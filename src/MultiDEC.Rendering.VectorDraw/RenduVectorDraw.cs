@@ -103,14 +103,15 @@ public sealed class RenduVectorDraw
                 continue;
             }
 
-            // Insertion comme dans l'ancienne version : point d'insertion en coordonnées monde,
-            // vecteur d'extrusion et rotation (le repère objet suit l'axe arbitraire DXF).
+            // Insertion par vecteur d'extrusion + rotation (repère objet = axe arbitraire DXF).
+            // VectorDraw lit InsertionPoint dans ce repère objet : on y convertit le point monde.
             var pose = PoseInsert.Depuis(orientations.Matrice(e));
+            var o = pose.InsertionOcs;
             var ins = new vdInsert();
             ins.SetUnRegisterDocument(_doc);
             ins.setDocumentDefaults();
             ins.Block = bloc;
-            ins.InsertionPoint = new gPoint(pose.Insertion.X, pose.Insertion.Y, pose.Insertion.Z);
+            ins.InsertionPoint = new gPoint(o.X, o.Y, o.Z);
             ins.ExtrusionVector = new Vector(pose.Extrusion.X, pose.Extrusion.Y, pose.Extrusion.Z);
             ins.Rotation = pose.Rotation;
             if (pose.EchelleZ < 0)

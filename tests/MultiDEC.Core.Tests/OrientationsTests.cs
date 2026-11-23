@@ -118,3 +118,26 @@ public class PoseInsertTests
         Assert.Equal(new Point3(1, 2, 3), pose.Insertion);
     }
 }
+
+public class InsertionOcsTests
+{
+    [Fact]
+    public void Point_monde_converti_dans_le_repere_objet_puis_retrouve()
+    {
+        var table = TableOrientations.ParDefaut();
+        foreach (var e in PoseInsertTests.Elements().Select(o => (ElementPlace)o[0]))
+        {
+            var pose = PoseInsert.Depuis(table.Matrice(e));
+            Assert.Equal(pose.Insertion, pose.OcsVersMonde(pose.InsertionOcs));
+        }
+    }
+
+    [Fact]
+    public void Poteau_a_10m_de_haut_reste_a_10m_en_Z()
+    {
+        // Cas de la capture du 23/11 : avec l'extrusion (0 ; -1 ; 0), le Z monde devient le Y objet.
+        var pose = PoseInsert.Depuis(TableOrientations.ParDefaut().Matrice(
+            new ElementPlace("HMPOT20", Famille.Poteau, new Point3(5, -0.7, 10), Axe.Z)));
+        Assert.Equal(new Point3(5, 10, 0.7), pose.InsertionOcs);
+    }
+}

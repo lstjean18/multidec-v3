@@ -129,9 +129,39 @@ public sealed class PoseInsert
         EchelleZ = echelleZ;
     }
 
+    /// <summary>Point d'insertion en coordonnées monde.</summary>
     public Point3 Insertion { get; }
 
     public Point3 Extrusion { get; }
+
+    /// <summary>
+    /// Point d'insertion exprimé dans le repère objet (OCS) défini par l'extrusion, comme le veut VectorDraw
+    /// (et le DXF) : avec une extrusion non verticale, donner le point monde tel quel le fait tourner avec le
+    /// repère (constaté le 23/11/2026 : hauteur dessinée selon Y).
+    /// </summary>
+    public Point3 InsertionOcs
+    {
+        get
+        {
+            var n = new[] { Extrusion.X, Extrusion.Y, Extrusion.Z };
+            var ax = AxeArbitraire(n);
+            var ay = Vectoriel(n, ax);
+            var p = new[] { Insertion.X, Insertion.Y, Insertion.Z };
+            return new Point3(Scalaire(p, ax), Scalaire(p, ay), Scalaire(p, n));
+        }
+    }
+
+    /// <summary>Repasse un point du repère objet au repère monde (pour les tests).</summary>
+    public Point3 OcsVersMonde(Point3 q)
+    {
+        var n = new[] { Extrusion.X, Extrusion.Y, Extrusion.Z };
+        var ax = AxeArbitraire(n);
+        var ay = Vectoriel(n, ax);
+        return new Point3(
+            q.X * ax[0] + q.Y * ay[0] + q.Z * n[0],
+            q.X * ax[1] + q.Y * ay[1] + q.Z * n[1],
+            q.X * ax[2] + q.Y * ay[2] + q.Z * n[2]);
+    }
 
     public double Rotation { get; }
 
