@@ -68,6 +68,23 @@ public class OrientationsTests
     }
 
     [Fact]
+    public void About_gauche_miroir_de_l_about_droit()
+    {
+        var droit = new ElementPlace("HMGCSE070", Famille.GardeCorps, new Point3(10, 0, 2), Axe.Y, Face.Aucune, 4);
+        var gauche = new ElementPlace("HMGCSE070", Famille.GardeCorps, new Point3(0, 0, 2), Axe.Y, Face.Aucune, 1, inverse: true);
+
+        // Même tracé en travers (de y = 0 vers l'extérieur)...
+        Assert.Equal(new Point3(10, -0.7, 2), Transforme(droit, 0.7, 0, 0));
+        Assert.Equal(new Point3(0, -0.7, 2), Transforme(gauche, 0.7, 0, 0));
+
+        // ... mais le côté « face » du bloc est retourné selon X.
+        double dxDroit = Transforme(droit, 0, 0, 0.1).X - 10;
+        double dxGauche = Transforme(gauche, 0, 0, 0.1).X;
+        Assert.Equal(-dxDroit, dxGauche, 3);
+        Assert.NotEqual(0, dxGauche, 3);
+    }
+
+    [Fact]
     public void Reglage_par_prefixe_le_plus_long()
     {
         var t = new TableOrientations(new[]

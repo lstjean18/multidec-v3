@@ -106,18 +106,10 @@ public static class References
 
                 return baseRef + classe;
 
-            case GammePlateaux.AluBois:
-                if (large)
-                {
-                    return variante == 1 ? "HMPLAL" + l + "ST" : "HMPLA" + l + "3CL" + (l300 ? "5" : "6");
-                }
-
-                return variante == 1 ? "HMPLAL" + l + "596ST" : "HMPLAF" + l + "3CL6";
-
-            case GammePlateaux.Portugais:
+            case GammePlateaux.StandardNF:
                 return variante == 1 ? "HMPLAF" + l + "3CL6" : "HMPLAF" + l + "2CL6";
 
-            case GammePlateaux.PortugaisAntiDerapant:
+            case GammePlateaux.AntiContaminationNF:
                 return variante == 1 ? "HMPLAF" + l + "3CL6-AC" : "HMPLAF" + l + "2CL6-AC";
 
             default:

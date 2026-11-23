@@ -97,9 +97,12 @@ public sealed class RenduVectorDraw
         }
 
         FondBlanc();
+        MasquerPresentations();
         _doc.Model.Update();
-        AxesFilaires(false);
-        Rendu(ModeRendu.OmbreAretes);
+
+        // Réglages par défaut demandés par Laurent (23/11/2026) : rendu ombré, axes filaires visibles.
+        AxesFilaires(true);
+        Rendu(ModeRendu.Ombre);
     }
 
     /// <summary>
@@ -182,6 +185,36 @@ public sealed class RenduVectorDraw
         }
 
         Diagnostic.Add($"Blocs préparés : {blocs}, entités d'axes déplacées : {deplaces}, entités « DuBloc » : {colores}");
+    }
+
+    /// <summary>
+    /// Masque les présentations venues de la bibliothèque (TES-ALU, TES-LIMON, Façade, Présentation1…) :
+    /// seul l'espace objet est montré. La mise en plan viendra plus tard. Le contrôle doit ensuite
+    /// reconstruire ses onglets (vdScrollableControl.ReFillTabs).
+    /// </summary>
+    public void MasquerPresentations()
+    {
+        int n = 0;
+        foreach (vdLayout presentation in _doc.LayOuts)
+        {
+            if (ReferenceEquals(presentation, _doc.Model) || string.Equals(presentation.Name, "Model", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            presentation.VisibleOnForms = false;
+            n++;
+        }
+
+        _doc.ActiveLayOut = _doc.Model;
+        Diagnostic.Add($"Présentations masquées : {n}");
+    }
+
+    /// <summary>Affiche tout le modèle, centré (bouton « Zoom tout »).</summary>
+    public void ZoomTout()
+    {
+        _doc.Model.ZoomExtents();
+        _doc.Redraw(true);
     }
 
     /// <summary>Fond blanc comme la v2 (propriété Palette.Background, recherchée par réflexion).</summary>

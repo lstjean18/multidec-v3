@@ -103,6 +103,13 @@ public sealed class TableOrientations
             m = Matrices.Produit(Matrices.Echelle(-1, 1, 1), m); // origine à droite, part vers la gauche
         }
 
+        if (e.Inverse && e.Axe == Axe.Y)
+        {
+            // About de l'extrémité gauche (x = 0) : miroir de l'about droit selon X monde
+            // (les garde-corps d'about ont un sens, Laurent 23/11/2026).
+            m = Matrices.Produit(Matrices.Echelle(1, -1, 1), m);
+        }
+
         // 3. Orientation dans le plan.
         double angle = AngleStandard(e) + (r?.RotationZ ?? 0);
         m = Matrices.Produit(Matrices.RotationZ(angle), m);

@@ -63,6 +63,23 @@ public class GenerateurFacadeTests
     }
 
     [Fact]
+    public void Lisse_de_securite_des_acces_dans_le_plan_des_poteaux()
+    {
+        var s = GenerateurFacade.Generer(Standard(p => p.SecuriteInterieure = TypeSecurite.Lisses));
+        var lisses = s.Elements.Where(e => e.Famille == Famille.Lisse && e.Axe == Axe.X).ToList();
+        Assert.Contains(lisses, e => Math.Abs(e.Origine.Z % 2 - 1.5) < 0.001); // lisses à 1,50 m au-dessus des plateaux
+        Assert.All(lisses, e => Assert.True(Math.Abs(e.Origine.Y) < 0.001 || Math.Abs(e.Origine.Y + 0.70) < 0.001, $"{e.Reference} à Y = {e.Origine.Y}"));
+    }
+
+    [Fact]
+    public void Plateaux_standard_nf_par_defaut()
+    {
+        Assert.Equal(GammePlateaux.StandardNF, new ParametresFacade().Plateaux);
+        Assert.Equal("Standard NF", LibellesPlateaux.Libelle(GammePlateaux.StandardNF));
+        Assert.Equal("Anti Contamination NF", LibellesPlateaux.Libelle(GammePlateaux.AntiContaminationNF));
+    }
+
+    [Fact]
     public void Plateaux_au_niveau_0_avec_lisses_des_deux_cotes()
     {
         var s = GenerateurFacade.Generer(Standard());

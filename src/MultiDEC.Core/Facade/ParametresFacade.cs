@@ -40,7 +40,7 @@ public sealed class ParametresFacade
 
     // ---- Planchers -------------------------------------------------------------------------
 
-    public GammePlateaux Plateaux { get; set; } = GammePlateaux.Standard;
+    public GammePlateaux Plateaux { get; set; } = GammePlateaux.StandardNF;
 
     /// <summary>Qualité plateau (1 ou 2), utilisée par la gamme Standard pour 2,50 et 3,00 m.</summary>
     public int QualitePlateaux { get; set; } = 1;

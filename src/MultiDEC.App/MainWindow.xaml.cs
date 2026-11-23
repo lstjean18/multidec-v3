@@ -43,6 +43,7 @@ public partial class MainWindow : Window
             _vd.BaseControl.EnsureDocument();
             _rendu = new RenduVectorDraw(_vd.BaseControl.ActiveDocument);
             _rendu.ChargerBibliotheque(chemin!);
+            _vd.ReFillTabs(); // onglets des présentations masqués : seul le modèle reste
             Reglages.CheminBibliotheque = chemin;
             TexteBibliotheque.Text = "Bibliothèque : " + Path.GetFileName(chemin);
         }
@@ -92,9 +93,11 @@ public partial class MainWindow : Window
         }
     }
 
+    private void ZoomTout_Click(object sender, RoutedEventArgs e) => _rendu?.ZoomTout();
+
     private void Axes_Click(object sender, RoutedEventArgs e) => _rendu?.AxesFilaires(CaseAxes.IsChecked == true);
 
-    private void Gamme_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e) => Vm.GammeChangee();
+    private void Modele_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e) => Vm.ModeleChange();
 
     private void Nouveau_Click(object sender, RoutedEventArgs e) => Vm.Nouveau();
 

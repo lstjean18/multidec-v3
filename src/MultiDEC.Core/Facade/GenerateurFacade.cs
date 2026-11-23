@@ -199,7 +199,7 @@ public sealed class GenerateurFacade
         ConsoleInfo? console = null;
         if (m.AConsole && !CatalogueConsoles.TryGet(_p.Modele, m.Console!, out console))
         {
-            _alertes.Add($"Maille {num} : console {m.Console} inconnue pour la gamme {_p.Modele}, ignorée.");
+            _alertes.Add($"Maille {num} : console {m.Console} inconnue pour le modèle {_p.Modele}, ignorée.");
             console = null;
         }
 
@@ -327,7 +327,6 @@ public sealed class GenerateurFacade
     /// <summary>Plateaux nécessaires pour une largeur : (variante 1 = courant / 2 = complément, rang depuis le bord).</summary>
     internal static IEnumerable<(int Variante, int Rang)> RepartitionPlateaux(double largeur, GammePlateaux gamme)
     {
-        bool aluBois = gamme == GammePlateaux.AluBois;
         if (largeur <= 0.30 + Cotes.Tolerance)
         {
             yield return (2, 0);
@@ -339,15 +338,7 @@ public sealed class GenerateurFacade
         else if (largeur <= 0.75 + Cotes.Tolerance)
         {
             yield return (1, 0);
-            if (!aluBois)
-            {
-                yield return (1, 1);
-            }
-        }
-        else if (aluBois)
-        {
-            yield return (1, 0);
-            yield return (2, 2);
+            yield return (1, 1);
         }
         else
         {
@@ -402,14 +393,14 @@ public sealed class GenerateurFacade
         }
         else
         {
-            // Lisse de sécurité au droit de la trémie, côté extérieur.
+            // Lisse de sécurité au droit de la trémie (1,50 m au-dessus des plateaux), dans le plan des poteaux.
             string secu = _p.SecuriteExterieure == TypeSecurite.GardeCorpsMds1 ? "HMLISSEC" + Cotes.EnCm3(lm) : References.LisseOuTraverse(lm);
-            Ajouter(secu, Famille.Lisse, new Point3(x0, -_l - DemiTube, z - 0.5), Axe.X, Face.Exterieure, num);
+            Ajouter(secu, Famille.Lisse, new Point3(x0, -_l, z - 0.5), Axe.X, Face.Exterieure, num);
 
             if (_p.SecuriteInterieure != TypeSecurite.Sans)
             {
                 string secuInt = _p.SecuriteInterieure == TypeSecurite.GardeCorpsMds1 ? "HMLISSEC" + Cotes.EnCm3(lm) : References.LisseOuTraverse(lm);
-                Ajouter(secuInt, Famille.Lisse, new Point3(x0, DemiTube, z - 0.5), Axe.X, Face.Interieure, num);
+                Ajouter(secuInt, Famille.Lisse, new Point3(x0, 0, z - 0.5), Axe.X, Face.Interieure, num);
                 Ajouter("HMCOL49ROSACE", Famille.Lisse, new Point3(x0, 0, z - 0.5), Axe.Z, Face.Interieure, num);
                 Ajouter("HMCOL49ROSACE", Famille.Lisse, new Point3(x0 + lm, 0, z - 0.5), Axe.Z, Face.Interieure, num);
             }

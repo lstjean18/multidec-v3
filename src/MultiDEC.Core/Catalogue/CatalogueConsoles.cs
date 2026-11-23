@@ -30,7 +30,7 @@ public sealed class ConsoleInfo
     public bool PorteGardeCorps => Reference != "HMTRA030";
 }
 
-/// <summary>Consoles disponibles par gamme. Données reprises de CheckConsole (Facade.vb).</summary>
+/// <summary>Consoles disponibles par modèle d'échafaudage. Données reprises de CheckConsole (Facade.vb).</summary>
 public static class CatalogueConsoles
 {
     private static readonly Dictionary<string, ConsoleInfo> MultiReto = Index(
@@ -68,7 +68,7 @@ public static class CatalogueConsoles
         new ConsoleInfo("HMCON1050E", 1.05, 0.04, References.Embase),
         new ConsoleInfo("HMCON1050EE", 1.05, 0.04));
 
-    /// <summary>Consoles proposées pour une gamme (Multi-RETO à embase : mêmes consoles que Multi-RETO).</summary>
+    /// <summary>Consoles proposées pour un modèle (Multi-RETO à embase : mêmes consoles que Multi-RETO).</summary>
     public static IReadOnlyCollection<ConsoleInfo> Pour(ModeleEchafaudage modele) => Table(modele).Values;
 
     public static bool TryGet(ModeleEchafaudage modele, string reference, out ConsoleInfo info) =>

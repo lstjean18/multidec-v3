@@ -24,8 +24,9 @@ Les points marqués **[à valider]** sont des choix faits en v3 faute de règle 
 - Extérieur à chaque niveau ≥ 0,50 m, sauf mailles de travail aux niveaux « accès seul ». Pas de plinthe aux niveaux d'accès.
 - Intérieur : même règle **[à valider : l'ancienne version posait le GC intérieur même sans plancher]** ; remplacé par les lisses en bout de console.
 - MDS 2 : pas de plinthe si maille ≤ 1,25 m. Abouts : HMGCSE / HMGCSE…GT / HMGCA / traverses selon le choix.
-- Plateaux : 2 (0,70/0,75) ou 3 (1,00/1,05) plateaux de 0,30 ; alu/bois : 1 large (+ 1 complément en 1,00/1,05).
-- Accès : trappe HMPLAL…602TR / 650TR (+EC > 2 m) côté intérieur, sens alterné par niveau, échelle si maille ≤ 2 m, 2 plateaux de départ au pied du 1er accès, lisse de sécurité au-dessus.
+- Les garde-corps d'about ont un sens : l'about gauche (x = 0) est le miroir de l'about droit (Laurent, 23/11/2026).
+- Plateaux : 2 (0,70/0,75) ou 3 (1,00/1,05) plateaux de 0,30. Gammes : Optissimo, Standard, Standard NF (HMPLAF…CL6, par défaut) et Anti Contamination NF (HMPLAF…CL6-AC) ; la gamme alu/bois est supprimée (Laurent, 23/11/2026).
+- Accès : trappe HMPLAL…602TR / 650TR (+EC > 2 m) côté intérieur, sens alterné par niveau, échelle si maille ≤ 2 m, 2 plateaux de départ au pied du 1er accès, lisse de sécurité 1,50 m au-dessus des plateaux, dans le plan des poteaux.
 - Niveau « accès seul » (au-dessus du sol) : chaque maille a une lisse des deux côtés, façade et extérieur (validé par Laurent le 23/11/2026).
 - Plateaux au niveau 0 : lisses de pied des deux côtés de la maille (validé le 23/11/2026). Une seule paire de lisses de pied par maille, même avec diagonale ou option « lisses en pied ».
 

@@ -46,9 +46,12 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
 
     public static Array TypesPlancher { get; } = Enum.GetValues(typeof(TypePlancher));
 
-    public static Array GammesPlateaux { get; } = Enum.GetValues(typeof(GammePlateaux));
+    /// <summary>Gammes de plateaux avec leur libellé (« Standard NF », « Anti Contamination NF »…).</summary>
+    public static IReadOnlyList<KeyValuePair<GammePlateaux, string>> ChoixPlateaux { get; } =
+        Enum.GetValues(typeof(GammePlateaux)).Cast<GammePlateaux>()
+            .Select(g => new KeyValuePair<GammePlateaux, string>(g, LibellesPlateaux.Libelle(g))).ToList();
 
-    /// <summary>Consoles de la gamme choisie, précédées d'une entrée vide (= sans console).</summary>
+    /// <summary>Consoles du modèle choisi, précédées d'une entrée vide (= sans console).</summary>
     public IReadOnlyList<string> Consoles =>
         new[] { string.Empty }.Concat(CatalogueConsoles.Pour(Parametres.Modele).Select(c => c.Reference)).ToList();
 
@@ -157,8 +160,8 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
         CheminFichier = chemin;
     }
 
-    /// <summary>À appeler quand la gamme change (la liste des consoles en dépend).</summary>
-    public void GammeChangee() => Notifier(nameof(Consoles));
+    /// <summary>À appeler quand le modèle d'échafaudage change (la liste des consoles en dépend).</summary>
+    public void ModeleChange() => Notifier(nameof(Consoles));
 
     private void ChargerProjet(ProjetFacade projet)
     {

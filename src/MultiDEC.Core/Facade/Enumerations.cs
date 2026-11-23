@@ -1,6 +1,6 @@
 namespace MultiDEC.Core.Facade;
 
-/// <summary>Gammes d'échafaudage reprises en v3 (Multi-FACADE abandonné, obsolète).</summary>
+/// <summary>Modèles d'échafaudage repris en v3 (Multi-FACADE abandonné, obsolète).</summary>
 public enum ModeleEchafaudage
 {
     /// <summary>Multi-RETO (MR) : départ HMPOTDP20/30 sur socle, poteaux HMPOTST.</summary>
@@ -59,14 +59,37 @@ public enum TypePlancher
     AccesSeulDiagoH,
 }
 
-/// <summary>Gamme de plateaux (ancien typePlateauxAcier : O, S, A, F, FAC).</summary>
+/// <summary>
+/// Gamme de plateaux (ancien typePlateauxAcier : O, S, F, FAC ; « A » alu/bois supprimé le 23/11/2026).
+/// Libellés affichés : <see cref="LibellesPlateaux"/>.
+/// </summary>
 public enum GammePlateaux
 {
     Optissimo,
     Standard,
-    AluBois,
-    Portugais,
-    PortugaisAntiDerapant,
+
+    /// <summary>« Standard NF » (ancien « Portugais », HMPLAF…CL6).</summary>
+    StandardNF,
+
+    /// <summary>« Anti Contamination NF » (ancien « Portugais antidérapant », HMPLAF…CL6-AC).</summary>
+    AntiContaminationNF,
+}
+
+/// <summary>Libellés des gammes de plateaux pour l'interface.</summary>
+public static class LibellesPlateaux
+{
+    public static string Libelle(GammePlateaux gamme)
+    {
+        switch (gamme)
+        {
+            case GammePlateaux.StandardNF:
+                return "Standard NF";
+            case GammePlateaux.AntiContaminationNF:
+                return "Anti Contamination NF";
+            default:
+                return gamme.ToString();
+        }
+    }
 }
 
 /// <summary>Côté d'un élément par rapport à la maille.</summary>

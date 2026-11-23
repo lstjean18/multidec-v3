@@ -25,7 +25,7 @@ public sealed class TronconPoteau
 
 /// <summary>
 /// Empilage d'un poteau, du calage au sommet (port de PlacePieds + PlacePoteaux) :
-/// HMCALEBOIS / HMSOCREG / départ selon la gamme / poteaux de 2 m / poteau de tête.
+/// HMCALEBOIS / HMSOCREG / départ selon le modèle / poteaux de 2 m / poteau de tête.
 /// Cotes de pied relevées dans Blocs-EM-3D.dxf (et non reprises de l'ancien code, dont la bibliothèque
 /// avait d'autres points de base) : le point de base de HMSOCREG est le haut du socle (plaque à -0,25 m),
 /// HMCALEBOIS fait 0,08 m d'épaisseur.
