@@ -23,4 +23,12 @@
     <Reference Include="VectorDraw.Serialize"><HintPath>$(VectorDrawDir)VectorDraw.Serialize.dll</HintPath></Reference>
     <Reference Include="VectorDraw.Actions"><HintPath>$(VectorDrawDir)VectorDraw.Actions.dll</HintPath></Reference>
   </ItemGroup>
+  <!--
+    Toutes les DLL VectorDraw à côté de l'exécutable, y compris celles chargées dynamiquement
+    (rendu OpenGL vdrawgl, solides 3D SolidModel/slapi, conversion vdxFcnv) : sans elles,
+    les volumes ne s'affichent pas en rendu ombré. Les contrôles ActiveX (VDraw*5, AxVD*) sont exclus.
+  -->
+  <ItemGroup>
+    <None Include="$(VectorDrawDir)*.dll" Exclude="$(VectorDrawDir)AxVD*.dll;$(VectorDrawDir)VDraw*5.dll;$(VectorDrawDir)VdrawPro5.dll;$(VectorDrawDir)VDgridLib.dll" Link="%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" Visible="false" />
+  </ItemGroup>
 </Project>

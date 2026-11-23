@@ -50,7 +50,7 @@ public sealed class RenduVectorDraw
     /// <summary>Calque des volumes 3D des blocs (même nom que dans l'ancienne version).</summary>
     public const string CalqueRealiste = "Structure-realiste";
 
-    /// <summary>Calque des axes filaires des blocs.</summary>
+    /// <summary>Calque des axes filaires des blocs… et du volume des blocs qui n'ont pas de calque réaliste (plateaux).</summary>
     public const string CalqueAxes = "Structure";
 
     /// <summary>Nom du bloc provisoire d'amarrage (cercle barré d'une croix, décision du 23/11/2026).</summary>
@@ -63,8 +63,16 @@ public sealed class RenduVectorDraw
         _doc = document ?? throw new ArgumentNullException(nameof(document));
     }
 
+    /// <summary>Calque créé au chargement : axes filaires des blocs qui ont aussi des volumes (masqué par défaut).</summary>
+    public const string CalqueAxesMdc = "MDC-Axes";
+
+    /// <summary>Messages de préparation de la bibliothèque (repère, calques, couleurs) : utiles aux tests du serveur.</summary>
+    public List<string> Diagnostic { get; } = new List<string>();
+
     /// <summary>
-    /// Ouvre la bibliothèque de blocs et vide l'espace objet (les définitions de blocs restent).
+    /// Ouvre la bibliothèque de blocs, vide l'espace objet (les définitions de blocs restent) et la prépare :
+    /// repère général (le DXF arrive avec un SCU actif où X = Y monde et Y = Z monde, ce qui couchait la vue),
+    /// séparation des axes filaires et des volumes, couleurs par famille, fond blanc, rendu réaliste.
     /// </summary>
     public void ChargerBibliotheque(string cheminDxf)
     {
@@ -73,17 +81,163 @@ public sealed class RenduVectorDraw
             throw new InvalidOperationException("Impossible d'ouvrir la bibliothèque de blocs : " + cheminDxf);
         }
 
+        Diagnostic.Clear();
         _doc.Model.Entities.RemoveAll();
-        var calque = _doc.Layers.FindName(CalqueRealiste);
-        if (calque != null)
+        _doc.ActiveLayOut = _doc.Model;
+        RepereGeneral();
+        PreparerBlocs();
+
+        foreach (var nom in new[] { CalqueRealiste, CalqueAxes })
         {
-            calque.On = true;
+            var calque = _doc.Layers.FindName(nom);
+            if (calque != null)
+            {
+                calque.On = true;
+            }
         }
 
-        _doc.ActiveLayOut = _doc.Model;
+        FondBlanc();
         _doc.Model.Update();
         AxesFilaires(false);
-        Rendu(ModeRendu.OmbreAretes);
+        Rendu(ModeRendu.Realiste);
+    }
+
+    /// <summary>
+    /// Remet le SCU sur le repère général : toutes les matrices « User2World » (document, espace objet,
+    /// présentation active) reçoivent l'identité. Les noms exacts varient selon les versions de VectorDraw,
+    /// d'où la recherche par réflexion ; ce qui a été trouvé est noté dans <see cref="Diagnostic"/>.
+    /// </summary>
+    public void RepereGeneral()
+    {
+        var cibles = new List<object> { _doc, _doc.Model };
+        if (_doc.ActiveLayOut != null && !ReferenceEquals(_doc.ActiveLayOut, _doc.Model))
+        {
+            cibles.Add(_doc.ActiveLayOut);
+        }
+
+        foreach (var cible in cibles)
+        {
+            foreach (var prop in cible.GetType().GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
+            {
+                if (prop.PropertyType != typeof(Matrix) || prop.GetIndexParameters().Length > 0)
+                {
+                    continue;
+                }
+
+                bool scu = prop.Name.IndexOf("User2World", StringComparison.OrdinalIgnoreCase) >= 0
+                    || prop.Name.IndexOf("UCS", StringComparison.OrdinalIgnoreCase) >= 0;
+                if (!scu)
+                {
+                    continue;
+                }
+
+                try
+                {
+                    var avant = prop.GetValue(cible) as Matrix;
+                    string etat = avant == null ? "null" : DecrireMatrice(avant);
+                    if (prop.CanWrite)
+                    {
+                        prop.SetValue(cible, new Matrix());
+                        Diagnostic.Add($"SCU {cible.GetType().Name}.{prop.Name} : {etat} → identité");
+                    }
+                    else
+                    {
+                        Diagnostic.Add($"SCU {cible.GetType().Name}.{prop.Name} (lecture seule) : {etat}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Diagnostic.Add($"SCU {cible.GetType().Name}.{prop.Name} : {ex.GetBaseException().Message}");
+                }
+            }
+        }
+    }
+
+    private static string DecrireMatrice(Matrix m)
+    {
+        var x = m.Transform(new gPoint(1, 0, 0));
+        var o = m.Transform(new gPoint(0, 0, 0));
+        var y = m.Transform(new gPoint(0, 1, 0));
+        return string.Format(System.Globalization.CultureInfo.InvariantCulture,
+            "X→({0:0.##};{1:0.##};{2:0.##}) Y→({3:0.##};{4:0.##};{5:0.##})",
+            x.x - o.x, x.y - o.y, x.z - o.z, y.x - o.x, y.y - o.y, y.z - o.z);
+    }
+
+    /// <summary>
+    /// Prépare les définitions de blocs pour le rendu :
+    /// <list type="bullet">
+    /// <item>dans un bloc qui a des volumes sur « Structure-realiste », les entités des calques « Structure » et
+    /// « 1_AXES » ne sont que des axes filaires : elles passent sur <see cref="CalqueAxesMdc"/>, masqué par défaut.
+    /// Dans les autres blocs (plateaux, cales…), « Structure » porte le volume lui-même et reste visible ;</item>
+    /// <item>toutes les entités passent en couleur « DuBloc » : la couleur de l'insertion (par famille) colore la pièce.</item>
+    /// </list>
+    /// La bibliothèque n'est modifiée qu'en mémoire.
+    /// </summary>
+    public void PreparerBlocs()
+    {
+        var axes = _doc.Layers.FindName(CalqueAxesMdc);
+        if (axes == null)
+        {
+            axes = new vdLayer();
+            axes.SetUnRegisterDocument(_doc);
+            axes.setDocumentDefaults();
+            axes.Name = CalqueAxesMdc;
+            _doc.Layers.AddItem(axes);
+        }
+
+        int blocs = 0, deplaces = 0, colores = 0;
+        foreach (vdBlock bloc in _doc.Blocks)
+        {
+            bool volumes = false;
+            foreach (vdFigure f in bloc.Entities)
+            {
+                if (string.Equals(f.Layer?.Name, CalqueRealiste, StringComparison.OrdinalIgnoreCase))
+                {
+                    volumes = true;
+                    break;
+                }
+            }
+
+            foreach (vdFigure f in bloc.Entities)
+            {
+                string calque = f.Layer?.Name ?? string.Empty;
+                if (volumes && (string.Equals(calque, CalqueAxes, StringComparison.OrdinalIgnoreCase) || string.Equals(calque, "1_AXES", StringComparison.OrdinalIgnoreCase)))
+                {
+                    f.Layer = axes;
+                    deplaces++;
+                }
+
+                f.PenColor.ByBlock = true;
+                colores++;
+            }
+
+            blocs++;
+        }
+
+        Diagnostic.Add($"Blocs préparés : {blocs}, entités d'axes déplacées : {deplaces}, entités « DuBloc » : {colores}");
+    }
+
+    /// <summary>Fond blanc comme la v2 (propriété Palette.Background, recherchée par réflexion).</summary>
+    private void FondBlanc()
+    {
+        try
+        {
+            var palette = _doc.GetType().GetProperty("Palette")?.GetValue(_doc);
+            var fond = palette?.GetType().GetProperty("Background");
+            if (fond != null && fond.CanWrite && fond.PropertyType == typeof(System.Drawing.Color))
+            {
+                fond.SetValue(palette, System.Drawing.Color.White);
+                Diagnostic.Add("Fond : blanc");
+            }
+            else
+            {
+                Diagnostic.Add("Fond : propriété Palette.Background introuvable");
+            }
+        }
+        catch (Exception ex)
+        {
+            Diagnostic.Add("Fond : " + ex.GetBaseException().Message);
+        }
     }
 
     /// <summary>Efface le dessin courant et dessine la structure.</summary>
@@ -123,6 +277,7 @@ public sealed class RenduVectorDraw
                 ins.Zscale = -1;
             }
 
+            ins.PenColor = new vdColor(PaletteFamilles.Couleur(e.Famille));
             ins.Label = e.NumeroMaille.ToString();
             _doc.Model.Entities.AddItem(ins);
             rapport.Inserts.Add((e, ins));
@@ -165,10 +320,10 @@ public sealed class RenduVectorDraw
         _doc.Redraw(true);
     }
 
-    /// <summary>Affiche ou masque le calque « Structure » (axes filaires des blocs), gênant en rendu ombré.</summary>
+    /// <summary>Affiche ou masque les axes filaires des blocs (calque <see cref="CalqueAxesMdc"/>), gênants en rendu ombré.</summary>
     public void AxesFilaires(bool visibles)
     {
-        var calque = _doc.Layers.FindName(CalqueAxes);
+        var calque = _doc.Layers.FindName(CalqueAxesMdc);
         if (calque != null)
         {
             calque.On = visibles;

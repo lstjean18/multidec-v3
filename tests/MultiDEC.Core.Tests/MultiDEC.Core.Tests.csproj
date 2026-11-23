@@ -15,6 +15,7 @@
   <!-- Fichiers sans dépendance VectorDraw/WPF des autres projets, compilés ici pour être testés sous Linux comme sous Windows. -->
   <ItemGroup>
     <Compile Include="..\..\src\MultiDEC.Rendering.VectorDraw\TableOrientations.cs" Link="Lies\TableOrientations.cs" />
+    <Compile Include="..\..\src\MultiDEC.Rendering.VectorDraw\PaletteFamilles.cs" Link="Lies\PaletteFamilles.cs" />
     <Compile Include="..\..\src\MultiDEC.App\ViewModels\*.cs" Link="Lies\%(Filename).cs" />
   </ItemGroup>
   <ItemGroup>

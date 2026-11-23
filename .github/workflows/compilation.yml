@@ -69,6 +69,27 @@ jobs:
           dotnet test tests/MultiDEC.Rendering.Tests --configuration Release --no-build --logger "console;verbosity=detailed"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
+      - name: Publier l'image du rendu (test de la façade réelle)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rendu-serveur-${{ github.sha }}
+          path: rendu-serveur/
+          if-no-files-found: ignore
+          retention-days: 14
+
+      # Copie de l'application hors du dossier de travail du runner : la lancer depuis _work
+      # verrouille les fichiers et fait échouer le checkout suivant.
+      - name: Installer l'application (actions-runner\MultiDEC-v3)
+        shell: powershell
+        continue-on-error: true
+        run: |
+          $dest = Join-Path $env:GITHUB_WORKSPACE '..\..\..\MultiDEC-v3'
+          robocopy src\MultiDEC.App\bin\Release\net48 $dest /MIR /NFL /NDL /NJH /R:1 /W:1
+          if ($LASTEXITCODE -ge 8) { Write-Warning "Copie incomplète : MultiDEC est peut-être ouvert depuis $dest" ; exit 1 }
+          Write-Host ("Application installée dans " + (Resolve-Path $dest))
+          exit 0
+
       - name: Publier l'application compilée
         uses: actions/upload-artifact@v4
         with:

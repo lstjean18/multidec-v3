@@ -4,7 +4,10 @@ using System.IO;
 using System.Linq;
 using MultiDEC.Core.Facade;
 using MultiDEC.Rendering.VectorDraw;
+using VectorDraw.Geometry;
 using VectorDraw.Professional.Components;
+using VectorDraw.Professional.vdObjects;
+using VectorDraw.Professional.vdPrimaries;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -86,6 +89,13 @@ public class FacadeReelleTests
         var doc = new vdDocumentComponent().Document;
         var rendu = new RenduVectorDraw(doc);
         rendu.ChargerBibliotheque(chemin);
+        foreach (var ligne in rendu.Diagnostic)
+        {
+            _sortie.WriteLine(ligne);
+        }
+
+        DecrireBloc(doc, "HMPLA3003CL5");
+        DecrireBloc(doc, "HMPOT20");
 
         var p = new ParametresFacade { LongueurTotaleSouhaitee = 10, LongueurMaillePreferee = 2.5, NombreAcces = 1, HauteurDernierPlancher = 6 };
         var projet = ProposeurStructure.NouveauProjet(p);
@@ -120,7 +130,76 @@ public class FacadeReelleTests
             }
         }
 
+        // Vue iso : Z monde doit monter à l'écran, X monde doit aller vers la droite (SCU du DXF neutralisé).
+        rendu.Vue(Vues.Iso);
+        var m = doc.World2ViewMatrix;
+        var o = m.Transform(new gPoint(0, 0, 0));
+        var vz = m.Transform(new gPoint(0, 0, 1));
+        var vx = m.Transform(new gPoint(1, 0, 0));
+        _sortie.WriteLine(string.Format(CultureInfo.InvariantCulture, "Vue iso : X→({0:0.##};{1:0.##})  Z→({2:0.##};{3:0.##})", vx.x - o.x, vx.y - o.y, vz.x - o.x, vz.y - o.y));
+
+        ExporterImages(doc, rendu);
+
         Assert.Equal(0, hors);
+        Assert.True(vz.y - o.y > 0.5 && Math.Abs(vz.x - o.x) < 0.2, "Z monde n'est pas vertical à l'écran");
+        Assert.True(vx.x - o.x > 0.5, "X monde ne va pas vers la droite à l'écran");
+    }
+
+    private void DecrireBloc(vdDocument doc, string nom)
+    {
+        var bloc = doc.Blocks.FindName(nom);
+        if (bloc == null)
+        {
+            _sortie.WriteLine($"Bloc {nom} absent");
+            return;
+        }
+
+        var types = new System.Collections.Generic.List<string>();
+        foreach (vdFigure f in bloc.Entities)
+        {
+            types.Add($"{f.GetType().Name}@{f.Layer?.Name}");
+        }
+
+        _sortie.WriteLine($"Bloc {nom} : {string.Join(", ", types.GroupBy(t => t).Select(g => g.Count() + "×" + g.Key))}");
+    }
+
+    /// <summary>
+    /// Essaie d'enregistrer le dessin en image (vue iso, rendu réaliste puis ombré) dans « rendu-serveur »,
+    /// publié par le workflow : permet de voir le rendu sans lancer l'application.
+    /// </summary>
+    private void ExporterImages(vdDocument doc, RenduVectorDraw rendu)
+    {
+        var dossier = Path.Combine(Environment.GetEnvironmentVariable("GITHUB_WORKSPACE") ?? Path.GetTempPath(), "rendu-serveur");
+        Directory.CreateDirectory(dossier);
+        foreach (var (mode, nom) in new[] { (ModeRendu.Realiste, "realiste"), (ModeRendu.OmbreAretes, "ombre-aretes"), (ModeRendu.Filaire, "filaire") })
+        {
+            rendu.Rendu(mode);
+            foreach (var ext in new[] { ".png", ".bmp", ".jpg" })
+            {
+                var f = Path.Combine(dossier, "iso-" + nom + ext);
+                try
+                {
+                    bool ok = doc.SaveAs(f);
+                    _sortie.WriteLine($"Image {Path.GetFileName(f)} : SaveAs={ok}, {(File.Exists(f) ? new FileInfo(f).Length + " octets" : "absente")}");
+                    if (ok && File.Exists(f))
+                    {
+                        break;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _sortie.WriteLine($"Image {Path.GetFileName(f)} : {ex.GetBaseException().Message}");
+                }
+            }
+        }
+
+        // Pistes pour un rendu hors écran si SaveAs ne sait pas faire d'image.
+        foreach (var t in new[] { doc.GetType(), doc.Model.GetType() })
+        {
+            var noms = t.GetMethods().Where(x => x.Name.IndexOf("Render", StringComparison.OrdinalIgnoreCase) >= 0 || x.Name.IndexOf("Image", StringComparison.OrdinalIgnoreCase) >= 0 || x.Name.IndexOf("Bitmap", StringComparison.OrdinalIgnoreCase) >= 0)
+                .Select(x => x.Name + "(" + string.Join(", ", x.GetParameters().Select(pp => pp.ParameterType.Name)) + ")").Distinct();
+            _sortie.WriteLine($"{t.Name} : {string.Join(" | ", noms)}");
+        }
     }
 
     private static bool Dedans(global::VectorDraw.Geometry.Box b, double l, double largeur, double h) =>
