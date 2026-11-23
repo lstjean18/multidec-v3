@@ -18,6 +18,7 @@
     <Reference Include="VectorDraw.Geometry"><HintPath>$(VectorDrawDir)VectorDraw.Geometry.dll</HintPath></Reference>
     <Reference Include="VectorDraw.Render"><HintPath>$(VectorDrawDir)VectorDraw.Render.dll</HintPath></Reference>
     <Reference Include="vdScrollableControl"><HintPath>$(VectorDrawDir)vdScrollableControl.dll</HintPath></Reference>
+    <Reference Include="VDrawBaseControl"><HintPath>$(VectorDrawDir)VDrawBaseControl.dll</HintPath></Reference>
     <Reference Include="WindowsFormsIntegration" />
   </ItemGroup>
 </Project>
