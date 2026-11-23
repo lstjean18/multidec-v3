@@ -23,7 +23,7 @@ jobs:
       - name: Tests
         run: dotnet test tests/MultiDEC.Core.Tests --configuration Release --logger "console;verbosity=normal"
 
-  # Solution complète sur le serveur de dev (runner auto-hébergé : VS 2022 + licence VectorDraw 8.8006).
+  # Solution complète sur le serveur de dev (runner auto-hébergé : VS 2022 + licence VectorDraw 9.9003).
   solution:
     name: Solution complète (serveur de dev)
     runs-on: [self-hosted, Windows]

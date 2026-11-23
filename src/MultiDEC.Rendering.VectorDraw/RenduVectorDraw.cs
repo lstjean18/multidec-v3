@@ -19,7 +19,7 @@ public sealed class RapportRendu
 }
 
 /// <summary>
-/// Dessine une <see cref="StructureFacade"/> dans un document VectorDraw 8.8006.
+/// Dessine une <see cref="StructureFacade"/> dans un document VectorDraw 9.9003.
 /// La bibliothèque Blocs-EM-3D.dxf est ouverte une fois ; ses blocs sont ensuite insérés par nom.
 /// À VÉRIFIER SUR LE SERVEUR DE DEV : ce fichier n'a pas pu être compilé sans les DLL VectorDraw.
 /// </summary>

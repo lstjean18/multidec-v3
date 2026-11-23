@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <!--
-    Rendu VectorDraw 8.8006 : transforme les éléments positionnés du Core en vdInsert.
+    Rendu VectorDraw 9.9003 : transforme les éléments positionnés du Core en vdInsert.
     Les DLL VectorDraw sont prises dans $(VectorDrawDir) (voir Directory.Build.props).
   -->
   <PropertyGroup>

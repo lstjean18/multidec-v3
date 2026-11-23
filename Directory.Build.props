@@ -12,7 +12,7 @@
   </PropertyGroup>
 
   <!--
-    Dossier des DLL VectorDraw Developer Framework 8.8006.
+    Dossier des DLL VectorDraw Developer Framework 9.9003.
     Valeur par défaut = installation standard ; à surcharger sur un poste en créant
     un fichier Directory.Build.props.user (non versionné) à la racine :
       <Project><PropertyGroup><VectorDrawDir>D:\...\</VectorDrawDir></PropertyGroup></Project>
