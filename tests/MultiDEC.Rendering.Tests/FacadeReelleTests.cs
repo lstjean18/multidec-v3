@@ -102,6 +102,6 @@ public class FacadeReelleTests
         Assert.Equal(0, hors);
     }
 
-    private static bool Dedans(VectorDraw.Geometry.Box b, double l, double largeur, double h) =>
+    private static bool Dedans(global::VectorDraw.Geometry.Box b, double l, double largeur, double h) =>
         b.Min.x > -0.6 && b.Max.x < l + 0.6 && b.Min.y > -largeur - 0.6 && b.Max.y < 1.3 && b.Min.z > -0.6 && b.Max.z < h + 0.8;
 }
