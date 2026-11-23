@@ -23,6 +23,10 @@
     <Reference Include="VectorDraw.Serialize"><HintPath>$(VectorDrawDir)VectorDraw.Serialize.dll</HintPath></Reference>
     <Reference Include="VectorDraw.Actions"><HintPath>$(VectorDrawDir)VectorDraw.Actions.dll</HintPath></Reference>
   </ItemGroup>
+  <!-- Extrait de Blocs-EM-3D.dxf (blocs de la façade de test, en-tête et SCU d'origine conservés). -->
+  <ItemGroup>
+    <None Include="Donnees\blocs-facade-test.dxf.gz" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
   <!--
     Toutes les DLL VectorDraw à côté de l'exécutable, y compris celles chargées dynamiquement
     (rendu OpenGL vdrawgl, solides 3D SolidModel/slapi, conversion vdxFcnv) : sans elles,

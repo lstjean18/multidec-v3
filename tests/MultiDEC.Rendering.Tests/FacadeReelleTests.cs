@@ -76,7 +76,26 @@ public class FacadeReelleTests
         {
         }
 
-        return null;
+        return Extrait();
+    }
+
+    /// <summary>Extrait livré avec les tests (19 blocs de Blocs-EM-3D.dxf, même en-tête), décompressé dans %TEMP%.</summary>
+    private static string? Extrait()
+    {
+        var gz = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Donnees", "blocs-facade-test.dxf.gz");
+        if (!File.Exists(gz))
+        {
+            return null;
+        }
+
+        var dxf = Path.Combine(Path.GetTempPath(), "multidec-blocs-facade-test.dxf");
+        using (var entree = new System.IO.Compression.GZipStream(File.OpenRead(gz), System.IO.Compression.CompressionMode.Decompress))
+        using (var sortie = File.Create(dxf))
+        {
+            entree.CopyTo(sortie);
+        }
+
+        return dxf;
     }
 
     [Fact]
@@ -101,14 +120,22 @@ public class FacadeReelleTests
         _sortie.WriteLine("Bibliothèque : " + chemin);
         var doc = new vdDocumentComponent().Document;
         var rendu = new RenduVectorDraw(doc);
+        var avant = new vdDocumentComponent().Document;
+        avant.Open(chemin);
+        _sortie.WriteLine("--- Document juste ouvert (avant préparation) ---");
+        DecrireRepere(avant);
+
         rendu.ChargerBibliotheque(chemin);
+        _sortie.WriteLine("--- Après ChargerBibliotheque ---");
+        DecrireRepere(doc);
         foreach (var ligne in rendu.Diagnostic)
         {
             _sortie.WriteLine(ligne);
         }
 
-        DecrireBloc(doc, "HMPLA3003CL5");
+        DecrireBloc(doc, "HMPLA250298CL6");
         DecrireBloc(doc, "HMPOT20");
+        DecrireBloc(doc, "HMGCSE250");
 
         var p = new ParametresFacade { LongueurTotaleSouhaitee = 10, LongueurMaillePreferee = 2.5, NombreAcces = 1, HauteurDernierPlancher = 6 };
         var projet = ProposeurStructure.NouveauProjet(p);
@@ -156,6 +183,64 @@ public class FacadeReelleTests
         Assert.Equal(0, hors);
         Assert.True(vz.y - o.y > 0.5 && Math.Abs(vz.x - o.x) < 0.2, "Z monde n'est pas vertical à l'écran");
         Assert.True(vx.x - o.x > 0.5, "X monde ne va pas vers la droite à l'écran");
+    }
+
+    /// <summary>Propriétés de repère / vue du document et de l'espace objet, et projection des axes monde en vue iso.</summary>
+    private void DecrireRepere(vdDocument d)
+    {
+        foreach (var cible in new object[] { d, d.Model })
+        {
+            foreach (var prop in cible.GetType().GetProperties())
+            {
+                var n = prop.Name;
+                bool interessant = n.IndexOf("UCS", StringComparison.OrdinalIgnoreCase) >= 0 || n.IndexOf("User", StringComparison.OrdinalIgnoreCase) >= 0
+                    || n.IndexOf("ViewDir", StringComparison.OrdinalIgnoreCase) >= 0 || n.IndexOf("World2", StringComparison.OrdinalIgnoreCase) >= 0
+                    || n.IndexOf("RenderMode", StringComparison.OrdinalIgnoreCase) >= 0 || n.IndexOf("ViewCenter", StringComparison.OrdinalIgnoreCase) >= 0;
+                if (!interessant || prop.GetIndexParameters().Length > 0)
+                {
+                    continue;
+                }
+
+                string valeur;
+                try
+                {
+                    var v = prop.GetValue(cible);
+                    valeur = v is Matrix m ? Axes(m) : (v?.ToString() ?? "null");
+                }
+                catch (Exception ex)
+                {
+                    valeur = "!" + ex.GetBaseException().Message;
+                }
+
+                _sortie.WriteLine($"   {cible.GetType().Name}.{n} [{(prop.CanWrite ? "rw" : "r")}] = {valeur}");
+            }
+        }
+
+        try
+        {
+            d.CommandAction.View3D("VISE");
+            _sortie.WriteLine("   VISE : World2ViewMatrix " + Axes(d.World2ViewMatrix));
+        }
+        catch (Exception ex)
+        {
+            _sortie.WriteLine("   VISE : " + ex.GetBaseException().Message);
+        }
+
+        var ucs = d.CommandAction.GetType().GetMethods().Where(x => x.Name.IndexOf("UCS", StringComparison.OrdinalIgnoreCase) >= 0)
+            .Select(x => x.Name + "(" + string.Join(", ", x.GetParameters().Select(pp => pp.ParameterType.Name)) + ")").Distinct();
+        _sortie.WriteLine("   CommandAction UCS : " + string.Join(" | ", ucs));
+    }
+
+    private static string Axes(Matrix m)
+    {
+        var o = m.Transform(new gPoint(0, 0, 0));
+        string A(double x, double y, double z)
+        {
+            var p = m.Transform(new gPoint(x, y, z));
+            return string.Format(CultureInfo.InvariantCulture, "({0:0.##};{1:0.##};{2:0.##})", p.x - o.x, p.y - o.y, p.z - o.z);
+        }
+
+        return $"X→{A(1, 0, 0)} Y→{A(0, 1, 0)} Z→{A(0, 0, 1)}";
     }
 
     private void DecrireBloc(vdDocument doc, string nom)
