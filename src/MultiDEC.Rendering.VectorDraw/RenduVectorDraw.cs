@@ -103,54 +103,21 @@ public sealed class RenduVectorDraw
     }
 
     /// <summary>
-    /// Remet le SCU sur le repère général : toutes les matrices « User2World » (document, espace objet,
-    /// présentation active) reçoivent l'identité. Les noms exacts varient selon les versions de VectorDraw,
-    /// d'où la recherche par réflexion ; ce qui a été trouvé est noté dans <see cref="Diagnostic"/>.
+    /// Remet le SCU sur le repère général. Mesuré sur le serveur : après ouverture de Blocs-EM-3D.dxf,
+    /// World2UserMatrix du document et de l'espace objet vaut (X→Z, Y→X, Z→Y), et les vues prédéfinies
+    /// (VISE…) sont calculées dans ce SCU : la longueur de la façade montait à l'écran.
     /// </summary>
     public void RepereGeneral()
     {
-        var cibles = new List<object> { _doc, _doc.Model };
-        if (_doc.ActiveLayOut != null && !ReferenceEquals(_doc.ActiveLayOut, _doc.Model))
+        Diagnostic.Add("SCU à l'ouverture : World2User " + DecrireMatrice(_doc.World2UserMatrix));
+        _doc.World2UserMatrix = new Matrix();
+        foreach (vdLayout presentation in _doc.LayOuts)
         {
-            cibles.Add(_doc.ActiveLayOut);
+            presentation.World2UserMatrix = new Matrix();
         }
 
-        foreach (var cible in cibles)
-        {
-            foreach (var prop in cible.GetType().GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
-            {
-                if (prop.PropertyType != typeof(Matrix) || prop.GetIndexParameters().Length > 0)
-                {
-                    continue;
-                }
-
-                bool scu = prop.Name.IndexOf("User2World", StringComparison.OrdinalIgnoreCase) >= 0
-                    || prop.Name.IndexOf("UCS", StringComparison.OrdinalIgnoreCase) >= 0;
-                if (!scu)
-                {
-                    continue;
-                }
-
-                try
-                {
-                    var avant = prop.GetValue(cible) as Matrix;
-                    string etat = avant == null ? "null" : DecrireMatrice(avant);
-                    if (prop.CanWrite)
-                    {
-                        prop.SetValue(cible, new Matrix());
-                        Diagnostic.Add($"SCU {cible.GetType().Name}.{prop.Name} : {etat} → identité");
-                    }
-                    else
-                    {
-                        Diagnostic.Add($"SCU {cible.GetType().Name}.{prop.Name} (lecture seule) : {etat}");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Diagnostic.Add($"SCU {cible.GetType().Name}.{prop.Name} : {ex.GetBaseException().Message}");
-                }
-            }
-        }
+        _doc.Model.World2UserMatrix = new Matrix();
+        Diagnostic.Add("SCU après remise à zéro : World2User " + DecrireMatrice(_doc.World2UserMatrix) + ", espace objet " + DecrireMatrice(_doc.Model.World2UserMatrix));
     }
 
     private static string DecrireMatrice(Matrix m)

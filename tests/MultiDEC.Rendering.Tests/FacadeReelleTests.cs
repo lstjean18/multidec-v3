@@ -226,6 +226,24 @@ public class FacadeReelleTests
             _sortie.WriteLine("   VISE : " + ex.GetBaseException().Message);
         }
 
+        _sortie.WriteLine("   Doc Open* / Acis / Solid : " + string.Join(" | ", d.GetType().GetMembers().Select(x => x.Name).Where(n => n.IndexOf("Open", StringComparison.OrdinalIgnoreCase) >= 0 || n.IndexOf("Acis", StringComparison.OrdinalIgnoreCase) >= 0 || n.IndexOf("Solid", StringComparison.OrdinalIgnoreCase) >= 0 || n.IndexOf("Unknown", StringComparison.OrdinalIgnoreCase) >= 0).Distinct()));
+        foreach (var asm in AppDomain.CurrentDomain.GetAssemblies().Where(x => x.GetName().Name.StartsWith("vd", StringComparison.OrdinalIgnoreCase) || x.GetName().Name.StartsWith("VectorDraw", StringComparison.OrdinalIgnoreCase)))
+        {
+            System.Type[] types;
+            try
+            {
+                types = asm.GetExportedTypes();
+            }
+            catch (Exception)
+            {
+                continue;
+            }
+
+            var hits = types.Where(t => t.Name.IndexOf("Acis", StringComparison.OrdinalIgnoreCase) >= 0 || t.Name.IndexOf("Solid", StringComparison.OrdinalIgnoreCase) >= 0 || t.Name.IndexOf("Dxf", StringComparison.OrdinalIgnoreCase) >= 0 || t.Name.IndexOf("Cnv", StringComparison.OrdinalIgnoreCase) >= 0)
+                .Select(t => t.FullName).Take(25);
+            _sortie.WriteLine($"   {asm.GetName().Name} : {string.Join(" | ", hits)}");
+        }
+
         var ucs = d.CommandAction.GetType().GetMethods().Where(x => x.Name.IndexOf("UCS", StringComparison.OrdinalIgnoreCase) >= 0)
             .Select(x => x.Name + "(" + string.Join(", ", x.GetParameters().Select(pp => pp.ParameterType.Name)) + ")").Distinct();
         _sortie.WriteLine("   CommandAction UCS : " + string.Join(" | ", ucs));
