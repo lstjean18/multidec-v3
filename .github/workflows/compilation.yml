@@ -27,6 +27,9 @@ jobs:
   solution:
     name: Solution complète (serveur de dev)
     runs-on: [self-hosted, Windows]
+    defaults:
+      run:
+        working-directory: ci
     env:
       # Le service du runner tourne sous un compte système : son profil NuGet par défaut
       # (C:\Windows\system32\config\systemprofile) est redirigé pour les processus 32 bits et
@@ -35,11 +38,11 @@ jobs:
       # Bibliothèque de blocs pour le test de la façade réelle (dossier ou fichier).
       MULTIDEC_BIBLIOTHEQUE: 'X:\Commun\0 -- Blocs RETOTUB - CLIENT\ÉCHAFAUDAGE\AUTOCAD'
     steps:
-      # Pas de « git clean » : si MultiDEC a été lancé depuis ce dossier, ses fichiers verrouillés
-      # bloquaient le checkout pendant plus de 10 minutes. La compilation écrase les sorties.
+      # Sources dans le sous-dossier « ci » : si MultiDEC a été lancé depuis l'ancien emplacement
+      # (_work\multidec-v3\multidec-v3\src\...), ses fichiers verrouillés ne bloquent plus le checkout.
       - uses: actions/checkout@v4
         with:
-          clean: false
+          path: ci
 
       - name: Vérifier VectorDraw
         shell: powershell
@@ -98,5 +101,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: MultiDEC-v3-${{ github.sha }}
-          path: src/MultiDEC.App/bin/Release/net48/
+          path: ci/src/MultiDEC.App/bin/Release/net48/
           retention-days: 14
