@@ -32,6 +32,8 @@ jobs:
       # (C:\Windows\system32\config\systemprofile) est redirigé pour les processus 32 bits et
       # les paquets restaurés y deviennent introuvables. On fixe un cache dans le dossier du runner.
       NUGET_PACKAGES: ${{ github.workspace }}\..\_nuget
+      # Bibliothèque de blocs pour le test de la façade réelle (dossier ou fichier).
+      MULTIDEC_BIBLIOTHEQUE: 'X:\Commun\0 -- Blocs RETOTUB - CLIENT\ÉCHAFAUDAGE\AUTOCAD'
     steps:
       - uses: actions/checkout@v4
 

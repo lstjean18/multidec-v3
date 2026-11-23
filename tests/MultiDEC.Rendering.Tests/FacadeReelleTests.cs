@@ -23,10 +23,22 @@ public class FacadeReelleTests
     /// <summary>MULTIDEC_BIBLIOTHEQUE, sinon le choix fait dans l'application par un utilisateur du poste.</summary>
     private static string? Bibliotheque()
     {
+        // Fichier ou dossier (on y cherche Blocs-EM-3D.dxf).
         var env = Environment.GetEnvironmentVariable("MULTIDEC_BIBLIOTHEQUE");
-        if (!string.IsNullOrEmpty(env) && File.Exists(env))
+        if (!string.IsNullOrEmpty(env))
         {
-            return env;
+            if (File.Exists(env))
+            {
+                return env;
+            }
+
+            var dansDossier = Path.Combine(env, "Blocs-EM-3D.dxf");
+            if (File.Exists(dansDossier))
+            {
+                return dansDossier;
+            }
+
+            Console.WriteLine($"MULTIDEC_BIBLIOTHEQUE = {env} : dossier visible = {Directory.Exists(env)}, fichier introuvable.");
         }
 
         try
@@ -57,7 +69,16 @@ public class FacadeReelleTests
         var chemin = Bibliotheque();
         if (chemin == null)
         {
-            _sortie.WriteLine("Bibliothèque Blocs-EM-3D.dxf introuvable sur ce poste : test non exécuté.");
+            var env = Environment.GetEnvironmentVariable("MULTIDEC_BIBLIOTHEQUE");
+            _sortie.WriteLine($"Bibliothèque Blocs-EM-3D.dxf introuvable sur ce poste : test non exécuté. MULTIDEC_BIBLIOTHEQUE = '{env}', dossier visible = {(!string.IsNullOrEmpty(env) && Directory.Exists(env))}, compte = {Environment.UserName}.");
+            if (!string.IsNullOrEmpty(env) && Directory.Exists(env))
+            {
+                foreach (var f in Directory.GetFiles(env, "*.dxf").Take(20))
+                {
+                    _sortie.WriteLine("   " + Path.GetFileName(f));
+                }
+            }
+
             return;
         }
 
