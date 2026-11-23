@@ -35,10 +35,13 @@ public class FacadeReelleTests
                 return env;
             }
 
-            var dansDossier = Path.Combine(env, "Blocs-EM-3D.dxf");
-            if (File.Exists(dansDossier))
+            foreach (var ext in new[] { ".dwg", ".dxf" })
             {
-                return dansDossier;
+                var dansDossier = Path.Combine(env, "Blocs-EM-3D" + ext);
+                if (File.Exists(dansDossier))
+                {
+                    return dansDossier;
+                }
             }
 
             Console.WriteLine($"MULTIDEC_BIBLIOTHEQUE = {env} : dossier visible = {Directory.Exists(env)}, fichier introuvable.");
@@ -48,13 +51,16 @@ public class FacadeReelleTests
         var ws = Environment.GetEnvironmentVariable("GITHUB_WORKSPACE");
         if (!string.IsNullOrEmpty(ws))
         {
-            var locale = Path.GetFullPath(Path.Combine(ws, "..", "..", "..", "bibliotheque", "Blocs-EM-3D.dxf"));
-            if (File.Exists(locale))
+            // Le DWG d'abord : VectorDraw ne lit les solides 3D (ACIS) que par le convertisseur DWG.
+            var dossier = Path.GetFullPath(Path.Combine(ws, "..", "..", "..", "bibliotheque"));
+            foreach (var ext in new[] { ".dwg", ".dxf" })
             {
-                return locale;
+                var locale = Path.Combine(dossier, "Blocs-EM-3D" + ext);
+                if (File.Exists(locale))
+                {
+                    return locale;
+                }
             }
-
-            Console.WriteLine("Copie locale absente : " + locale);
         }
 
         try
