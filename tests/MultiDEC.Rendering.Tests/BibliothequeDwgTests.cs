@@ -26,10 +26,12 @@ public class BibliothequeDwgTests
 
     public BibliothequeDwgTests(ITestOutputHelper sortie) => _sortie = sortie;
 
-    [Fact]
-    public void Facade_avec_le_dwg()
+    [Theory]
+    [InlineData("ECHAFAUDAGE-FILAIRE-3D-MultiDEC.dwg")]
+    [InlineData("Bloc3D.dwg")]
+    public void Facade_avec_le_dwg(string fichier)
     {
-        var dwg = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Donnees", "Bloc3D.dwg");
+        var dwg = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Donnees", fichier);
         var doc = new vdDocumentComponent().Document;
         var rendu = new RenduVectorDraw(doc);
         rendu.ChargerBibliotheque(dwg);
@@ -51,7 +53,7 @@ public class BibliothequeDwgTests
         }
 
         _sortie.WriteLine($"{blocs} blocs ; entités : {string.Join(", ", types.OrderByDescending(x => x.Value).Take(20).Select(x => x.Value + "×" + x.Key))}");
-        _sortie.WriteLine("Blocs : " + string.Join(" ", doc.Blocks.Cast<vdBlock>().Select(b => b.Name).Where(n => !n.StartsWith("*")).Take(80)));
+        _sortie.WriteLine("Blocs : " + string.Join(" ", doc.Blocks.Cast<vdBlock>().Select(b => b.Name).Where(n => !n.StartsWith("*")).Take(600)));
 
         foreach (var nom in new[] { "HMPLA250298CL6", "HMPOT20", "HMGCSE250", "HMSOCREG" })
         {
@@ -75,7 +77,7 @@ public class BibliothequeDwgTests
         {
             rendu.Rendu(mode);
             rendu.Vue(Vues.Iso);
-            Image(doc, mode.ToString());
+            Image(doc, Path.GetFileNameWithoutExtension(fichier) + "-" + mode);
         }
     }
 
@@ -83,7 +85,7 @@ public class BibliothequeDwgTests
     {
         try
         {
-            using var bmp = new Bitmap(900, 520);
+            using var bmp = new Bitmap(1400, 800);
             doc.Model.RenderToBitmap(bmp);
             using var petit = new MemoryStream();
             bmp.Save(petit, ImageFormat.Png);
