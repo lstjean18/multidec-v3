@@ -61,6 +61,12 @@ jobs:
           dotnet test tests/MultiDEC.Core.Tests --configuration Release --no-build
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
+      - name: Tests du rendu VectorDraw (serveur)
+        shell: powershell
+        run: |
+          dotnet test tests/MultiDEC.Rendering.Tests --configuration Release --no-build --logger "console;verbosity=detailed"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
       - name: Publier l'application compilée
         uses: actions/upload-artifact@v4
         with:
