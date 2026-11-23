@@ -165,16 +165,36 @@
       <!-- Dessin + décompte -->
       <Grid Grid.Column="2" Margin="0,6,6,6">
         <Grid.RowDefinitions>
+          <RowDefinition Height="Auto" />
           <RowDefinition Height="3*" />
           <RowDefinition Height="5" />
           <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <wfi:WindowsFormsHost x:Name="HoteVectorDraw" Grid.Row="0" />
+        <ToolBar Grid.Row="0">
+          <TextBlock Text="Vue :" VerticalAlignment="Center" Margin="2,0,4,0" />
+          <Button Content="Iso" Tag="Iso" Click="Vue_Click" />
+          <Button Content="Façade" Tag="Facade" Click="Vue_Click" />
+          <Button Content="Dessus" Tag="Dessus" Click="Vue_Click" />
+          <Button Content="Côté gauche" Tag="CoteGauche" Click="Vue_Click" />
+          <Button Content="Côté droit" Tag="CoteDroit" Click="Vue_Click" />
+          <Separator />
+          <TextBlock Text="Rendu :" VerticalAlignment="Center" Margin="2,0,4,0" />
+          <ComboBox x:Name="ChoixRendu" Width="150" SelectedIndex="3" SelectionChanged="Rendu_SelectionChanged">
+            <ComboBoxItem Content="Filaire" Tag="Filaire" />
+            <ComboBoxItem Content="Lignes cachées" Tag="LignesCachees" />
+            <ComboBoxItem Content="Ombré" Tag="Ombre" />
+            <ComboBoxItem Content="Ombré + arêtes" Tag="OmbreAretes" />
+            <ComboBoxItem Content="Réaliste (OpenGL)" Tag="Realiste" />
+          </ComboBox>
+          <CheckBox Content="Axes filaires" Margin="8,0,0,0" VerticalAlignment="Center" Click="Axes_Click" x:Name="CaseAxes" />
+        </ToolBar>
 
-        <GridSplitter Grid.Row="1" HorizontalAlignment="Stretch" />
+        <wfi:WindowsFormsHost x:Name="HoteVectorDraw" Grid.Row="1" />
 
-        <TabControl Grid.Row="2">
+        <GridSplitter Grid.Row="2" HorizontalAlignment="Stretch" />
+
+        <TabControl Grid.Row="3">
           <TabItem Header="Décompte">
             <DataGrid ItemsSource="{Binding Decompte}" AutoGenerateColumns="False" IsReadOnly="True">
               <DataGrid.Columns>

@@ -113,6 +113,92 @@ public sealed class TableOrientations
     }
 }
 
+/// <summary>
+/// Paramètres d'un vdInsert équivalents à une matrice : point d'insertion (monde), vecteur d'extrusion,
+/// rotation dans le plan du repère objet (radians) et facteur d'échelle Z (-1 pour une symétrie).
+/// C'est la manière d'insérer de l'ancienne version (InsertionPoint + ExtrusionVector + Rotation),
+/// avec le repère objet calculé par l'algorithme d'axe arbitraire DXF.
+/// </summary>
+public sealed class PoseInsert
+{
+    public PoseInsert(Point3 insertion, Point3 extrusion, double rotation, double echelleZ)
+    {
+        Insertion = insertion;
+        Extrusion = extrusion;
+        Rotation = rotation;
+        EchelleZ = echelleZ;
+    }
+
+    public Point3 Insertion { get; }
+
+    public Point3 Extrusion { get; }
+
+    public double Rotation { get; }
+
+    public double EchelleZ { get; }
+
+    /// <summary>Décompose la matrice (rotation, éventuellement avec une symétrie, + translation).</summary>
+    public static PoseInsert Depuis(double[,] m)
+    {
+        var u = new[] { m[0, 0], m[1, 0], m[2, 0] };
+        var v = new[] { m[0, 1], m[1, 1], m[2, 1] };
+        var w = new[] { m[0, 2], m[1, 2], m[2, 2] };
+
+        // Symétrie : on la porte sur l'axe Z local (Zscale = -1), le reste devient une rotation directe.
+        double det = Scalaire(Vectoriel(u, v), w);
+        double echelleZ = det < 0 ? -1 : 1;
+        var n = det < 0 ? new[] { -w[0], -w[1], -w[2] } : w;
+
+        var ax = AxeArbitraire(n);
+        var ay = Vectoriel(n, ax);
+        double rotation = Math.Atan2(Scalaire(u, ay), Scalaire(u, ax));
+        return new PoseInsert(
+            new Point3(m[0, 3], m[1, 3], m[2, 3]),
+            new Point3(n[0], n[1], n[2]),
+            Math.Abs(rotation) < 1e-12 ? 0 : rotation,
+            echelleZ);
+    }
+
+    /// <summary>Recalcule la matrice (pour les tests) : M = T · [Ax Ay N] · Rz(rotation) · Sz(echelleZ).</summary>
+    public double[,] VersMatrice()
+    {
+        var n = new[] { Extrusion.X, Extrusion.Y, Extrusion.Z };
+        var ax = AxeArbitraire(n);
+        var ay = Vectoriel(n, ax);
+        var ocs = Matrices.Identite();
+        for (int i = 0; i < 3; i++)
+        {
+            ocs[i, 0] = ax[i];
+            ocs[i, 1] = ay[i];
+            ocs[i, 2] = n[i];
+        }
+
+        var m = Matrices.Produit(Matrices.RotationZ(Rotation * 180 / Math.PI), Matrices.Echelle(1, 1, EchelleZ));
+        m = Matrices.Produit(ocs, m);
+        return Matrices.Produit(Matrices.Translation(Insertion.X, Insertion.Y, Insertion.Z), m);
+    }
+
+    /// <summary>Algorithme d'axe arbitraire (DXF / VectorDraw) : axe X du repère objet pour une normale donnée.</summary>
+    public static double[] AxeArbitraire(double[] n)
+    {
+        const double seuil = 1.0 / 64.0;
+        var a = Math.Abs(n[0]) < seuil && Math.Abs(n[1]) < seuil
+            ? Vectoriel(new[] { 0.0, 1, 0 }, n)
+            : Vectoriel(new[] { 0.0, 0, 1 }, n);
+        double l = Math.Sqrt(Scalaire(a, a));
+        return new[] { a[0] / l, a[1] / l, a[2] / l };
+    }
+
+    private static double[] Vectoriel(double[] a, double[] b) => new[]
+    {
+        a[1] * b[2] - a[2] * b[1],
+        a[2] * b[0] - a[0] * b[2],
+        a[0] * b[1] - a[1] * b[0],
+    };
+
+    private static double Scalaire(double[] a, double[] b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+}
+
 /// <summary>Petites opérations sur matrices 4x4 (indépendantes de VectorDraw, donc testables).</summary>
 public static class Matrices
 {

@@ -76,6 +76,24 @@ public partial class MainWindow : Window
         }
     }
 
+    private void Vue_Click(object sender, RoutedEventArgs e)
+    {
+        if (_rendu != null && sender is FrameworkElement b && Enum.TryParse((string)b.Tag, out Vues vue))
+        {
+            _rendu.Vue(vue);
+        }
+    }
+
+    private void Rendu_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+        if (_rendu != null && ChoixRendu.SelectedItem is FrameworkElement item && Enum.TryParse((string)item.Tag, out ModeRendu mode))
+        {
+            _rendu.Rendu(mode);
+        }
+    }
+
+    private void Axes_Click(object sender, RoutedEventArgs e) => _rendu?.AxesFilaires(CaseAxes.IsChecked == true);
+
     private void Gamme_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e) => Vm.GammeChangee();
 
     private void Nouveau_Click(object sender, RoutedEventArgs e) => Vm.Nouveau();

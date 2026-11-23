@@ -79,3 +79,42 @@ public class OrientationsTests
         Assert.Null(t.Reglage("HMPOT20"));
     }
 }
+
+public class PoseInsertTests
+{
+    private static readonly TableOrientations Table = TableOrientations.ParDefaut();
+
+    public static IEnumerable<object[]> Elements() => new[]
+    {
+        new object[] { new ElementPlace("HMPOT20", Famille.Poteau, new Point3(2.5, -0.7, 0.046), Axe.Z) },
+        new object[] { new ElementPlace("HMLIS250", Famille.Lisse, new Point3(5, 0, 4), Axe.X) },
+        new object[] { new ElementPlace("HMTRA070", Famille.Traverse, new Point3(5, 0, 4), Axe.Y) },
+        new object[] { new ElementPlace("HMCON700E", Famille.Console, new Point3(5, 0, 4), Axe.Y, Face.Interieure) },
+        new object[] { new ElementPlace("HMDIA2502", Famille.DiagonaleVerticale, new Point3(2.5, -0.75, 0), Axe.X, Face.Exterieure, 1, inverse: true) },
+        new object[] { new ElementPlace("HMGCSE250", Famille.GardeCorps, new Point3(0, 0, 2), Axe.X, Face.Interieure) },
+        new object[] { new ElementPlace("HMDIA2502", Famille.DiagonaleVerticale, new Point3(2.5, 0.05, 0), Axe.X, Face.Interieure, 1, inverse: true) },
+    };
+
+    [Theory]
+    [MemberData(nameof(Elements))]
+    public void Pose_reproduit_la_matrice(ElementPlace e)
+    {
+        var m = Table.Matrice(e);
+        var r = PoseInsert.Depuis(m).VersMatrice();
+        foreach (var p in new[] { (0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0), (0.3, 2.0, -0.4) })
+        {
+            Assert.Equal(Matrices.Appliquer(m, p.Item1, p.Item2, p.Item3), Matrices.Appliquer(r, p.Item1, p.Item2, p.Item3));
+        }
+    }
+
+    [Fact]
+    public void Poteau_comme_l_ancienne_version_extrusion_horizontale()
+    {
+        // Relevage Rx(+90°) = extrusion (0 ; -1 ; 0) sans rotation : Y du bloc → Z monde.
+        var pose = PoseInsert.Depuis(Table.Matrice(new ElementPlace("HMPOT20", Famille.Poteau, new Point3(1, 2, 3), Axe.Z)));
+        Assert.Equal(new Point3(0, -1, 0), pose.Extrusion);
+        Assert.Equal(0, pose.Rotation, 9);
+        Assert.Equal(1, pose.EchelleZ);
+        Assert.Equal(new Point3(1, 2, 3), pose.Insertion);
+    }
+}
