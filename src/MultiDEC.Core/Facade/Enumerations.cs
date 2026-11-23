@@ -18,8 +18,7 @@ public enum TypeSecurite
 {
     Sans,
 
-    /// <summary>Garde-corps MDS 1 : HMGCSE + longueur.</summary>
-    GardeCorpsMds1,
+    // « Garde-corps MDS 1 » retiré des choix (Laurent, 23/11/2026) ; les anciens fichiers passent en MDS 2.
 
     /// <summary>Garde-corps MDS 2 : HMGCSE + longueur + GT.</summary>
     GardeCorpsMds2,

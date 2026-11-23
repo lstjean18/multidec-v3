@@ -46,12 +46,12 @@ public class ProposeurStructureTests
     }
 
     [Fact]
-    public void Console_par_defaut_sur_mailles_de_travail_seulement()
+    public void Grille_proposee_avec_cases_diagonales_pre_cochees_et_sans_console()
     {
-        var p = new ParametresFacade { LongueurTotaleSouhaitee = 10, LongueurMaillePreferee = 2.5, NombreAcces = 1, ConsoleParDefaut = "HMCON700E" };
+        var p = new ParametresFacade { LongueurTotaleSouhaitee = 30, LongueurMaillePreferee = 2.5, NombreAcces = 1 };
         var mailles = ProposeurStructure.ProposerMailles(p);
-        Assert.All(mailles.Where(m => m.Type == TypeMaille.Travail), m => Assert.Equal("HMCON700E", m.Console));
-        Assert.All(mailles.Where(m => m.Type == TypeMaille.Acces), m => Assert.False(m.AConsole));
+        Assert.Equal(new[] { 1, 6, 11 }, mailles.Select((m, i) => (m, i)).Where(x => x.m.Diagonale).Select(x => x.i + 1));
+        Assert.All(mailles, m => Assert.Empty(m.Consoles));
     }
 
     [Fact]

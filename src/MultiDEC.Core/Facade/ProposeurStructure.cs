@@ -67,7 +67,7 @@ public static class ProposeurStructure
             int nb = nbCourantes / nbBlocs + (bloc < nbCourantes % nbBlocs ? 1 : 0);
             for (int i = 0; i < nb; i++)
             {
-                mailles.Add(new MailleDefinition(lp, TypeMaille.Travail, p.ConsoleParDefaut));
+                mailles.Add(new MailleDefinition(lp, TypeMaille.Travail));
             }
 
             if (bloc < nbAcces)
@@ -78,9 +78,10 @@ public static class ProposeurStructure
 
         foreach (double l in complement)
         {
-            mailles.Add(new MailleDefinition(l, TypeMaille.Travail, p.ConsoleParDefaut));
+            mailles.Add(new MailleDefinition(l, TypeMaille.Travail));
         }
 
+        Regles.RegleDiagonales.Proposer(p, mailles);
         return mailles;
     }
 

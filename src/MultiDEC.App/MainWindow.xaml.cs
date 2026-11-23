@@ -1,9 +1,14 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Collections.Generic;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
+using System.Windows.Data;
 using Microsoft.Win32;
 using MultiDEC.App.ViewModels;
+using MultiDEC.Core.Facade;
 using MultiDEC.Core.Persistance;
 using MultiDEC.Rendering.VectorDraw;
 
@@ -20,11 +25,16 @@ public partial class MainWindow : Window
     private readonly TableOrientations _orientations;
     private RenduVectorDraw? _rendu;
 
+    /// <summary>Colonnes « ConXm » ajoutées à la grille des mailles (une par niveau avec console).</summary>
+    private readonly List<DataGridColumn> _colonnesConsoles = new List<DataGridColumn>();
+
     public MainWindow()
     {
         InitializeComponent();
         HoteVectorDraw.Child = _vd;
         MenuContextuel();
+        Vm.ColonnesConsolesChangees += (_, _) => ColonnesConsoles();
+        ColonnesConsoles();
         _orientations = TableOrientations.Charger(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "orientations-blocs.json"));
         Loaded += (_, _) => ChargerBibliotheque(Reglages.CheminBibliotheque);
     }
@@ -123,6 +133,40 @@ public partial class MainWindow : Window
 
         var retires = _rendu.SupprimerSelection();
         Vm.RetirerElements(retires);
+    }
+
+    /// <summary>
+    /// Une colonne de cases par niveau avec console, titrée « Con » + hauteur (ex. « Con4m ») :
+    /// cochée = la maille porte la console de ce niveau (Laurent, 23/11/2026).
+    /// </summary>
+    private void ColonnesConsoles()
+    {
+        foreach (var c in _colonnesConsoles)
+        {
+            GrilleMailles.Columns.Remove(c);
+        }
+
+        _colonnesConsoles.Clear();
+        foreach (var n in Vm.NiveauxAvecConsole)
+        {
+            var caseACocher = new FrameworkElementFactory(typeof(CheckBox));
+            caseACocher.SetBinding(ToggleButton.IsCheckedProperty, new Binding("[" + MailleDefinition.Cle(n.Hauteur) + "]")
+            {
+                Mode = BindingMode.TwoWay,
+                UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged,
+            });
+            caseACocher.SetValue(HorizontalAlignmentProperty, HorizontalAlignment.Center);
+            caseACocher.SetValue(ToolTipProperty, $"Console {n.Console} au niveau {n.Hauteur:0.00} m");
+
+            var colonne = new DataGridTemplateColumn
+            {
+                Header = n.NomColonneConsole,
+                CellTemplate = new DataTemplate { VisualTree = caseACocher },
+                Width = DataGridLength.Auto,
+            };
+            GrilleMailles.Columns.Add(colonne);
+            _colonnesConsoles.Add(colonne);
+        }
     }
 
     private void ZoomTout_Click(object sender, RoutedEventArgs e) => _rendu?.ZoomTout();

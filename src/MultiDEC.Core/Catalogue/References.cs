@@ -41,7 +41,6 @@ public static class References
     /// <summary>Garde-corps pour une longueur donnée, ou null si la sécurité n'est pas un cadre (Sans, Lisses).</summary>
     public static string? GardeCorps(TypeSecurite type, double longueur) => type switch
     {
-        TypeSecurite.GardeCorpsMds1 => "HMGCSE" + Cotes.EnCm3(longueur),
         TypeSecurite.GardeCorpsMds2 => "HMGCSE" + Cotes.EnCm3(longueur) + "GT",
         TypeSecurite.GardeCorpsAbout => "HMGCA" + Cotes.EnCm3(longueur),
         _ => null,

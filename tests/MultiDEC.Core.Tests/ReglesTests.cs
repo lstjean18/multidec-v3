@@ -10,16 +10,18 @@ public class ReglesTests
     {
         var p = new ParametresFacade { HauteurDernierPlancher = 10 };
         config?.Invoke(p);
-        return new ProjetFacade
+        var projet = new ProjetFacade
         {
             Parametres = p,
             Mailles = Enumerable.Range(0, nbMailles).Select(_ => new MailleDefinition(longueur)).ToList(),
             Niveaux = ProposeurStructure.ProposerNiveaux(p),
         };
+        RegleDiagonales.Proposer(p, projet.Mailles);
+        return projet;
     }
 
     [Theory]
-    [InlineData(TypeSecurite.GardeCorpsMds1, false, 5)]
+    [InlineData(TypeSecurite.GardeCorpsMds2, false, 5)]
     [InlineData(TypeSecurite.Lisses, false, 3)]
     [InlineData(TypeSecurite.GardeCorpsMds2, true, 3)]
     [InlineData(TypeSecurite.Lisses, true, 2)]
@@ -41,7 +43,7 @@ public class ReglesTests
     [Fact]
     public void Diagonales_interieures_si_protection_interieure()
     {
-        var d = RegleDiagonales.Calculer(Projet(6, config: p => p.SecuriteInterieure = TypeSecurite.GardeCorpsMds1));
+        var d = RegleDiagonales.Calculer(Projet(6, config: p => p.SecuriteInterieure = TypeSecurite.GardeCorpsMds2));
         Assert.All(d, x => Assert.True(x.Interieure));
     }
 

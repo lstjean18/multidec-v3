@@ -45,16 +45,13 @@ public sealed class ParametresFacade
     /// <summary>Qualité plateau (1 ou 2), utilisée par la gamme Standard pour 2,50 et 3,00 m.</summary>
     public int QualitePlateaux { get; set; } = 1;
 
-    /// <summary>Console appliquée par défaut aux nouvelles mailles de travail (null = aucune).</summary>
-    public string? ConsoleParDefaut { get; set; }
-
     // ---- Sécurité --------------------------------------------------------------------------
 
-    public TypeSecurite SecuriteExterieure { get; set; } = TypeSecurite.GardeCorpsMds1;
+    public TypeSecurite SecuriteExterieure { get; set; } = TypeSecurite.GardeCorpsMds2;
 
     public TypeSecurite SecuriteInterieure { get; set; } = TypeSecurite.Sans;
 
-    public TypeSecurite SecuriteAbouts { get; set; } = TypeSecurite.GardeCorpsMds1;
+    public TypeSecurite SecuriteAbouts { get; set; } = TypeSecurite.GardeCorpsMds2;
 
     public TypePlinthe PlintheExterieure { get; set; } = TypePlinthe.Axees;
 

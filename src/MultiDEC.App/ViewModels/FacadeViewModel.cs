@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -8,6 +9,7 @@ using MultiDEC.Core.Catalogue;
 using MultiDEC.Core.Decompte;
 using MultiDEC.Core.Facade;
 using MultiDEC.Core.Facade.Regles;
+using MultiDEC.Core.Geometrie;
 using MultiDEC.Core.Persistance;
 
 namespace MultiDEC.App.ViewModels;
@@ -22,13 +24,21 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
     private StructureFacade? _structure;
     private string? _cheminFichier;
 
+    /// <summary>Hauteur connue de chaque niveau, pour que les cases « ConXm » suivent un changement de hauteur.</summary>
+    private readonly Dictionary<Niveau, double> _hauteurs = new Dictionary<Niveau, double>();
+
     public FacadeViewModel()
     {
         Proposer = new Commande(ProposerStructure);
+        ProposerLesDiagonales = new Commande(ProposerDiagonales);
+        Niveaux.CollectionChanged += Niveaux_CollectionChanged;
         ChargerProjet(ProposeurStructure.NouveauProjet(new ParametresFacade()));
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
+
+    /// <summary>Les colonnes « ConXm » de la grille des mailles sont à reconstruire (console ajoutée, retirée, hauteur changée).</summary>
+    public event EventHandler? ColonnesConsolesChangees;
 
     // ---- Listes de choix --------------------------------------------------------------------
 
@@ -112,19 +122,28 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
 
     public double LongueurObtenue => Mailles.Sum(m => m.Longueur);
 
+    /// <summary>Niveaux qui ont une console : une colonne de cases « ConXm » chacun dans la grille des mailles.</summary>
+    public IReadOnlyList<Niveau> NiveauxAvecConsole => Niveaux.Where(n => n.AConsole).OrderBy(n => n.Hauteur).ToList();
+
     public StructureFacade? Structure => _structure;
 
     public Commande Proposer { get; }
+
+    public Commande ProposerLesDiagonales { get; }
 
     // ---- Actions ----------------------------------------------------------------------------
 
     /// <summary>Remplace les deux grilles par la proposition calculée depuis les paramètres.</summary>
     public void ProposerStructure()
     {
-        Remplir(Mailles, ProposeurStructure.ProposerMailles(Parametres));
+        // Niveaux d'abord : retirer un niveau à console décoche les mailles en place, pas les nouvelles.
         Remplir(Niveaux, ProposeurStructure.ProposerNiveaux(Parametres));
+        Remplir(Mailles, ProposeurStructure.ProposerMailles(Parametres));
         Notifier(nameof(Resume));
     }
+
+    /// <summary>Recoche les cases « Diagonale » selon la règle (pas selon la protection, diagonales renforcées).</summary>
+    public void ProposerDiagonales() => RegleDiagonales.Proposer(Parametres, Mailles);
 
     /// <summary>Recopie les grilles éditées dans le projet et génère la structure.</summary>
     public StructureFacade Generer()
@@ -181,11 +200,67 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
     {
         _projet = projet;
         _structure = null;
-        Remplir(Mailles, projet.Mailles);
         Remplir(Niveaux, projet.Niveaux.OrderByDescending(n => n.Hauteur));
+        Remplir(Mailles, projet.Mailles);
         Decompte.Clear();
         Alertes.Clear();
         Notifier(string.Empty); // tout rafraîchir
+    }
+
+    private void Niveaux_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        foreach (var n in _hauteurs.Keys.Except(Niveaux).ToList())
+        {
+            n.PropertyChanged -= Niveau_PropertyChanged;
+            if (n.AConsole && !Niveaux.Any(autre => autre.AConsole && Cotes.Egal(autre.Hauteur, n.Hauteur)))
+            {
+                CocherConsoles(n.Hauteur, false);
+            }
+
+            _hauteurs.Remove(n);
+        }
+
+        foreach (var n in Niveaux.Where(n => !_hauteurs.ContainsKey(n)))
+        {
+            n.PropertyChanged += Niveau_PropertyChanged;
+            _hauteurs[n] = n.Hauteur;
+        }
+
+        ColonnesConsolesChangees?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void Niveau_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        var n = (Niveau)sender!;
+        if (e.PropertyName == nameof(Niveau.AConsole))
+        {
+            // Console ajoutée au niveau : cochée sur toutes les mailles (à décocher là où il n'y en a pas) ;
+            // console retirée : cases effacées.
+            CocherConsoles(n.Hauteur, n.AConsole);
+            ColonnesConsolesChangees?.Invoke(this, EventArgs.Empty);
+        }
+        else if (e.PropertyName == nameof(Niveau.Hauteur))
+        {
+            double ancienne = _hauteurs[n];
+            _hauteurs[n] = n.Hauteur;
+            if (n.AConsole)
+            {
+                foreach (var m in Mailles)
+                {
+                    m.DeplacerConsole(ancienne, n.Hauteur);
+                }
+
+                ColonnesConsolesChangees?.Invoke(this, EventArgs.Empty);
+            }
+        }
+    }
+
+    private void CocherConsoles(double hauteur, bool coche)
+    {
+        foreach (var m in Mailles)
+        {
+            m.DefinirConsole(hauteur, coche);
+        }
     }
 
     private static void Remplir<T>(ObservableCollection<T> cible, IEnumerable<T> source)

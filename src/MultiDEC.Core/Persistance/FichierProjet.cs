@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using MultiDEC.Core.Facade;
+using MultiDEC.Core.Facade.Regles;
 
 namespace MultiDEC.Core.Persistance;
 
@@ -14,7 +15,8 @@ namespace MultiDEC.Core.Persistance;
 public static class FichierProjet
 {
     public const string Extension = ".mdc3";
-    public const int VersionFormat = 1;
+    /// <summary>2 : consoles par niveau + cases par maille, case « Diagonale » par maille (23/11/2026).</summary>
+    public const int VersionFormat = 2;
 
     private static readonly JsonSerializerOptions Options = new JsonSerializerOptions
     {
@@ -28,6 +30,8 @@ public static class FichierProjet
 
     public static ProjetFacade DepuisJson(string json)
     {
+        // « Garde-corps MDS 1 » n'existe plus (Laurent, 23/11/2026) : les anciens fichiers passent en MDS 2.
+        json = json.Replace("\"GardeCorpsMds1\"", "\"GardeCorpsMds2\"");
         var e = JsonSerializer.Deserialize<Enveloppe>(json, Options)
                 ?? throw new InvalidDataException("Fichier projet vide.");
         if (e.Version > VersionFormat)
@@ -35,7 +39,14 @@ public static class FichierProjet
             throw new InvalidDataException($"Fichier projet en version {e.Version}, non pris en charge par cette version de MultiDEC.");
         }
 
-        return e.Facade ?? throw new InvalidDataException("Le fichier ne contient pas de projet façade.");
+        var projet = e.Facade ?? throw new InvalidDataException("Le fichier ne contient pas de projet façade.");
+        if (e.Version < 2)
+        {
+            projet.ConvertirConsolesAncienFormat();
+            RegleDiagonales.Proposer(projet.Parametres, projet.Mailles);
+        }
+
+        return projet;
     }
 
     public static void Enregistrer(ProjetFacade projet, string chemin) =>

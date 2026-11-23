@@ -12,7 +12,7 @@ public class FacadeViewModelTests
         var vm = new FacadeViewModel();
         int avant = vm.Mailles.Count;
         vm.Mailles.Add(new MailleDefinition(1.5));
-        vm.Mailles[0].Console = "HMCON700E";
+        vm.Niveaux.First(n => n.Hauteur == 4).Console = "HMCON700E";
 
         var s = vm.Generer();
 
@@ -25,9 +25,9 @@ public class FacadeViewModelTests
     public void Console_vide_equivaut_a_sans_console()
     {
         var vm = new FacadeViewModel();
-        foreach (var m in vm.Mailles)
+        foreach (var n in vm.Niveaux)
         {
-            m.Console = string.Empty;
+            n.Console = string.Empty;
         }
 
         Assert.DoesNotContain(vm.Generer().Elements, e => e.Famille == Famille.Console);
@@ -81,5 +81,64 @@ public class FacadeViewModelTests
 
         Assert.Equal(avant - 2, vm.Decompte.Single(l => l.Reference == "HMSOCREG").Quantite);
         Assert.Equal(structure.Elements.Count - 2, vm.Structure!.Elements.Count);
+    }
+
+    [Fact]
+    public void Console_ajoutee_a_un_niveau_cochee_sur_toutes_les_mailles_et_colonne_creee()
+    {
+        var vm = new FacadeViewModel();
+        int signaux = 0;
+        vm.ColonnesConsolesChangees += (_, _) => signaux++;
+        var n4 = vm.Niveaux.Single(n => n.Hauteur == 4);
+
+        n4.Console = "HMCON700E";
+
+        Assert.True(signaux > 0);
+        Assert.Equal("Con4m", vm.NiveauxAvecConsole.Single().NomColonneConsole);
+        Assert.All(vm.Mailles, m => Assert.True(m["4"]));
+
+        vm.Mailles[0]["4"] = false; // l'utilisateur décoche une maille
+        Assert.False(vm.Mailles[0].ConsoleA(4));
+
+        n4.Hauteur = 4.5;            // la case suit le niveau
+        Assert.True(vm.Mailles[1]["4.5"]);
+        Assert.False(vm.Mailles[1]["4"]);
+        Assert.Equal("Con4,5m", vm.NiveauxAvecConsole.Single().NomColonneConsole);
+
+        n4.Console = null;           // console retirée : cases effacées, plus de colonne
+        Assert.Empty(vm.NiveauxAvecConsole);
+        Assert.All(vm.Mailles, m => Assert.Empty(m.Consoles));
+    }
+
+    [Fact]
+    public void Niveau_supprime_efface_ses_cases_console()
+    {
+        var vm = new FacadeViewModel();
+        var n6 = vm.Niveaux.Single(n => n.Hauteur == 6);
+        n6.Console = "HMCON700E";
+        vm.Niveaux.Remove(n6);
+        Assert.All(vm.Mailles, m => Assert.Empty(m.Consoles));
+        Assert.Empty(vm.NiveauxAvecConsole);
+    }
+
+    [Fact]
+    public void Proposer_les_diagonales_recoche_selon_la_regle()
+    {
+        var vm = new FacadeViewModel();
+        foreach (var m in vm.Mailles)
+        {
+            m.Diagonale = false;
+        }
+
+        vm.Parametres.SecuriteExterieure = TypeSecurite.Lisses; // une maille sur 3
+        vm.ProposerLesDiagonales.Execute(null);
+        Assert.Equal(new[] { 1, 4, 7 }, vm.Mailles.Select((m, i) => (m, i)).Where(x => x.m.Diagonale).Select(x => x.i + 1));
+    }
+
+    [Fact]
+    public void Garde_corps_mds1_absent_des_choix()
+    {
+        Assert.DoesNotContain("GardeCorpsMds1", FacadeViewModel.Securites.Cast<object>().Select(o => o.ToString()));
+        Assert.Equal(TypeSecurite.GardeCorpsMds2, new FacadeViewModel().Parametres.SecuriteExterieure);
     }
 }

@@ -33,7 +33,7 @@ public sealed class MailleDiagonale
 /// diagonales renforcées : une sur 3 (MDS) ou une sur 2 (lisses).
 /// Les diagonales occupent toute la hauteur de la maille.
 /// Nouveauté v3 : avec une protection intérieure, mêmes mailles côté intérieur.
-/// Pas de diagonale sur un côté sans garde-corps (Laurent, 23/11/2026).
+/// Pas de diagonale sur un côté sans garde-corps ; mailles choisies par case à cocher, pré-cochées par la règle (Laurent, 23/11/2026).
 /// </summary>
 public static class RegleDiagonales
 {
@@ -41,7 +41,7 @@ public static class RegleDiagonales
     {
         // Type de protection qui porte les diagonales : l'extérieur, sinon le côté façade.
         var securite = p.SecuriteExterieure != TypeSecurite.Sans ? p.SecuriteExterieure : p.SecuriteInterieure;
-        bool mds = securite == TypeSecurite.GardeCorpsMds1 || securite == TypeSecurite.GardeCorpsMds2;
+        bool mds = securite == TypeSecurite.GardeCorpsMds2;
         if (p.DiagonalesRenforcees)
         {
             return mds ? 3 : 2;
@@ -50,11 +50,29 @@ public static class RegleDiagonales
         return mds ? 5 : 3;
     }
 
+    /// <summary>
+    /// Pré-coche la case « Diagonale » des mailles selon la règle (une sur 5 / 3, renforcées une sur 3 / 2).
+    /// L'utilisateur coche ou décoche ensuite librement dans la grille des mailles.
+    /// </summary>
+    public static void Proposer(ParametresFacade p, IList<MailleDefinition> mailles)
+    {
+        int pas = Pas(p);
+        int n = mailles.Count;
+        for (int k = 1; k <= n; k++)
+        {
+            // Première maille : toujours si la façade dépasse un pas, sinon seulement sur option.
+            bool coche = (k - 1) % pas == 0 && !(k == 1 && n <= pas && !p.DiagonalePremiereMaille);
+            mailles[k - 1].Diagonale = coche;
+        }
+    }
+
+    /// <summary>
+    /// Diagonales à poser : les mailles cochées, sens alterné de l'une à la suivante, sur les côtés
+    /// qui ont un garde-corps (aucun côté → aucune diagonale).
+    /// </summary>
     public static List<MailleDiagonale> Calculer(ProjetFacade projet)
     {
         var p = projet.Parametres;
-        int pas = Pas(p);
-        int n = projet.Mailles.Count;
         bool interieur = p.SecuriteInterieure != TypeSecurite.Sans;
         bool exterieur = p.SecuriteExterieure != TypeSecurite.Sans;
         var resultat = new List<MailleDiagonale>();
@@ -64,15 +82,9 @@ public static class RegleDiagonales
         }
 
         bool inverse = false;
-        for (int k = 1; k <= n; k++)
+        for (int k = 1; k <= projet.Mailles.Count; k++)
         {
-            if ((k - 1) % pas != 0)
-            {
-                continue;
-            }
-
-            // Première maille : toujours si la façade dépasse un pas, sinon seulement sur option.
-            if (k == 1 && n <= pas && !p.DiagonalePremiereMaille)
+            if (!projet.Mailles[k - 1].Diagonale)
             {
                 continue;
             }

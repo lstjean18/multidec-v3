@@ -94,7 +94,11 @@ public class BibliothequeDwgTests
 
         var p = new ParametresFacade { LongueurTotaleSouhaitee = 10, LongueurMaillePreferee = 2.5, NombreAcces = 1, HauteurDernierPlancher = 6 };
         var projet = ProposeurStructure.NouveauProjet(p);
-        projet.Mailles[0].Console = "HMCON700E";
+        foreach (var n in projet.Niveaux.Where(n => n.Type == TypePlancher.Complet && n.Hauteur > 0))
+        {
+            n.Console = "HMCON700E";
+            projet.Mailles[0].DefinirConsole(n.Hauteur, true);
+        }
         var rapport = rendu.Dessiner(GenerateurFacade.Generer(projet), TableOrientations.ParDefaut());
         _sortie.WriteLine($"{rapport.Inseres} insérés, manquants : {string.Join(", ", rapport.BlocsManquants)}");
         foreach (var g in rapport.Inserts.GroupBy(x => x.Element.Famille))

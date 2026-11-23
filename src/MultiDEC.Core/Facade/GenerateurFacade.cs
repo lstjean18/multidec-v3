@@ -40,7 +40,7 @@ public sealed class StructureFacade
 /// Moteur façade v3 : transforme un <see cref="ProjetFacade"/> en liste d'éléments positionnés.
 /// Port structuré de Facade.vb (MultiRETO / MultiSystem / PlacePieds / PlacePoteaux / PlaceMailles /
 /// PlaceGC / PlaceConsole / PlacePlateaux / PlaceAcces / PlaceDiago / Placeabout), sans dépendance
-/// à l'interface ni à VectorDraw, plus les nouveautés v3 (consoles par maille, diagonales intérieures,
+/// à l'interface ni à VectorDraw, plus les nouveautés v3 (consoles par niveau et par maille, diagonales choisies par maille, diagonales intérieures,
 /// amarrages placés).
 /// Conventions (alignées sur les blocs de Blocs-EM-3D.dxf, dessinés dans le plan XY, hauteur selon +Y) :
 /// - élément d'axe X : origine à l'extrémité gauche (X mini), ou à droite si <c>Inverse</c> (bloc symétrisé) ;
@@ -70,6 +70,11 @@ public sealed class GenerateurFacade
     /// <summary>Mailles qui ont déjà leurs lisses de pied (une seule paire par maille).</summary>
     private readonly HashSet<int> _lissesPied = new HashSet<int>();
 
+    /// <summary>Consoles reconnues par niveau (null = pas de console ou console inconnue).</summary>
+    private readonly Dictionary<Niveau, ConsoleInfo?> _consolesNiveau = new Dictionary<Niveau, ConsoleInfo?>();
+
+    private Niveau? _niveauSommet;
+
     private GenerateurFacade(ProjetFacade projet)
     {
         _projet = projet;
@@ -97,6 +102,18 @@ public sealed class GenerateurFacade
     private StructureFacade Executer()
     {
         var niveaux = _projet.Niveaux.OrderBy(n => n.Hauteur).ToList();
+        _niveauSommet = niveaux.LastOrDefault();
+        foreach (var n in niveaux.Where(n => n.AConsole))
+        {
+            ConsoleInfo? info = null;
+            if (!CatalogueConsoles.TryGet(_p.Modele, n.Console!, out info))
+            {
+                _alertes.Add(FormattableString.Invariant($"Niveau {n.Hauteur:0.00} m : console {n.Console} inconnue pour le modèle {_p.Modele}, ignorée."));
+                info = null;
+            }
+
+            _consolesNiveau[n] = info;
+        }
 
         PlacerFiles(niveaux);
         for (int i = 0; i < _projet.Mailles.Count; i++)
@@ -150,8 +167,9 @@ public sealed class GenerateurFacade
             // Côté extérieur : garde-corps en tête ; départ 3 m si option.
             Empiler(x, -_l, Face.Exterieure, _p.Depart3mExterieur, gardeCorps: true);
 
-            // Côté intérieur : garde-corps si extrémité, ou protection intérieure sur une maille voisine sans console.
-            bool gcInt = extremite || (_p.SecuriteInterieure != TypeSecurite.Sans && MaillesVoisines(f).Any(m => !m.AConsole));
+            // Côté intérieur : garde-corps si extrémité, ou protection intérieure sur une maille voisine
+            // sans console au dernier niveau.
+            bool gcInt = extremite || (_p.SecuriteInterieure != TypeSecurite.Sans && MaillesVoisines(f).Any(m => ConsoleSommet(m) == null));
             Empiler(x, 0, Face.Interieure, _p.Depart3mExterieur && extremite, gcInt);
 
             // Traverses à chaque niveau (renforcées aux planchers complets si demandé).
@@ -186,6 +204,15 @@ public sealed class GenerateurFacade
         }
     }
 
+    /// <summary>Console posée sur une maille à un niveau (case « ConXm » cochée, console connue), ou null.</summary>
+    private ConsoleInfo? ConsoleDe(MailleDefinition m, Niveau n) =>
+        _projet.ConsoleDe(m, n) != null && _consolesNiveau.TryGetValue(n, out var c) ? c : null;
+
+    private ConsoleInfo? ConsoleDe(int indexMaille, Niveau n) =>
+        indexMaille >= 0 && indexMaille < _projet.Mailles.Count ? ConsoleDe(_projet.Mailles[indexMaille], n) : null;
+
+    private ConsoleInfo? ConsoleSommet(MailleDefinition m) => _niveauSommet == null ? null : ConsoleDe(m, _niveauSommet);
+
     private void Empiler(double x, double y, Face face, bool depart3m, bool gardeCorps)
     {
         foreach (var t in ReglePoteaux.Empiler(_p, depart3m, gardeCorps))
@@ -207,13 +234,6 @@ public sealed class GenerateurFacade
         string lisse = References.LisseOuTraverse(lm);
         bool inverseTrappe = false;
 
-        ConsoleInfo? console = null;
-        if (m.AConsole && !CatalogueConsoles.TryGet(_p.Modele, m.Console!, out console))
-        {
-            _alertes.Add($"Maille {num} : console {m.Console} inconnue pour le modèle {_p.Modele}, ignorée.");
-            console = null;
-        }
-
         if (_p.LissesEnPied)
         {
             LissesDePied(num, x0, lm);
@@ -223,6 +243,7 @@ public sealed class GenerateurFacade
         {
             double z = n.Hauteur;
             bool sansPlancher = n.EstAccesSeul && m.Type == TypeMaille.Travail;
+            var console = ConsoleDe(m, n);
 
             if (z > Cotes.Tolerance)
             {
@@ -263,16 +284,16 @@ public sealed class GenerateurFacade
                 PlacerAcces(m, num, x0, n, ref inverseTrappe);
             }
 
-            if (console != null && n.Type == TypePlancher.Complet && z > Cotes.Tolerance)
+            if (console != null)
             {
-                PlacerConsole(console, index, x0, lm, z, num);
+                PlacerConsole(console, index, x0, lm, n, num);
             }
         }
 
         if (_p.GardeCorpsCouvreur)
         {
             Ajouter(lisse, Famille.Lisse, new Point3(x0, -_l, _h + 1.5), Axe.X, Face.Exterieure, num);
-            if (_p.SecuriteInterieure != TypeSecurite.Sans && console == null)
+            if (_p.SecuriteInterieure != TypeSecurite.Sans && ConsoleSommet(m) == null)
             {
                 Ajouter(lisse, Famille.Lisse, new Point3(x0, 0, _h + 1.5), Axe.X, Face.Interieure, num);
             }
@@ -404,24 +425,23 @@ public sealed class GenerateurFacade
         }
         else
         {
-            // Lisse de sécurité au droit de la trémie (1,50 m au-dessus des plateaux), dans le plan des poteaux.
-            string secu = _p.SecuriteExterieure == TypeSecurite.GardeCorpsMds1 ? "HMLISSEC" + Cotes.EnCm3(lm) : References.LisseOuTraverse(lm);
+            // Lisse de sécurité au droit de la trémie (1,50 m au-dessus des plateaux) : lisse ordinaire
+            // dans le plan des poteaux, montée sur leurs rosaces (tous les 0,50 m), sans collier (Laurent, 23/11/2026).
+            string secu = References.LisseOuTraverse(lm);
             Ajouter(secu, Famille.Lisse, new Point3(x0, -_l, z - 0.5), Axe.X, Face.Exterieure, num);
 
             if (_p.SecuriteInterieure != TypeSecurite.Sans)
             {
-                string secuInt = _p.SecuriteInterieure == TypeSecurite.GardeCorpsMds1 ? "HMLISSEC" + Cotes.EnCm3(lm) : References.LisseOuTraverse(lm);
-                Ajouter(secuInt, Famille.Lisse, new Point3(x0, 0, z - 0.5), Axe.X, Face.Interieure, num);
-                Ajouter("HMCOL49ROSACE", Famille.Lisse, new Point3(x0, 0, z - 0.5), Axe.Z, Face.Interieure, num);
-                Ajouter("HMCOL49ROSACE", Famille.Lisse, new Point3(x0 + lm, 0, z - 0.5), Axe.Z, Face.Interieure, num);
+                Ajouter(secu, Famille.Lisse, new Point3(x0, 0, z - 0.5), Axe.X, Face.Interieure, num);
             }
         }
 
         inverse = !inverse;
     }
 
-    private void PlacerConsole(ConsoleInfo c, int index, double x0, double lm, double z, int num)
+    private void PlacerConsole(ConsoleInfo c, int index, double x0, double lm, Niveau n, int num)
     {
+        double z = n.Hauteur;
         double w = c.Largeur;
         bool gc = c.PorteGardeCorps && _p.SecuriteInterieure != TypeSecurite.Sans;
         bool sommet = Cotes.Egal(z, _h);
@@ -429,7 +449,7 @@ public sealed class GenerateurFacade
         // Une console sur chaque file bordant la maille, sans doublon avec la maille voisine.
         for (int f = index; f <= index + 1; f++)
         {
-            if (f == index && index > 0 && MemeConsole(index - 1, c))
+            if (f == index && MemeConsole(ConsoleDe(index - 1, n), c))
             {
                 continue;
             }
@@ -452,11 +472,18 @@ public sealed class GenerateurFacade
                 }
             }
 
-            // Abouts de console aux extrémités de la façade.
-            if (f == 0 || f == DerniereFile)
-            {
-                PlacerAboutConsole(x, z, w, gauche: f == 0, num);
-            }
+        }
+
+        // About en lisses au bout de la console quand la maille voisine n'a pas de console à ce niveau,
+        // et en bout de façade (Laurent, 23/11/2026).
+        if (ConsoleDe(index - 1, n) == null && (index > 0 || _p.AboutGauche))
+        {
+            PlacerAbout(_x[index], z, w, gauche: true, console: true, num, yOrigine: w);
+        }
+
+        if (ConsoleDe(index + 1, n) == null && (index + 1 < DerniereFile || _p.AboutDroit))
+        {
+            PlacerAbout(_x[index + 1], z, w, gauche: false, console: true, num, yOrigine: w);
         }
 
         PlacerPlateaux(x0, w, z, w, lm, num);
@@ -475,8 +502,8 @@ public sealed class GenerateurFacade
         }
     }
 
-    private bool MemeConsole(int indexMaille, ConsoleInfo c) =>
-        string.Equals(_projet.Mailles[indexMaille].Console, c.Reference, StringComparison.OrdinalIgnoreCase);
+    private static bool MemeConsole(ConsoleInfo? voisine, ConsoleInfo c) =>
+        voisine != null && string.Equals(voisine.Reference, c.Reference, StringComparison.OrdinalIgnoreCase);
 
     // ------------------------------------------------------------------------------------------
     // Abouts
@@ -498,14 +525,6 @@ public sealed class GenerateurFacade
         }
     }
 
-    private void PlacerAboutConsole(double x, double z, double largeur, bool gauche, int num)
-    {
-        if ((gauche && _p.AboutGauche) || (!gauche && _p.AboutDroit))
-        {
-            PlacerAbout(x, z, largeur, gauche, console: true, num, yOrigine: largeur);
-        }
-    }
-
     /// <summary>
     /// About en travers de la façade (port de Placeabout). Origine : (x, yOrigine, z), axe Y ;
     /// <c>Inverse</c> = about gauche (tourné vers les X négatifs).
@@ -515,8 +534,9 @@ public sealed class GenerateurFacade
         string cm = Cotes.EnCm3(largeur);
         string traverse = References.LisseOuTraverse(largeur);
         var o = new Point3(x, yOrigine, z);
-        TypePlinthe plinthe = console ? TypePlinthe.Axees : _p.PlintheAbouts;
-        var type = console ? TypeSecurite.GardeCorpsAbout : _p.SecuriteAbouts;
+        TypePlinthe plinthe = console ? TypePlinthe.Sans : _p.PlintheAbouts;
+        // Sur les consoles, l'about est en lisses (lisse + sous-lisse), Laurent 23/11/2026.
+        var type = console ? TypeSecurite.Lisses : _p.SecuriteAbouts;
 
         if (largeur <= 0.40 + Cotes.Tolerance)
         {
@@ -526,10 +546,6 @@ public sealed class GenerateurFacade
 
         switch (type)
         {
-            case TypeSecurite.GardeCorpsMds1:
-                Ajouter("HMGCSE" + cm, Famille.GardeCorps, o, Axe.Y, Face.Aucune, num, gauche);
-                break;
-
             case TypeSecurite.GardeCorpsMds2 when largeur > 0.5:
                 Ajouter("HMGCSE" + cm + "GT", Famille.GardeCorps, o, Axe.Y, Face.Aucune, num, gauche);
                 if (largeur < 1.5)

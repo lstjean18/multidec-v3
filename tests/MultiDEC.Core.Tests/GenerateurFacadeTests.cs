@@ -23,6 +23,19 @@ public class GenerateurFacadeTests
         return ProposeurStructure.NouveauProjet(p);
     }
 
+    /// <summary>Console sur tous les niveaux complets, cochée sur les mailles données (index 0).</summary>
+    private static void Consoles(ProjetFacade projet, string reference, params int[] mailles)
+    {
+        foreach (var n in projet.Niveaux.Where(n => n.Type == TypePlancher.Complet && n.Hauteur > 0))
+        {
+            n.Console = reference;
+            foreach (int i in mailles)
+            {
+                projet.Mailles[i].DefinirConsole(n.Hauteur, true);
+            }
+        }
+    }
+
     private static int Nb(StructureFacade s, string reference) => s.Elements.Count(e => e.Reference == reference);
 
     [Fact]
@@ -33,8 +46,9 @@ public class GenerateurFacadeTests
         // 8 mailles → 9 files x 2 poteaux
         Assert.Equal(18, Nb(s, "HMSOCREG"));
         Assert.Equal(18, Nb(s, "HMEMB"));
-        // Garde-corps MDS1 extérieur : 7 mailles de travail x 5 niveaux complets + accès sur 5 niveaux
-        Assert.Equal(8 * 5, Nb(s, "HMGCSE250"));
+        // Garde-corps MDS2 extérieur (par défaut) : 7 mailles de travail x 5 niveaux complets + accès sur 5 niveaux
+        Assert.Equal(8 * 5, Nb(s, "HMGCSE250GT"));
+        Assert.Equal(TypeSecurite.GardeCorpsMds2, new ParametresFacade().SecuriteAbouts);
         // Diagonales : mailles 1 et 6, 5 diagonales de 2 m chacune
         Assert.Equal(10, Nb(s, "HMDIA2502"));
         // Trappes aux niveaux 2 à 10 dans la maille d'accès
@@ -119,8 +133,7 @@ public class GenerateurFacadeTests
     public void Console_par_maille_sans_doublon_entre_mailles_voisines()
     {
         var projet = Standard(p => p.SecuriteInterieure = TypeSecurite.Lisses);
-        projet.Mailles[1].Console = "HMCON700E";
-        projet.Mailles[2].Console = "HMCON700E";
+        Consoles(projet, "HMCON700E", 1, 2);
         var s = GenerateurFacade.Generer(projet);
 
         // 3 files x 5 niveaux complets
@@ -134,7 +147,7 @@ public class GenerateurFacadeTests
     public void Console_inconnue_signalee()
     {
         var projet = Standard();
-        projet.Mailles[0].Console = "HMCON999";
+        Consoles(projet, "HMCON999", 0);
         var s = GenerateurFacade.Generer(projet);
         Assert.Contains(s.Alertes, a => a.Contains("HMCON999"));
     }
@@ -151,7 +164,7 @@ public class GenerateurFacadeTests
     [Fact]
     public void Diagonales_interieures_avec_garde_corps_interieur()
     {
-        var s = GenerateurFacade.Generer(Standard(p => p.SecuriteInterieure = TypeSecurite.GardeCorpsMds1));
+        var s = GenerateurFacade.Generer(Standard(p => p.SecuriteInterieure = TypeSecurite.GardeCorpsMds2));
         var dia = s.Elements.Where(e => e.Famille == Famille.DiagonaleVerticale).ToList();
         Assert.Equal(dia.Count(e => e.Face == Face.Exterieure), dia.Count(e => e.Face == Face.Interieure));
     }
@@ -162,7 +175,7 @@ public class GenerateurFacadeTests
         var s = GenerateurFacade.Generer(Standard(p =>
         {
             p.SecuriteExterieure = TypeSecurite.Sans;
-            p.SecuriteInterieure = TypeSecurite.GardeCorpsMds1;
+            p.SecuriteInterieure = TypeSecurite.GardeCorpsMds2;
         }));
         var dia = s.Elements.Where(e => e.Famille == Famille.DiagonaleVerticale).ToList();
         Assert.NotEmpty(dia);
@@ -198,7 +211,7 @@ public class GenerateurFacadeTests
 
         foreach (var modele in Enum.GetValues<ModeleEchafaudage>())
         {
-            var s = GenerateurFacade.Generer(Standard(p => { p.Modele = modele; p.SecuriteInterieure = TypeSecurite.GardeCorpsMds1; }));
+            var s = GenerateurFacade.Generer(Standard(p => { p.Modele = modele; p.SecuriteInterieure = TypeSecurite.GardeCorpsMds2; }));
             var manquantes = biblio.Manquantes(s.Elements.Select(e => e.Reference))
                                    .Where(r => !r.StartsWith("HMTUBAMA", StringComparison.Ordinal)) // bloc provisoire (décision 23/11/2026)
                                    .ToList();
@@ -220,15 +233,120 @@ public class GenerateurFacadeTests
     {
         var projet = Standard(p => p.Bache = true);
         projet.Chantier = "Essai";
-        projet.Mailles[0].Console = "HMCON700E";
+        Consoles(projet, "HMCON700E", 0, 3);
+        projet.Mailles[1].Diagonale = true;
 
         var relu = FichierProjet.DepuisJson(FichierProjet.VersJson(projet));
 
         Assert.Equal("Essai", relu.Chantier);
         Assert.True(relu.Parametres.Bache);
         Assert.Equal(projet.Mailles.Count, relu.Mailles.Count);
-        Assert.Equal("HMCON700E", relu.Mailles[0].Console);
+        Assert.Equal(projet.Niveaux.Select(n => n.Console), relu.Niveaux.Select(n => n.Console));
+        Assert.Equal(new[] { 2.0, 4, 6, 8, 10 }, relu.Mailles[3].Consoles);
+        Assert.Empty(relu.Mailles[2].Consoles);
+        Assert.Equal(projet.Mailles.Select(m => m.Diagonale), relu.Mailles.Select(m => m.Diagonale));
         Assert.Equal(projet.Niveaux.Select(n => n.Hauteur), relu.Niveaux.Select(n => n.Hauteur));
         Assert.Equal(GenerateurFacade.Generer(projet).Elements.Count, GenerateurFacade.Generer(relu).Elements.Count);
     }
+
+    [Fact]
+    public void Lisse_de_securite_des_acces_ordinaire_sans_collier()
+    {
+        var s = GenerateurFacade.Generer(Standard(p => p.SecuriteInterieure = TypeSecurite.Lisses));
+        Assert.DoesNotContain(s.Elements, e => e.Reference.StartsWith("HMLISSEC", StringComparison.Ordinal));
+        Assert.DoesNotContain(s.Elements, e => e.Reference == "HMCOL49ROSACE");
+    }
+
+    [Fact]
+    public void Diagonales_sur_les_mailles_cochees()
+    {
+        var projet = Standard();
+        foreach (var m in projet.Mailles)
+        {
+            m.Diagonale = false;
+        }
+
+        projet.Mailles[2].Diagonale = true;
+        projet.Mailles[4].Diagonale = true;
+        var dia = GenerateurFacade.Generer(projet).Elements.Where(e => e.Famille == Famille.DiagonaleVerticale).ToList();
+
+        Assert.Equal(new[] { 3, 5 }, dia.Select(e => e.NumeroMaille).Distinct().OrderBy(n => n));
+        Assert.Equal(5, dia.Count(e => e.NumeroMaille == 3));   // toute la hauteur : 5 x 2 m
+        Assert.All(dia.Where(e => e.NumeroMaille == 3), e => Assert.False(e.Inverse));
+        Assert.All(dia.Where(e => e.NumeroMaille == 5), e => Assert.True(e.Inverse)); // sens alterné
+    }
+
+    [Fact]
+    public void Console_seulement_aux_niveaux_et_mailles_coches()
+    {
+        var projet = Standard();
+        var n4 = projet.Niveaux.Single(n => n.Hauteur == 4);
+        n4.Console = "HMCON700E";
+        projet.Mailles[1].DefinirConsole(4, true);
+        var s = GenerateurFacade.Generer(projet);
+
+        var consoles = s.Elements.Where(e => e.Reference == "HMCON700E").ToList();
+        Assert.Equal(2, consoles.Count);                         // 2 files bordant la maille 2
+        Assert.All(consoles, e => Assert.Equal(4, e.Origine.Z, 3));
+    }
+
+    [Fact]
+    public void About_en_lisses_au_bout_d_une_console_sans_voisine()
+    {
+        var projet = Standard(p => p.SecuriteInterieure = TypeSecurite.Lisses);
+        projet.Niveaux.Single(n => n.Hauteur == 4).Console = "HMCON700E";
+        projet.Mailles[1].DefinirConsole(4, true);
+        projet.Mailles[2].DefinirConsole(4, true);
+        var s = GenerateurFacade.Generer(projet);
+
+        // Abouts en travers de la console (axe Y, partant du bout de console), à 4,5 et 5 m.
+        var abouts = s.Elements.Where(e => e.Axe == Axe.Y && Math.Abs(e.Origine.Y - 0.70) < 0.001 && e.Origine.Z > 4.1 && e.Origine.Z < 5.1).ToList();
+        Assert.Equal(4, abouts.Count);                                         // lisse + sous-lisse aux deux bouts
+        Assert.All(abouts, e => Assert.Equal("HMTRA070", e.Reference));
+        Assert.Equal(new[] { 2.5, 7.5 }, abouts.Select(e => e.Origine.X).Distinct().OrderBy(x => x));
+        Assert.Equal(2, abouts.Count(e => e.Inverse));                         // côté gauche en miroir
+        Assert.DoesNotContain(s.Elements, e => e.Reference.StartsWith("HMGCA", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void About_de_console_en_bout_de_facade_selon_l_option()
+    {
+        var projet = Standard();
+        projet.Niveaux.Single(n => n.Hauteur == 4).Console = "HMCON700E";
+        projet.Mailles[0].DefinirConsole(4, true);
+
+        bool AboutGaucheConsole(ProjetFacade p) => GenerateurFacade.Generer(p).Elements
+            .Any(e => e.Axe == Axe.Y && Math.Abs(e.Origine.X) < 0.001 && Math.Abs(e.Origine.Y - 0.70) < 0.001 && e.Inverse);
+
+        Assert.True(AboutGaucheConsole(projet));
+        projet.Parametres.AboutGauche = false;
+        Assert.False(AboutGaucheConsole(projet));
+    }
+
+    [Fact]
+    public void Ancien_fichier_mds1_et_console_par_maille_converti()
+    {
+        var projet = Standard();
+        string json = FichierProjet.VersJson(projet)
+            .Replace("\"version\": 2", "\"version\": 1")
+            .Replace("\"securiteExterieure\": \"GardeCorpsMds2\"", "\"securiteExterieure\": \"GardeCorpsMds1\"");
+        int i = json.IndexOf("\"longueur\"", StringComparison.Ordinal);
+        json = json.Insert(i, "\"console\": \"HMCON700E\", ");
+
+        var relu = FichierProjet.DepuisJson(json);
+
+        Assert.Equal(TypeSecurite.GardeCorpsMds2, relu.Parametres.SecuriteExterieure);
+        Assert.All(relu.Niveaux.Where(n => n.Type == TypePlancher.Complet), n => Assert.Equal("HMCON700E", n.Console));
+        Assert.Equal(new[] { 2.0, 4, 6, 8, 10 }, relu.Mailles[0].Consoles);
+        Assert.Empty(relu.Mailles[1].Consoles);
+        Assert.Null(relu.Mailles[0].ConsoleAncienFormat);
+        Assert.True(relu.Mailles[0].Diagonale);
+        Assert.All(FichierProjet.DepuisJson(FichierProjet.VersJson(relu)).Mailles, m => Assert.Null(m.ConsoleAncienFormat));
+    }
+
+    [Theory]
+    [InlineData(4.0, "Con4m")]
+    [InlineData(4.5, "Con4,5m")]
+    [InlineData(10.0, "Con10m")]
+    public void Nom_des_colonnes_de_console(double hauteur, string nom) => Assert.Equal(nom, Niveau.NomColonne(hauteur));
 }

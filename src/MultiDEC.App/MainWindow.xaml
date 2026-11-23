@@ -30,7 +30,7 @@
     <Grid>
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="300" />
-        <ColumnDefinition Width="330" />
+        <ColumnDefinition Width="380" />
         <ColumnDefinition Width="*" />
       </Grid.ColumnDefinitions>
 
@@ -75,8 +75,6 @@
             <StackPanel>
               <TextBlock Text="Plateaux" />
               <ComboBox ItemsSource="{x:Static vm:FacadeViewModel.ChoixPlateaux}" DisplayMemberPath="Value" SelectedValuePath="Key" SelectedValue="{Binding Parametres.Plateaux}" />
-              <TextBlock Text="Console par défaut (nouvelles mailles)" />
-              <ComboBox ItemsSource="{Binding Consoles}" SelectedItem="{Binding Parametres.ConsoleParDefaut}" />
             </StackPanel>
           </GroupBox>
 
@@ -102,6 +100,8 @@
             <StackPanel>
               <CheckBox Content="Diagonales renforcées" IsChecked="{Binding Parametres.DiagonalesRenforcees}" />
               <CheckBox Content="Diagonale dans la 1re maille" IsChecked="{Binding Parametres.DiagonalePremiereMaille}" />
+              <Button Content="Proposer les diagonales" Command="{Binding ProposerLesDiagonales}" Margin="0,6,0,0"
+                      ToolTip="Recoche les cases « Diagonale » de la grille des mailles selon la règle (une maille sur 5 ou sur 3…)" />
             </StackPanel>
           </GroupBox>
 
@@ -129,10 +129,28 @@
         </Grid.RowDefinitions>
 
         <GroupBox Header="Grille des mailles" Grid.Row="0">
-          <DataGrid ItemsSource="{Binding Mailles}" AutoGenerateColumns="False" CanUserAddRows="True" CanUserDeleteRows="True">
+          <!-- Colonnes « ConXm » ajoutées par le code, une par niveau avec console. -->
+          <DataGrid x:Name="GrilleMailles" ItemsSource="{Binding Mailles}" AutoGenerateColumns="False" CanUserAddRows="True" CanUserDeleteRows="True">
             <DataGrid.Columns>
               <DataGridComboBoxColumn Header="Longueur" SelectedItemBinding="{Binding Longueur}" ItemsSource="{x:Static vm:FacadeViewModel.LongueursMaille}" Width="80" />
               <DataGridComboBoxColumn Header="Type" SelectedItemBinding="{Binding Type}" ItemsSource="{x:Static vm:FacadeViewModel.TypesMaille}" Width="80" />
+              <DataGridTemplateColumn Header="Diagonale" Width="Auto">
+                <DataGridTemplateColumn.CellTemplate>
+                  <DataTemplate>
+                    <CheckBox IsChecked="{Binding Diagonale, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Center"
+                              ToolTip="Diagonales verticales sur toute la hauteur de la maille" />
+                  </DataTemplate>
+                </DataGridTemplateColumn.CellTemplate>
+              </DataGridTemplateColumn>
+            </DataGrid.Columns>
+          </DataGrid>
+        </GroupBox>
+
+        <GroupBox Header="Niveaux de plancher" Grid.Row="1">
+          <DataGrid ItemsSource="{Binding Niveaux}" AutoGenerateColumns="False" CanUserAddRows="True" CanUserDeleteRows="True">
+            <DataGrid.Columns>
+              <DataGridTextColumn Header="Hauteur (m)" Binding="{Binding Hauteur, StringFormat=0.00}" Width="90" />
+              <DataGridComboBoxColumn Header="Plancher" SelectedItemBinding="{Binding Type}" ItemsSource="{x:Static vm:FacadeViewModel.TypesPlancher}" Width="*" />
               <DataGridTemplateColumn Header="Console" Width="*">
                 <DataGridTemplateColumn.CellTemplate>
                   <DataTemplate>
@@ -146,15 +164,6 @@
                   </DataTemplate>
                 </DataGridTemplateColumn.CellEditingTemplate>
               </DataGridTemplateColumn>
-            </DataGrid.Columns>
-          </DataGrid>
-        </GroupBox>
-
-        <GroupBox Header="Niveaux de plancher" Grid.Row="1">
-          <DataGrid ItemsSource="{Binding Niveaux}" AutoGenerateColumns="False" CanUserAddRows="True" CanUserDeleteRows="True">
-            <DataGrid.Columns>
-              <DataGridTextColumn Header="Hauteur (m)" Binding="{Binding Hauteur, StringFormat=0.00}" Width="90" />
-              <DataGridComboBoxColumn Header="Plancher" SelectedItemBinding="{Binding Type}" ItemsSource="{x:Static vm:FacadeViewModel.TypesPlancher}" Width="*" />
             </DataGrid.Columns>
           </DataGrid>
         </GroupBox>

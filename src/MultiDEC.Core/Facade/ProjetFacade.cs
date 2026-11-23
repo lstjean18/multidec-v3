@@ -35,6 +35,41 @@ public sealed class ProjetFacade
 
     public bool NoteDeCalculObligatoire => HauteurTotale > Parametres.SeuilNoteDeCalcul;
 
+    /// <summary>
+    /// Console posée sur une maille à un niveau : celle du niveau si la case « ConXm » de la maille est cochée,
+    /// seulement aux niveaux de plancher complets au-dessus du sol. Null sinon.
+    /// </summary>
+    public string? ConsoleDe(MailleDefinition maille, Niveau niveau) =>
+        niveau.AConsole && niveau.Type == TypePlancher.Complet && niveau.Hauteur > Cotes.Tolerance && maille.ConsoleA(niveau.Hauteur)
+            ? niveau.Console
+            : null;
+
+    /// <summary>
+    /// Conversion d'un fichier v1 (console par maille, tous niveaux complets) : chaque niveau complet reçoit
+    /// la console la plus fréquente et les mailles qui en avaient une sont cochées à ces niveaux.
+    /// </summary>
+    public void ConvertirConsolesAncienFormat()
+    {
+        var anciennes = Mailles.Where(m => !string.IsNullOrWhiteSpace(m.ConsoleAncienFormat)).ToList();
+        if (anciennes.Count > 0)
+        {
+            string console = anciennes.GroupBy(m => m.ConsoleAncienFormat!).OrderByDescending(g => g.Count()).First().Key;
+            foreach (var n in Niveaux.Where(n => n.Type == TypePlancher.Complet && n.Hauteur > Cotes.Tolerance))
+            {
+                n.Console = console;
+                foreach (var m in anciennes)
+                {
+                    m.DefinirConsole(n.Hauteur, true);
+                }
+            }
+        }
+
+        foreach (var m in Mailles)
+        {
+            m.ConsoleAncienFormat = null;
+        }
+    }
+
     /// <summary>Abscisses des files de poteaux (n mailles → n+1 files).</summary>
     public IReadOnlyList<double> AbscissesFiles()
     {
