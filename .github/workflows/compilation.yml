@@ -1,0 +1,64 @@
+name: Compilation
+
+on:
+  push:
+    branches: [main, "claude/**"]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: compilation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Tests du cœur métier sur un runner GitHub (pas besoin de VectorDraw).
+  tests:
+    name: Tests du cœur (Linux)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: Tests
+        run: dotnet test tests/MultiDEC.Core.Tests --configuration Release --logger "console;verbosity=normal"
+
+  # Solution complète sur le serveur de dev (runner auto-hébergé : VS 2022 + licence VectorDraw 8.8006).
+  solution:
+    name: Solution complète (serveur de dev)
+    runs-on: [self-hosted, Windows]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Vérifier VectorDraw
+        shell: powershell
+        run: |
+          $vd = 'C:\Program Files (x86)\VectorDraw\Common\'
+          if (-not (Test-Path (Join-Path $vd 'VectorDraw.Professional.dll'))) {
+            Write-Error "DLL VectorDraw introuvables dans $vd"
+            exit 1
+          }
+          Get-ChildItem $vd -Filter '*.dll' | Select-Object Name, @{n='Version';e={$_.VersionInfo.FileVersion}} | Format-Table -AutoSize
+
+      - name: Compiler (MSBuild VS 2022)
+        shell: powershell
+        run: |
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $msbuild = & $vswhere -latest -version '[17.0,18.0)' -requires Microsoft.Component.MSBuild -find 'MSBuild\**\Bin\MSBuild.exe' | Select-Object -First 1
+          if (-not $msbuild) { Write-Error 'MSBuild de Visual Studio 2022 introuvable'; exit 1 }
+          Write-Host "MSBuild : $msbuild"
+          & $msbuild MultiDEC.sln /restore /m /nologo /v:minimal /p:Configuration=Release /clp:Summary
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Tests (serveur)
+        shell: powershell
+        run: |
+          dotnet test tests/MultiDEC.Core.Tests --configuration Release --no-build
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Publier l'application compilée
+        uses: actions/upload-artifact@v4
+        with:
+          name: MultiDEC-v3-${{ github.sha }}
+          path: src/MultiDEC.App/bin/Release/net48/
+          retention-days: 14

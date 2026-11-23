@@ -40,3 +40,14 @@ msbuild MultiDEC.sln /p:Configuration=Debug  # solution complète (Windows + Vec
 ```
 
 Voir `docs/regles-facade.md` pour les règles métier implémentées.
+
+## Intégration continue
+
+Le workflow `.github/workflows/compilation.yml` lance à chaque push :
+
+- les tests du cœur sur un runner GitHub (Linux) ;
+- la compilation de la solution complète sur le serveur de dev (runner auto-hébergé Windows, VS 2022 +
+  VectorDraw 8.8006). L'application compilée est téléchargeable dans les artefacts du run pendant 14 jours.
+
+Installation du runner sur le serveur : *Settings > Actions > Runners > New self-hosted runner* (Windows x64),
+suivre les commandes affichées, puis l'installer comme service (`config.cmd` propose « Run as service »).
