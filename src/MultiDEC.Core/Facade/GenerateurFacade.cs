@@ -23,6 +23,17 @@ public sealed class StructureFacade
 
     /// <summary>Messages à montrer à l'utilisateur (console inconnue, note de calcul, surface d'ancrage...).</summary>
     public IReadOnlyList<string> Alertes { get; }
+
+    /// <summary>
+    /// Même structure sans les éléments supprimés à la main dans le dessin (comparaison par référence d'objet :
+    /// deux pièces identiques au même endroit restent distinctes).
+    /// </summary>
+    public StructureFacade SansElements(IEnumerable<ElementPlace> retires)
+    {
+        var aRetirer = new List<ElementPlace>(retires);
+        var restants = Elements.Where(e => !aRetirer.Any(r => ReferenceEquals(r, e))).ToList();
+        return new StructureFacade(restants, Amarrages, Alertes);
+    }
 }
 
 /// <summary>

@@ -24,6 +24,7 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         HoteVectorDraw.Child = _vd;
+        MenuContextuel();
         _orientations = TableOrientations.Charger(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "orientations-blocs.json"));
         Loaded += (_, _) => ChargerBibliotheque(Reglages.CheminBibliotheque);
     }
@@ -91,6 +92,37 @@ public partial class MainWindow : Window
         {
             _rendu.Rendu(mode);
         }
+    }
+
+    /// <summary>Clic droit dans le dessin : supprimer les blocs sélectionnés (le décompte suit).</summary>
+    private void MenuContextuel()
+    {
+        var menu = new System.Windows.Forms.ContextMenuStrip();
+        var supprimer = new System.Windows.Forms.ToolStripMenuItem("Supprimer la sélection");
+        supprimer.Click += (_, _) => SupprimerSelection();
+        menu.Items.Add(supprimer);
+        menu.Items.Add(new System.Windows.Forms.ToolStripSeparator());
+        var zoom = new System.Windows.Forms.ToolStripMenuItem("Zoom tout");
+        zoom.Click += (_, _) => _rendu?.ZoomTout();
+        menu.Items.Add(zoom);
+        menu.Opening += (_, _) =>
+        {
+            int n = _rendu?.NombreSelectionnes ?? 0;
+            supprimer.Enabled = n > 0;
+            supprimer.Text = n > 1 ? $"Supprimer les {n} blocs sélectionnés" : "Supprimer la sélection";
+        };
+        _vd.BaseControl.ContextMenuStrip = menu;
+    }
+
+    private void SupprimerSelection()
+    {
+        if (_rendu == null)
+        {
+            return;
+        }
+
+        var retires = _rendu.SupprimerSelection();
+        Vm.RetirerElements(retires);
     }
 
     private void ZoomTout_Click(object sender, RoutedEventArgs e) => _rendu?.ZoomTout();

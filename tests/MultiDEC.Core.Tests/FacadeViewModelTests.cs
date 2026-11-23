@@ -68,4 +68,18 @@ public class FacadeViewModelTests
         vm.LongueurFacade = 45;
         Assert.Equal(2, vm.NombreAcces);
     }
+
+    [Fact]
+    public void Supprimer_des_blocs_dans_le_dessin_met_a_jour_le_decompte()
+    {
+        var vm = new FacadeViewModel();
+        var structure = vm.Generer();
+        var socles = structure.Elements.Where(e => e.Reference == "HMSOCREG").Take(2).ToList();
+        int avant = vm.Decompte.Single(l => l.Reference == "HMSOCREG").Quantite;
+
+        vm.RetirerElements(socles);
+
+        Assert.Equal(avant - 2, vm.Decompte.Single(l => l.Reference == "HMSOCREG").Quantite);
+        Assert.Equal(structure.Elements.Count - 2, vm.Structure!.Elements.Count);
+    }
 }

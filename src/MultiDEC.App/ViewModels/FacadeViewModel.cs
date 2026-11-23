@@ -140,6 +140,20 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
         return _structure;
     }
 
+    /// <summary>Retire de la structure les pièces supprimées dans le dessin et recalcule le décompte.</summary>
+    public void RetirerElements(IReadOnlyCollection<ElementPlace> retires)
+    {
+        if (_structure == null || retires.Count == 0)
+        {
+            return;
+        }
+
+        _structure = _structure.SansElements(retires);
+        Remplir(Decompte, CalculDecompte.Calculer(_structure.Elements));
+        Notifier(nameof(Structure));
+        Notifier(nameof(Resume));
+    }
+
     public void Nouveau()
     {
         ChargerProjet(ProposeurStructure.NouveauProjet(new ParametresFacade()));

@@ -57,6 +57,7 @@ public sealed class RenduVectorDraw
     public const string BlocAmarrageProvisoire = "MDC-AMARRAGE-PROVISOIRE";
 
     private readonly vdDocument _doc;
+    private RapportRendu? _dernierRendu;
 
     public RenduVectorDraw(vdDocument document)
     {
@@ -98,6 +99,7 @@ public sealed class RenduVectorDraw
 
         FondBlanc();
         MasquerPresentations();
+        _doc.EnableAutoGripOn = true; // un clic sélectionne un bloc (poignées), pour le supprimer au clic droit
         _doc.Model.Update();
 
         // Réglages par défaut demandés par Laurent (23/11/2026) : rendu ombré, axes filaires visibles.
@@ -210,6 +212,59 @@ public sealed class RenduVectorDraw
         Diagnostic.Add($"Présentations masquées : {n}");
     }
 
+    /// <summary>Nombre d'objets sélectionnés (poignées) dans le dessin.</summary>
+    public int NombreSelectionnes
+    {
+        get
+        {
+            var selection = _doc.GetGripSelection();
+            return selection == null ? 0 : selection.Count;
+        }
+    }
+
+    /// <summary>
+    /// Supprime du dessin les blocs sélectionnés (clic, fenêtre de sélection) et renvoie les éléments
+    /// correspondants, pour que le décompte suive.
+    /// </summary>
+    public List<ElementPlace> SupprimerSelection()
+    {
+        var retires = new List<ElementPlace>();
+        var selection = _doc.GetGripSelection();
+        if (selection == null || selection.Count == 0)
+        {
+            return retires;
+        }
+
+        var figures = new List<vdFigure>();
+        foreach (vdFigure f in selection)
+        {
+            figures.Add(f);
+        }
+
+        foreach (var f in figures)
+        {
+            f.Deleted = true;
+        }
+
+        if (_dernierRendu != null)
+        {
+            foreach (var (element, insert) in _dernierRendu.Inserts)
+            {
+                if (figures.Any(f => ReferenceEquals(f, insert)))
+                {
+                    retires.Add(element);
+                }
+            }
+
+            _dernierRendu.Inserts.RemoveAll(x => figures.Any(f => ReferenceEquals(f, x.Insert)));
+        }
+
+        selection.RemoveAll();
+        _doc.Model.Entities.Update();
+        _doc.Redraw(true);
+        return retires;
+    }
+
     /// <summary>Affiche tout le modèle, centré (bouton « Zoom tout »).</summary>
     public void ZoomTout()
     {
@@ -244,6 +299,7 @@ public sealed class RenduVectorDraw
     public RapportRendu Dessiner(StructureFacade structure, TableOrientations orientations)
     {
         var rapport = new RapportRendu();
+        _dernierRendu = rapport;
         _doc.Model.Entities.RemoveAll();
 
         foreach (var e in structure.Elements)
