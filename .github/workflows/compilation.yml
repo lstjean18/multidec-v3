@@ -2,7 +2,7 @@ name: Compilation
 
 on:
   push:
-    branches: [main, "claude/**"]
+    branches: [main]
   pull_request:
   workflow_dispatch:
 
@@ -27,6 +27,11 @@ jobs:
   solution:
     name: Solution complète (serveur de dev)
     runs-on: [self-hosted, Windows]
+    env:
+      # Le service du runner tourne sous un compte système : son profil NuGet par défaut
+      # (C:\Windows\system32\config\systemprofile) est redirigé pour les processus 32 bits et
+      # les paquets restaurés y deviennent introuvables. On fixe un cache dans le dossier du runner.
+      NUGET_PACKAGES: ${{ github.workspace }}\..\_nuget
     steps:
       - uses: actions/checkout@v4
 
