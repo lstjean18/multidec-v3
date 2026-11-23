@@ -72,7 +72,7 @@ public sealed class RenduVectorDraw
     /// <summary>
     /// Ouvre la bibliothèque de blocs, vide l'espace objet (les définitions de blocs restent) et la prépare :
     /// repère général (le DXF arrive avec un SCU actif où X = Y monde et Y = Z monde, ce qui couchait la vue),
-    /// séparation des axes filaires et des volumes, couleurs par famille, fond blanc, rendu réaliste.
+    /// séparation des axes filaires et des volumes, couleurs par famille, fond blanc, rendu ombré avec arêtes (le rendu réaliste OpenGL reste au choix).
     /// </summary>
     public void ChargerBibliotheque(string cheminDxf)
     {
@@ -99,7 +99,7 @@ public sealed class RenduVectorDraw
         FondBlanc();
         _doc.Model.Update();
         AxesFilaires(false);
-        Rendu(ModeRendu.Realiste);
+        Rendu(ModeRendu.OmbreAretes);
     }
 
     /// <summary>

@@ -180,7 +180,7 @@
           <Button Content="Côté droit" Tag="CoteDroit" Click="Vue_Click" />
           <Separator />
           <TextBlock Text="Rendu :" VerticalAlignment="Center" Margin="2,0,4,0" />
-          <ComboBox x:Name="ChoixRendu" Width="150" SelectedIndex="4" SelectionChanged="Rendu_SelectionChanged">
+          <ComboBox x:Name="ChoixRendu" Width="150" SelectedIndex="3" SelectionChanged="Rendu_SelectionChanged">
             <ComboBoxItem Content="Filaire" Tag="Filaire" />
             <ComboBoxItem Content="Lignes cachées" Tag="LignesCachees" />
             <ComboBoxItem Content="Ombré" Tag="Ombre" />
