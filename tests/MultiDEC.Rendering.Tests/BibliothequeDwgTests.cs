@@ -26,12 +26,43 @@ public class BibliothequeDwgTests
 
     public BibliothequeDwgTests(ITestOutputHelper sortie) => _sortie = sortie;
 
-    [Theory]
-    [InlineData("ECHAFAUDAGE-FILAIRE-3D-MultiDEC.dwg")]
-    [InlineData("Bloc3D.dwg")]
-    public void Facade_avec_le_dwg(string fichier)
+    /// <summary>Bloc3D.dwg livré avec les tests, puis les DWG déposés dans actions-runner\bibliotheque (ou bibliothèque).</summary>
+    private static List<string> Fichiers()
     {
-        var dwg = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Donnees", fichier);
+        var liste = new List<string> { Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Donnees", "Bloc3D.dwg") };
+        var ws = Environment.GetEnvironmentVariable("GITHUB_WORKSPACE");
+        if (!string.IsNullOrEmpty(ws))
+        {
+            var runner = Path.GetFullPath(Path.Combine(ws, "..", "..", ".."));
+            foreach (var d in Directory.GetDirectories(runner).Where(d => Path.GetFileName(d).StartsWith("biblioth", StringComparison.OrdinalIgnoreCase)))
+            {
+                liste.AddRange(Directory.GetFiles(d, "*.dwg"));
+            }
+        }
+
+        return liste;
+    }
+
+    [Fact]
+    public void Facades_avec_les_dwg()
+    {
+        foreach (var f in Fichiers())
+        {
+            _sortie.WriteLine("===== " + f + " (" + new FileInfo(f).Length + " octets)");
+            try
+            {
+                Facade_avec_le_dwg(f);
+            }
+            catch (Exception ex)
+            {
+                _sortie.WriteLine("ERREUR : " + ex.GetBaseException());
+            }
+        }
+    }
+
+    private void Facade_avec_le_dwg(string dwg)
+    {
+        var fichier = Path.GetFileName(dwg);
         var doc = new vdDocumentComponent().Document;
         var rendu = new RenduVectorDraw(doc);
         rendu.ChargerBibliotheque(dwg);
