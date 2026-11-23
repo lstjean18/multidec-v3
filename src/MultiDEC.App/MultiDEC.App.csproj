@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Application WPF MultiDEC v3 (VS 2022). La vue 3D VectorDraw est hébergée dans un WindowsFormsHost. -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <RootNamespace>MultiDEC.App</RootNamespace>
+    <AssemblyName>MultiDEC</AssemblyName>
+    <PlatformTarget>x86</PlatformTarget>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\MultiDEC.Core\MultiDEC.Core.csproj" />
+    <ProjectReference Include="..\MultiDEC.Rendering.VectorDraw\MultiDEC.Rendering.VectorDraw.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="VectorDraw.Professional"><HintPath>$(VectorDrawDir)VectorDraw.Professional.dll</HintPath></Reference>
+    <Reference Include="VectorDraw.Geometry"><HintPath>$(VectorDrawDir)VectorDraw.Geometry.dll</HintPath></Reference>
+    <Reference Include="VectorDraw.Render"><HintPath>$(VectorDrawDir)VectorDraw.Render.dll</HintPath></Reference>
+    <Reference Include="vdScrollableControl"><HintPath>$(VectorDrawDir)vdScrollableControl.dll</HintPath></Reference>
+    <Reference Include="WindowsFormsIntegration" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Cœur métier de MultiDEC v3 : modèle de l'échafaudage, règles RETOTUB,
+    génération des éléments positionnés, décompte, enregistrement JSON.
+    Aucune dépendance à VectorDraw ni à WPF : testable partout (VS 2022, dotnet test).
+  -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <RootNamespace>MultiDEC.Core</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="System.Text.Json" Version="8.0.5" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="MultiDEC.Core.Tests" />
+  </ItemGroup>
+</Project>

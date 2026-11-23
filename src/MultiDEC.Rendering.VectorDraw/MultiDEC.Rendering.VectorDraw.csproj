@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Rendu VectorDraw 8.8006 : transforme les éléments positionnés du Core en vdInsert.
+    Les DLL VectorDraw sont prises dans $(VectorDrawDir) (voir Directory.Build.props).
+  -->
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <RootNamespace>MultiDEC.Rendering.VectorDraw</RootNamespace>
+    <UseWindowsForms>true</UseWindowsForms>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\MultiDEC.Core\MultiDEC.Core.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="VectorDraw.Professional"><HintPath>$(VectorDrawDir)VectorDraw.Professional.dll</HintPath></Reference>
+    <Reference Include="VectorDraw.Geometry"><HintPath>$(VectorDrawDir)VectorDraw.Geometry.dll</HintPath></Reference>
+    <Reference Include="VectorDraw.Generics"><HintPath>$(VectorDrawDir)VectorDraw.Generics.dll</HintPath></Reference>
+    <Reference Include="VectorDraw.Render"><HintPath>$(VectorDrawDir)VectorDraw.Render.dll</HintPath></Reference>
+    <Reference Include="VectorDraw.Serialize"><HintPath>$(VectorDrawDir)VectorDraw.Serialize.dll</HintPath></Reference>
+    <Reference Include="VectorDraw.Actions"><HintPath>$(VectorDrawDir)VectorDraw.Actions.dll</HintPath></Reference>
+    <Reference Include="vdDXF"><HintPath>$(VectorDrawDir)vdDXF.dll</HintPath></Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="orientations-blocs.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

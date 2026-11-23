@@ -1,0 +1,50 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{3F1A8188-C01E-4883-8BF9-C0070ADEE991}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MultiDEC.Core", "src\MultiDEC.Core\MultiDEC.Core.csproj", "{09B6A280-E4BB-4AD3-AE99-BED5F8D2F01E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{65757E14-37B9-4E8F-BDDB-456461BC3EF6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MultiDEC.Core.Tests", "tests\MultiDEC.Core.Tests\MultiDEC.Core.Tests.csproj", "{6CEC5093-0471-42C4-94D2-F01673E4E8C6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MultiDEC.Rendering.VectorDraw", "src\MultiDEC.Rendering.VectorDraw\MultiDEC.Rendering.VectorDraw.csproj", "{6A0394AA-63EC-4412-AC5B-C715CB533AC3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MultiDEC.App", "src\MultiDEC.App\MultiDEC.App.csproj", "{35989ADF-59A0-4BFF-9E78-BAE896737F8A}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{09B6A280-E4BB-4AD3-AE99-BED5F8D2F01E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{09B6A280-E4BB-4AD3-AE99-BED5F8D2F01E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{09B6A280-E4BB-4AD3-AE99-BED5F8D2F01E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{09B6A280-E4BB-4AD3-AE99-BED5F8D2F01E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6CEC5093-0471-42C4-94D2-F01673E4E8C6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6CEC5093-0471-42C4-94D2-F01673E4E8C6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6CEC5093-0471-42C4-94D2-F01673E4E8C6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6CEC5093-0471-42C4-94D2-F01673E4E8C6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6A0394AA-63EC-4412-AC5B-C715CB533AC3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6A0394AA-63EC-4412-AC5B-C715CB533AC3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6A0394AA-63EC-4412-AC5B-C715CB533AC3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6A0394AA-63EC-4412-AC5B-C715CB533AC3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{35989ADF-59A0-4BFF-9E78-BAE896737F8A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{35989ADF-59A0-4BFF-9E78-BAE896737F8A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{35989ADF-59A0-4BFF-9E78-BAE896737F8A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{35989ADF-59A0-4BFF-9E78-BAE896737F8A}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{09B6A280-E4BB-4AD3-AE99-BED5F8D2F01E} = {3F1A8188-C01E-4883-8BF9-C0070ADEE991}
+		{6CEC5093-0471-42C4-94D2-F01673E4E8C6} = {65757E14-37B9-4E8F-BDDB-456461BC3EF6}
+		{6A0394AA-63EC-4412-AC5B-C715CB533AC3} = {3F1A8188-C01E-4883-8BF9-C0070ADEE991}
+		{35989ADF-59A0-4BFF-9E78-BAE896737F8A} = {3F1A8188-C01E-4883-8BF9-C0070ADEE991}
+	EndGlobalSection
+EndGlobal
