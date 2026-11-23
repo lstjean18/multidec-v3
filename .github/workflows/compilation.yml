@@ -35,7 +35,11 @@ jobs:
       # Bibliothèque de blocs pour le test de la façade réelle (dossier ou fichier).
       MULTIDEC_BIBLIOTHEQUE: 'X:\Commun\0 -- Blocs RETOTUB - CLIENT\ÉCHAFAUDAGE\AUTOCAD'
     steps:
+      # Pas de « git clean » : si MultiDEC a été lancé depuis ce dossier, ses fichiers verrouillés
+      # bloquaient le checkout pendant plus de 10 minutes. La compilation écrase les sorties.
       - uses: actions/checkout@v4
+        with:
+          clean: false
 
       - name: Vérifier VectorDraw
         shell: powershell
