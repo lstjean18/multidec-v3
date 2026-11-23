@@ -44,6 +44,19 @@ public class FacadeReelleTests
             Console.WriteLine($"MULTIDEC_BIBLIOTHEQUE = {env} : dossier visible = {Directory.Exists(env)}, fichier introuvable.");
         }
 
+        // Copie locale à côté du runner (le service tourne sous le compte Système, qui ne voit pas les lecteurs réseau).
+        var ws = Environment.GetEnvironmentVariable("GITHUB_WORKSPACE");
+        if (!string.IsNullOrEmpty(ws))
+        {
+            var locale = Path.GetFullPath(Path.Combine(ws, "..", "..", "..", "bibliotheque", "Blocs-EM-3D.dxf"));
+            if (File.Exists(locale))
+            {
+                return locale;
+            }
+
+            Console.WriteLine("Copie locale absente : " + locale);
+        }
+
         try
         {
             foreach (var profil in Directory.GetDirectories(@"C:\Users"))
