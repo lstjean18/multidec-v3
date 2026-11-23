@@ -92,6 +92,9 @@ public class CalibrageInsertionTests
         }
 
         _sortie.WriteLine("BILAN : " + string.Join(" | ", methodes.Select(x => $"{x.Nom} {(ok.TryGetValue(x.Nom, out int n) ? n : 0)}/{Echantillon().Count()}")));
+
+        // La méthode utilisée par RenduVectorDraw (pose + point monde) doit placer juste toutes les orientations.
+        Assert.Equal(Echantillon().Count(), ok.TryGetValue("B pose+WCS", out int retenue) ? retenue : 0);
     }
 
     private static void Pose(vdInsert ins, PoseInsert p)

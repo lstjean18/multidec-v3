@@ -104,9 +104,10 @@ public sealed class RenduVectorDraw
             }
 
             // Insertion par vecteur d'extrusion + rotation (repère objet = axe arbitraire DXF).
-            // VectorDraw lit InsertionPoint dans ce repère objet : on y convertit le point monde.
+            // InsertionPoint est en coordonnées MONDE : vérifié sur le serveur par le test de calibrage
+            // (MultiDEC.Rendering.Tests), qui mesure la boîte englobante obtenue pour chaque orientation.
             var pose = PoseInsert.Depuis(orientations.Matrice(e));
-            var o = pose.InsertionOcs;
+            var o = pose.Insertion;
             var ins = new vdInsert();
             ins.SetUnRegisterDocument(_doc);
             ins.setDocumentDefaults();

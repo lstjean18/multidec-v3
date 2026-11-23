@@ -135,9 +135,9 @@ public sealed class PoseInsert
     public Point3 Extrusion { get; }
 
     /// <summary>
-    /// Point d'insertion exprimé dans le repère objet (OCS) défini par l'extrusion, comme le veut VectorDraw
-    /// (et le DXF) : avec une extrusion non verticale, donner le point monde tel quel le fait tourner avec le
-    /// repère (constaté le 23/11/2026 : hauteur dessinée selon Y).
+    /// Point d'insertion exprimé dans le repère objet (OCS) défini par l'extrusion.
+    /// Attention : VectorDraw attend le point en coordonnées MONDE (<see cref="Insertion"/>) ;
+    /// mesuré sur le serveur le 23/11/2026, l'OCS place les blocs de travers. Gardé pour le calibrage.
     /// </summary>
     public Point3 InsertionOcs
     {
