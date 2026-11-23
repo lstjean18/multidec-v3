@@ -46,8 +46,9 @@ public class OrientationsTests
     [Fact]
     public void Plateau_largeur_vers_l_exterieur()
     {
+        // Les plateaux acier du DXF ont leur largeur vers -Z local (relevé du 23/11/2026).
         var e = new ElementPlace("HMPLA250298CL6", Famille.Plateau, new Point3(0, -0.025, 2), Axe.X);
-        Assert.Equal(new Point3(0, -0.325, 2), Transforme(e, 0, 0, 0.30));
+        Assert.Equal(new Point3(0, -0.325, 2), Transforme(e, 0, 0, -0.30));
     }
 
     [Fact]
@@ -139,5 +140,26 @@ public class InsertionOcsTests
         var pose = PoseInsert.Depuis(TableOrientations.ParDefaut().Matrice(
             new ElementPlace("HMPOT20", Famille.Poteau, new Point3(5, -0.7, 10), Axe.Z)));
         Assert.Equal(new Point3(5, 10, 0.7), pose.InsertionOcs);
+    }
+}
+
+public class PlateauxOrientationTests
+{
+    [Theory]
+    [InlineData("HMPLA250298CL6", -0.298)] // dessiné largeur vers -Z → retourné
+    [InlineData("HMPLAF2503CL6", -0.298)]
+    public void Plateau_acier_largeur_vers_l_exterieur(string reference, double zLocal)
+    {
+        var e = new ElementPlace(reference, Famille.Plateau, new Point3(0, -0.025, 2), Axe.X);
+        var p = Matrices.Appliquer(TableOrientations.ParDefaut().Matrice(e), 0, 0, zLocal);
+        Assert.Equal(-0.323, p.Y, 3);
+    }
+
+    [Fact]
+    public void Trappe_alu_largeur_vers_l_exterieur()
+    {
+        var e = new ElementPlace("HMPLAL250602TREC", Famille.Trappe, new Point3(0, -0.025, 2), Axe.X);
+        var p = Matrices.Appliquer(TableOrientations.ParDefaut().Matrice(e), 0, 0, 0.596);
+        Assert.Equal(-0.621, p.Y, 3);
     }
 }

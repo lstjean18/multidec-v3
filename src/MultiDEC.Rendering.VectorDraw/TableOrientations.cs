@@ -23,6 +23,12 @@ public sealed class OrientationBloc
     /// <summary>Retourne le bloc (symétrie de son axe Z local) quand l'élément est côté intérieur.</summary>
     public bool MiroirFaceInterieure { get; set; }
 
+    /// <summary>
+    /// Retourne toujours le bloc (symétrie de son axe Z local). Sert aux plateaux HMPLA / HMPLAF,
+    /// dessinés avec la largeur vers -Z, alors que les HMPLAL (trappes, alu) l'ont vers +Z.
+    /// </summary>
+    public bool MiroirZ { get; set; }
+
     /// <summary>Décalage en mètres dans le repère monde, appliqué en dernier.</summary>
     public double[] Decalage { get; set; } = new double[3];
 }
@@ -46,9 +52,11 @@ public sealed class TableOrientations
             .ToList();
     }
 
-    /// <summary>Réglages par défaut : consoles tournées vers la façade, faces intérieures retournées.</summary>
+    /// <summary>Réglages par défaut : faces intérieures retournées, plateaux acier retournés (relevé du DXF du 23/11/2026).</summary>
     public static TableOrientations ParDefaut() => new TableOrientations(new[]
     {
+        new OrientationBloc { Prefixe = "HMPLA", MiroirZ = true },
+        new OrientationBloc { Prefixe = "HMPLAL", MiroirZ = false },
         new OrientationBloc { Prefixe = "HMGCSE", MiroirFaceInterieure = true },
         new OrientationBloc { Prefixe = "HMPLIM", MiroirFaceInterieure = true },
         new OrientationBloc { Prefixe = "HMPLINBO", MiroirFaceInterieure = true },
@@ -79,7 +87,12 @@ public sealed class TableOrientations
         // 1. Relever le bloc.
         var m = Matrices.RotationX(90);
 
-        // 2. Symétries (appliquées dans le repère relevé).
+        // 2. Symétries (appliquées dans le repère relevé : l'axe Z local est devenu -Y monde).
+        if (r?.MiroirZ == true)
+        {
+            m = Matrices.Produit(Matrices.Echelle(1, -1, 1), m);
+        }
+
         if (r?.MiroirFaceInterieure == true && e.Face == Face.Interieure)
         {
             m = Matrices.Produit(Matrices.Echelle(1, -1, 1), m); // retourne la face (axe Y monde = ancien Z local)

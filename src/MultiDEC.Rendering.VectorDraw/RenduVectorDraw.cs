@@ -32,7 +32,10 @@ public enum ModeRendu
 /// <summary>Compte rendu d'un dessin.</summary>
 public sealed class RapportRendu
 {
-    public int Inseres { get; internal set; }
+    public int Inseres => Inserts.Count;
+
+    /// <summary>Chaque élément dessiné et le vdInsert créé (sert aux contrôles et aux futures sélections).</summary>
+    public List<(ElementPlace Element, vdInsert Insert)> Inserts { get; } = new List<(ElementPlace, vdInsert)>();
 
     /// <summary>Références sans bloc dans la bibliothèque (non dessinées).</summary>
     public SortedSet<string> BlocsManquants { get; } = new SortedSet<string>(StringComparer.Ordinal);
@@ -122,7 +125,7 @@ public sealed class RenduVectorDraw
 
             ins.Label = e.NumeroMaille.ToString();
             _doc.Model.Entities.AddItem(ins);
-            rapport.Inseres++;
+            rapport.Inserts.Add((e, ins));
         }
 
         _doc.Model.Entities.Update();

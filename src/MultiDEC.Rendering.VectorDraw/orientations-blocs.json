@@ -3,6 +3,8 @@
 // rotationZ : rotation supplémentaire en degrés ; miroirFaceInterieure : retourne le bloc côté intérieur ;
 // decalage : [dx, dy, dz] en mètres.
 [
+  { "prefixe": "HMPLA", "miroirZ": true },
+  { "prefixe": "HMPLAL", "miroirZ": false },
   { "prefixe": "HMGCSE", "miroirFaceInterieure": true },
   { "prefixe": "HMPLIM", "miroirFaceInterieure": true },
   { "prefixe": "HMPLINBO", "miroirFaceInterieure": true },
