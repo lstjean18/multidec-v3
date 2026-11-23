@@ -6,11 +6,12 @@ namespace MultiDEC.Core.Facade.Regles;
 /// <summary>Une maille qui reçoit des diagonales verticales.</summary>
 public sealed class MailleDiagonale
 {
-    public MailleDiagonale(int numeroMaille, bool inverse, bool interieure)
+    public MailleDiagonale(int numeroMaille, bool inverse, bool interieure, bool exterieure = true)
     {
         NumeroMaille = numeroMaille;
         Inverse = inverse;
         Interieure = interieure;
+        Exterieure = exterieure;
     }
 
     /// <summary>Numéro de maille, de 1 à n.</summary>
@@ -19,8 +20,11 @@ public sealed class MailleDiagonale
     /// <summary>Sens alterné d'une maille à diagonale à la suivante.</summary>
     public bool Inverse { get; }
 
-    /// <summary>Diagonales aussi côté intérieur (garde-corps des deux côtés).</summary>
+    /// <summary>Diagonales côté intérieur (protection côté façade).</summary>
     public bool Interieure { get; }
+
+    /// <summary>Diagonales côté extérieur (protection côté extérieur).</summary>
+    public bool Exterieure { get; }
 }
 
 /// <summary>
@@ -29,12 +33,15 @@ public sealed class MailleDiagonale
 /// diagonales renforcées : une sur 3 (MDS) ou une sur 2 (lisses).
 /// Les diagonales occupent toute la hauteur de la maille.
 /// Nouveauté v3 : avec une protection intérieure, mêmes mailles côté intérieur.
+/// Pas de diagonale sur un côté sans garde-corps (Laurent, 23/11/2026).
 /// </summary>
 public static class RegleDiagonales
 {
     public static int Pas(ParametresFacade p)
     {
-        bool mds = p.SecuriteExterieure == TypeSecurite.GardeCorpsMds1 || p.SecuriteExterieure == TypeSecurite.GardeCorpsMds2;
+        // Type de protection qui porte les diagonales : l'extérieur, sinon le côté façade.
+        var securite = p.SecuriteExterieure != TypeSecurite.Sans ? p.SecuriteExterieure : p.SecuriteInterieure;
+        bool mds = securite == TypeSecurite.GardeCorpsMds1 || securite == TypeSecurite.GardeCorpsMds2;
         if (p.DiagonalesRenforcees)
         {
             return mds ? 3 : 2;
@@ -49,7 +56,13 @@ public static class RegleDiagonales
         int pas = Pas(p);
         int n = projet.Mailles.Count;
         bool interieur = p.SecuriteInterieure != TypeSecurite.Sans;
+        bool exterieur = p.SecuriteExterieure != TypeSecurite.Sans;
         var resultat = new List<MailleDiagonale>();
+        if (!interieur && !exterieur)
+        {
+            return resultat;
+        }
+
         bool inverse = false;
         for (int k = 1; k <= n; k++)
         {
@@ -64,7 +77,7 @@ public static class RegleDiagonales
                 continue;
             }
 
-            resultat.Add(new MailleDiagonale(k, inverse, interieur));
+            resultat.Add(new MailleDiagonale(k, inverse, interieur, exterieur));
             inverse = !inverse;
         }
 

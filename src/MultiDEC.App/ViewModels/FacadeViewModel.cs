@@ -7,6 +7,7 @@ using System.Runtime.CompilerServices;
 using MultiDEC.Core.Catalogue;
 using MultiDEC.Core.Decompte;
 using MultiDEC.Core.Facade;
+using MultiDEC.Core.Facade.Regles;
 using MultiDEC.Core.Persistance;
 
 namespace MultiDEC.App.ViewModels;
@@ -56,6 +57,37 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
     public ProjetFacade Projet => _projet;
 
     public ParametresFacade Parametres => _projet.Parametres;
+
+    /// <summary>Longueur de façade souhaitée : la modifier recalcule le nombre d'accès proposé.</summary>
+    public double LongueurFacade
+    {
+        get => Parametres.LongueurTotaleSouhaitee;
+        set
+        {
+            if (Math.Abs(Parametres.LongueurTotaleSouhaitee - value) < 1e-9)
+            {
+                return;
+            }
+
+            Parametres.LongueurTotaleSouhaitee = value;
+            Notifier();
+            NombreAcces = RegleAcces.NombreConseille(value);
+        }
+    }
+
+    /// <summary>Nombre d'accès : proposé d'après la longueur, modifiable par l'utilisateur.</summary>
+    public int NombreAcces
+    {
+        get => Parametres.NombreAcces;
+        set
+        {
+            if (Parametres.NombreAcces != value)
+            {
+                Parametres.NombreAcces = value;
+                Notifier();
+            }
+        }
+    }
 
     public ObservableCollection<MailleDefinition> Mailles { get; } = new ObservableCollection<MailleDefinition>();
 

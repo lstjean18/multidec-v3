@@ -4,6 +4,7 @@ Sources : ancien `Facade.vb` / `frmParam.vb`, NT-Echafaudage RETOTUB, décisions
 Les points marqués **[à valider]** sont des choix faits en v3 faute de règle explicite.
 
 ## Grille des mailles (proposition, ensuite éditable)
+- Nombre d'accès proposé à chaque changement de longueur : 1 + partie entière (longueur / 20,50 m), formule de la v2 (CNAMTS : un accès tous les 20 m). Modifiable ensuite (validé par Laurent le 23/11/2026).
 - Mailles d'accès à la longueur préférée, réparties entre `NombreAcces + 1` blocs de travail de taille égale
   (l'ancienne version mettait le surplus dans un seul bloc).
 - Reste complété à droite par les longueurs standard 3,00 / 2,50 / 2,00 / 1,50 / 1,00 / 0,70, somme exacte si possible ;
@@ -32,6 +33,7 @@ Les points marqués **[à valider]** sont des choix faits en v3 faute de règle 
 - Une maille sur 5 (garde-corps MDS) ou sur 3 (lisses) ; renforcées : sur 3 ou sur 2. Sens alterné.
 - Toute la hauteur ; hauteur non multiple de 2 m : une diagonale en pied puis colonne décalée.
 - **Nouveau v3** : protection intérieure → diagonales aussi côté intérieur, mêmes mailles.
+- Pas de diagonale sur un côté sans garde-corps (protection « Sans ») ; aucun des deux côtés → aucune diagonale et alerte (validé par Laurent le 23/11/2026). Le pas suit la protection extérieure, ou celle du côté façade si l'extérieur est sans.
 - Conseil « diagonales renforcées » si les niveaux accès seul sont au moins aussi nombreux que les complets.
 
 ## Amarrages (NT-Echafaudage p. 8-13, validé le 23/11/2026) — placés sur le dessin

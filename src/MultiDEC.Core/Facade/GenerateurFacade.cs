@@ -112,6 +112,11 @@ public sealed class GenerateurFacade
             _alertes.Add($"Amarrages : {bilan.Amarrages.Count} placés pour {bilan.MinimumParSurface} requis par la surface ({bilan.Surface:0.#} m²).");
         }
 
+        if (_p.SecuriteExterieure == TypeSecurite.Sans && _p.SecuriteInterieure == TypeSecurite.Sans)
+        {
+            _alertes.Add("Aucun garde-corps : pas de diagonale verticale posée, contreventement à prévoir.");
+        }
+
         if (RegleDiagonales.RenforcementConseille(niveaux) && !_p.DiagonalesRenforcees)
         {
             _alertes.Add("Beaucoup de niveaux « accès seul » : diagonales renforcées conseillées.");
@@ -599,7 +604,11 @@ public sealed class GenerateurFacade
             double xDia = d.Inverse ? x0 + lm : x0;
             foreach (double z in cotes)
             {
-                Ajouter(refDia, Famille.DiagonaleVerticale, new Point3(xDia, -_l - DemiTube, z), Axe.X, Face.Exterieure, d.NumeroMaille, d.Inverse);
+                if (d.Exterieure)
+                {
+                    Ajouter(refDia, Famille.DiagonaleVerticale, new Point3(xDia, -_l - DemiTube, z), Axe.X, Face.Exterieure, d.NumeroMaille, d.Inverse);
+                }
+
                 if (d.Interieure)
                 {
                     Ajouter(refDia, Famille.DiagonaleVerticale, new Point3(xDia, DemiTube, z), Axe.X, Face.Interieure, d.NumeroMaille, d.Inverse);

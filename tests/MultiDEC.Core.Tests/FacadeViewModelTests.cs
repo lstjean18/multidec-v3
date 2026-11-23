@@ -40,4 +40,32 @@ public class FacadeViewModelTests
         Assert.Equal(string.Empty, vm.Consoles[0]);
         Assert.Contains("HMCON700E", vm.Consoles);
     }
+
+    [Theory]
+    [InlineData(10, 1)]
+    [InlineData(20, 1)]
+    [InlineData(20.5, 2)]
+    [InlineData(40, 2)]
+    [InlineData(41, 3)]
+    [InlineData(62, 4)]
+    public void Nombre_d_acces_conseille(double longueur, int attendu) =>
+        Assert.Equal(attendu, MultiDEC.Core.Facade.Regles.RegleAcces.NombreConseille(longueur));
+
+    [Fact]
+    public void Changer_la_longueur_recalcule_les_acces_puis_l_utilisateur_peut_les_modifier()
+    {
+        var vm = new FacadeViewModel();
+        var notifies = new List<string?>();
+        vm.PropertyChanged += (_, e) => notifies.Add(e.PropertyName);
+
+        vm.LongueurFacade = 45;
+        Assert.Equal(3, vm.NombreAcces);
+        Assert.Equal(3, vm.Parametres.NombreAcces);
+        Assert.Contains(nameof(FacadeViewModel.NombreAcces), notifies);
+
+        vm.NombreAcces = 2; // choix de l'utilisateur, conservé tant que la longueur ne change pas
+        Assert.Equal(2, vm.Parametres.NombreAcces);
+        vm.LongueurFacade = 45;
+        Assert.Equal(2, vm.NombreAcces);
+    }
 }

@@ -55,11 +55,11 @@
               <TextBlock Text="Largeur de maille (m)" />
               <ComboBox ItemsSource="{x:Static vm:FacadeViewModel.LargeursMaille}" SelectedItem="{Binding Parametres.LargeurMaille}" ItemStringFormat="0.00" />
               <TextBlock Text="Longueur de façade souhaitée (m)" />
-              <TextBox Text="{Binding Parametres.LongueurTotaleSouhaitee, StringFormat=0.00}" />
+              <TextBox Text="{Binding LongueurFacade, StringFormat=0.00}" />
               <TextBlock Text="Longueur de maille préférée (m)" />
               <ComboBox ItemsSource="{x:Static vm:FacadeViewModel.LongueursMaille}" SelectedItem="{Binding Parametres.LongueurMaillePreferee}" ItemStringFormat="0.00" />
               <TextBlock Text="Nombre d'accès" />
-              <TextBox Text="{Binding Parametres.NombreAcces}" />
+              <TextBox Text="{Binding NombreAcces}" />
               <TextBlock Text="Hauteur du dernier plancher (m)" />
               <TextBox Text="{Binding Parametres.HauteurDernierPlancher, StringFormat=0.00}" />
               <TextBlock Text="Distance file intérieure – façade (m)" />

@@ -140,6 +140,40 @@ public class GenerateurFacadeTests
     }
 
     [Fact]
+    public void Pas_de_diagonale_cote_exterieur_sans_garde_corps()
+    {
+        var s = GenerateurFacade.Generer(Standard(p =>
+        {
+            p.SecuriteExterieure = TypeSecurite.Sans;
+            p.SecuriteInterieure = TypeSecurite.GardeCorpsMds1;
+        }));
+        var dia = s.Elements.Where(e => e.Famille == Famille.DiagonaleVerticale).ToList();
+        Assert.NotEmpty(dia);
+        Assert.All(dia, e => Assert.Equal(Face.Interieure, e.Face));
+    }
+
+    [Fact]
+    public void Pas_de_diagonale_cote_facade_sans_garde_corps()
+    {
+        var s = GenerateurFacade.Generer(Standard(p => p.SecuriteInterieure = TypeSecurite.Sans));
+        var dia = s.Elements.Where(e => e.Famille == Famille.DiagonaleVerticale).ToList();
+        Assert.NotEmpty(dia);
+        Assert.All(dia, e => Assert.Equal(Face.Exterieure, e.Face));
+    }
+
+    [Fact]
+    public void Aucune_diagonale_sans_aucun_garde_corps_et_alerte()
+    {
+        var s = GenerateurFacade.Generer(Standard(p =>
+        {
+            p.SecuriteExterieure = TypeSecurite.Sans;
+            p.SecuriteInterieure = TypeSecurite.Sans;
+        }));
+        Assert.DoesNotContain(s.Elements, e => e.Famille == Famille.DiagonaleVerticale);
+        Assert.Contains(s.Alertes, a => a.Contains("pas de diagonale"));
+    }
+
+    [Fact]
     public void References_generees_presentes_dans_la_bibliotheque()
     {
         var biblio = BibliothequeBlocs.DepuisFichier("blocs-EM-3D.txt");
