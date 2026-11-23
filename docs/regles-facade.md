@@ -25,6 +25,8 @@ Les points marqués **[à valider]** sont des choix faits en v3 faute de règle 
 - MDS 2 : pas de plinthe si maille ≤ 1,25 m. Abouts : HMGCSE / HMGCSE…GT / HMGCA / traverses selon le choix.
 - Plateaux : 2 (0,70/0,75) ou 3 (1,00/1,05) plateaux de 0,30 ; alu/bois : 1 large (+ 1 complément en 1,00/1,05).
 - Accès : trappe HMPLAL…602TR / 650TR (+EC > 2 m) côté intérieur, sens alterné par niveau, échelle si maille ≤ 2 m, 2 plateaux de départ au pied du 1er accès, lisse de sécurité au-dessus.
+- Niveau « accès seul » (au-dessus du sol) : chaque maille a une lisse des deux côtés, façade et extérieur (validé par Laurent le 23/11/2026).
+- Plateaux au niveau 0 : lisses de pied des deux côtés de la maille (validé le 23/11/2026). Une seule paire de lisses de pied par maille, même avec diagonale ou option « lisses en pied ».
 
 ## Diagonales verticales
 - Une maille sur 5 (garde-corps MDS) ou sur 3 (lisses) ; renforcées : sur 3 ou sur 2. Sens alterné.

@@ -56,6 +56,9 @@ public sealed class GenerateurFacade
     private readonly double _l;
     private readonly double _h;
 
+    /// <summary>Mailles qui ont déjà leurs lisses de pied (une seule paire par maille).</summary>
+    private readonly HashSet<int> _lissesPied = new HashSet<int>();
+
     private GenerateurFacade(ProjetFacade projet)
     {
         _projet = projet;
@@ -197,8 +200,7 @@ public sealed class GenerateurFacade
 
         if (_p.LissesEnPied)
         {
-            Ajouter(lisse, Famille.Lisse, new Point3(x0, 0, 0), Axe.X, Face.Interieure, num);
-            Ajouter(lisse, Famille.Lisse, new Point3(x0, -_l, 0), Axe.X, Face.Exterieure, num);
+            LissesDePied(num, x0, lm);
         }
 
         foreach (var n in niveaux)
@@ -209,6 +211,12 @@ public sealed class GenerateurFacade
             if (z > Cotes.Tolerance)
             {
                 Ajouter(lisse, Famille.Lisse, new Point3(x0, 0, z), Axe.X, Face.Interieure, num);
+
+                // Niveau « accès seul » : lisse des deux côtés, façade et extérieur (Laurent, 23/11/2026).
+                if (n.EstAccesSeul)
+                {
+                    Ajouter(lisse, Famille.Lisse, new Point3(x0, -_l, z), Axe.X, Face.Exterieure, num);
+                }
             }
 
             if (z >= 0.5 - Cotes.Tolerance && !sansPlancher)
@@ -232,7 +240,6 @@ public sealed class GenerateurFacade
                 else if (n.Type == TypePlancher.AccesSeulDiagoH && z > Cotes.Tolerance)
                 {
                     Ajouter(References.DiagonaleHorizontale(_l, lm), Famille.DiagonaleHorizontale, new Point3(x0, 0, z), Axe.X, Face.Aucune, num);
-                    Ajouter(lisse, Famille.Lisse, new Point3(x0, -_l, z), Axe.X, Face.Exterieure, num);
                 }
             }
             else
@@ -293,6 +300,12 @@ public sealed class GenerateurFacade
     /// <summary>Plateaux couvrant une largeur, posés à partir du bord <paramref name="yBord"/> vers les Y négatifs.</summary>
     private void PlacerPlateaux(double x0, double yBord, double z, double largeur, double lm, int num, int premierRang = 0, int dernierRang = int.MaxValue)
     {
+        // Plateaux au niveau 0 : lisses des deux côtés (Laurent, 23/11/2026).
+        if (Math.Abs(z) <= Cotes.Tolerance)
+        {
+            LissesDePied(num, x0, lm);
+        }
+
         foreach (var (variante, rang) in RepartitionPlateaux(largeur, _p.Plateaux))
         {
             if (rang < premierRang || rang > dernierRang)
@@ -569,12 +582,7 @@ public sealed class GenerateurFacade
             double lm = _projet.Mailles[i].Longueur;
             string refDia = References.DiagonaleVerticale(lm);
 
-            if (!_p.LissesEnPied)
-            {
-                string lisse = References.LisseOuTraverse(lm);
-                Ajouter(lisse, Famille.Lisse, new Point3(x0, 0, 0), Axe.X, Face.Interieure, d.NumeroMaille);
-                Ajouter(lisse, Famille.Lisse, new Point3(x0, -_l, 0), Axe.X, Face.Exterieure, d.NumeroMaille);
-            }
+            LissesDePied(d.NumeroMaille, x0, lm);
 
             var cotes = new List<double>();
             if (debut > Cotes.Tolerance)
@@ -614,6 +622,19 @@ public sealed class GenerateurFacade
         }
 
         return bilan;
+    }
+
+    /// <summary>Lisses de pied (z = 0) côté façade et côté extérieur, posées une seule fois par maille.</summary>
+    private void LissesDePied(int num, double x0, double lm)
+    {
+        if (!_lissesPied.Add(num))
+        {
+            return;
+        }
+
+        string lisse = References.LisseOuTraverse(lm);
+        Ajouter(lisse, Famille.Lisse, new Point3(x0, 0, 0), Axe.X, Face.Interieure, num);
+        Ajouter(lisse, Famille.Lisse, new Point3(x0, -_l, 0), Axe.X, Face.Exterieure, num);
     }
 
     private void Ajouter(string reference, Famille famille, Point3 origine, Axe axe, Face face = Face.Aucune, int numeroMaille = 0, bool inverse = false) =>

@@ -42,6 +42,51 @@ public class GenerateurFacadeTests
         Assert.DoesNotContain(s.Elements, e => e.Reference == References.Echelle); // maille > 2 m : pas d'échelle intégrée
     }
 
+    private static int LissesA(StructureFacade s, int maille, double y, double z) =>
+        s.Elements.Count(e => e.Famille == Famille.Lisse && e.NumeroMaille == maille && e.Axe == Axe.X
+                              && Math.Abs(e.Origine.Y - y) < 0.001 && Math.Abs(e.Origine.Z - z) < 0.001);
+
+    [Theory]
+    [InlineData(TypePlancher.AccesSeul)]
+    [InlineData(TypePlancher.AccesSeulDiagoH)]
+    public void Niveau_acces_seul_lisse_des_deux_cotes_sur_chaque_maille(TypePlancher type)
+    {
+        var projet = Standard();
+        projet.Niveaux.Single(n => Math.Abs(n.Hauteur - 4) < 0.001).Type = type;
+        var s = GenerateurFacade.Generer(projet);
+
+        for (int m = 1; m <= projet.Mailles.Count; m++)
+        {
+            Assert.Equal(1, LissesA(s, m, 0, 4));      // côté façade
+            Assert.Equal(1, LissesA(s, m, -0.70, 4));  // côté extérieur
+        }
+    }
+
+    [Fact]
+    public void Plateaux_au_niveau_0_avec_lisses_des_deux_cotes()
+    {
+        var s = GenerateurFacade.Generer(Standard());
+        var maillesAuSol = s.Elements.Where(e => (e.Famille == Famille.Plateau || e.Famille == Famille.Trappe) && Math.Abs(e.Origine.Z) < 0.001)
+                                     .Select(e => e.NumeroMaille).Distinct().ToList();
+        Assert.NotEmpty(maillesAuSol); // plateaux de départ au pied de l'échelle
+        foreach (var m in maillesAuSol)
+        {
+            Assert.Equal(1, LissesA(s, m, 0, 0));
+            Assert.Equal(1, LissesA(s, m, -0.70, 0));
+        }
+    }
+
+    [Fact]
+    public void Lisses_de_pied_sans_doublon_si_diagonale_et_plateaux_au_sol()
+    {
+        var s = GenerateurFacade.Generer(Standard(p => p.LissesEnPied = true));
+        foreach (var m in s.Elements.Select(e => e.NumeroMaille).Where(m => m > 0).Distinct())
+        {
+            Assert.Equal(1, LissesA(s, m, 0, 0));
+            Assert.Equal(1, LissesA(s, m, -0.70, 0));
+        }
+    }
+
     [Fact]
     public void Poteaux_interieurs_sans_protection_s_arretent_au_plancher_sauf_extremites()
     {
