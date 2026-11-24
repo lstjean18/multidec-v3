@@ -313,7 +313,7 @@ public class GenerateurFacadeTests
     [Fact]
     public void References_des_options_presentes_dans_la_bibliotheque()
     {
-        var biblio = BibliothequeBlocs.DepuisFichier("blocs-EM-3D.txt");
+        var biblio = BibliothequeBlocs.DepuisFichier("blocs-3D-echafaudage.txt");
         foreach (var socle in CatalogueSocles.Tous)
         {
             foreach (var modele in Enum.GetValues<ModeleEchafaudage>())
@@ -748,7 +748,7 @@ public class GenerateurFacadeTests
     [Fact]
     public void Sous_mailles_references_presentes_dans_la_bibliotheque()
     {
-        var biblio = BibliothequeBlocs.DepuisFichier("blocs-EM-3D.txt");
+        var biblio = BibliothequeBlocs.DepuisFichier("blocs-3D-echafaudage.txt");
         foreach (bool acier in new[] { false, true })
         {
             var face = Standard(p => p.TrappesAcier = acier);
@@ -774,7 +774,7 @@ public class GenerateurFacadeTests
     [Fact]
     public void References_generees_presentes_dans_la_bibliotheque()
     {
-        var biblio = BibliothequeBlocs.DepuisFichier("blocs-EM-3D.txt");
+        var biblio = BibliothequeBlocs.DepuisFichier("blocs-3D-echafaudage.txt");
         Assert.True(biblio.Nombre > 500);
 
         foreach (var modele in Enum.GetValues<ModeleEchafaudage>())
@@ -785,6 +785,19 @@ public class GenerateurFacadeTests
                                    .ToList();
             Assert.True(manquantes.Count == 0, $"{modele} : blocs manquants {string.Join(", ", manquantes)}");
         }
+    }
+
+    [Theory]
+    [InlineData(GammePlateaux.StandardNF, "HMPLAF2503NF")]
+    [InlineData(GammePlateaux.AntiContaminationNF, "HMPLAF2503CL6-AC")]
+    public void Plateaux_NF_de_la_bibliotheque_du_24_11(GammePlateaux gamme, string courant)
+    {
+        // Laurent 24/11/2026 : Standard NF = HMPLAF…3NF ; compléments de 0,20 m = HMPLAF…2CL6 dans les deux gammes NF.
+        var biblio = BibliothequeBlocs.DepuisFichier("blocs-3D-echafaudage.txt");
+        var s = GenerateurFacade.Generer(Standard(p => { p.Plateaux = gamme; p.LargeurMaille = 1.0; }));
+        Assert.Contains(s.Elements, e => e.Reference == courant);
+        Assert.Equal("HMPLAF2502CL6", References.Plateau(gamme, 2.5, 0.70, 2));
+        Assert.Empty(biblio.Manquantes(s.Elements.Where(e => e.Famille == Famille.Plateau).Select(e => e.Reference)));
     }
 
     [Fact]

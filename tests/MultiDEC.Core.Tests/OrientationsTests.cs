@@ -229,7 +229,7 @@ public class PlateauxOrientationTests
 {
     [Theory]
     [InlineData("HMPLA250298CL6", -0.298)] // dessiné largeur vers -Z → retourné
-    [InlineData("HMPLAF2503CL6", -0.298)]
+    [InlineData("HMPLAF2503NF", -0.298)]
     public void Plateau_acier_largeur_vers_l_exterieur(string reference, double zLocal)
     {
         var e = new ElementPlace(reference, Famille.Plateau, new Point3(0, -0.025, 2), Axe.X);

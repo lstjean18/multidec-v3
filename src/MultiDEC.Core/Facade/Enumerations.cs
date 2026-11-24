@@ -85,7 +85,7 @@ public enum GammePlateaux
     Optissimo,
     Standard,
 
-    /// <summary>« Standard NF » (ancien « Portugais », HMPLAF…CL6).</summary>
+    /// <summary>« Standard NF » (ancien « Portugais », HMPLAF…3NF).</summary>
     StandardNF,
 
     /// <summary>« Anti Contamination NF » (ancien « Portugais antidérapant », HMPLAF…CL6-AC).</summary>

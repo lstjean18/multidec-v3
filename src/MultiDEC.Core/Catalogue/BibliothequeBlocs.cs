@@ -6,7 +6,7 @@ using System.Linq;
 namespace MultiDEC.Core.Catalogue;
 
 /// <summary>
-/// Liste des noms de blocs disponibles dans la bibliothèque (Blocs-EM-3D.dxf).
+/// Liste des noms de blocs disponibles dans la bibliothèque (« Blocs 3D - Echafaudage.dwg » ; lignes « # » = commentaires).
 /// Permet de signaler, avant le dessin, les références générées qui n'ont pas de bloc.
 /// </summary>
 public sealed class BibliothequeBlocs
@@ -16,13 +16,13 @@ public sealed class BibliothequeBlocs
     public BibliothequeBlocs(IEnumerable<string> noms)
     {
         _noms = new HashSet<string>(
-            noms.Select(n => n.Trim()).Where(n => n.Length > 0 && !n.StartsWith("*", StringComparison.Ordinal)),
+            noms.Select(n => n.Trim()).Where(n => n.Length > 0 && !n.StartsWith("*", StringComparison.Ordinal) && !n.StartsWith("#", StringComparison.Ordinal)),
             StringComparer.OrdinalIgnoreCase);
     }
 
     public int Nombre => _noms.Count;
 
-    /// <summary>Charge un fichier texte : un nom de bloc par ligne (ex. catalogue/blocs-EM-3D.txt).</summary>
+    /// <summary>Charge un fichier texte : un nom de bloc par ligne (ex. catalogue/blocs-3D-echafaudage.txt).</summary>
     public static BibliothequeBlocs DepuisFichier(string chemin) => new BibliothequeBlocs(File.ReadAllLines(chemin));
 
     public bool Contient(string reference) => _noms.Contains(reference);

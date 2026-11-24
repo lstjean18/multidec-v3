@@ -183,10 +183,11 @@ public static class References
                 return baseRef + classe;
 
             case GammePlateaux.StandardNF:
-                return variante == 1 ? "HMPLAF" + l + "3CL6" : "HMPLAF" + l + "2CL6";
+                // Bibliothèque du 24/11/2026 : HMPLAF…3NF (ex-…3CL6) ; compléments de 0,20 m HMPLAF…2CL6 dans les deux gammes NF.
+                return variante == 1 ? "HMPLAF" + l + "3NF" : "HMPLAF" + l + "2CL6";
 
             case GammePlateaux.AntiContaminationNF:
-                return variante == 1 ? "HMPLAF" + l + "3CL6-AC" : "HMPLAF" + l + "2CL6-AC";
+                return variante == 1 ? "HMPLAF" + l + "3CL6-AC" : "HMPLAF" + l + "2CL6";
 
             default:
                 throw new ArgumentOutOfRangeException(nameof(gamme), gamme, null);

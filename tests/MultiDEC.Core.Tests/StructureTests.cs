@@ -384,7 +384,7 @@ public class StructureTests
         var s = vm.Generer();
         Assert.Contains(s.Elements, e => e.NomFace == "M4" && e.Reference == "HMDIA2002"); // diagonales en travers > 1,05 m
 
-        var biblio = MultiDEC.Core.Catalogue.BibliothequeBlocs.DepuisFichier("blocs-EM-3D.txt");
+        var biblio = MultiDEC.Core.Catalogue.BibliothequeBlocs.DepuisFichier("blocs-3D-echafaudage.txt");
         foreach (double l in new[] { 1.5, 2.0, 2.5, 3.0 })
         {
             vm.Parametres.LargeurMaille = l;

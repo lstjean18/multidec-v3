@@ -150,7 +150,7 @@ public class ReglesTests
     [Fact]
     public void Socles_du_catalogue_dans_la_bibliotheque()
     {
-        var blocs = File.ReadAllLines(Path.Combine(AppContext.BaseDirectory, "blocs-EM-3D.txt"));
+        var blocs = File.ReadAllLines(Path.Combine(AppContext.BaseDirectory, "blocs-3D-echafaudage.txt"));
         Assert.All(CatalogueSocles.Tous, s => Assert.Contains(s.Reference, blocs));
     }
 
