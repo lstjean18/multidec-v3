@@ -391,6 +391,14 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
     /// <summary>Titre de l'onglet des grilles : « Mailles et niveaux · S2 ».</summary>
     public string TitreGrilles => "Mailles et niveaux · " + NomFaceActive;
 
+    /// <summary>Couleur pastel de chaque face (S1, S2, S3, S4), sur son onglet et sur celui des grilles.</summary>
+    public static IReadOnlyList<string> CouleursFaces { get; } = new[] { "#CFE2F3", "#D9EAD3", "#FCE5CD", "#E4D7F0" };
+
+    public static string CouleurFace(int index) => CouleursFaces[((index % CouleursFaces.Count) + CouleursFaces.Count) % CouleursFaces.Count];
+
+    /// <summary>Couleur de la face active (onglet « Mailles et niveaux »).</summary>
+    public string CouleurFaceActive => CouleurFace(_indexFace);
+
     public string TitreAlertes => Alertes.Count == 0 ? "Alertes" : $"Alertes ({Alertes.Count})";
 
     /// <summary>Résultat de la face active : longueur obtenue, hauteur, mailles et niveaux.</summary>
@@ -619,6 +627,7 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
         Notifier(nameof(LongueurObtenue));
         Notifier(nameof(Resume));
         Notifier(nameof(TitreGrilles));
+        Notifier(nameof(CouleurFaceActive));
         Notifier(nameof(ResumeFace));
         ColonnesConsolesChangees?.Invoke(this, EventArgs.Empty);
     }

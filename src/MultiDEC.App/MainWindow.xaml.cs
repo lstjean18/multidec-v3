@@ -141,11 +141,20 @@ public partial class MainWindow : Window
             Onglets.Items.RemoveAt(Onglets.Items.Count - 1);
         }
 
-        foreach (var face in Vm.Faces)
+        for (int i = 0; i < Vm.Faces.Count; i++)
         {
+            var face = Vm.Faces[i];
             Onglets.Items.Add(new TabItem
             {
-                Header = face.Nom,
+                // Couleur pastel de la face, reprise sur l'onglet « Mailles et niveaux » quand elle est active.
+                Header = new Border
+                {
+                    Background = (System.Windows.Media.Brush)new System.Windows.Media.BrushConverter().ConvertFromString(FacadeViewModel.CouleurFace(i))!,
+                    CornerRadius = new CornerRadius(2),
+                    Padding = new Thickness(6, 1, 6, 1),
+                    Margin = new Thickness(-4, -1, -4, -1),
+                    Child = new TextBlock { Text = face.Nom },
+                },
                 Content = Vm,
                 ContentTemplate = (DataTemplate)FindResource("PanneauFace"),
                 MinWidth = 44,
