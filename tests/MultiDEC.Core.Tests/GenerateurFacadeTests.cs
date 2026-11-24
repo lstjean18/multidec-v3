@@ -793,6 +793,33 @@ public class GenerateurFacadeTests
     }
 
     [Fact]
+    public void Acces_rapporte_plus_haut_que_sa_maille_garde_corps_cote_facade()
+    {
+        // Laurent 24/11/2026 : la partie qui dépasse reçoit les garde-corps des paramètres (ici intérieur MDS 2).
+        var face = Standard(p => p.SecuriteInterieure = TypeSecurite.GardeCorpsMds2); // planchers 2…10
+        face.Mailles[2].Type = TypeMaille.AccesRapporte;
+        face.Mailles[2].EcartHauteur = -4; // maille arrêtée à 6 m, colonne d'accès jusqu'à 10 m
+        var s = GenerateurFacade.Generer(face);
+        var x = face.AbscissesFiles();
+        var gc = s.Elements.Where(e => e.NumeroMaille == 3 && e.Famille == Famille.GardeCorps && e.Axe == Axe.X && Math.Abs(e.Origine.Y + 0.70) < 1e-6 && Math.Abs(e.Origine.X - x[2]) < 1e-6)
+            .Select(e => Math.Round(e.Origine.Z, 2)).OrderBy(z => z).ToList();
+        Assert.Equal(new[] { 8.0, 10.0 }, gc);
+        Assert.True(Sommet(s, x[2], -0.70) >= 11.0 - 1e-6); // poteaux montés pour tenir le garde-corps
+    }
+
+    [Fact]
+    public void Maille_plus_haute_que_son_acces_rapporte_garde_corps_exterieur()
+    {
+        var face = Standard(); // planchers 2…10
+        face.Mailles[2].Type = TypeMaille.AccesRapporte;
+        face.Mailles[2].EcartHauteur = 2; // maille montée à 12 m, colonne d'accès jusqu'à 10 m
+        var s = GenerateurFacade.Generer(face);
+        var gc = s.Elements.Where(e => e.NumeroMaille == 3 && e.Famille == Famille.GardeCorps && e.Axe == Axe.X && Math.Abs(e.Origine.Y + 0.70) < 1e-6).ToList();
+        Assert.Contains(gc, e => Math.Abs(e.Origine.Z - 12) < 1e-6);
+        Assert.DoesNotContain(gc, e => e.Origine.Z < 10 + 1e-6);
+    }
+
+    [Fact]
     public void Escalier_sur_maille_de_2_m_ignore_avec_alerte()
     {
         var face = Standard();

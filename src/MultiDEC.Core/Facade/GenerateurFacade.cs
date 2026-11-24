@@ -450,13 +450,14 @@ public sealed partial class GenerateurFacade
                 {
                     // Structure inversée : le côté extérieur du carré d'angle donne sur le bout de la face précédente (passage).
                 }
-                else if (m.Type == TypeMaille.AccesRapporte || (m.EstEscalier && EscalierPossible(m)))
+                else if ((m.Type == TypeMaille.AccesRapporte || (m.EstEscalier && EscalierPossible(m))) && z <= HauteurSousMaille(m, _projet.Niveaux) + Cotes.Tolerance)
                 {
                     // Garde-corps extérieur reporté sur la file de l'accès rapporté ; lisse de plancher ici (v2).
                     Ajouter(lisse, Famille.Lisse, new Point3(x0, -_l, z), Axe.X, Face.Exterieure, num);
                 }
                 else if (!SousMailleDesservie(m, n))
                 {
+                    // Maille plus haute que sa sous-maille rapportée : garde-corps extérieur des paramètres au-dessus (Laurent, 24/11/2026).
                     // Appro / recette desservis : la maille s'ouvre sur la sous-maille, pas de garde-corps extérieur.
                     // Sur une poutre : garde-corps en lisses (v2 remplace les cadres MDS).
                     PlacerGardeCorps(surPoutre ? GardeCorpsSurPoutre(SecuriteExterieure(index)) : SecuriteExterieure(index), plintheExt, x0, -_l, z, lm, Face.Exterieure, num);

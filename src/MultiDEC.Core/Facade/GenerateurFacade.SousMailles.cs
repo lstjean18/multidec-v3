@@ -101,6 +101,8 @@ public sealed partial class GenerateurFacade
             {
                 PlacerSousMaille(i, m, w, hs, niveaux);
             }
+
+            GardeCorpsSousMailleAuDessus(i, m, hs, niveaux);
         }
 
         foreach (var kv in files)
@@ -110,6 +112,28 @@ public sealed partial class GenerateurFacade
             foreach (var t in ReglePoteaux.Empiler(_p, false, true, Cotes.Arrondi(kv.Value + HauteurGardeCorps)))
             {
                 Ajouter(t.Reference, t.Famille, new Point3(x, y, t.Z), Axe.Z, Face.Exterieure);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Sous-maille rapportée plus haute que sa maille (Laurent, 24/11/2026) : au-dessus du dernier plancher de la maille,
+    /// le côté façade de la sous-maille (file extérieure de la maille) reçoit le garde-corps intérieur des paramètres.
+    /// </summary>
+    private void GardeCorpsSousMailleAuDessus(int index, MailleDefinition m, double hs, List<Niveau> niveaux)
+    {
+        double hm = m.HauteurMax(_h);
+        if (hs <= hm + Cotes.Tolerance)
+        {
+            return;
+        }
+
+        foreach (var n in niveaux.Where(n => n.Hauteur > hm + Cotes.Tolerance && n.Hauteur <= hs + Cotes.Tolerance))
+        {
+            bool plancher = m.Type == TypeMaille.Appro || m.Type == TypeMaille.Recette ? SousMailleDesservie(m, n) : !(n.EstAccesSeul && m.Type == TypeMaille.AccesRapporte);
+            if (plancher)
+            {
+                PlacerGardeCorps(SecuriteInterieure(index), PlintheInterieure(index), _x[index], -_l, n.Hauteur, m.Longueur, Face.Interieure, index + 1);
             }
         }
     }
