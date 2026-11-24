@@ -48,7 +48,8 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
         Niveaux.CollectionChanged += Niveaux_CollectionChanged;
         Mailles.CollectionChanged += Mailles_CollectionChanged;
         Alertes.CollectionChanged += (_, _) => Notifier(nameof(TitreAlertes));
-        ChargerProjet(ProjetStructure.Nouveau());
+        ChargerProjet(_defauts.NouveauProjet());
+        _dessinerFacade = _defauts.DessinerFacade;
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -64,7 +65,8 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
     public static IReadOnlyList<double> LargeursMailleVolumique { get; } = new[] { 0.70, 0.75, 1.00, 1.05, 1.50, 2.00, 2.50, 3.00 };
 
     /// <summary>Largeurs proposées pour la face ou le module actif.</summary>
-    public IReadOnlyList<double> LargeursProposees => EstVolumique ? LargeursMailleVolumique : LargeursMaille;
+    public IReadOnlyList<double> LargeursProposees =>
+        Proposees(ListesDeChoix.LargeurMaille, EstVolumique ? LargeursMailleVolumique : LargeursMaille, new[] { Parametres.LargeurMaille });
 
     public static IReadOnlyList<double> LongueursMaille { get; } = new[] { 0.70, 0.75, 1.00, 1.05, 1.50, 2.00, 2.50, 3.00 };
 
@@ -97,9 +99,79 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
         Enum.GetValues(typeof(GammePlateaux)).Cast<GammePlateaux>()
             .Select(g => new KeyValuePair<GammePlateaux, string>(g, LibellesPlateaux.Libelle(g))).ToList();
 
-    /// <summary>Consoles du modèle choisi, précédées d'une entrée vide (= sans console).</summary>
+    /// <summary>Consoles du modèle choisi, précédées d'une entrée vide (= sans console), sans celles retirées par l'utilisateur.</summary>
     public IReadOnlyList<string> Consoles =>
-        new[] { string.Empty }.Concat(CatalogueConsoles.Pour(General.Modele).Select(c => c.Reference)).ToList();
+        new[] { string.Empty }.Concat(Proposees(ListesDeChoix.Console, CatalogueConsoles.Pour(General.Modele).Select(c => c.Reference),
+                                                Niveaux.Select(n => n.Console ?? string.Empty))).ToList();
+
+    // ---- Paramètres par défaut : listes réduites aux valeurs gardées par l'utilisateur ------------
+
+    /// <summary>Paramètres par défaut de l'utilisateur : valeurs du « Nouveau » et valeurs retirées des listes.</summary>
+    public ParametresParDefaut Defauts
+    {
+        get => _defauts;
+        set
+        {
+            _defauts = value ?? ParametresParDefaut.Usine();
+            NotifierListes();
+        }
+    }
+
+    public IReadOnlyList<ModeleEchafaudage> ChoixModeles =>
+        Proposees(ListesDeChoix.Modele, Modeles.Cast<ModeleEchafaudage>(), new[] { General.Modele });
+
+    public IReadOnlyList<KeyValuePair<GammePlateaux, string>> ChoixGammes =>
+        Proposees(ListesDeChoix.Plateaux, ChoixPlateaux, new[] { ChoixPlateaux.First(k => k.Key == General.Plateaux) }, k => k.Key);
+
+    public IReadOnlyList<SocleInfo> ChoixSocles =>
+        Proposees(ListesDeChoix.Socle, Socles, Socles.Where(x => x.Reference == General.Socle), x => x.Reference);
+
+    public IReadOnlyList<TypeSecurite> ChoixSecurites =>
+        Proposees(ListesDeChoix.Securite, Securites.Cast<TypeSecurite>(), new[] { General.SecuriteExterieure, General.SecuriteInterieure, General.SecuriteAbouts });
+
+    public IReadOnlyList<TypePlinthe> ChoixPlinthes =>
+        Proposees(ListesDeChoix.Plinthe, Plinthes.Cast<TypePlinthe>(), new[] { General.PlintheExterieure, General.PlintheInterieure, General.PlintheAbouts });
+
+    public IReadOnlyList<double> ChoixLongueursMaille =>
+        Proposees(ListesDeChoix.LongueurMaille, LongueursMaille, new[] { Parametres.LongueurMaillePreferee });
+
+    public IReadOnlyList<TypeTraverse> ChoixTraverses =>
+        Proposees(ListesDeChoix.Traverses, TypesTraverse.Cast<TypeTraverse>(), new[] { Parametres.Traverses });
+
+    public IReadOnlyList<TypeMaille> ChoixTypesMaille =>
+        Proposees(ListesDeChoix.TypeMaille, TypesMaille.Cast<TypeMaille>(), Mailles.Select(m => m.Type));
+
+    public IReadOnlyList<TypePlancher> ChoixTypesPlancher =>
+        Proposees(ListesDeChoix.TypePlancher, TypesPlancher, Niveaux.Select(n => n.Type));
+
+    public IReadOnlyList<double> ChoixStabilisation =>
+        Proposees(ListesDeChoix.Stabilisation, LargeursStabilisation, Mailles.Select(m => m.Stabilisation));
+
+    public IReadOnlyList<double> ChoixProfondeursRecette =>
+        Proposees(ListesDeChoix.ProfondeurRecette, ProfondeursRecette, Mailles.Select(m => m.ProfondeurRecette));
+
+    /// <summary>Valeurs non retirées, plus celles en cours d'utilisation ; liste complète si tout est retiré.</summary>
+    private IReadOnlyList<T> Proposees<T>(string liste, IEnumerable<T> toutes, IEnumerable<T> enCours, Func<T, object?>? cle = null)
+    {
+        cle ??= v => v;
+        var utilisees = new HashSet<string>(enCours.Select(v => ParametresParDefaut.Cle(cle(v))));
+        var tout = toutes.ToList();
+        var gardees = tout.Where(v => !_defauts.EstMasque(liste, cle(v)) || utilisees.Contains(ParametresParDefaut.Cle(cle(v)))).ToList();
+        return gardees.Count == 0 ? tout : gardees;
+    }
+
+    private void NotifierListes()
+    {
+        foreach (var nom in new[]
+        {
+            nameof(Consoles), nameof(ChoixModeles), nameof(ChoixGammes), nameof(ChoixSocles), nameof(ChoixSecurites), nameof(ChoixPlinthes),
+            nameof(LargeursProposees), nameof(ChoixLongueursMaille), nameof(ChoixTraverses), nameof(ChoixTypesMaille), nameof(ChoixTypesPlancher),
+            nameof(ChoixStabilisation), nameof(ChoixProfondeursRecette),
+        })
+        {
+            Notifier(nom);
+        }
+    }
 
     // ---- Données ----------------------------------------------------------------------------
 
@@ -171,6 +243,8 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
         }
 
         Notifier(nameof(General));
+        Notifier(nameof(ChoixSecurites));
+        Notifier(nameof(ChoixPlinthes));
     }
 
     /// <summary>Forme de la structure : la changer crée ou retire des faces (S1 à S4).</summary>
@@ -386,6 +460,8 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
     private CatalogueArticles _articles = CatalogueArticles.Vide;
 
     private bool _dessinerFacade;
+
+    private ParametresParDefaut _defauts = ParametresParDefaut.Usine();
 
     public ObservableCollection<MailleDefinition> Mailles { get; } = new ObservableCollection<MailleDefinition>();
 
@@ -603,9 +679,11 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
         Notifier(nameof(Resume));
     }
 
+    /// <summary>Nouveau projet avec les paramètres par défaut de l'utilisateur.</summary>
     public void Nouveau()
     {
-        ChargerProjet(ProjetStructure.Nouveau());
+        ChargerProjet(_defauts.NouveauProjet());
+        DessinerFacade = _defauts.DessinerFacade;
         CheminFichier = null;
     }
 
@@ -673,6 +751,10 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
         Notifier(nameof(Parametres));
         Notifier(nameof(LongueurFacade));
         Notifier(nameof(NombreAcces));
+        Notifier(nameof(LargeurMaille));
+        Notifier(nameof(LongueurMaillePreferee));
+        Notifier(nameof(HauteurDernierPlancher));
+        NotifierListes();
         Notifier(nameof(LongueurObtenue));
         Notifier(nameof(Resume));
         Notifier(nameof(TitreGrilles));

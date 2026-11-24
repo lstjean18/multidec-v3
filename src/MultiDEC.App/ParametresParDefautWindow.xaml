@@ -1,0 +1,115 @@
+<Window x:Class="MultiDEC.App.ParametresParDefautWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Paramètres par défaut" Height="720" Width="900" MinHeight="480" MinWidth="640"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False" FontFamily="Segoe UI" FontSize="13">
+  <!--
+    Paramètres par défaut de l'utilisateur (Laurent, 24/11/2026) : valeurs utilisées au « Nouveau » et à l'ouverture
+    du programme, valeurs retirées des listes, fichiers de référence. DataContext = ParametresParDefautViewModel.
+  -->
+  <Window.Resources>
+    <SolidColorBrush x:Key="Discret" Color="#57606A" />
+  </Window.Resources>
+
+  <DockPanel Margin="10">
+    <TextBlock DockPanel.Dock="Top" TextWrapping="Wrap" Foreground="{StaticResource Discret}" Margin="0,0,0,8"
+               Text="Ces réglages s'appliquent à chaque « Nouveau » et à l'ouverture du programme, pour votre profil Windows. Décochez une valeur pour la retirer de la liste dans l'application ; la liste déroulante donne la valeur par défaut. Exportez-les pour les réimporter chez un autre utilisateur." />
+
+    <DockPanel DockPanel.Dock="Bottom" Margin="0,10,0,0">
+      <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
+        <Button Content="Enregistrer" IsDefault="True" Click="Enregistrer_Click" Padding="16,4" Margin="4,0" />
+        <Button Content="Annuler" IsCancel="True" Padding="16,4" Margin="4,0,0,0" />
+      </StackPanel>
+      <StackPanel Orientation="Horizontal">
+        <Button Content="Importer…" Click="Importer_Click" Padding="10,4" Margin="0,0,4,0" />
+        <Button Content="Exporter…" Click="Exporter_Click" Padding="10,4" Margin="4,0" />
+        <Button Content="Paramètres d'usine" Click="Usine_Click" Padding="10,4" Margin="4,0" />
+      </StackPanel>
+    </DockPanel>
+
+    <TabControl>
+      <TabItem Header="Listes de choix">
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+          <ItemsControl ItemsSource="{Binding Listes}" Margin="4">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <GroupBox Header="{Binding Titre}" Margin="0,0,0,8">
+                  <StackPanel>
+                    <ItemsControl ItemsSource="{Binding Defauts}">
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                          <StackPanel Orientation="Horizontal" Margin="0,2">
+                            <TextBlock Text="{Binding Titre}" Width="90" VerticalAlignment="Center" />
+                            <ComboBox ItemsSource="{Binding Proposees}" SelectedItem="{Binding Choix}" DisplayMemberPath="Libelle" MinWidth="220" />
+                          </StackPanel>
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <TextBlock Text="Valeurs proposées :" Foreground="{StaticResource Discret}" Margin="0,4,0,0" />
+                    <ItemsControl ItemsSource="{Binding Valeurs}" IsEnabled="{Binding Masquable}">
+                      <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                          <WrapPanel />
+                        </ItemsPanelTemplate>
+                      </ItemsControl.ItemsPanel>
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                          <CheckBox Content="{Binding Libelle}" IsChecked="{Binding Proposee}" Margin="0,2,14,2" />
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                  </StackPanel>
+                </GroupBox>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </ScrollViewer>
+      </TabItem>
+
+      <TabItem Header="Cases et cotes">
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+          <StackPanel Margin="8">
+            <TextBlock Text="CASES À COCHER" FontSize="11" FontWeight="Bold" Foreground="{StaticResource Discret}" Margin="0,4,0,6" />
+            <ItemsControl ItemsSource="{Binding Cases}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <CheckBox Content="{Binding Titre}" IsChecked="{Binding Valeur}" Margin="0,3" />
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <TextBlock Text="COTES" FontSize="11" FontWeight="Bold" Foreground="{StaticResource Discret}" Margin="0,14,0,6" />
+            <ItemsControl ItemsSource="{Binding Cotes}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <StackPanel Orientation="Horizontal" Margin="0,2">
+                    <TextBlock Text="{Binding Titre}" Width="200" VerticalAlignment="Center" />
+                    <TextBox Text="{Binding Valeur, StringFormat=0.00}" Width="90" />
+                  </StackPanel>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </ScrollViewer>
+      </TabItem>
+
+      <TabItem Header="Fichiers">
+        <StackPanel Margin="8">
+          <ItemsControl ItemsSource="{Binding Fichiers}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <DockPanel Margin="0,4">
+                  <TextBlock Text="{Binding Titre}" Width="170" VerticalAlignment="Center" />
+                  <Button DockPanel.Dock="Right" Content="Aucun" Click="EffacerFichier_Click" Padding="8,2" Margin="4,0,0,0" />
+                  <Button DockPanel.Dock="Right" Content="Parcourir…" Click="ChoisirFichier_Click" Padding="8,2" Margin="6,0,0,0" />
+                  <TextBox Text="{Binding Chemin, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center" />
+                </DockPanel>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+          <TextBlock TextWrapping="Wrap" Foreground="{StaticResource Discret}" Margin="0,10,0,0"
+                     Text="La bibliothèque de blocs est chargée à l'ouverture du programme. La trame des devis, les références clients et le logo serviront au décompte, au devis et à la mise en plan." />
+        </StackPanel>
+      </TabItem>
+    </TabControl>
+  </DockPanel>
+</Window>

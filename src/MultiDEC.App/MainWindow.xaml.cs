@@ -45,7 +45,63 @@ public partial class MainWindow : Window
         Vm_PropertyChanged(Vm, new System.ComponentModel.PropertyChangedEventArgs(string.Empty));
         OngletsFaces();
         _orientations = TableOrientations.Charger(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "orientations-blocs.json"));
-        Loaded += (_, _) => ChargerBibliotheque(Reglages.CheminBibliotheque);
+
+        // Paramètres par défaut de l'utilisateur : appliqués au projet de départ, à la bibliothèque et au rendu.
+        try
+        {
+            Vm.Defauts = ParametresParDefaut.Charger(Reglages.CheminParametresParDefaut);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show("Paramètres par défaut illisibles, paramètres d'usine utilisés : " + ex.Message, "Paramètres par défaut", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+
+        Vm.Nouveau();
+        ListeRendu(true);
+        Loaded += (_, _) =>
+        {
+            string? defaut = Vm.Defauts.Bibliotheque;
+            ChargerBibliotheque(!string.IsNullOrEmpty(defaut) && File.Exists(defaut) ? defaut : Reglages.CheminBibliotheque);
+        };
+    }
+
+    /// <summary>Liste des rendus : modes retirés masqués (sauf celui en cours), mode par défaut choisi si demandé.</summary>
+    private void ListeRendu(bool choisirDefaut)
+    {
+        foreach (var item in ChoixRendu.Items.OfType<ComboBoxItem>())
+        {
+            if (choisirDefaut && (string)item.Tag == Vm.Defauts.ModeRendu)
+            {
+                ChoixRendu.SelectedItem = item;
+            }
+        }
+
+        foreach (var item in ChoixRendu.Items.OfType<ComboBoxItem>())
+        {
+            bool masque = Vm.Defauts.EstMasque(ListesDeChoix.ModeRendu, (string)item.Tag) && !ReferenceEquals(item, ChoixRendu.SelectedItem);
+            item.Visibility = masque ? Visibility.Collapsed : Visibility.Visible;
+        }
+    }
+
+    private void ParametresParDefaut_Click(object sender, RoutedEventArgs e)
+    {
+        var fenetre = new ParametresParDefautWindow(Vm.Defauts) { Owner = this };
+        if (fenetre.ShowDialog() != true)
+        {
+            return;
+        }
+
+        try
+        {
+            fenetre.Resultat.Enregistrer(Reglages.CheminParametresParDefaut);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(this, "Enregistrement impossible : " + ex.Message, "Paramètres par défaut", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+
+        Vm.Defauts = fenetre.Resultat;
+        ListeRendu(false);
     }
 
     private FacadeViewModel Vm => (FacadeViewModel)DataContext;
@@ -66,6 +122,7 @@ public partial class MainWindow : Window
             _vd.ReFillTabs(); // onglets des présentations masqués : seul le modèle reste
             Reglages.CheminBibliotheque = chemin;
             TexteBibliotheque.Text = "Bibliothèque : " + Path.GetFileName(chemin);
+            Rendu_SelectionChanged(ChoixRendu, null!);
             ChargerArticles(Path.Combine(Path.GetDirectoryName(chemin)!, CatalogueArticles.NomFichier));
         }
         catch (Exception ex)
@@ -363,7 +420,11 @@ public partial class MainWindow : Window
 
     private void Modele_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e) => Vm.ModeleChange();
 
-    private void Nouveau_Click(object sender, RoutedEventArgs e) => Vm.Nouveau();
+    private void Nouveau_Click(object sender, RoutedEventArgs e)
+    {
+        Vm.Nouveau();
+        ListeRendu(true);
+    }
 
     private void Quitter_Click(object sender, RoutedEventArgs e) => Close();
 
@@ -417,6 +478,9 @@ public partial class MainWindow : Window
 internal static class Reglages
 {
     private static readonly string Dossier = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MultiDEC", "v3");
+
+    /// <summary>Paramètres par défaut de l'utilisateur (profil Windows).</summary>
+    public static string CheminParametresParDefaut => Path.Combine(Dossier, ParametresParDefaut.NomFichier);
 
     public static string? CheminBibliotheque
     {

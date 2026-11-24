@@ -134,7 +134,7 @@
             <TextBlock Grid.Row="1" Style="{StaticResource Etiquette}" Text="Largeur de maille (m)" />
             <ComboBox Grid.Row="1" Grid.Column="1" Margin="0,2" ItemsSource="{Binding LargeursProposees}" SelectedItem="{Binding LargeurMaille}" ItemStringFormat="0.00" />
             <TextBlock Grid.Row="2" Style="{StaticResource Etiquette}" Text="Maille préférée (m)" />
-            <ComboBox Grid.Row="2" Grid.Column="1" Margin="0,2" ItemsSource="{x:Static vm:FacadeViewModel.LongueursMaille}" SelectedItem="{Binding LongueurMaillePreferee}" ItemStringFormat="0.00" />
+            <ComboBox Grid.Row="2" Grid.Column="1" Margin="0,2" ItemsSource="{Binding ChoixLongueursMaille}" SelectedItem="{Binding LongueurMaillePreferee}" ItemStringFormat="0.00" />
             <TextBlock Grid.Row="3" Style="{StaticResource Etiquette}" Text="Nombre d'accès" />
             <TextBox Grid.Row="3" Grid.Column="1" Margin="0,2" Text="{Binding NombreAcces}" />
             <TextBlock Grid.Row="4" Style="{StaticResource Etiquette}" Text="Dernier plancher (m)" />
@@ -169,7 +169,7 @@
 
           <TextBlock Style="{StaticResource Section}" Text="OPTIONS" />
           <DockPanel Margin="0,2,0,4">
-            <ComboBox DockPanel.Dock="Right" Width="110" Style="{StaticResource ListeLibelles}" ItemsSource="{x:Static vm:FacadeViewModel.TypesTraverse}" SelectedItem="{Binding Parametres.Traverses}"
+            <ComboBox DockPanel.Dock="Right" Width="110" Style="{StaticResource ListeLibelles}" ItemsSource="{Binding ChoixTraverses}" SelectedItem="{Binding Parametres.Traverses}"
                       ToolTip="Traverses des files aux planchers complets ; poutrelle et poutre au-delà de 1,05 m de largeur" />
             <TextBlock Style="{StaticResource Etiquette}" Text="Traverses" />
           </DockPanel>
@@ -204,6 +204,9 @@
       </MenuItem>
       <MenuItem Header="_Bibliothèque">
         <MenuItem Header="Choisir la bibliothèque de blocs…" Click="Bibliotheque_Click" />
+      </MenuItem>
+      <MenuItem Header="_Outils">
+        <MenuItem Header="Paramètres par _défaut…" Click="ParametresParDefaut_Click" />
       </MenuItem>
     </Menu>
 
@@ -365,13 +368,13 @@
                   <RowDefinition /><RowDefinition /><RowDefinition />
                 </Grid.RowDefinitions>
                 <TextBlock Style="{StaticResource Etiquette}" Text="Modèle" />
-                <ComboBox Grid.Column="1" Margin="0,2" Style="{StaticResource ListeLibelles}" ItemsSource="{x:Static vm:FacadeViewModel.Modeles}"
+                <ComboBox Grid.Column="1" Margin="0,2" Style="{StaticResource ListeLibelles}" ItemsSource="{Binding ChoixModeles}"
                           SelectedItem="{Binding General.Modele}" SelectionChanged="Modele_SelectionChanged" />
                 <TextBlock Grid.Row="1" Style="{StaticResource Etiquette}" Text="Plateaux" />
-                <ComboBox Grid.Row="1" Grid.Column="1" Margin="0,2" ItemsSource="{x:Static vm:FacadeViewModel.ChoixPlateaux}" DisplayMemberPath="Value" SelectedValuePath="Key"
+                <ComboBox Grid.Row="1" Grid.Column="1" Margin="0,2" ItemsSource="{Binding ChoixGammes}" DisplayMemberPath="Value" SelectedValuePath="Key"
                           SelectedValue="{Binding General.Plateaux}" />
                 <TextBlock Grid.Row="2" Style="{StaticResource Etiquette}" Text="Socles" />
-                <ComboBox Grid.Row="2" Grid.Column="1" Margin="0,2" ItemsSource="{x:Static vm:FacadeViewModel.Socles}" DisplayMemberPath="Libelle" SelectedValuePath="Reference"
+                <ComboBox Grid.Row="2" Grid.Column="1" Margin="0,2" ItemsSource="{Binding ChoixSocles}" DisplayMemberPath="Libelle" SelectedValuePath="Reference"
                           SelectedValue="{Binding General.Socle}" />
               </Grid>
 
@@ -436,14 +439,14 @@
                 <TextBlock Grid.Column="1" Text="Garde-corps" FontSize="12" Foreground="{StaticResource Discret}" />
                 <TextBlock Grid.Column="2" Text="Plinthe" FontSize="12" Foreground="{StaticResource Discret}" Margin="4,0,0,0" />
                 <TextBlock Grid.Row="1" Style="{StaticResource Etiquette}" Text="Extérieur (rue)" />
-                <ComboBox Grid.Row="1" Grid.Column="1" Margin="0,2" Style="{StaticResource ListeLibelles}" ItemsSource="{x:Static vm:FacadeViewModel.Securites}" SelectedItem="{Binding SecuriteExterieure}" />
-                <ComboBox Grid.Row="1" Grid.Column="2" Margin="4,2,0,2" Style="{StaticResource ListeLibelles}" ItemsSource="{x:Static vm:FacadeViewModel.Plinthes}" SelectedItem="{Binding PlintheExterieure}" />
+                <ComboBox Grid.Row="1" Grid.Column="1" Margin="0,2" Style="{StaticResource ListeLibelles}" ItemsSource="{Binding ChoixSecurites}" SelectedItem="{Binding SecuriteExterieure}" />
+                <ComboBox Grid.Row="1" Grid.Column="2" Margin="4,2,0,2" Style="{StaticResource ListeLibelles}" ItemsSource="{Binding ChoixPlinthes}" SelectedItem="{Binding PlintheExterieure}" />
                 <TextBlock Grid.Row="2" Style="{StaticResource Etiquette}" Text="Intérieur (mur)" />
-                <ComboBox Grid.Row="2" Grid.Column="1" Margin="0,2" Style="{StaticResource ListeLibelles}" ItemsSource="{x:Static vm:FacadeViewModel.Securites}" SelectedItem="{Binding SecuriteInterieure}" />
-                <ComboBox Grid.Row="2" Grid.Column="2" Margin="4,2,0,2" Style="{StaticResource ListeLibelles}" ItemsSource="{x:Static vm:FacadeViewModel.Plinthes}" SelectedItem="{Binding PlintheInterieure}" />
+                <ComboBox Grid.Row="2" Grid.Column="1" Margin="0,2" Style="{StaticResource ListeLibelles}" ItemsSource="{Binding ChoixSecurites}" SelectedItem="{Binding SecuriteInterieure}" />
+                <ComboBox Grid.Row="2" Grid.Column="2" Margin="4,2,0,2" Style="{StaticResource ListeLibelles}" ItemsSource="{Binding ChoixPlinthes}" SelectedItem="{Binding PlintheInterieure}" />
                 <TextBlock Grid.Row="3" Style="{StaticResource Etiquette}" Text="Abouts" />
-                <ComboBox Grid.Row="3" Grid.Column="1" Margin="0,2" Style="{StaticResource ListeLibelles}" ItemsSource="{x:Static vm:FacadeViewModel.Securites}" SelectedItem="{Binding SecuriteAbouts}" />
-                <ComboBox Grid.Row="3" Grid.Column="2" Margin="4,2,0,2" Style="{StaticResource ListeLibelles}" ItemsSource="{x:Static vm:FacadeViewModel.Plinthes}" SelectedItem="{Binding PlintheAbouts}" />
+                <ComboBox Grid.Row="3" Grid.Column="1" Margin="0,2" Style="{StaticResource ListeLibelles}" ItemsSource="{Binding ChoixSecurites}" SelectedItem="{Binding SecuriteAbouts}" />
+                <ComboBox Grid.Row="3" Grid.Column="2" Margin="4,2,0,2" Style="{StaticResource ListeLibelles}" ItemsSource="{Binding ChoixPlinthes}" SelectedItem="{Binding PlintheAbouts}" />
               </Grid>
               <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
                 <CheckBox Content="About gauche" IsChecked="{Binding General.AboutGauche}" Margin="0,3,16,3" />
@@ -522,7 +525,7 @@
                       </DataGridTemplateColumn.CellTemplate>
                       <DataGridTemplateColumn.CellEditingTemplate>
                         <DataTemplate>
-                          <ComboBox Style="{StaticResource ListeLibelles}" ItemsSource="{x:Static vm:FacadeViewModel.TypesMaille}" SelectedItem="{Binding Type, UpdateSourceTrigger=PropertyChanged}" />
+                          <ComboBox Style="{StaticResource ListeLibelles}" ItemsSource="{Binding DataContext.ChoixTypesMaille, RelativeSource={RelativeSource AncestorType=DataGrid}}" SelectedItem="{Binding Type, UpdateSourceTrigger=PropertyChanged}" />
                         </DataTemplate>
                       </DataGridTemplateColumn.CellEditingTemplate>
                     </DataGridTemplateColumn>
@@ -564,7 +567,7 @@
                       </DataGridTemplateColumn.CellTemplate>
                       <DataGridTemplateColumn.CellEditingTemplate>
                         <DataTemplate>
-                          <ComboBox ItemsSource="{x:Static vm:FacadeViewModel.LargeursStabilisation}" SelectedItem="{Binding Stabilisation, UpdateSourceTrigger=PropertyChanged}">
+                          <ComboBox ItemsSource="{Binding DataContext.ChoixStabilisation, RelativeSource={RelativeSource AncestorType=DataGrid}}" SelectedItem="{Binding Stabilisation, UpdateSourceTrigger=PropertyChanged}">
                             <ComboBox.ItemTemplate>
                               <DataTemplate>
                                 <TextBlock Text="{Binding Converter={StaticResource CoteOptionnelle}}" />
@@ -612,7 +615,7 @@
                       </DataGridTemplateColumn.CellTemplate>
                       <DataGridTemplateColumn.CellEditingTemplate>
                         <DataTemplate>
-                          <ComboBox ItemsSource="{x:Static vm:FacadeViewModel.ProfondeursRecette}" SelectedItem="{Binding ProfondeurRecette, UpdateSourceTrigger=PropertyChanged}"
+                          <ComboBox ItemsSource="{Binding DataContext.ChoixProfondeursRecette, RelativeSource={RelativeSource AncestorType=DataGrid}}" SelectedItem="{Binding ProfondeurRecette, UpdateSourceTrigger=PropertyChanged}"
                                     ItemStringFormat="0.00" IsEnabled="{Binding Type, Converter={StaticResource Egal}, ConverterParameter=Recette}" />
                         </DataTemplate>
                       </DataGridTemplateColumn.CellEditingTemplate>
@@ -643,7 +646,7 @@
                       </DataGridTemplateColumn.CellTemplate>
                       <DataGridTemplateColumn.CellEditingTemplate>
                         <DataTemplate>
-                          <ComboBox Style="{StaticResource ListeLibelles}" ItemsSource="{x:Static vm:FacadeViewModel.TypesPlancher}" SelectedItem="{Binding Type, UpdateSourceTrigger=PropertyChanged}" />
+                          <ComboBox Style="{StaticResource ListeLibelles}" ItemsSource="{Binding DataContext.ChoixTypesPlancher, RelativeSource={RelativeSource AncestorType=DataGrid}}" SelectedItem="{Binding Type, UpdateSourceTrigger=PropertyChanged}" />
                         </DataTemplate>
                       </DataGridTemplateColumn.CellEditingTemplate>
                     </DataGridTemplateColumn>
