@@ -44,6 +44,37 @@ public class BibliothequeDwgTests
         return liste;
     }
 
+    /// <summary>Fichiers .bib (XML : désignations et poids des blocs) du dossier bibliothèque : début et taille dans le log.</summary>
+    [Fact]
+    public void Fichiers_bib()
+    {
+        var ws = Environment.GetEnvironmentVariable("GITHUB_WORKSPACE");
+        if (string.IsNullOrEmpty(ws))
+        {
+            return;
+        }
+
+        var runner = Path.GetFullPath(Path.Combine(ws, "..", "..", ".."));
+        foreach (var d in Directory.GetDirectories(runner).Where(d => Path.GetFileName(d).StartsWith("biblioth", StringComparison.OrdinalIgnoreCase)))
+        {
+            foreach (var f in Directory.GetFiles(d, "*.bib"))
+            {
+                var texte = File.ReadAllText(f);
+                var lignes = texte.Split('\n');
+                _sortie.WriteLine($"BIB {Path.GetFileName(f)} : {new FileInfo(f).Length} octets, {lignes.Length} lignes");
+                foreach (var l in lignes.Take(80))
+                {
+                    _sortie.WriteLine("BIB| " + l.TrimEnd('\r'));
+                }
+
+                foreach (var l in lignes.Where(l => l.Contains("HMPOT20") || l.Contains("HMPLAF2503NF") || l.Contains("HMCON700E\"")).Take(20))
+                {
+                    _sortie.WriteLine("BIB* " + l.TrimEnd('\r'));
+                }
+            }
+        }
+    }
+
     [Fact]
     public void Facades_avec_les_dwg()
     {
