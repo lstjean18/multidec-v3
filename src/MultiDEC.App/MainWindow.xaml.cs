@@ -26,7 +26,7 @@ public partial class MainWindow : Window
     private readonly TableOrientations _orientations;
     private RenduVectorDraw? _rendu;
 
-    /// <summary>Colonnes « ConXm » ajoutées à la grille des mailles (une par niveau avec console).</summary>
+    /// <summary>Colonnes « ConXm » et « PareGravXm » ajoutées à la grille des mailles (une par niveau avec console / pare-gravois).</summary>
     private readonly List<DataGridColumn> _colonnesConsoles = new List<DataGridColumn>();
 
     private bool _ongletsAReconstruire;
@@ -283,6 +283,28 @@ public partial class MainWindow : Window
             var colonne = new DataGridTemplateColumn
             {
                 Header = n.NomColonneConsole,
+                CellTemplate = new DataTemplate { VisualTree = caseACocher },
+                Width = DataGridLength.Auto,
+            };
+            GrilleMailles.Columns.Add(colonne);
+            _colonnesConsoles.Add(colonne);
+        }
+
+        // Une colonne « PareGravXm » par niveau avec pare-gravois (Laurent, 24/11/2026).
+        foreach (var n in Vm.NiveauxAvecPareGravois)
+        {
+            var caseACocher = new FrameworkElementFactory(typeof(CheckBox));
+            caseACocher.SetBinding(ToggleButton.IsCheckedProperty, new Binding("[" + MailleDefinition.PrefixePareGravois + MailleDefinition.Cle(n.Hauteur) + "]")
+            {
+                Mode = BindingMode.TwoWay,
+                UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged,
+            });
+            caseACocher.SetValue(HorizontalAlignmentProperty, HorizontalAlignment.Center);
+            caseACocher.SetValue(ToolTipProperty, $"Pare-gravois au niveau {n.Hauteur:0.00} m sur cette maille");
+
+            var colonne = new DataGridTemplateColumn
+            {
+                Header = n.NomColonnePareGravois,
                 CellTemplate = new DataTemplate { VisualTree = caseACocher },
                 Width = DataGridLength.Auto,
             };

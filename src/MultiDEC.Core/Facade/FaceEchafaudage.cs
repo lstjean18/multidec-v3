@@ -44,6 +44,25 @@ public sealed class FaceEchafaudage
             ? niveau.Console
             : null;
 
+    /// <summary>Pare-gravois posé sur une maille à un niveau : niveau coché et case « PareGravXm » de la maille cochée.</summary>
+    public bool PareGravoisSur(MailleDefinition maille, Niveau niveau) =>
+        niveau.PareGravois && niveau.Hauteur > Cotes.Tolerance && maille.PareGravoisA(niveau.Hauteur);
+
+    /// <summary>
+    /// Fichiers d'avant le 24/11/2026 (pare-gravois sur toute la face) : un niveau de pare-gravois sans aucune maille
+    /// cochée est coché sur toutes les mailles.
+    /// </summary>
+    public void ConvertirPareGravoisAncienFormat()
+    {
+        foreach (var n in Niveaux.Where(n => n.PareGravois && !Mailles.Any(m => m.PareGravoisA(n.Hauteur))))
+        {
+            foreach (var m in Mailles)
+            {
+                m.DefinirPareGravois(n.Hauteur, true);
+            }
+        }
+    }
+
     /// <summary>
     /// Conversion d'un fichier v1 (console par maille, tous niveaux complets) : chaque niveau complet reçoit
     /// la console la plus fréquente et les mailles qui en avaient une sont cochées à ces niveaux.

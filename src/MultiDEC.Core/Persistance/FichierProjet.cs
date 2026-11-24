@@ -54,6 +54,11 @@ public static class FichierProjet
             }
 
             structure.AjusterFaces();
+            foreach (var f in structure.Faces)
+            {
+                f.ConvertirPareGravoisAncienFormat();
+            }
+
             return structure;
         }
 
@@ -85,6 +90,7 @@ public static class FichierProjet
         face.Nom = "S1";
         projet.Faces.Add(face);
         projet.AppliquerGeneraux();
+        face.ConvertirPareGravoisAncienFormat();
         if (version < 2)
         {
             face.ConvertirConsolesAncienFormat();

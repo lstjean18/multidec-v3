@@ -778,43 +778,72 @@ public sealed partial class GenerateurFacade
         {
             double z = n.Hauteur;
 
-            // Une console HMPARGRA à chaque file, sur la file extérieure, tournée vers l'extérieur.
-            for (int f = 0; f <= DerniereFile; f++)
+            // Mailles cochées dans la colonne « PareGravXm » (Laurent, 24/11/2026), par tronçons de mailles consécutives.
+            var tronçons = new List<(int Debut, int Fin)>();
+            for (int i = 0; i < _projet.Mailles.Count; i++)
             {
-                if (PoutreSousFile(f) is double zp && z < zp - Cotes.Tolerance)
+                if (!_projet.PareGravoisSur(_projet.Mailles[i], n))
                 {
                     continue;
                 }
 
-                Ajouter(References.ConsolePareGravois, Famille.PareGravois, new Point3(_x[f], -_l, z), Axe.Y, Face.Exterieure);
-            }
-
-            // Trois lisses par maille le long des consoles (cotes v2 : 0,27 / 1,20 / 2,15 m au-dessus du plancher,
-            // 0,10 m devant la file, le tout tourné de 35° autour de la file extérieure).
-            foreach (var (dy, dz) in new[] { (-0.10, 0.27), (-0.10, 1.20), (-0.10, 2.15) })
-            {
-                var (y, zz) = Tourner(dy, dz, AnglePareGravois);
-                for (int i = 0; i < _projet.Mailles.Count; i++)
+                if (tronçons.Count > 0 && tronçons[tronçons.Count - 1].Fin == i - 1)
                 {
-                    var m = _projet.Mailles[i];
-                    Ajouter(References.LisseOuTraverse(m.Longueur), Famille.PareGravois, new Point3(_x[i], Cotes.Arrondi(-_l + y), Cotes.Arrondi(z + zz)), Axe.X, Face.Exterieure, i + 1);
+                    tronçons[tronçons.Count - 1] = (tronçons[tronçons.Count - 1].Debut, i);
+                }
+                else
+                {
+                    tronçons.Add((i, i));
                 }
             }
 
-            // Tôles de 0,90 m de large posées tous les 0,80 m (recouvrement 0,10 m), la dernière calée au bout ;
-            // chaque tôle (2,00 m dans la pente) monte vers l'extérieur le long du bras de la console, 3 crochets chacune.
-            double xMax = Math.Max(0, Cotes.Arrondi(LongueurTotale - LargeurTolePareGravois));
-            for (double x = 0; ; x = Cotes.Arrondi(x + PasTolesPareGravois))
+            foreach (var (debut, fin) in tronçons)
             {
-                double xTole = Math.Min(x, xMax);
-                Ajouter(References.TolePareGravois, Famille.PareGravois, new Point3(xTole, -_l - 0.10, z + 0.10), Axe.X, Face.Exterieure, 0, inverse: false, inclinaison: 90 + AnglePareGravois);
-                Ajouter(References.CrochetPareGravois, Famille.PareGravois, new Point3(xTole, -_l, z + 0.30), Axe.X, Face.Exterieure);
-                Ajouter(References.CrochetPareGravois, Famille.PareGravois, new Point3(xTole, -_l, z + 0.30), Axe.X, Face.Exterieure);
-                Ajouter(References.CrochetPareGravois, Famille.PareGravois, new Point3(xTole, -_l, z + 0.075), Axe.X, Face.Exterieure);
-                if (xTole >= xMax - Cotes.Tolerance)
-                {
-                    break;
-                }
+                PlacerPareGravois(z, debut, fin);
+            }
+        }
+    }
+
+    /// <summary>Pare-gravois d'un niveau sur les mailles <paramref name="debut"/> à <paramref name="fin"/> (consécutives).</summary>
+    private void PlacerPareGravois(double z, int debut, int fin)
+    {
+        // Une console HMPARGRA à chaque file, sur la file extérieure, tournée vers l'extérieur.
+        for (int f = debut; f <= fin + 1; f++)
+        {
+            if (PoutreSousFile(f) is double zp && z < zp - Cotes.Tolerance)
+            {
+                continue;
+            }
+
+            Ajouter(References.ConsolePareGravois, Famille.PareGravois, new Point3(_x[f], -_l, z), Axe.Y, Face.Exterieure);
+        }
+
+        // Trois lisses par maille le long des consoles (cotes v2 : 0,27 / 1,20 / 2,15 m au-dessus du plancher,
+        // 0,10 m devant la file, le tout tourné de 35° autour de la file extérieure).
+        foreach (var (dy, dz) in new[] { (-0.10, 0.27), (-0.10, 1.20), (-0.10, 2.15) })
+        {
+            var (y, zz) = Tourner(dy, dz, AnglePareGravois);
+            for (int i = debut; i <= fin; i++)
+            {
+                var m = _projet.Mailles[i];
+                Ajouter(References.LisseOuTraverse(m.Longueur), Famille.PareGravois, new Point3(_x[i], Cotes.Arrondi(-_l + y), Cotes.Arrondi(z + zz)), Axe.X, Face.Exterieure, i + 1);
+            }
+        }
+
+        // Tôles de 0,90 m de large posées tous les 0,80 m (recouvrement 0,10 m), la dernière calée au bout ;
+        // chaque tôle (2,00 m dans la pente) monte vers l'extérieur le long du bras de la console, 3 crochets chacune.
+        double x0 = _x[debut];
+        double xMax = Math.Max(x0, Cotes.Arrondi(_x[fin + 1] - LargeurTolePareGravois));
+        for (double x = x0; ; x = Cotes.Arrondi(x + PasTolesPareGravois))
+        {
+            double xTole = Math.Min(x, xMax);
+            Ajouter(References.TolePareGravois, Famille.PareGravois, new Point3(xTole, -_l - 0.10, z + 0.10), Axe.X, Face.Exterieure, 0, inverse: false, inclinaison: 90 + AnglePareGravois);
+            Ajouter(References.CrochetPareGravois, Famille.PareGravois, new Point3(xTole, -_l, z + 0.30), Axe.X, Face.Exterieure);
+            Ajouter(References.CrochetPareGravois, Famille.PareGravois, new Point3(xTole, -_l, z + 0.30), Axe.X, Face.Exterieure);
+            Ajouter(References.CrochetPareGravois, Famille.PareGravois, new Point3(xTole, -_l, z + 0.075), Axe.X, Face.Exterieure);
+            if (xTole >= xMax - Cotes.Tolerance)
+            {
+                break;
             }
         }
     }

@@ -335,6 +335,9 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
     /// <summary>Niveaux qui ont une console : une colonne de cases « ConXm » chacun dans la grille des mailles.</summary>
     public IReadOnlyList<Niveau> NiveauxAvecConsole => Niveaux.Where(n => n.AConsole).OrderBy(n => n.Hauteur).ToList();
 
+    /// <summary>Niveaux avec pare-gravois : une colonne « PareGravXm » chacun dans la grille des mailles (Laurent, 24/11/2026).</summary>
+    public IReadOnlyList<Niveau> NiveauxAvecPareGravois => Niveaux.Where(n => n.PareGravois && n.Hauteur > Cotes.Tolerance).OrderBy(n => n.Hauteur).ToList();
+
     public StructureFacade? Structure => _structure;
 
     public Commande Proposer { get; }
@@ -407,13 +410,14 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
         }
     }
 
-    /// <summary>Nouvelle maille : longueur préférée de la face, consoles comme sa voisine, sans diagonale.</summary>
+    /// <summary>Nouvelle maille : longueur préférée de la face, consoles et pare-gravois comme sa voisine, sans diagonale.</summary>
     private MailleDefinition NouvelleMaille(int voisine)
     {
         var m = new MailleDefinition(Parametres.LongueurMaillePreferee);
         if (voisine >= 0 && voisine < Mailles.Count)
         {
             m.Consoles = new List<double>(Mailles[voisine].Consoles);
+            m.PareGravois = new List<double>(Mailles[voisine].PareGravois);
         }
 
         return m;
@@ -593,6 +597,11 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
                 CocherConsoles(n.Hauteur, false);
             }
 
+            if (n.PareGravois && !Niveaux.Any(autre => autre.PareGravois && Cotes.Egal(autre.Hauteur, n.Hauteur)))
+            {
+                CocherPareGravois(n.Hauteur, false);
+            }
+
             _hauteurs.Remove(n);
         }
 
@@ -616,19 +625,41 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
             CocherConsoles(n.Hauteur, n.AConsole);
             ColonnesConsolesChangees?.Invoke(this, EventArgs.Empty);
         }
+        else if (e.PropertyName == nameof(Niveau.PareGravois))
+        {
+            // Pare-gravois coché au niveau : colonne « PareGravXm » créée, toutes les mailles cochées (Laurent, 24/11/2026).
+            CocherPareGravois(n.Hauteur, n.PareGravois);
+            ColonnesConsolesChangees?.Invoke(this, EventArgs.Empty);
+        }
         else if (e.PropertyName == nameof(Niveau.Hauteur))
         {
             double ancienne = _hauteurs[n];
             _hauteurs[n] = n.Hauteur;
-            if (n.AConsole)
+            if (n.AConsole || n.PareGravois)
             {
                 foreach (var m in Mailles)
                 {
-                    m.DeplacerConsole(ancienne, n.Hauteur);
+                    if (n.AConsole)
+                    {
+                        m.DeplacerConsole(ancienne, n.Hauteur);
+                    }
+
+                    if (n.PareGravois)
+                    {
+                        m.DeplacerPareGravois(ancienne, n.Hauteur);
+                    }
                 }
 
                 ColonnesConsolesChangees?.Invoke(this, EventArgs.Empty);
             }
+        }
+    }
+
+    private void CocherPareGravois(double hauteur, bool coche)
+    {
+        foreach (var m in Mailles)
+        {
+            m.DefinirPareGravois(hauteur, coche);
         }
     }
 

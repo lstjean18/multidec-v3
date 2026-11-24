@@ -12,7 +12,8 @@ namespace MultiDEC.Core.Facade;
 /// <summary>
 /// Une ligne de la grille des mailles, éditable par l'utilisateur (Laurent, 23/11/2026) :
 /// - case « Diagonale » : la maille porte des diagonales verticales sur toute sa hauteur ;
-/// - cases « ConXm » : la maille porte la console du niveau X (la console se choisit par niveau).
+/// - cases « ConXm » : la maille porte la console du niveau X (la console se choisit par niveau) ;
+/// - cases « PareGravXm » : la maille porte le pare-gravois du niveau X (Laurent, 24/11/2026).
 /// </summary>
 public sealed class MailleDefinition : INotifyPropertyChanged
 {
@@ -20,6 +21,7 @@ public sealed class MailleDefinition : INotifyPropertyChanged
     private TypeMaille _type = TypeMaille.Travail;
     private bool _diagonale;
     private List<double> _consoles = new List<double>();
+    private List<double> _pareGravois = new List<double>();
     private string _jonction = string.Empty;
     private double _profondeurRecette = 2.0;
     private double _stabilisation;
@@ -185,12 +187,70 @@ public sealed class MailleDefinition : INotifyPropertyChanged
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? ConsoleAncienFormat { get; set; }
 
-    /// <summary>Accès des cases « ConXm » de la grille : clé = hauteur du niveau, en invariant (ex. "4" ou "4.5").</summary>
-    [JsonIgnore]
-    public bool this[string hauteur]
+    /// <summary>Hauteurs des niveaux de pare-gravois posés sur cette maille.</summary>
+    public List<double> PareGravois
     {
-        get => ConsoleA(Lire(hauteur));
-        set => DefinirConsole(Lire(hauteur), value);
+        get => _pareGravois;
+        set
+        {
+            _pareGravois = value ?? new List<double>();
+            NotifierConsoles();
+        }
+    }
+
+    /// <summary>
+    /// Accès des cases de la grille : « ConXm » avec la clé = hauteur du niveau en invariant (ex. "4" ou "4.5"),
+    /// « PareGravXm » avec la clé préfixée de <see cref="PrefixePareGravois"/> (ex. "PG4").
+    /// </summary>
+    [JsonIgnore]
+    public bool this[string cle]
+    {
+        get => cle.StartsWith(PrefixePareGravois, StringComparison.Ordinal) ? PareGravoisA(Lire(cle.Substring(PrefixePareGravois.Length))) : ConsoleA(Lire(cle));
+        set
+        {
+            if (cle.StartsWith(PrefixePareGravois, StringComparison.Ordinal))
+            {
+                DefinirPareGravois(Lire(cle.Substring(PrefixePareGravois.Length)), value);
+            }
+            else
+            {
+                DefinirConsole(Lire(cle), value);
+            }
+        }
+    }
+
+    public const string PrefixePareGravois = "PG";
+
+    public bool PareGravoisA(double hauteur) => _pareGravois.Any(h => Cotes.Egal(h, hauteur));
+
+    public void DefinirPareGravois(double hauteur, bool present)
+    {
+        if (present == PareGravoisA(hauteur))
+        {
+            return;
+        }
+
+        if (present)
+        {
+            _pareGravois.Add(Cotes.Arrondi(hauteur));
+            _pareGravois.Sort();
+        }
+        else
+        {
+            _pareGravois.RemoveAll(h => Cotes.Egal(h, hauteur));
+        }
+
+        NotifierConsoles();
+    }
+
+    /// <summary>Le niveau a changé de hauteur : la case de pare-gravois suit.</summary>
+    public void DeplacerPareGravois(double ancienne, double nouvelle)
+    {
+        if (PareGravoisA(ancienne))
+        {
+            DefinirPareGravois(ancienne, false);
+            DefinirPareGravois(nouvelle, true);
+        }
     }
 
     public bool ConsoleA(double hauteur) => _consoles.Any(h => Cotes.Egal(h, hauteur));
@@ -230,6 +290,7 @@ public sealed class MailleDefinition : INotifyPropertyChanged
     public MailleDefinition Copie() => new MailleDefinition(Longueur, Type, Diagonale)
     {
         Consoles = new List<double>(_consoles),
+        PareGravois = new List<double>(_pareGravois),
         ProfondeurRecette = ProfondeurRecette,
         Stabilisation = Stabilisation,
         EcartHauteur = EcartHauteur,

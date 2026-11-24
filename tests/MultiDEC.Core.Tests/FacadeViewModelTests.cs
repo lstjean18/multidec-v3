@@ -127,6 +127,33 @@ public class FacadeViewModelTests
     }
 
     [Fact]
+    public void Pare_gravois_coche_a_un_niveau_colonne_creee_et_toutes_les_mailles_cochees()
+    {
+        var vm = new FacadeViewModel();
+        int signaux = 0;
+        vm.ColonnesConsolesChangees += (_, _) => signaux++;
+        var n4 = vm.Niveaux.Single(n => n.Hauteur == 4);
+
+        n4.PareGravois = true;
+
+        Assert.True(signaux > 0);
+        Assert.Equal("PareGrav4m", vm.NiveauxAvecPareGravois.Single().NomColonnePareGravois);
+        Assert.All(vm.Mailles, m => Assert.True(m["PG4"]));
+        Assert.All(vm.Mailles, m => Assert.False(m["4"]));
+
+        vm.Mailles[0]["PG4"] = false;
+        var s = vm.Generer();
+        Assert.DoesNotContain(s.Elements, e => e.Famille == Famille.PareGravois && e.NumeroMaille == 1);
+
+        n4.Hauteur = 4.5;
+        Assert.True(vm.Mailles[1]["PG4.5"]);
+
+        n4.PareGravois = false;
+        Assert.Empty(vm.NiveauxAvecPareGravois);
+        Assert.All(vm.Mailles, m => Assert.Empty(m.PareGravois));
+    }
+
+    [Fact]
     public void Niveau_supprime_efface_ses_cases_console()
     {
         var vm = new FacadeViewModel();

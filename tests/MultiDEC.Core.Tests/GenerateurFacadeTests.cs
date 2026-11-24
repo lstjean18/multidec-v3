@@ -110,10 +110,43 @@ public class GenerateurFacadeTests
     }
 
     [Fact]
+    public void Pare_gravois_seulement_sur_les_mailles_cochees()
+    {
+        // Laurent 24/11/2026 : colonne « PareGrav2m » dans la grille des mailles.
+        var face = Standard();
+        face.Niveaux.Single(n => Math.Abs(n.Hauteur - 2) < 0.001).PareGravois = true;
+        face.Mailles[2].DefinirPareGravois(2, true);
+        face.Mailles[3].DefinirPareGravois(2, true);
+        face.Mailles[6].DefinirPareGravois(2, true);
+        Assert.True(face.Mailles[2]["PG2"]);
+        Assert.False(face.Mailles[2]["2"]); // la case console du même niveau reste distincte
+        var s = GenerateurFacade.Generer(face);
+        var x = face.AbscissesFiles();
+        var pg = s.Elements.Where(e => e.Famille == Famille.PareGravois).ToList();
+
+        // Deux tronçons : mailles 3-4 (3 files) et maille 7 (2 files).
+        Assert.Equal(5, pg.Count(e => e.Reference == "HMPARGRA"));
+        Assert.Equal(9, pg.Count(e => e.Axe == Axe.X && e.Reference.StartsWith("HMLIS", StringComparison.Ordinal)));
+        var toles = pg.Where(e => e.Reference == "HMTOG200").ToList();
+        Assert.All(toles, t => Assert.True((t.Origine.X >= x[2] - 1e-6 && t.Origine.X + 0.9 <= x[4] + 1e-6) || (t.Origine.X >= x[6] - 1e-6 && t.Origine.X + 0.9 <= x[7] + 1e-6)));
+        Assert.Equal("PareGrav2m", face.Niveaux.Single(n => Math.Abs(n.Hauteur - 2) < 0.001).NomColonnePareGravois);
+    }
+
+    [Fact]
+    public void Ancien_fichier_pare_gravois_coche_sur_toutes_les_mailles()
+    {
+        var projet = ProjetStructure.Nouveau();
+        projet.S1.Niveaux.Single(n => Math.Abs(n.Hauteur - 4) < 0.001).PareGravois = true;
+        var relu = FichierProjet.DepuisJson(FichierProjet.VersJson(projet));
+        Assert.All(relu.S1.Mailles, m => Assert.True(m.PareGravoisA(4)));
+    }
+
+    [Fact]
     public void Pare_gravois_consoles_a_chaque_file_toles_et_lisses()
     {
         var face = Standard();
         face.Niveaux.Single(n => Math.Abs(n.Hauteur - 2) < 0.001).PareGravois = true;
+        face.ConvertirPareGravoisAncienFormat(); // toutes les mailles cochées, comme à la création de la colonne
         var s = GenerateurFacade.Generer(face);
         var pg = s.Elements.Where(e => e.Famille == Famille.PareGravois).ToList();
 
@@ -380,6 +413,7 @@ public class GenerateurFacadeTests
                 var face = Standard(p => { p.Modele = modele; p.Socle = socle.Reference; p.Grutable = true; p.Traverses = TypeTraverse.Renforce; p.TrappesAcier = true; p.LisseGcAccesNiveau0 = true; });
                 face.Niveaux.First(n => n.Hauteur > 0).DiagoH = true;
                 face.Niveaux.First(n => n.Hauteur > 0).PareGravois = true;
+                face.ConvertirPareGravoisAncienFormat();
                 face.Niveaux.Add(new Niveau(1.0, TypePlancher.Complet)); // portillon d'about
                 var manquantes = biblio.Manquantes(GenerateurFacade.Generer(face).Elements.Select(e => e.Reference))
                                        .Where(r => !r.StartsWith("HMTUBAMA", StringComparison.Ordinal)).ToList();

@@ -397,6 +397,7 @@ public class BibliothequeDwgTests
         projet.ProposerFace(1);
         projet.Faces[1].Niveaux.First(n => n.Hauteur == 4).DiagoH = true;
         projet.S1.Niveaux.First(n => n.Hauteur == 2).PareGravois = true;
+        projet.S1.ConvertirPareGravoisAncienFormat();
         projet.S1.Parametres.TrappesAcier = true;
         projet.S1.Niveaux.Add(new Niveau(1.0, TypePlancher.Complet)); // portillon d'about
         projet.Faces[1].Niveaux.Add(new Niveau(1.0, TypePlancher.Complet)); // premier plancher commun aux faces (exigé)

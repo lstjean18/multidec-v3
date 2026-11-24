@@ -58,7 +58,10 @@ public sealed class Niveau : INotifyPropertyChanged
         }
     }
 
-    /// <summary>Pare-gravois à ce niveau, sur toute la longueur de la face, côté extérieur (v2).</summary>
+    /// <summary>
+    /// Pare-gravois à ce niveau, côté extérieur, sur les mailles cochées dans la colonne « PareGravXm » de la grille
+    /// des mailles (Laurent, 24/11/2026 ; toutes cochées à la création de la colonne).
+    /// </summary>
     public bool PareGravois
     {
         get => _pareGravois;
@@ -105,6 +108,10 @@ public sealed class Niveau : INotifyPropertyChanged
     /// <summary>Titre de la colonne de la grille des mailles : « Con » + hauteur (ex. « Con4m », « Con4,5m »).</summary>
     [JsonIgnore]
     public string NomColonneConsole => NomColonne(Hauteur);
+
+    /// <summary>Titre de la colonne de pare-gravois de la grille des mailles (ex. « PareGrav4m »).</summary>
+    [JsonIgnore]
+    public string NomColonnePareGravois => "PareGrav" + NomColonne(Hauteur).Substring(3);
 
     public static string NomColonne(double hauteur) =>
         "Con" + Cotes.Arrondi(hauteur).ToString("0.##", CultureInfo.InvariantCulture).Replace('.', ',') + "m";
