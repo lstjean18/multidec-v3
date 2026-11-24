@@ -267,10 +267,13 @@ public sealed partial class GenerateurFacade
         Ajouter(References.TraverseIntermediaire(w), Famille.Traverse, new Point3(xPied, y1, 0), Axe.Y, Face.Exterieure, num);
         Travers(References.LisseOuTraverse(w), Famille.Traverse, xBout, y1, 0, num);
         // Côté extérieur : lisses au sol, au palier (1 m), et garde-corps 1 m au-dessus du palier (Laurent, 24/11/2026).
-        foreach (double zl in new[] { 0.0, 1.0, 1.5, 2.0 })
+        // Lisse à 0,50 m des deux côtés de la volée : côté extérieur et côté façade, sous le premier plancher (Laurent, 24/11/2026).
+        foreach (double zl in new[] { 0.0, 0.5, 1.0, 1.5, 2.0 })
         {
             Ajouter(References.LisseOuTraverse(lv), Famille.Lisse, new Point3(_x[voisine], y2, zl), Axe.X, Face.Exterieure, num);
         }
+
+        Ajouter(References.LisseOuTraverse(lv), Famille.Lisse, new Point3(_x[voisine], y1, 0.5), Axe.X, Face.Exterieure, num);
 
         foreach (var t in ReglePoteaux.Empiler(_p, false, false, 2.0))
         {

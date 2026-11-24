@@ -96,7 +96,7 @@ Les points marqués **[à valider]** sont des choix faits en v3 faute de règle 
     garde-corps central sur piquages HMPIQLIS(-E) + poteaux de 1 m, ouvert sur 0,75 m aux deux bouts.
   - Premier plancher à 1,00 m : la volée de 1 m (HMESCALU175100) sort de la tour, sur la maille voisine du côté où part la
     volée suivante (maille suivante pour un demi-escalier), pied au sol sur une HMTIP, plateaux acier HMPLA…3CL6 sur le reste
-    de la maille, poteau de 2 m au bout ; côté extérieur, lisses à 0 et 1 m et garde-corps 1 m au-dessus du palier
+    de la maille, poteau de 2 m au bout ; lisse à 0,50 m des deux côtés ; côté extérieur, lisses à 0 et 1 m et garde-corps 1 m au-dessus du palier
     (lisses à 1,50 et 2,00 m) ; pas de diagonale devant cette entrée. Si la voisine ne s'y prête pas, la volée reste dans
     la tour : pied sur une HMTIP de la largeur de la tour (HMTIP150), plateaux HMPLA…3CL6 de cette largeur posés en
     travers jusqu'au bout d'entrée (24/11/2026).

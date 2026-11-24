@@ -671,7 +671,8 @@ public class GenerateurFacadeTests
         // Côté extérieur : lisses à 0 et 1 m, garde-corps 1 m au-dessus du palier (lisses à 1,50 et 2,00 m).
         var lissesExt = s.Elements.Where(e => e.Famille == Famille.Lisse && Math.Abs(e.Origine.X - x[6]) < 1e-6 && Math.Abs(e.Origine.Y - y2) < 1e-6)
             .Select(e => Math.Round(e.Origine.Z, 2)).OrderBy(z => z).ToList();
-        Assert.Equal(new[] { 0.0, 1.0, 1.5, 2.0 }, lissesExt);
+        Assert.Equal(new[] { 0.0, 0.5, 1.0, 1.5, 2.0 }, lissesExt);
+        Assert.Contains(s.Elements, e => e.Famille == Famille.Lisse && Math.Abs(e.Origine.X - x[6]) < 1e-6 && Math.Abs(e.Origine.Y + 0.70) < 1e-6 && Math.Abs(e.Origine.Z - 0.5) < 1e-6);
 
         // Pas de diagonale en travers devant l'entrée de la tour au plancher de 1 m.
         Assert.DoesNotContain(s.Elements, e => e.Reference == "HMDIA0702" && e.Axe == Axe.Y && e.Origine.X > x[6] && Math.Abs(e.Origine.Z - 1) < 1e-6);
