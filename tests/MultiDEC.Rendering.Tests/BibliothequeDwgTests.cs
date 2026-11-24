@@ -85,7 +85,14 @@ public class BibliothequeDwgTests
         }
 
         _sortie.WriteLine($"{blocs} blocs ; entités : {string.Join(", ", types.OrderByDescending(x => x.Value).Take(20).Select(x => x.Value + "×" + x.Key))}");
-        _sortie.WriteLine("Blocs : " + string.Join(" ", doc.Blocks.Cast<vdBlock>().Select(b => b.Name).Where(n => !n.StartsWith("*")).Take(600)));
+        var noms = doc.Blocks.Cast<vdBlock>().Select(b => b.Name).Where(n => !n.StartsWith("*")).OrderBy(n => n, StringComparer.Ordinal).ToList();
+        _sortie.WriteLine("Blocs : " + string.Join(" ", noms.Take(600)));
+
+        // Liste complète des noms (une ligne par bloc) pour comparer la bibliothèque au catalogue des références.
+        foreach (var n in noms)
+        {
+            _sortie.WriteLine("NOM " + fichier + " | " + n);
+        }
 
         foreach (var nom in new[] { "HMPLA250298CL6", "HMPOT20", "HMGCSE250", "HMSOCREG" })
         {
