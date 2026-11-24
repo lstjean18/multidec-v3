@@ -442,7 +442,9 @@ public sealed class RenduVectorDraw
             var boite = new vdPolyface();
             boite.SetUnRegisterDocument(_doc);
             boite.setDocumentDefaults();
-            boite.CreateBox(new gPoint(mur.Debut.X, mur.Debut.Y, 0), mur.Longueur, EpaisseurMur, mur.Hauteur, mur.Angle);
+            // Angle ramené entre 0 et 2π : un angle négatif (structure inversée, -90°) était ignoré par CreateBox (rendu serveur 24/11).
+            double angle = mur.Angle < 0 ? mur.Angle + 2 * Math.PI : mur.Angle;
+            boite.CreateBox(new gPoint(mur.Debut.X, mur.Debut.Y, 0), mur.Longueur, EpaisseurMur, mur.Hauteur, angle);
             boite.Layer = calque;
             boite.PenColor = new vdColor(CouleurMur);
             _doc.Model.Entities.AddItem(boite);
