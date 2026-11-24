@@ -126,6 +126,23 @@ public class GenerateurFacadeTests
     }
 
     [Fact]
+    public void Portillon_d_about_et_echelle_quand_le_1er_plancher_est_sous_2_m()
+    {
+        var face = Standard(p => p.HauteurDernierPlancher = 9); // planchers 1, 3, 5, 7, 9
+        var s = GenerateurFacade.Generer(face);
+
+        var portillon = Assert.Single(s.Elements, e => e.Reference == "HMPORTILLONPLIN070");
+        Assert.Equal(new MultiDEC.Core.Geometrie.Point3(0, 0, 2.0), portillon.Origine);
+        Assert.Single(s.Elements, e => e.Reference == "HMECH100LIS");
+        // L'about gauche du niveau 1,00 m est remplacé, celui de droite reste.
+        Assert.DoesNotContain(s.Elements, e => e.Famille == Famille.GardeCorps && e.Axe == Axe.Y && e.Inverse && Math.Abs(e.Origine.Z - 1) < 0.001);
+        Assert.Contains(s.Elements, e => e.Famille == Famille.GardeCorps && e.Axe == Axe.Y && !e.Inverse && Math.Abs(e.Origine.Z - 1) < 0.001);
+
+        // Planchers à 2, 4… : pas de portillon.
+        Assert.DoesNotContain(GenerateurFacade.Generer(Standard()).Elements, e => e.Reference.StartsWith("HMPORTILLON", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public void Ecran_trappes_acier_coche_les_diagonales_1_sur_2()
     {
         var vm = new MultiDEC.App.ViewModels.FacadeViewModel();
@@ -300,6 +317,7 @@ public class GenerateurFacadeTests
                 var face = Standard(p => { p.Modele = modele; p.Socle = socle.Reference; p.Grutable = true; p.Traverses = TypeTraverse.Renforce; p.TrappesAcier = true; p.LisseGcAccesNiveau0 = true; });
                 face.Niveaux.First(n => n.Hauteur > 0).DiagoH = true;
                 face.Niveaux.First(n => n.Hauteur > 0).PareGravois = true;
+                face.Niveaux.Add(new Niveau(1.0, TypePlancher.Complet)); // portillon d'about
                 var manquantes = biblio.Manquantes(GenerateurFacade.Generer(face).Elements.Select(e => e.Reference))
                                        .Where(r => !r.StartsWith("HMTUBAMA", StringComparison.Ordinal)).ToList();
                 Assert.True(manquantes.Count == 0, $"{modele} {socle.Reference} : blocs manquants {string.Join(", ", manquantes)}");

@@ -421,8 +421,16 @@ public sealed class GenerateurFacade
 
         if (n.EstAccesSeul && z > Cotes.Tolerance)
         {
-            // Maille d'accès isolée : abouts des deux côtés.
-            PlacerAbout(x0, z, _l, gauche: true, console: false, num);
+            // Maille d'accès isolée : abouts des deux côtés (portillon à gauche sous 2 m, v2).
+            if (PortillonNecessaire(n))
+            {
+                PlacerPortillon(x0, z, num);
+            }
+            else
+            {
+                PlacerAbout(x0, z, _l, gauche: true, console: false, num);
+            }
+
             PlacerAbout(x0 + lm, z, _l, gauche: false, console: false, num);
         }
 
@@ -631,7 +639,14 @@ public sealed class GenerateurFacade
         {
             if (_p.AboutGauche && _projet.Mailles[0].Type == TypeMaille.Travail)
             {
-                PlacerAbout(0, n.Hauteur, _l, gauche: true, console: false, 1);
+                if (PortillonNecessaire(n))
+                {
+                    PlacerPortillon(0, n.Hauteur, 1);
+                }
+                else
+                {
+                    PlacerAbout(0, n.Hauteur, _l, gauche: true, console: false, 1);
+                }
             }
 
             if (_p.AboutDroit && _projet.Mailles[_projet.Mailles.Count - 1].Type == TypeMaille.Travail)
@@ -639,6 +654,30 @@ public sealed class GenerateurFacade
                 PlacerAbout(LongueurTotale, n.Hauteur, _l, gauche: false, console: false, _projet.Mailles.Count);
             }
         }
+    }
+
+    /// <summary>
+    /// Portillon d'about (v2 : NeedPortillon) : sur un plancher entre 0 et 2 m, quand la face a des accès,
+    /// l'about de gauche est remplacé par un portillon et une échelle depuis le sol.
+    /// </summary>
+    private bool PortillonNecessaire(Niveau n) =>
+        n.Hauteur > Cotes.Tolerance && n.Hauteur < 2.0 - Cotes.Tolerance && _projet.Mailles.Any(m => m.Type == TypeMaille.Acces);
+
+    /// <summary>Portillon HMPORTILLONPLIN + échelle HMECH…LIS, à l'about gauche d'une maille (posés d'office).</summary>
+    private void PlacerPortillon(double x, double z, int num)
+    {
+        double largeur = _l > 1.05 + Cotes.Tolerance ? 1.00 : _l;
+        string? echelle = References.EchelleAbout(z);
+        if (echelle != null)
+        {
+            Ajouter(echelle, Famille.Echelle, new Point3(x, 0, z), Axe.Y, Face.Aucune, num, inverse: true);
+        }
+        else
+        {
+            _alertes.Add(FormattableString.Invariant($"Portillon au niveau {z:0.00} m : pas d'échelle d'about de cette hauteur."));
+        }
+
+        Ajouter(References.Portillon(largeur), Famille.GardeCorps, new Point3(x, 0, z + 1.0), Axe.Y, Face.Aucune, num, inverse: true);
     }
 
     /// <summary>

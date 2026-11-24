@@ -152,6 +152,13 @@ public static class References
     public static string TrappeAcier(double largeurMaille) =>
         Cotes.Egal(largeurMaille, 1.05) || Cotes.Egal(largeurMaille, 0.75) ? "HMPLAL100TR" : "HMPLAL100596TR";
 
+    /// <summary>Portillon d'about (v2) : HMPORTILLONPLIN + largeur en cm (070, 075, 100, 105).</summary>
+    public static string Portillon(double largeur) => "HMPORTILLONPLIN" + Cotes.EnCm3(largeur);
+
+    /// <summary>Échelle d'about montant au plancher de hauteur z (HMECH050LIS, HMECH100LIS, HMECH150LIS), ou null.</summary>
+    public static string? EchelleAbout(double z) =>
+        Cotes.Egal(z, 0.5) || Cotes.Egal(z, 1.0) || Cotes.Egal(z, 1.5) ? "HMECH" + Cotes.EnCm3(z) + "LIS" : null;
+
     /// <summary>Traverse intermédiaire de plancher (HMTIP + largeur de maille en cm).</summary>
     public static string TraverseIntermediaire(double largeurMaille) => "HMTIP" + Cotes.EnCm3(largeurMaille);
 

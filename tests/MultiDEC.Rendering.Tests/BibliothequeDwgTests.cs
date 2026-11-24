@@ -167,6 +167,7 @@ public class BibliothequeDwgTests
         projet.Faces[1].Niveaux.First(n => n.Hauteur == 4).DiagoH = true;
         projet.S1.Niveaux.First(n => n.Hauteur == 2).PareGravois = true;
         projet.S1.Parametres.TrappesAcier = true;
+        projet.S1.Niveaux.Add(new Niveau(1.0, TypePlancher.Complet)); // portillon d'about
         projet.General.Socle = "HMSOCROU";
         var s = GenerateurStructure.Generer(projet);
         var rapport = rendu.Dessiner(s, TableOrientations.ParDefaut());
