@@ -62,7 +62,7 @@ public sealed class ConsoleInfo
     public string PoteauGardeCorps(ModeleEchafaudage modele) =>
         modele == ModeleEchafaudage.MultiSystem ? "HMPOT10"
         : Fixation == FixationBout.Chape ? "HMPOTDP10"
-        : "HMPOTST10"; // nipple en Multi-RETO : poteau courant sur l'embase intégrée (à confirmer par Laurent)
+        : "HMPOTST10"; // nipple en Multi-RETO : poteau courant sur l'embase intégrée (confirmé par Laurent le 24/11/2026)
 
     /// <summary>Hauteur du pied du poteau au-dessus du plancher : 4 cm sur une embase (HMEMB ou intégrée) en Multi-SYSTEM.</summary>
     public double DecalageZ(ModeleEchafaudage modele) => modele == ModeleEchafaudage.MultiSystem && Fixation != FixationBout.Platine ? 0.04 : 0;
@@ -81,7 +81,6 @@ public static class CatalogueConsoles
         new ConsoleInfo("HMCON300", 0.40, FixationBout.Platine, MR, MS),
         new ConsoleInfo("HMCON400E2", 0.40, FixationBout.Nipple, Non, MS),
         new ConsoleInfo("HMCON400E", 0.40, FixationBout.Chape, MR, MS),
-        new ConsoleInfo("HMCON500EE", 0.60, FixationBout.Chape, Non, MS), // largeur reprise de l'ancien HMCON500E (à confirmer)
         new ConsoleInfo("HMCON700E", 0.70, FixationBout.Chape, MR, MS),
         new ConsoleInfo("HMCON700E2", 0.70, FixationBout.Nipple, Non, MS),
         new ConsoleInfo("HMCON700EE", 0.70, FixationBout.Chape, MR, MS),

@@ -338,7 +338,8 @@ public class GenerateurFacadeTests
     public void Consoles_de_la_liste_dans_la_bibliotheque()
     {
         var biblio = BibliothequeBlocs.DepuisFichier("blocs-3D-echafaudage.txt");
-        Assert.Equal(16, CatalogueConsoles.Liste.Count);
+        Assert.Equal(15, CatalogueConsoles.Liste.Count); // HMCON500EE retirée des listes (Laurent, 24/11/2026 19h14)
+        Assert.DoesNotContain(CatalogueConsoles.Liste, c => c.Reference == "HMCON500EE");
         Assert.Empty(biblio.Manquantes(CatalogueConsoles.Liste.Select(c => c.Reference)));
     }
 
