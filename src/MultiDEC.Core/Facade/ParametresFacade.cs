@@ -195,5 +195,13 @@ public sealed class ParametresFacade
     [JsonIgnore]
     public bool PlanchersDamier { get; set; }
 
+    /// <summary>Structure volumique : longueur du module précédent (côté façade), 0 pour M1.</summary>
+    [JsonIgnore]
+    public double LongueurModulePrecedent { get; set; }
+
+    /// <summary>Structure volumique : longueur du module suivant (côté extérieur), 0 pour le dernier.</summary>
+    [JsonIgnore]
+    public double LongueurModuleSuivant { get; set; }
+
     public ParametresFacade Copie() => (ParametresFacade)MemberwiseClone();
 }

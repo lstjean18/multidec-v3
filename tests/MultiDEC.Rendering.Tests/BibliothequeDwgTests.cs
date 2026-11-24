@@ -121,6 +121,42 @@ public class BibliothequeDwgTests
         SousMailles(rendu, doc, Path.GetFileNameWithoutExtension(fichier));
         PoutreEtPignon(rendu, doc, Path.GetFileNameWithoutExtension(fichier));
         Escaliers(rendu, doc, Path.GetFileNameWithoutExtension(fichier));
+        VolumiqueEtHauteurs(rendu, doc, Path.GetFileNameWithoutExtension(fichier));
+    }
+
+    /// <summary>
+    /// Volumique 3 modules (M2 plus long que M1 de deux mailles, M3 de 2,00 m de large) ;
+    /// façade droite avec une maille arrêtée à 4 m et une montée à 8 m (colonne « Ht max »).
+    /// </summary>
+    private void VolumiqueEtHauteurs(RenduVectorDraw rendu, vdDocument doc, string nom)
+    {
+        var projet = ProjetStructure.Nouveau(face: new ParametresFacade { LongueurTotaleSouhaitee = 10, HauteurDernierPlancher = 6, NombreAcces = 1 });
+        projet.Forme = FormeStructure.Volumique;
+        projet.NombreModules = 3;
+        projet.AjusterFaces();
+        projet.Faces[1].Mailles.Add(new MailleDefinition(2.5));
+        projet.Faces[1].Mailles.Add(new MailleDefinition(2.5));
+        projet.Faces[2].Parametres.LargeurMaille = 2.0;
+        var s = GenerateurStructure.Generer(projet);
+        var rapport = rendu.Dessiner(s, TableOrientations.ParDefaut());
+        _sortie.WriteLine($"VO : {rapport.Inseres} insérés, alertes : {string.Join(" | ", s.Alertes)}");
+        rendu.Rendu(ModeRendu.OmbreAretes);
+        rendu.Vue(Vues.Iso);
+        Image(doc, nom + "-VO-iso");
+        rendu.Vue(Vues.Dessus);
+        Image(doc, nom + "-VO-dessus");
+
+        var droite = ProjetStructure.Nouveau(face: new ParametresFacade { LongueurTotaleSouhaitee = 15, HauteurDernierPlancher = 6, NombreAcces = 0 });
+        droite.S1.Mailles[1].EcartHauteur = -2;
+        droite.S1.Mailles[4].EcartHauteur = 2;
+        var h = GenerateurStructure.Generer(droite);
+        rapport = rendu.Dessiner(h, TableOrientations.ParDefaut());
+        _sortie.WriteLine($"HT : mailles {string.Join(" ", droite.S1.Mailles)} ; {rapport.Inseres} insérés, alertes : {string.Join(" | ", h.Alertes)}");
+        rendu.Rendu(ModeRendu.OmbreAretes);
+        rendu.Vue(Vues.Iso);
+        Image(doc, nom + "-HT-iso");
+        rendu.Vue(Vues.Facade);
+        Image(doc, nom + "-HT-facade");
     }
 
     /// <summary>Façade de 15 m, dernier plancher 6 m : escalier 1,50 m (maille 2) et demi-escalier 1,00 m (maille 5).</summary>
@@ -263,6 +299,7 @@ public class BibliothequeDwgTests
         projet.S1.Niveaux.First(n => n.Hauteur == 2).PareGravois = true;
         projet.S1.Parametres.TrappesAcier = true;
         projet.S1.Niveaux.Add(new Niveau(1.0, TypePlancher.Complet)); // portillon d'about
+        projet.Faces[1].Niveaux.Add(new Niveau(1.0, TypePlancher.Complet)); // premier plancher commun aux faces (exigé)
         projet.General.Socle = "HMSOCROU";
         var s = GenerateurStructure.Generer(projet);
         var rapport = rendu.Dessiner(s, TableOrientations.ParDefaut());

@@ -60,9 +60,11 @@ public static class GenerateurStructure
                 p.ModuleVolumique = i;
                 p.NombreModules = projet.Faces.Count;
                 p.PlanchersDamier = projet.PlanchersDamier;
-                if (i > 0 && !MemesMailles(face, projet.S1))
+                p.LongueurModulePrecedent = i > 0 ? projet.Faces[i - 1].LongueurObtenue : 0;
+                p.LongueurModuleSuivant = i < projet.Faces.Count - 1 ? projet.Faces[i + 1].LongueurObtenue : 0;
+                if (i > 0 && !FilesCommunes(face, projet.Faces[i - 1]))
                 {
-                    alertes.Add($"{face.Nom} : mailles différentes de M1, les modules ne tombent pas sur les mêmes files.");
+                    alertes.Add($"{face.Nom} : sur la longueur commune, les mailles ne tombent pas sur les files de {projet.Faces[i - 1].Nom}.");
                 }
             }
             else if (plusieurs)
@@ -87,6 +89,8 @@ public static class GenerateurStructure
                 p.ModuleVolumique = null;
                 p.NombreModules = 1;
                 p.PlanchersDamier = false;
+                p.LongueurModulePrecedent = 0;
+                p.LongueurModuleSuivant = 0;
             }
 
             var pose = poses[i];
@@ -106,6 +110,11 @@ public static class GenerateurStructure
             mini += s.Amarrages.MinimumParSurface;
             note |= s.Amarrages.NoteDeCalculObligatoire;
             alertes.AddRange(plusieurs ? s.Alertes.Select(a => face.Nom + " : " + a) : s.Alertes);
+        }
+
+        if (!projet.EstVolumique && projet.Faces.Any(f => f.Parametres.LargeurMaille > 1.05 + Cotes.Tolerance))
+        {
+            alertes.Add("Largeur de maille supérieure à 1,05 m : réservée aux structures volumiques.");
         }
 
         if (projet.Forme == FormeStructure.Fermee && projet.Faces.Count == 4)
@@ -193,8 +202,14 @@ public static class GenerateurStructure
     public static bool RaccordeeApres(ProjetStructure projet, int i) =>
         !projet.EstVolumique && (i < projet.Faces.Count - 1 || (projet.Forme == FormeStructure.Fermee && projet.Faces.Count == 4));
 
-    private static bool MemesMailles(FaceEchafaudage a, FaceEchafaudage b) =>
-        a.Mailles.Count == b.Mailles.Count && a.Mailles.Zip(b.Mailles, (x, y) => Cotes.Egal(x.Longueur, y.Longueur)).All(ok => ok);
+    /// <summary>Volumique : sur la longueur commune aux deux modules, mêmes files (le plus long peut continuer au-delà).</summary>
+    private static bool FilesCommunes(FaceEchafaudage a, FaceEchafaudage b)
+    {
+        double commun = Math.Min(a.LongueurObtenue, b.LongueurObtenue);
+        var fa = a.AbscissesFiles().Where(x => x <= commun + Cotes.Tolerance).Select(Cotes.Arrondi);
+        var fb = b.AbscissesFiles().Where(x => x <= commun + Cotes.Tolerance).Select(Cotes.Arrondi);
+        return fa.SequenceEqual(fb);
+    }
 
     /// <summary>Volumique : retire les pièces identiques déjà posées par le module voisin (lisses sur la file commune…).</summary>
     private static List<ElementPlace> SansDoublons(List<ElementPlace> face, List<ElementPlace> dejaPoses)

@@ -37,6 +37,14 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
         Proposer = new Commande(ProposerStructure);
         ProposerLesDiagonales = new Commande(ProposerDiagonales);
         CopierS1 = new Commande(CopierDepuisS1);
+        AjouterModule = new Commande(() =>
+        {
+            if (NombreModules < ProjetStructure.ModulesMaxi)
+            {
+                NombreModules++;
+                IndexFaceActive = Faces.Count - 1;
+            }
+        });
         Niveaux.CollectionChanged += Niveaux_CollectionChanged;
         Mailles.CollectionChanged += Mailles_CollectionChanged;
         Alertes.CollectionChanged += (_, _) => Notifier(nameof(TitreAlertes));
@@ -51,6 +59,12 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
     // ---- Listes de choix --------------------------------------------------------------------
 
     public static IReadOnlyList<double> LargeursMaille { get; } = new[] { 0.70, 0.75, 1.00, 1.05 };
+
+    /// <summary>Largeurs au-delà de 1,05 m : seulement pour une structure volumique (Laurent, 24/11/2026).</summary>
+    public static IReadOnlyList<double> LargeursMailleVolumique { get; } = new[] { 0.70, 0.75, 1.00, 1.05, 1.50, 2.00, 2.50, 3.00 };
+
+    /// <summary>Largeurs proposées pour la face ou le module actif.</summary>
+    public IReadOnlyList<double> LargeursProposees => EstVolumique ? LargeursMailleVolumique : LargeursMaille;
 
     public static IReadOnlyList<double> LongueursMaille { get; } = new[] { 0.70, 0.75, 1.00, 1.05, 1.50, 2.00, 2.50, 3.00 };
 
@@ -113,13 +127,17 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
             _structure = null;
             Notifier();
             Notifier(nameof(EstVolumique));
+            Notifier(nameof(LargeursProposees));
             ChargerFace(Math.Min(_indexFace, Faces.Count - 1));
         }
     }
 
     public bool EstVolumique => _projet.EstVolumique;
 
-    public static IReadOnlyList<int> ChoixModules { get; } = new[] { 2, 3, 4, 5, 6 };
+    public static IReadOnlyList<int> ChoixModules { get; } = Enumerable.Range(2, ProjetStructure.ModulesMaxi - 1).ToArray();
+
+    /// <summary>Ajoute un module derrière le dernier (bouton « + Module »).</summary>
+    public Commande AjouterModule { get; }
 
     /// <summary>Structure volumique : nombre de modules M1… (crée ou retire des onglets).</summary>
     public int NombreModules

@@ -109,7 +109,7 @@
             <TextBlock Style="{StaticResource Etiquette}" Text="Longueur souhaitée (m)" />
             <TextBox Grid.Column="1" Margin="0,2" Text="{Binding LongueurFacade, StringFormat=0.00}" />
             <TextBlock Grid.Row="1" Style="{StaticResource Etiquette}" Text="Largeur de maille (m)" />
-            <ComboBox Grid.Row="1" Grid.Column="1" Margin="0,2" ItemsSource="{x:Static vm:FacadeViewModel.LargeursMaille}" SelectedItem="{Binding Parametres.LargeurMaille}" ItemStringFormat="0.00" />
+            <ComboBox Grid.Row="1" Grid.Column="1" Margin="0,2" ItemsSource="{Binding LargeursProposees}" SelectedItem="{Binding Parametres.LargeurMaille}" ItemStringFormat="0.00" />
             <TextBlock Grid.Row="2" Style="{StaticResource Etiquette}" Text="Maille préférée (m)" />
             <ComboBox Grid.Row="2" Grid.Column="1" Margin="0,2" ItemsSource="{x:Static vm:FacadeViewModel.LongueursMaille}" SelectedItem="{Binding Parametres.LongueurMaillePreferee}" ItemStringFormat="0.00" />
             <TextBlock Grid.Row="3" Style="{StaticResource Etiquette}" Text="Nombre d'accès" />
@@ -368,12 +368,14 @@
                   </StackPanel>
                 </RadioButton>
               </UniformGrid>
-              <TextBlock Text="La forme crée les onglets S1 à S4. À partir de S2, la 1re maille est le carré d'angle qui raccorde la face à la précédente. Volumique : modules M1 (contre la façade), M2… côte à côte en profondeur, mêmes mailles, largeur propre à chaque module."
+              <TextBlock Text="La forme crée les onglets S1 à S4. À partir de S2, la 1re maille est le carré d'angle qui raccorde la face à la précédente. Volumique : modules M1 (contre la façade), M2, M3… côte à côte en profondeur, longueur et largeur propres à chaque module (largeur jusqu'à 3,00 m), accès proposés sur M1."
                          TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource Discret}" Margin="0,6,0,0" />
               <StackPanel Orientation="Horizontal" Margin="0,6,0,0"
                           Visibility="{Binding EstVolumique, Converter={StaticResource VisibleSi}}">
                 <TextBlock Text="Modules" VerticalAlignment="Center" Margin="0,0,8,0" />
                 <ComboBox Width="60" ItemsSource="{x:Static vm:FacadeViewModel.ChoixModules}" SelectedItem="{Binding NombreModules}" />
+                <Button Content="+ Module" Command="{Binding AjouterModule}" Padding="8,2" Margin="6,0,0,0"
+                        ToolTip="Ajoute un module derrière le dernier (mêmes mailles que M1, sans accès)" />
                 <CheckBox Content="Planchers en damier" IsChecked="{Binding PlanchersDamier}" VerticalAlignment="Center" Margin="16,0,0,0"
                           ToolTip="Une maille sur deux sans plancher, décalée d'un module à l'autre (v2)" />
               </StackPanel>

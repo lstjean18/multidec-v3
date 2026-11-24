@@ -99,34 +99,49 @@ public sealed partial class GenerateurFacade
             _alertes.Add("Trappes et plateaux acier : garde-corps MDS remplacés par des lisses (incompatibles, comme dans la v2).");
         }
 
-        if (_p.ModuleVolumique is int module)
-        {
-            // Structure volumique : pas de protection sur les côtés communs à deux modules.
-            bool interieurCommun = module > 0;
-            bool exterieurCommun = module < _p.NombreModules - 1;
-            if (interieurCommun || exterieurCommun)
-            {
-                _p = _p.Copie();
-                if (interieurCommun)
-                {
-                    _p.SecuriteInterieure = TypeSecurite.Sans;
-                    _p.PlintheInterieure = TypePlinthe.Sans;
-                }
-
-                if (exterieurCommun)
-                {
-                    _p.SecuriteExterieure = TypeSecurite.Sans;
-                    _p.PlintheExterieure = TypePlinthe.Sans;
-                }
-            }
-        }
-
         _x = projet.AbscissesFiles();
         _l = _p.LargeurMaille;
         _h = _p.HauteurDernierPlancher;
     }
 
     private int DerniereFile => _x.Count - 1;
+
+    // ---- Structure volumique : côtés communs à deux modules (Laurent, 24/11/2026) ------------------------
+    // Un module peut être plus long que son voisin : seul le tronçon couvert par le voisin est commun ;
+    // au-delà, le côté donne dans le vide et a son garde-corps (et ses diagonales).
+
+    /// <summary>Côté façade de la maille partagé avec le module précédent (M1 pour M2…).</summary>
+    private bool InterieurCommun(int maille) =>
+        _p.ModuleVolumique > 0 && _x[maille + 1] <= _p.LongueurModulePrecedent + Cotes.Tolerance;
+
+    /// <summary>Côté extérieur de la maille partagé avec le module suivant.</summary>
+    private bool ExterieurCommun(int maille) =>
+        _p.ModuleVolumique is int module && module < _p.NombreModules - 1 && _x[maille + 1] <= _p.LongueurModuleSuivant + Cotes.Tolerance;
+
+    /// <summary>Protection côté façade d'une maille : sur un module au-delà de M1, ce côté donne dans le vide hors tronçon commun.</summary>
+    private TypeSecurite SecuriteInterieure(int maille) =>
+        InterieurCommun(maille) ? TypeSecurite.Sans : _p.ModuleVolumique > 0 ? _p.SecuriteExterieure : _p.SecuriteInterieure;
+
+    private TypePlinthe PlintheInterieure(int maille) =>
+        InterieurCommun(maille) ? TypePlinthe.Sans : _p.ModuleVolumique > 0 ? _p.PlintheExterieure : _p.PlintheInterieure;
+
+    private TypeSecurite SecuriteExterieure(int maille) => ExterieurCommun(maille) ? TypeSecurite.Sans : _p.SecuriteExterieure;
+
+    private TypePlinthe PlintheExterieure(int maille) => ExterieurCommun(maille) ? TypePlinthe.Sans : _p.PlintheExterieure;
+
+    /// <summary>Mailles qui touchent une file (index).</summary>
+    private IEnumerable<int> IndexVoisines(int file)
+    {
+        if (file > 0)
+        {
+            yield return file - 1;
+        }
+
+        if (file < _projet.Mailles.Count)
+        {
+            yield return file;
+        }
+    }
 
     private double LongueurTotale => _x[DerniereFile];
 
@@ -226,14 +241,15 @@ public sealed partial class GenerateurFacade
             double? zPoutre = PoutreSousFile(f);
 
             // Côté extérieur : garde-corps en tête ; départ 3 m si option.
-            Empiler(x, -_l, Face.Exterieure, _p.Depart3mExterieur, gardeCorps: true, sommetPignon, zPoutre);
+            bool gcExt = !IndexVoisines(f).All(ExterieurCommun) || (f == 0 && _p.AboutGauche) || (f == DerniereFile && _p.AboutDroit);
+            Empiler(x, -_l, Face.Exterieure, _p.Depart3mExterieur, gcExt, gcExt ? sommetPignon : hFile, zPoutre);
 
             // Côté intérieur : garde-corps seulement s'il y en a un qui s'y accroche en tête (Laurent 24/11/2026 :
             // sinon le poteau s'arrête au plancher) : about à cette extrémité, protection intérieure sur une maille voisine
             // sans console au dernier niveau, ou différence de hauteur avec la maille voisine (about).
             bool aboutIci = (f == 0 && _p.AboutGauche) || (f == DerniereFile && _p.AboutDroit);
             bool gcInt = aboutIci
-                || (_p.SecuriteInterieure != TypeSecurite.Sans && MaillesVoisines(f).Any(m => ConsoleSommet(m) == null && Cotes.Egal(m.HauteurMax(_h), hFile)))
+                || IndexVoisines(f).Any(i => SecuriteInterieure(i) != TypeSecurite.Sans && ConsoleSommet(_projet.Mailles[i]) == null && Cotes.Egal(_projet.Mailles[i].HauteurMax(_h), hFile))
                 || (f > 0 && f < DerniereFile && !Cotes.Egal(_projet.Mailles[f - 1].HauteurMax(_h), _projet.Mailles[f].HauteurMax(_h)));
             Empiler(x, 0, Face.Interieure, _p.Depart3mExterieur && extremite, gcInt, gcInt ? sommetPignon : hFile, zPoutre);
 
@@ -381,7 +397,7 @@ public sealed partial class GenerateurFacade
 
             if (z >= 0.5 - Cotes.Tolerance && !sansPlancher)
             {
-                var plintheExt = n.EstAccesSeul ? TypePlinthe.Sans : _p.PlintheExterieure;
+                var plintheExt = n.EstAccesSeul ? TypePlinthe.Sans : PlintheExterieure(index);
                 if (m.Type == TypeMaille.AccesRapporte || (m.EstEscalier && EscalierPossible(m)))
                 {
                     // Garde-corps extérieur reporté sur la file de l'accès rapporté ; lisse de plancher ici (v2).
@@ -391,14 +407,14 @@ public sealed partial class GenerateurFacade
                 {
                     // Appro / recette desservis : la maille s'ouvre sur la sous-maille, pas de garde-corps extérieur.
                     // Sur une poutre : garde-corps en lisses (v2 remplace les cadres MDS).
-                    PlacerGardeCorps(surPoutre ? GardeCorpsSurPoutre(_p.SecuriteExterieure) : _p.SecuriteExterieure, plintheExt, x0, -_l, z, lm, Face.Exterieure, num);
+                    PlacerGardeCorps(surPoutre ? GardeCorpsSurPoutre(SecuriteExterieure(index)) : SecuriteExterieure(index), plintheExt, x0, -_l, z, lm, Face.Exterieure, num);
                 }
 
                 // v3 : même règle côté intérieur (l'ancienne version posait le GC intérieur même sans plancher).
                 // Carré d'angle : son côté intérieur donne sur le bout de la face précédente (passage), pas de garde-corps.
                 if (console == null && !(index == 0 && _p.CarreDAngleEnTete))
                 {
-                    PlacerGardeCorps(surPoutre ? GardeCorpsSurPoutre(_p.SecuriteInterieure) : _p.SecuriteInterieure, _p.PlintheInterieure, x0, 0, z, lm, Face.Interieure, num);
+                    PlacerGardeCorps(surPoutre ? GardeCorpsSurPoutre(SecuriteInterieure(index)) : SecuriteInterieure(index), PlintheInterieure(index), x0, 0, z, lm, Face.Interieure, num);
                 }
             }
 
@@ -449,8 +465,12 @@ public sealed partial class GenerateurFacade
         if (_p.GardeCorpsCouvreur)
         {
             double hm = m.HauteurMax(_h);
-            Ajouter(lisse, Famille.Lisse, new Point3(x0, -_l, hm + 1.5), Axe.X, Face.Exterieure, num);
-            if (_p.SecuriteInterieure != TypeSecurite.Sans && (ConsoleSommet(m) == null || hm > _h + Cotes.Tolerance))
+            if (!ExterieurCommun(index))
+            {
+                Ajouter(lisse, Famille.Lisse, new Point3(x0, -_l, hm + 1.5), Axe.X, Face.Exterieure, num);
+            }
+
+            if (SecuriteInterieure(index) != TypeSecurite.Sans && (ConsoleSommet(m) == null || hm > _h + Cotes.Tolerance))
             {
                 Ajouter(lisse, Famille.Lisse, new Point3(x0, 0, hm + 1.5), Axe.X, Face.Interieure, num);
             }
@@ -946,13 +966,17 @@ public sealed partial class GenerateurFacade
             double xDia = d.Inverse ? x0 + lm : x0;
             foreach (double z in cotes.Where(z => !SousPoutre(i, z)))
             {
-                if (d.Exterieure && !(maille.EstEscalier && hs > Cotes.Tolerance)) // la tour d'escalier a ses propres diagonales
+                // Volumique : pas de diagonale sur un côté commun à deux modules (Laurent, 24/11/2026) ;
+                // côté façade d'un module au-delà de M1 hors tronçon commun : il donne dans le vide, diagonales comme à l'extérieur.
+                bool exterieure = d.Exterieure && !ExterieurCommun(i);
+                bool interieure = _p.ModuleVolumique > 0 ? (d.Exterieure || d.Interieure) && !InterieurCommun(i) : d.Interieure;
+                if (exterieure && !(maille.EstEscalier && hs > Cotes.Tolerance)) // la tour d'escalier a ses propres diagonales
                 {
                     double yExt = z < hs - Cotes.Tolerance ? -_l - maille.LargeurRapportee : -_l;
                     Ajouter(refDia, Famille.DiagonaleVerticale, new Point3(xDia, Cotes.Arrondi(yExt - DemiTube), z), Axe.X, Face.Exterieure, d.NumeroMaille, d.Inverse);
                 }
 
-                if (d.Interieure)
+                if (interieure)
                 {
                     Ajouter(refDia, Famille.DiagonaleVerticale, new Point3(xDia, DemiTube, z), Axe.X, Face.Interieure, d.NumeroMaille, d.Inverse);
                 }

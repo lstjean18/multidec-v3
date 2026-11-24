@@ -268,4 +268,59 @@ public class StructureTests
         Assert.False(plancher("M2", 1));
         Assert.True(plancher("M2", 2));
     }
+
+    [Fact]
+    public void Volumique_M2_plus_long_garde_corps_cote_vide_et_pas_de_diagonale_entre_modules()
+    {
+        var projet = ProjetStructure.Nouveau(face: new ParametresFacade { LongueurTotaleSouhaitee = 10, HauteurDernierPlancher = 4, NombreAcces = 1 });
+        projet.Forme = FormeStructure.Volumique;
+        projet.AjusterFaces();
+        Assert.Contains(projet.S1.Mailles, m => m.Type == TypeMaille.Acces);
+        Assert.DoesNotContain(projet.Faces[1].Mailles, m => m.Type == TypeMaille.Acces); // accès proposés sur M1 seulement
+        Assert.Equal(0, projet.Faces[1].Parametres.NombreAcces);
+
+        // M2 prolongé de deux mailles au-delà de M1 (L1 = 10 m).
+        projet.Faces[1].Mailles.Add(new MailleDefinition(2.5));
+        projet.Faces[1].Mailles.Add(new MailleDefinition(2.5));
+        double l1 = projet.S1.LongueurObtenue;
+        var s = GenerateurStructure.Generer(projet);
+        Assert.DoesNotContain(s.Alertes, a => a.Contains("ne tombent pas"));
+
+        // Côté commun (y = -0,70) : pas de garde-corps ni de diagonale sur la longueur de M1 ; au-delà, garde-corps côté vide.
+        bool Sur(ElementPlace e, double y) => Math.Abs(e.Origine.Y - y) < 0.1;
+        Assert.DoesNotContain(s.Elements, e => e.Famille == Famille.GardeCorps && e.Axe == Axe.X && Sur(e, -0.70) && e.Origine.X < l1 - 0.01);
+        Assert.Contains(s.Elements, e => e.Famille == Famille.GardeCorps && e.Axe == Axe.X && Sur(e, -0.70) && e.Origine.X > l1 - 0.01 && e.NomFace == "M2");
+        Assert.DoesNotContain(s.Elements, e => e.Famille == Famille.DiagonaleVerticale && e.Axe == Axe.X && Sur(e, -0.70) && e.Origine.X < l1 - 0.01);
+
+        // M1 plus court : about à son bout droit (côté vide).
+        Assert.Contains(s.Elements, e => e.NomFace == "M1" && e.Famille == Famille.GardeCorps && e.Axe == Axe.Y && Math.Abs(e.Origine.X - l1) < 1e-6);
+    }
+
+    [Fact]
+    public void Volumique_largeur_2_m_et_ajout_de_modules()
+    {
+        var vm = new FacadeViewModel();
+        vm.Forme = FormeStructure.Volumique;
+        Assert.Contains(2.00, vm.LargeursProposees);
+        Assert.Contains(3.00, vm.LargeursProposees);
+        vm.AjouterModule.Execute(null);
+        vm.AjouterModule.Execute(null);
+        Assert.Equal(4, vm.Faces.Count);
+        Assert.Equal("M4", vm.NomFaceActive);
+        vm.Parametres.LargeurMaille = 2.0;
+        var s = vm.Generer();
+        Assert.Contains(s.Elements, e => e.NomFace == "M4" && e.Reference == "HMDIA2002"); // diagonales en travers > 1,05 m
+
+        var biblio = MultiDEC.Core.Catalogue.BibliothequeBlocs.DepuisFichier("blocs-EM-3D.txt");
+        foreach (double l in new[] { 1.5, 2.0, 2.5, 3.0 })
+        {
+            vm.Parametres.LargeurMaille = l;
+            var manquantes = biblio.Manquantes(vm.Generer().Elements.Select(e => e.Reference))
+                                   .Where(r => !r.StartsWith("HMTUBAMA", StringComparison.Ordinal)).ToList();
+            Assert.True(manquantes.Count == 0, $"largeur {l} : blocs manquants {string.Join(", ", manquantes)}");
+        }
+
+        vm.Forme = FormeStructure.EnL;
+        Assert.DoesNotContain(2.00, vm.LargeursProposees);
+    }
 }

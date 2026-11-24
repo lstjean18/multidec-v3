@@ -44,7 +44,10 @@ public sealed class ProjetStructure
 
     public FormeStructure Forme { get; set; } = FormeStructure.Droite;
 
-    /// <summary>Nombre de modules d'une structure volumique (2 à 6).</summary>
+    /// <summary>Nombre maximum de modules d'une structure volumique.</summary>
+    public const int ModulesMaxi = 12;
+
+    /// <summary>Nombre de modules d'une structure volumique (2 à <see cref="ModulesMaxi"/>).</summary>
     public int NombreModules { get; set; } = 2;
 
     /// <summary>Structure volumique : planchers en damier (une maille sur deux, décalée d'un module à l'autre, v2).</summary>
@@ -70,9 +73,9 @@ public sealed class ProjetStructure
 
     /// <summary>Nombre de faces (ou de modules) voulu pour la forme.</summary>
     [JsonIgnore]
-    public int NombreDeFacesVoulu => EstVolumique ? Math.Max(2, Math.Min(6, NombreModules)) : NombreDeFaces(Forme);
+    public int NombreDeFacesVoulu => EstVolumique ? Math.Max(2, Math.Min(ModulesMaxi, NombreModules)) : NombreDeFaces(Forme);
 
-    /// <summary>Nom d'une face : S1…S4, ou M1…M6 pour les modules d'une structure volumique.</summary>
+    /// <summary>Nom d'une face : S1…S4, ou M1, M2… pour les modules d'une structure volumique.</summary>
     public string NomFace(int index) => (EstVolumique ? "M" : "S") + (index + 1);
 
     /// <summary>Recopie les paramètres généraux dans chaque face (avant génération ou affichage).</summary>
@@ -111,6 +114,7 @@ public sealed class ProjetStructure
             {
                 CopierDepuisS1(Faces.Count - 1);
                 Faces[Faces.Count - 1].Parametres.LargeurMaille = face.Parametres.LargeurMaille;
+                SansAcces(Faces[Faces.Count - 1]);
             }
             else
             {
@@ -138,6 +142,11 @@ public sealed class ProjetStructure
     {
         var face = Faces[indexFace];
         face.Parametres.AppliquerGeneraux(General);
+        if (EstVolumique && indexFace > 0)
+        {
+            face.Parametres.NombreAcces = 0;
+        }
+
         face.Niveaux = ProposeurStructure.ProposerNiveaux(face.Parametres);
         face.Mailles = ProposeurStructure.ProposerMailles(face.Parametres, CommenceParCarreDAngle(indexFace), LargeurFacePrecedente(indexFace));
     }
@@ -166,6 +175,19 @@ public sealed class ProjetStructure
 
         Faces[indexFace] = copie;
         copie.Parametres.AppliquerGeneraux(General);
+    }
+
+    /// <summary>
+    /// Module volumique au-delà de M1 : les accès ne sont proposés que sur M1 (Laurent, 24/11/2026) ;
+    /// l'utilisateur peut ensuite en ajouter dans la grille.
+    /// </summary>
+    private static void SansAcces(FaceEchafaudage face)
+    {
+        face.Parametres.NombreAcces = 0;
+        foreach (var m in face.Mailles.Where(m => m.Type == TypeMaille.Acces))
+        {
+            m.Type = TypeMaille.Travail;
+        }
     }
 
     /// <summary>Projet d'une face droite, avec les grilles proposées depuis les paramètres.</summary>
