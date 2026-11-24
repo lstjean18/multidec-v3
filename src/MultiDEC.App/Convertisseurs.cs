@@ -22,3 +22,12 @@ public sealed class ConvertisseurEgal : IValueConverter
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) =>
         value is true && parameter is string nom ? Enum.Parse(targetType, nom) : Binding.DoNothing;
 }
+
+/// <summary>Cote optionnelle en mètres : « – » pour 0 (stabilisation absente, etc.), sinon 0,00.</summary>
+public sealed class ConvertisseurCoteOptionnelle : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
+        value is double d && Math.Abs(d) > 1e-9 ? d.ToString("0.00", CultureInfo.CurrentCulture) : "–";
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
+}

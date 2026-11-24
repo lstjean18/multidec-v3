@@ -44,7 +44,8 @@ public static class ReglePoteaux
 
     /// <param name="depart3m">Départ 3 m (côté extérieur ou file d'extrémité, si l'option est cochée et la hauteur ≥ 3 m).</param>
     /// <param name="gardeCorps">Le poteau porte un garde-corps au dernier niveau.</param>
-    public static List<TronconPoteau> Empiler(ParametresFacade p, bool depart3m, bool gardeCorps)
+    /// <param name="sommetVise">Sommet imposé (poteaux d'une sous-maille rapportée, d'une stabilisation) ; sinon calculé.</param>
+    public static List<TronconPoteau> Empiler(ParametresFacade p, bool depart3m, bool gardeCorps, double? sommetVise = null)
     {
         var socle = CatalogueSocles.De(p.Socle);
         var t = new List<TronconPoteau>();
@@ -60,7 +61,7 @@ public static class ReglePoteaux
         }
 
         double h = p.HauteurDernierPlancher;
-        double sommet = h + (gardeCorps ? 1.0 : 0.0) + (gardeCorps && p.GardeCorpsCouvreur ? 0.5 : 0.0);
+        double sommet = sommetVise ?? h + (gardeCorps ? 1.0 : 0.0) + (gardeCorps && p.GardeCorpsCouvreur ? 0.5 : 0.0);
         depart3m = depart3m && p.Modele != ModeleEchafaudage.MultiRetoEmbase && h + 1.0 >= 3.0 - Cotes.Tolerance;
 
         double z;            // cote nominale atteinte (sans le décalage MS)

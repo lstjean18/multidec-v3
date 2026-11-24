@@ -53,6 +53,12 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
 
     public static IReadOnlyList<double> LongueursMaille { get; } = new[] { 0.70, 0.75, 1.00, 1.05, 1.50, 2.00, 2.50, 3.00 };
 
+    /// <summary>Largeurs de stabilisation proposées (0 = sans).</summary>
+    public static IReadOnlyList<double> LargeursStabilisation { get; } = new[] { 0.0, 0.70, 1.00, 1.50, 2.00, 2.50, 3.00 };
+
+    /// <summary>Profondeurs de recette proposées.</summary>
+    public static IReadOnlyList<double> ProfondeursRecette { get; } = new[] { 0.70, 1.00, 1.50, 2.00, 2.50, 3.00 };
+
     public static Array Modeles { get; } = Enum.GetValues(typeof(ModeleEchafaudage));
 
     public static Array Securites { get; } = Enum.GetValues(typeof(TypeSecurite));

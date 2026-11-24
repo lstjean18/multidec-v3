@@ -118,6 +118,43 @@ public class BibliothequeDwgTests
 
         BoitesDesBlocs(doc);
         StructureEnL(rendu, doc, Path.GetFileNameWithoutExtension(fichier));
+        SousMailles(rendu, doc, Path.GetFileNameWithoutExtension(fichier));
+    }
+
+    /// <summary>
+    /// Façade droite avec sous-mailles rapportées : stabilisation (maille 1), accès rapporté (maille 2),
+    /// module d'appro (maille 4), recette de 1,50 m au niveau 4 (maille 5).
+    /// </summary>
+    private void SousMailles(RenduVectorDraw rendu, vdDocument doc, string nom)
+    {
+        var projet = ProjetStructure.Nouveau(face: new ParametresFacade { LongueurTotaleSouhaitee = 15, HauteurDernierPlancher = 6, NombreAcces = 0 });
+        var face = projet.S1;
+        face.Mailles[0].Stabilisation = 1.5;
+        face.Mailles[1].Type = TypeMaille.AccesRapporte;
+        face.Mailles[3].Type = TypeMaille.Appro;
+        face.Mailles[4].Type = TypeMaille.Recette;
+        face.Mailles[4].ProfondeurRecette = 1.5;
+        face.Niveaux.First(n => n.Hauteur == 4).Recette = true;
+        var s = GenerateurStructure.Generer(projet);
+        var rapport = rendu.Dessiner(s, TableOrientations.ParDefaut());
+        _sortie.WriteLine($"SM : {rapport.Inseres} insérés, alertes : {string.Join(" | ", s.Alertes)}");
+        foreach (var g in rapport.Inserts.Where(x => x.Element.Reference.StartsWith("HMGCAPPRO", StringComparison.Ordinal)).GroupBy(x => x.Element.Reference))
+        {
+            foreach (var x in g)
+            {
+                var b = x.Insert.BoundingBox;
+                _sortie.WriteLine(string.Format(CultureInfo.InvariantCulture, "SM {0,-16} o=({1:0.00},{2:0.00},{3:0.00})  X {4:0.00}..{5:0.00}  Y {6:0.00}..{7:0.00}  Z {8:0.00}..{9:0.00}",
+                    g.Key, x.Element.Origine.X, x.Element.Origine.Y, x.Element.Origine.Z, b.Min.x, b.Max.x, b.Min.y, b.Max.y, b.Min.z, b.Max.z));
+            }
+        }
+
+        rendu.Rendu(ModeRendu.OmbreAretes);
+        rendu.Vue(Vues.Iso);
+        Image(doc, nom + "-SM-iso");
+        rendu.Vue(Vues.Dessus);
+        Image(doc, nom + "-SM-dessus");
+        rendu.Vue(Vues.CoteGauche);
+        Image(doc, nom + "-SM-cote");
     }
 
     /// <summary>
@@ -127,8 +164,8 @@ public class BibliothequeDwgTests
     private void BoitesDesBlocs(vdDocument doc)
     {
         var table = TableOrientations.ParDefaut();
-        var verticaux = new[] { "HMCALEBOIS", "HMSOCREG", "HMSOCREG800", "HMSOCROU", "HMSOCROU200-1200", "HMSOCROUFC", "HMVERORI38780", "HMVERORI38500B019", "HMEMB", "HMSUPSUNI", "HMCOLLEV", "VSZ10070", "VEF10", "OECGOUP8S" };
-        var long_x = new[] { "HMPORTILLONPLIN070", "HMPORTILLONPLIN100", "HMPARGRA", "HMTOG200", "HMCROCHE", "HMECH100LIS", "HMPOUT500", "HMPTRL250", "HMLISR250", "HMLIS250", "HMTRAP250", "HMPLAA250", "HMTRA070" };
+        var verticaux = new[] { "HMCALEBOIS", "HMSOCREG", "HMSOCREG800", "HMSOCROU", "HMSOCROU200-1200", "HMSOCROUFC", "HMVERORI38780", "HMVERORI38500B019", "HMEMB", "HMSUPSUNI", "HMCOLLEV", "VSZ10070", "VEF10", "OECGOUP8S", "HMGCAPPROSUP" };
+        var long_x = new[] { "HMPORTILLONPLIN070", "HMPORTILLONPLIN100", "HMPARGRA", "HMTOG200", "HMCROCHE", "HMECH100LIS", "HMPOUT500", "HMPTRL250", "HMLISR250", "HMLIS250", "HMTRAP250", "HMPLAA250", "HMTRA070", "HMGCAPPRO-C", "HMGCAPPROGC200" };
         foreach (var (refs, axe) in new[] { (verticaux, Axe.Z), (long_x, Axe.X) })
         {
             foreach (var nom in refs)

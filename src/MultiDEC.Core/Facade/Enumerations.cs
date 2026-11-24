@@ -43,6 +43,15 @@ public enum TypeMaille
 {
     Travail,
     Acces,
+
+    /// <summary>Maille de travail + accès rapporté de 0,70 m côté extérieur (trappes et échelles), v2.</summary>
+    AccesRapporte,
+
+    /// <summary>Maille de travail + module d'approvisionnement de 2,00 m côté extérieur (garde-corps basculant), v2.</summary>
+    Appro,
+
+    /// <summary>Maille de travail + recette de profondeur variable côté extérieur (plancher et garde-corps), v2.</summary>
+    Recette,
 }
 
 /// <summary>Type de plancher à un niveau (reprend les choix de l'ancienne grille des niveaux).</summary>

@@ -59,6 +59,15 @@ public static class References
         };
     }
 
+    /// <summary>Support du garde-corps d'approvisionnement, fixé sur les lisses latérales (NT-GC_Approvisionnement).</summary>
+    public const string SupportAppro = "HMGCAPPROSUP";
+
+    /// <summary>Cadre basculeur du garde-corps d'approvisionnement.</summary>
+    public const string CadreAppro = "HMGCAPPRO-C";
+
+    /// <summary>Garde-corps d'approvisionnement entre les cadres : longueur de maille - 0,50 m (HMGCAPPROGC150 / 200 / 250).</summary>
+    public static string GardeCorpsAppro(double longueur) => "HMGCAPPROGC" + Cotes.EnCm3(longueur);
+
     /// <summary>Diagonale verticale de 2 m de haut : HMDIA + longueur + "2" (ex. HMDIA2502).</summary>
     public static string DiagonaleVerticale(double longueurMaille) => "HMDIA" + Cotes.EnCm3(longueurMaille) + "2";
 

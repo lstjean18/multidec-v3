@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using MultiDEC.Core.Catalogue;
 using MultiDEC.Core.Decompte;
 using MultiDEC.Core.Facade;
+using MultiDEC.Core.Facade.Regles;
 using MultiDEC.Core.Persistance;
 using Xunit;
 
@@ -325,6 +326,126 @@ public class GenerateurFacadeTests
                                        .Where(r => !r.StartsWith("HMTUBAMA", StringComparison.Ordinal)).ToList();
                 Assert.True(manquantes.Count == 0, $"{modele} {socle.Reference} : blocs manquants {string.Join(", ", manquantes)}");
             }
+        }
+    }
+
+    /// <summary>Poteaux (base des empilages) posés à une profondeur donnée.</summary>
+    private static List<ElementPlace> Pieds(StructureFacade s, double y) =>
+        s.Elements.Where(e => e.Famille == Famille.Socle && Math.Abs(e.Origine.Y - y) < 1e-6).ToList();
+
+    private static double Sommet(StructureFacade s, double x, double y) =>
+        s.Elements.Where(e => e.Famille == Famille.Poteau && Math.Abs(e.Origine.X - x) < 1e-6 && Math.Abs(e.Origine.Y - y) < 1e-6)
+                  .Max(e => e.Origine.Z + int.Parse(e.Reference.Substring(e.Reference.Length - 2)) / 10.0)
+          - ReglePoteaux.DecalageEmbaseMs; // Multi-SYSTEM : poteaux posés sur l'embase
+
+    [Fact]
+    public void Acces_rapporte_file_supplementaire_trappes_et_garde_corps_deporte()
+    {
+        var face = Standard(); // 8 mailles de 2,50, accès en maille 4
+        face.Mailles[1].Type = TypeMaille.AccesRapporte;
+        face.Mailles[2].Type = TypeMaille.AccesRapporte; // deux voisines : file du milieu partagée
+        var s = GenerateurFacade.Generer(face);
+        double y2 = -0.70 - 0.70;
+
+        Assert.Equal(3, Pieds(s, y2).Count); // files 2, 3 et 4, une seule fois chacune
+        Assert.Equal(11.0, Sommet(s, face.AbscissesFiles()[1], y2), 3); // dernier plancher + garde-corps
+
+        // Trappes de 0,60 dans l'accès rapporté (y = -0,70 - 0,025) aux niveaux 2 à 10, sens alterné.
+        var trappes = s.Elements.Where(e => e.Famille == Famille.Trappe && Math.Abs(e.Origine.Y + 0.725) < 1e-6 && e.NumeroMaille == 2).ToList();
+        Assert.Equal(5, trappes.Count);
+        Assert.Equal(new[] { false, true, false, true, false }, trappes.OrderBy(t => t.Origine.Z).Select(t => t.Inverse));
+
+        // Garde-corps extérieur sur la file rapportée, plus sur la file extérieure de la maille.
+        Assert.Contains(s.Elements, e => e.Famille == Famille.GardeCorps && e.NumeroMaille == 2 && Math.Abs(e.Origine.Y - y2) < 1e-6);
+        Assert.DoesNotContain(s.Elements, e => e.Famille == Famille.GardeCorps && e.Axe == Axe.X && e.NumeroMaille == 2 && Math.Abs(e.Origine.Y + 0.70) < 1e-6);
+
+        // Abouts de 0,70 aux deux bouts du groupe, pas entre les deux mailles.
+        var aboutsRap = s.Elements.Where(e => e.Axe == Axe.Y && e.Famille == Famille.GardeCorps && Math.Abs(e.Origine.Y + 0.70) < 1e-6 && Math.Abs(e.Origine.Z - 4) < 1e-6).ToList();
+        Assert.Equal(2, aboutsRap.Count);
+    }
+
+    [Fact]
+    public void Module_appro_aux_niveaux_coches_seulement()
+    {
+        var face = Standard();
+        face.Mailles[0].Type = TypeMaille.Appro;
+        foreach (var n in face.Niveaux)
+        {
+            n.Appro = Math.Abs(n.Hauteur - 4) < 1e-6 || Math.Abs(n.Hauteur - 8) < 1e-6;
+        }
+
+        var s = GenerateurFacade.Generer(face);
+        double y2 = -0.70 - 2.0;
+        Assert.Equal(2, Pieds(s, y2).Count);
+        Assert.Equal(9.0, Sommet(s, 0, y2), 3); // jusqu'au plus haut niveau desservi + 1 m
+
+        Assert.Equal(2, Nb(s, "HMGCAPPROGC200")); // maille de 2,50 → garde-corps de 2,00, aux niveaux 4 et 8
+        Assert.Equal(4, Nb(s, References.SupportAppro));
+        Assert.Equal(4, Nb(s, References.CadreAppro));
+        Assert.Contains(s.Elements, e => e.Famille == Famille.Plateau && e.NumeroMaille == 1 && e.Origine.Y < -0.70 && Math.Abs(e.Origine.Z - 8) < 1e-6);
+        Assert.DoesNotContain(s.Elements, e => e.Famille == Famille.Plateau && e.NumeroMaille == 1 && e.Origine.Y < -0.70 && Math.Abs(e.Origine.Z - 6) < 1e-6);
+
+        // Niveaux desservis : maille ouverte côté extérieur ; ailleurs garde-corps habituel.
+        bool gcExt(double z) => s.Elements.Any(e => e.Famille == Famille.GardeCorps && e.NumeroMaille == 1 && e.Axe == Axe.X && Math.Abs(e.Origine.Y + 0.70) < 1e-6 && Math.Abs(e.Origine.Z - z) < 1e-6);
+        Assert.False(gcExt(4));
+        Assert.True(gcExt(6));
+        Assert.True(gcExt(10));
+    }
+
+    [Fact]
+    public void Recette_de_profondeur_choisie()
+    {
+        var face = Standard();
+        face.Mailles[4].Type = TypeMaille.Recette;
+        face.Mailles[4].ProfondeurRecette = 1.5;
+        face.Niveaux.Single(n => Math.Abs(n.Hauteur - 6) < 1e-6).Recette = true;
+        var s = GenerateurFacade.Generer(face);
+        double y2 = -0.70 - 1.5;
+
+        Assert.Equal(2, Pieds(s, y2).Count);
+        Assert.Equal(7.0, Sommet(s, face.AbscissesFiles()[4], y2), 3);
+        var plateaux = s.Elements.Where(e => e.Famille == Famille.Plateau && e.NumeroMaille == 5 && e.Origine.Y < -0.70).ToList();
+        Assert.NotEmpty(plateaux);
+        Assert.All(plateaux, e => Assert.Equal(6, e.Origine.Z, 6));
+        Assert.Contains(s.Elements, e => e.Reference == "HMLISR150" && Math.Abs(e.Origine.Z - 6) < 1e-6); // poutrelle sous le plancher (renforcée jusqu'à 1,50 m, v2)
+        Assert.Contains(s.Elements, e => e.Reference == "HMDIA1502" && e.Axe == Axe.Y); // contreventement en travers
+    }
+
+    [Fact]
+    public void Stabilisation_file_lisses_et_diagonales_jusqu_a_2_m_sous_le_dernier_plancher()
+    {
+        var face = Standard();
+        face.Mailles[0].Stabilisation = 1.5;
+        var s = GenerateurFacade.Generer(face);
+        double y = -0.70 - 1.5;
+
+        Assert.Equal(2, Pieds(s, y).Count);
+        Assert.Equal(8.0, Sommet(s, 0, y), 3);
+        Assert.Equal(4, s.Elements.Count(e => e.Reference == "HMDIA2502" && Math.Abs(e.Origine.Y - (y - GenerateurFacade.DemiTube)) < 1e-6));
+        Assert.Equal(8, s.Elements.Count(e => e.Reference == "HMDIA1502" && e.Axe == Axe.Y)); // 2 bouts x 4 niveaux
+        Assert.Equal(5, s.Elements.Count(e => e.Famille == Famille.Lisse && e.Axe == Axe.X && Math.Abs(e.Origine.Y - y) < 1e-6)); // 0, 2, 4, 6, 8
+    }
+
+    [Fact]
+    public void Sous_mailles_references_presentes_dans_la_bibliotheque()
+    {
+        var biblio = BibliothequeBlocs.DepuisFichier("blocs-EM-3D.txt");
+        foreach (bool acier in new[] { false, true })
+        {
+            var face = Standard(p => p.TrappesAcier = acier);
+            face.Mailles[0].Type = TypeMaille.AccesRapporte;
+            face.Mailles[1].Type = TypeMaille.Appro;
+            face.Mailles[2].Type = TypeMaille.Recette;
+            face.Mailles[2].ProfondeurRecette = 2.5;
+            face.Mailles[5].Stabilisation = 2.0;
+            foreach (var n in face.Niveaux)
+            {
+                n.Recette = true;
+            }
+
+            var manquantes = biblio.Manquantes(GenerateurFacade.Generer(face).Elements.Select(e => e.Reference))
+                                   .Where(r => !r.StartsWith("HMTUBAMA", StringComparison.Ordinal)).ToList();
+            Assert.True(manquantes.Count == 0, $"blocs manquants {string.Join(", ", manquantes)}");
         }
     }
 

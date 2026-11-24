@@ -19,6 +19,8 @@ public sealed class Niveau : INotifyPropertyChanged
     private string? _console;
     private bool _diagoH;
     private bool _pareGravois;
+    private bool _appro = true;
+    private bool _recette;
 
     public Niveau()
     {
@@ -61,6 +63,20 @@ public sealed class Niveau : INotifyPropertyChanged
     {
         get => _pareGravois;
         set => Changer(ref _pareGravois, value);
+    }
+
+    /// <summary>Niveau desservi par les modules d'approvisionnement (v2 : coché par défaut).</summary>
+    public bool Appro
+    {
+        get => _appro;
+        set => Changer(ref _appro, value);
+    }
+
+    /// <summary>Niveau desservi par les recettes (plancher et garde-corps dans la recette à ce niveau).</summary>
+    public bool Recette
+    {
+        get => _recette;
+        set => Changer(ref _recette, value);
     }
 
     /// <summary>

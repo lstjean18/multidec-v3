@@ -48,7 +48,7 @@ public sealed class StructureFacade
 /// - élément d'axe Y : origine côté file intérieure, part vers l'extérieur ; les consoles partent vers la façade.
 /// Le rendu (MultiDEC.Rendering.VectorDraw) traduit ces conventions en matrices d'insertion.
 /// </summary>
-public sealed class GenerateurFacade
+public sealed partial class GenerateurFacade
 {
     /// <summary>Demi-diamètre de tube : décalage des diagonales et lisses posées contre les poteaux.</summary>
     public const double DemiTube = 0.0483;
@@ -141,6 +141,8 @@ public sealed class GenerateurFacade
             PlacerMaille(i, niveaux);
         }
 
+        PlacerSousMailles(niveaux);
+        PlacerStabilisations(niveaux);
         PlacerDiagonales();
         PlacerAbouts(niveaux);
         PlacerPareGravois(niveaux);
@@ -268,7 +270,7 @@ public sealed class GenerateurFacade
         foreach (var n in niveaux)
         {
             double z = n.Hauteur;
-            bool sansPlancher = n.EstAccesSeul && m.Type == TypeMaille.Travail;
+            bool sansPlancher = n.EstAccesSeul && m.EstTravail;
             var console = ConsoleDe(m, n);
 
             if (z > Cotes.Tolerance)
@@ -285,7 +287,16 @@ public sealed class GenerateurFacade
             if (z >= 0.5 - Cotes.Tolerance && !sansPlancher)
             {
                 var plintheExt = n.EstAccesSeul ? TypePlinthe.Sans : _p.PlintheExterieure;
-                PlacerGardeCorps(_p.SecuriteExterieure, plintheExt, x0, -_l, z, lm, Face.Exterieure, num);
+                if (m.Type == TypeMaille.AccesRapporte)
+                {
+                    // Garde-corps extérieur reporté sur la file de l'accès rapporté ; lisse de plancher ici (v2).
+                    Ajouter(lisse, Famille.Lisse, new Point3(x0, -_l, z), Axe.X, Face.Exterieure, num);
+                }
+                else if (!SousMailleDesservie(m, n))
+                {
+                    // Appro / recette desservis : la maille s'ouvre sur la sous-maille, pas de garde-corps extérieur.
+                    PlacerGardeCorps(_p.SecuriteExterieure, plintheExt, x0, -_l, z, lm, Face.Exterieure, num);
+                }
 
                 // v3 : même règle côté intérieur (l'ancienne version posait le GC intérieur même sans plancher).
                 if (console == null)
@@ -294,7 +305,7 @@ public sealed class GenerateurFacade
                 }
             }
 
-            if (m.Type == TypeMaille.Travail)
+            if (m.EstTravail)
             {
                 if (n.Type == TypePlancher.Complet && z > Cotes.Tolerance)
                 {
@@ -455,9 +466,20 @@ public sealed class GenerateurFacade
             return;
         }
 
+        PlacerTremie(x0, lm, 0, _l, z, num, ref inverse, secuCoteBord: _p.SecuriteInterieure != TypeSecurite.Sans);
+    }
+
+    /// <summary>
+    /// Plancher d'une colonne d'accès de largeur <paramref name="largeur"/> à partir du bord <paramref name="yBord"/> :
+    /// plateaux sous 2 m ; au-dessus, plateau à trappe (ou trappe acier) + échelle en sens alterné, plateaux de départ
+    /// au pied de la première échelle, lisse de sécurité au droit de la trémie.
+    /// </summary>
+    private void PlacerTremie(double x0, double lm, double yBord, double largeur, double z, int num, ref bool inverse, bool secuCoteBord)
+    {
+        double yExt = Cotes.Arrondi(yBord - largeur);
         if (z < 2.0 - Cotes.Tolerance)
         {
-            PlacerPlateaux(x0, 0, z, _l, lm, num);
+            PlacerPlateaux(x0, yBord, z, largeur, lm, num);
             return;
         }
 
@@ -471,39 +493,39 @@ public sealed class GenerateurFacade
             // à 1,00 m, plateaux sur le reste de la maille.
             const double lt = 1.0;
             double xTip = inverse ? x0 + lm - lt : x0 + lt;
-            Ajouter(References.TraverseIntermediaire(_l), Famille.Traverse, new Point3(xTip, 0, z), Axe.Y, Face.Aucune, num);
-            Ajouter(References.TrappeAcier(_l), Famille.Trappe, new Point3(xTrappe, -RetraitPlateau, z), Axe.X, Face.Aucune, num, inverse);
-            Ajouter(References.Echelle, Famille.Echelle, new Point3(xTrappe, -RetraitPlateau, z), Axe.X, Face.Aucune, num, inverse);
-            PlacerPlateaux(inverse ? x0 + lm - lt : x0, 0, z, _l, lt, num, premierRang: 2);
-            PlacerPlateaux(inverse ? x0 : x0 + lt, 0, z, _l, Cotes.Arrondi(lm - lt), num);
+            Ajouter(References.TraverseIntermediaire(largeur), Famille.Traverse, new Point3(xTip, yBord, z), Axe.Y, Face.Aucune, num);
+            Ajouter(References.TrappeAcier(largeur), Famille.Trappe, new Point3(xTrappe, yBord - RetraitPlateau, z), Axe.X, Face.Aucune, num, inverse);
+            Ajouter(References.Echelle, Famille.Echelle, new Point3(xTrappe, yBord - RetraitPlateau, z), Axe.X, Face.Aucune, num, inverse);
+            PlacerPlateaux(inverse ? x0 + lm - lt : x0, yBord, z, largeur, lt, num, premierRang: 2);
+            PlacerPlateaux(inverse ? x0 : x0 + lt, yBord, z, largeur, Cotes.Arrondi(lm - lt), num);
         }
         else
         {
-            Ajouter(References.PlateauTrappe(lm, _l), Famille.Trappe, new Point3(xTrappe, -RetraitPlateau, z), Axe.X, Face.Aucune, num, inverse);
+            Ajouter(References.PlateauTrappe(lm, largeur), Famille.Trappe, new Point3(xTrappe, yBord - RetraitPlateau, z), Axe.X, Face.Aucune, num, inverse);
             if (lm <= 2.0 + Cotes.Tolerance)
             {
-                Ajouter(References.Echelle, Famille.Echelle, new Point3(xTrappe, -RetraitPlateau, z), Axe.X, Face.Aucune, num, inverse);
+                Ajouter(References.Echelle, Famille.Echelle, new Point3(xTrappe, yBord - RetraitPlateau, z), Axe.X, Face.Aucune, num, inverse);
             }
 
-            PlacerPlateaux(x0, 0, z, _l, lm, num, premierRang: 2);
+            PlacerPlateaux(x0, yBord, z, largeur, lm, num, premierRang: 2);
         }
 
         bool premierAcces = Cotes.Egal(z, 2.0) || Cotes.Egal(z, 3.0);
         if (premierAcces)
         {
             // Plateaux de départ au pied de l'échelle.
-            PlacerPlateaux(x0, 0, z - 2.0, _l, lm, num, premierRang: 0, dernierRang: 1);
+            PlacerPlateaux(x0, yBord, z - 2.0, largeur, lm, num, premierRang: 0, dernierRang: 1);
         }
         else
         {
             // Lisse de sécurité au droit de la trémie (1,50 m au-dessus des plateaux) : lisse ordinaire
             // dans le plan des poteaux, montée sur leurs rosaces (tous les 0,50 m), sans collier (Laurent, 23/11/2026).
             string secu = References.LisseOuTraverse(lm);
-            Ajouter(secu, Famille.Lisse, new Point3(x0, -_l, z - 0.5), Axe.X, Face.Exterieure, num);
+            Ajouter(secu, Famille.Lisse, new Point3(x0, yExt, z - 0.5), Axe.X, Face.Exterieure, num);
 
-            if (_p.SecuriteInterieure != TypeSecurite.Sans)
+            if (secuCoteBord)
             {
-                Ajouter(secu, Famille.Lisse, new Point3(x0, 0, z - 0.5), Axe.X, Face.Interieure, num);
+                Ajouter(secu, Famille.Lisse, new Point3(x0, yBord, z - 0.5), Axe.X, Face.Interieure, num);
             }
         }
 
@@ -646,7 +668,7 @@ public sealed class GenerateurFacade
     {
         foreach (var n in niveaux.Where(n => n.Type == TypePlancher.Complet && n.Hauteur > Cotes.Tolerance))
         {
-            if (_p.AboutGauche && _projet.Mailles[0].Type == TypeMaille.Travail)
+            if (_p.AboutGauche && _projet.Mailles[0].EstTravail)
             {
                 if (PortillonNecessaire(n))
                 {
@@ -658,7 +680,7 @@ public sealed class GenerateurFacade
                 }
             }
 
-            if (_p.AboutDroit && _projet.Mailles[_projet.Mailles.Count - 1].Type == TypeMaille.Travail)
+            if (_p.AboutDroit && _projet.Mailles[_projet.Mailles.Count - 1].EstTravail)
             {
                 PlacerAbout(LongueurTotale, n.Hauteur, _l, gauche: false, console: false, _projet.Mailles.Count);
             }
@@ -670,7 +692,7 @@ public sealed class GenerateurFacade
     /// l'about de gauche est remplacé par un portillon et une échelle depuis le sol.
     /// </summary>
     private bool PortillonNecessaire(Niveau n) =>
-        n.Hauteur > Cotes.Tolerance && n.Hauteur < 2.0 - Cotes.Tolerance && _projet.Mailles.Any(m => m.Type == TypeMaille.Acces);
+        n.Hauteur > Cotes.Tolerance && n.Hauteur < 2.0 - Cotes.Tolerance && _projet.Mailles.Any(m => m.Type == TypeMaille.Acces || m.Type == TypeMaille.AccesRapporte);
 
     /// <summary>Portillon HMPORTILLONPLIN + échelle HMECH…LIS, à l'about gauche d'une maille (posés d'office).</summary>
     private void PlacerPortillon(double x, double z, int num)
@@ -766,8 +788,12 @@ public sealed class GenerateurFacade
         {
             int i = d.NumeroMaille - 1;
             double x0 = _x[i];
-            double lm = _projet.Mailles[i].Longueur;
+            var maille = _projet.Mailles[i];
+            double lm = maille.Longueur;
             string refDia = References.DiagonaleVerticale(lm);
+
+            // Sous-maille rapportée : la diagonale extérieure passe sur la file rapportée, jusqu'à son dernier plancher.
+            double hs = maille.LargeurRapportee > Cotes.Tolerance ? HauteurSousMaille(maille, _projet.Niveaux) : 0;
 
             LissesDePied(d.NumeroMaille, x0, lm);
 
@@ -788,7 +814,8 @@ public sealed class GenerateurFacade
             {
                 if (d.Exterieure)
                 {
-                    Ajouter(refDia, Famille.DiagonaleVerticale, new Point3(xDia, -_l - DemiTube, z), Axe.X, Face.Exterieure, d.NumeroMaille, d.Inverse);
+                    double yExt = z < hs - Cotes.Tolerance ? -_l - maille.LargeurRapportee : -_l;
+                    Ajouter(refDia, Famille.DiagonaleVerticale, new Point3(xDia, Cotes.Arrondi(yExt - DemiTube), z), Axe.X, Face.Exterieure, d.NumeroMaille, d.Inverse);
                 }
 
                 if (d.Interieure)

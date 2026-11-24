@@ -21,6 +21,8 @@ public sealed class MailleDefinition : INotifyPropertyChanged
     private bool _diagonale;
     private List<double> _consoles = new List<double>();
     private string _jonction = string.Empty;
+    private double _profondeurRecette = 2.0;
+    private double _stabilisation;
 
     public MailleDefinition()
     {
@@ -45,7 +47,48 @@ public sealed class MailleDefinition : INotifyPropertyChanged
     public TypeMaille Type
     {
         get => _type;
-        set => Changer(ref _type, value);
+        set
+        {
+            if (Changer(ref _type, value))
+            {
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(LargeurRapportee)));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(EstTravail)));
+            }
+        }
+    }
+
+    /// <summary>Maille de travail (avec ou sans sous-maille rapportée), par opposition à une maille d'accès.</summary>
+    [JsonIgnore]
+    public bool EstTravail => _type != TypeMaille.Acces;
+
+    /// <summary>
+    /// Profondeur de la sous-maille rapportée côté extérieur (v2 LargeurSousMaille) : 0,70 m pour un accès
+    /// rapporté, 2,00 m pour un module d'appro, la profondeur choisie pour une recette, 0 sinon.
+    /// </summary>
+    [JsonIgnore]
+    public double LargeurRapportee => _type switch
+    {
+        TypeMaille.AccesRapporte => 0.70,
+        TypeMaille.Appro => 2.00,
+        TypeMaille.Recette => _profondeurRecette,
+        _ => 0,
+    };
+
+    /// <summary>Profondeur de la recette (colonne « Prof. recette », utilisée si la maille est une recette).</summary>
+    public double ProfondeurRecette
+    {
+        get => _profondeurRecette;
+        set => Changer(ref _profondeurRecette, value);
+    }
+
+    /// <summary>
+    /// Largeur de la stabilisation côté extérieur (colonne « Stab. ») : file de poteaux à cette distance,
+    /// reliée par lisses et diagonales jusqu'à 2 m sous le dernier plancher (v2). 0 = pas de stabilisation.
+    /// </summary>
+    public double Stabilisation
+    {
+        get => _stabilisation;
+        set => Changer(ref _stabilisation, value);
     }
 
     /// <summary>Diagonales verticales sur toute la hauteur de la maille.</summary>
@@ -124,10 +167,15 @@ public sealed class MailleDefinition : INotifyPropertyChanged
 
     public static string Cle(double hauteur) => Cotes.Arrondi(hauteur).ToString("0.###", CultureInfo.InvariantCulture);
 
-    public MailleDefinition Copie() => new MailleDefinition(Longueur, Type, Diagonale) { Consoles = new List<double>(_consoles) };
+    public MailleDefinition Copie() => new MailleDefinition(Longueur, Type, Diagonale)
+    {
+        Consoles = new List<double>(_consoles),
+        ProfondeurRecette = ProfondeurRecette,
+        Stabilisation = Stabilisation,
+    };
 
     public override string ToString() =>
-        FormattableString.Invariant($"{Longueur:0.00} m {Type}{(Diagonale ? " + diagonale" : string.Empty)}{(_consoles.Count > 0 ? " + consoles " + string.Join("/", _consoles) : string.Empty)}");
+        FormattableString.Invariant($"{Longueur:0.00} m {Type}{(Diagonale ? " + diagonale" : string.Empty)}{(LargeurRapportee > 0 ? $" ({LargeurRapportee:0.00})" : string.Empty)}{(Stabilisation > 0 ? $" + stab. {Stabilisation:0.00}" : string.Empty)}{(_consoles.Count > 0 ? " + consoles " + string.Join("/", _consoles) : string.Empty)}");
 
     private static double Lire(string hauteur) => double.Parse(hauteur, CultureInfo.InvariantCulture);
 
@@ -137,12 +185,15 @@ public sealed class MailleDefinition : INotifyPropertyChanged
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Item[]"));
     }
 
-    private void Changer<T>(ref T champ, T valeur, [CallerMemberName] string? nom = null)
+    private bool Changer<T>(ref T champ, T valeur, [CallerMemberName] string? nom = null)
     {
-        if (!EqualityComparer<T>.Default.Equals(champ, valeur))
+        if (EqualityComparer<T>.Default.Equals(champ, valeur))
         {
-            champ = valeur;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nom));
+            return false;
         }
+
+        champ = valeur;
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nom));
+        return true;
     }
 }
