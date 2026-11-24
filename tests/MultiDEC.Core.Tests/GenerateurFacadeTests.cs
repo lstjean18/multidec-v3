@@ -118,10 +118,13 @@ public class GenerateurFacadeTests
 
         Assert.Equal(face.Mailles.Count + 1, pg.Count(e => e.Reference == "HMPARGRA"));
         Assert.Equal(3 * face.Mailles.Count, pg.Count(e => e.Axe == Axe.X && e.Reference.StartsWith("HMLIS", StringComparison.Ordinal)));
-        int toles = (int)Math.Floor(face.LongueurObtenue / 0.8 + 1e-6) + 1;
-        Assert.Equal(toles, pg.Count(e => e.Reference == "HMTOG200"));
+        int toles = (int)Math.Ceiling((face.LongueurObtenue - 0.9) / 0.8 - 1e-6) + 1;
+        var tolesPlacees = pg.Where(e => e.Reference == "HMTOG200").ToList();
+        Assert.Equal(toles, tolesPlacees.Count);
+        Assert.Equal(0, tolesPlacees.Min(e => e.Origine.X), 6);
+        Assert.Equal(face.LongueurObtenue - 0.9, tolesPlacees.Max(e => e.Origine.X), 6); // la dernière finit au bout
         Assert.Equal(3 * toles, pg.Count(e => e.Reference == "HMCROCHE"));
-        Assert.All(pg.Where(e => e.Reference == "HMTOG200"), e => Assert.Equal(-55, e.Inclinaison));
+        Assert.All(pg.Where(e => e.Reference == "HMTOG200"), e => Assert.Equal(125, e.Inclinaison));
         Assert.All(pg, e => Assert.True(e.Origine.Y <= -0.70 + 1e-6)); // côté extérieur
     }
 

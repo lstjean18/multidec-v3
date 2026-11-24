@@ -520,6 +520,9 @@ public sealed class GenerateurFacade
     /// <summary>Pas de pose des tôles (largeur utile 0,80 m).</summary>
     public const double PasTolesPareGravois = 0.80;
 
+    /// <summary>Largeur d'une tôle HMTOG200 le long de la façade (relevée dans la bibliothèque DWG).</summary>
+    public const double LargeurTolePareGravois = 0.90;
+
     private void PlacerPareGravois(List<Niveau> niveaux)
     {
         foreach (var n in niveaux.Where(n => n.PareGravois && n.Hauteur > Cotes.Tolerance))
@@ -544,14 +547,20 @@ public sealed class GenerateurFacade
                 }
             }
 
-            // Tôles tous les 0,80 m sur toute la longueur (la dernière calée au bout), 3 crochets chacune.
-            for (double x = 0; x <= LongueurTotale + Cotes.Tolerance; x = Cotes.Arrondi(x + PasTolesPareGravois))
+            // Tôles de 0,90 m de large posées tous les 0,80 m (recouvrement 0,10 m), la dernière calée au bout ;
+            // chaque tôle (2,00 m dans la pente) monte vers l'extérieur le long du bras de la console, 3 crochets chacune.
+            double xMax = Math.Max(0, Cotes.Arrondi(LongueurTotale - LargeurTolePareGravois));
+            for (double x = 0; ; x = Cotes.Arrondi(x + PasTolesPareGravois))
             {
-                double xTole = Math.Min(x + PasTolesPareGravois, LongueurTotale);
-                Ajouter(References.TolePareGravois, Famille.PareGravois, new Point3(xTole, -_l - 0.10, z + 0.10), Axe.X, Face.Exterieure, 0, inverse: false, inclinaison: -(90 - AnglePareGravois));
-                Ajouter(References.CrochetPareGravois, Famille.PareGravois, new Point3(x, -_l, z + 0.30), Axe.X, Face.Exterieure);
-                Ajouter(References.CrochetPareGravois, Famille.PareGravois, new Point3(x, -_l, z + 0.30), Axe.X, Face.Exterieure);
-                Ajouter(References.CrochetPareGravois, Famille.PareGravois, new Point3(x, -_l, z + 0.075), Axe.X, Face.Exterieure);
+                double xTole = Math.Min(x, xMax);
+                Ajouter(References.TolePareGravois, Famille.PareGravois, new Point3(xTole, -_l - 0.10, z + 0.10), Axe.X, Face.Exterieure, 0, inverse: false, inclinaison: 90 + AnglePareGravois);
+                Ajouter(References.CrochetPareGravois, Famille.PareGravois, new Point3(xTole, -_l, z + 0.30), Axe.X, Face.Exterieure);
+                Ajouter(References.CrochetPareGravois, Famille.PareGravois, new Point3(xTole, -_l, z + 0.30), Axe.X, Face.Exterieure);
+                Ajouter(References.CrochetPareGravois, Famille.PareGravois, new Point3(xTole, -_l, z + 0.075), Axe.X, Face.Exterieure);
+                if (xTole >= xMax - Cotes.Tolerance)
+                {
+                    break;
+                }
             }
         }
     }
