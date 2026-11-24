@@ -22,7 +22,11 @@ Les points marqués **[à valider]** sont des choix faits en v3 faute de règle 
 - Pied : HMCALEBOIS (-0,33) + HMSOCREG (0) — cotes relevées dans `Blocs-EM-3D.dxf` **[à valider à l'écran]**.
 - MR : HMPOTDP20 (ou HMPOTDP30 si départ 3 m) puis HMPOTST20. MRE : HMEMB + HMPOTDP10E puis HMPOTST. MS : HMEMB (+ HMPOT30 si départ 3 m) puis HMPOT20 + goupilles OECGOUP8S, décalage 0,046.
 - Départ 3 m : côté extérieur et files d'extrémité (sans effet en MRE).
-- Sommet : dernier plancher, + 1,00 m si garde-corps, + 0,50 m en couvreur. Poteau intérieur avec garde-corps si file d'extrémité ou protection intérieure sur une maille voisine sans console.
+- Sommet (24/11/2026) : poteaux posés en dernier, chacun monte au plancher de sa file et jusqu'à la plus haute protection
+  qui s'y accroche (cadre MDS = plancher + 1 m, lisses, abouts, lisse couvreur à + 1,50 m, diagonales). Un garde-corps a
+  donc toujours un poteau de chaque côté ; sans garde-corps accroché, le poteau s'arrête au plancher.
+- Portillon : premier plancher entre 0,50 et 1,50 m (même sans maille d'accès) → portillon HMPORTILLONPLIN + échelle
+  entre lisses HMECH050/100/150LIS à l'about de départ de la face (about de fin si le départ est un carré d'angle).
 
 ## Garde-corps, plinthes, plateaux, accès
 - Extérieur à chaque niveau ≥ 0,50 m, sauf mailles de travail aux niveaux « accès seul ». Pas de plinthe aux niveaux d'accès.
@@ -62,6 +66,9 @@ Les points marqués **[à valider]** sont des choix faits en v3 faute de règle 
   - **Tout about qui donne sur le vide a un garde-corps**, seul le côté façade en est dispensé (bout de S2 côté S1 compris).
     Les cadres d'about HMGCSE…GT sont tournés vers l'extérieur.
   - Un poteau sans garde-corps qui s'y accroche (angle) s'arrête à hauteur du plancher.
+  - Case « Inverser la structure » (onglet Général, L / U / fermée) : bâtiment dans l'angle rentrant. Les faces tournent
+    vers la droite (-90°), chacune garde son côté mur côté bâtiment, donc garde-corps et sous-mailles rapportées passent de
+    l'autre côté du dessin. Le carré d'angle n'a pas d'about au départ (mur) ni de garde-corps côté extérieur (passage).
   - Volumique uniquement : largeurs 1,50 / 2,00 / 2,50 / 3,00 en plus de 0,70 à 1,05. Les modules peuvent avoir des longueurs
     différentes : la partie qui dépasse du module voisin a ses garde-corps côté vide. Accès proposés sur M1 seulement
     (l'utilisateur peut en ajouter). Pas de diagonale ni de protection à l'interface entre deux modules.
@@ -85,10 +92,18 @@ Les points marqués **[à valider]** sont des choix faits en v3 faute de règle 
   - Côté maille : garde-corps extérieur remplacé par la lisse de plancher et une fermeture (montant HMMONTGC(E) + 2 lisses + plinthe)
     sur 1,50 m (2,00 m en maille de 3 m), ouverte sur 1,00 m au bout d'arrivée ; demi-escalier aux niveaux intermédiaires :
     garde-corps central sur piquages HMPIQLIS(-E) + poteaux de 1 m, ouvert sur 0,75 m aux deux bouts.
+  - Premier plancher à 1,00 m : la volée de 1 m (HMESCALU175100) sort de la tour, sur la maille voisine du côté où part la
+    volée suivante (maille suivante pour un demi-escalier), pied au sol sur une HMTIP, plateaux acier HMPLA…3CL6 sur le reste
+    de la maille, poteau court au bout ; pas de diagonale devant cette entrée.
+  - Rendu : volées et garde-corps de volée en bleu, montants HMMONTGC(E) en violet.
 - **Stabilisation** (colonne « Stab. ») : file à la distance choisie, lisses et diagonales jusqu'à 2 m sous le dernier plancher.
+  Diagonales en travers du pied côté stabilisation vers le haut côté structure ; la dernière relie le haut de la stabilisation
+  au dernier plancher de la structure.
 - **Colonne « Ht max »** (remplace Pignon le 24/11/2026) : dernier plancher de chaque maille, écart avec celui de la face
   par multiple de 2 m (sinon alerte et hauteur de la face). Au-dessus : planchers tous les 2 m (accès seul pour une maille
-  d'accès). En dessous : maille arrêtée plus bas. Abouts avec garde-corps sur la maille plus haute, côté de la voisine plus basse.
+  d'accès). En dessous : maille arrêtée plus bas. Abouts avec garde-corps sur la maille plus haute, côté de la voisine plus basse,
+  aux planchers de la maille (bouts de face compris). Une maille plus haute que ses voisines (ou que sa seule voisine) a un
+  plateau d'accès à trappe à chaque plancher qu'aucune voisine n'atteint.
 - **Poutre de franchissement** (colonne « Poutre », sur la maille de gauche d'une paire de mailles de travail identiques) :
   deux poutres HMPOUT à 0,50 m sous le plancher choisi, file du milieu supprimée dessous, tubes en diagonale horizontale,
   diagonales en V au-dessus, abouts sur les mailles voisines ; refus avec alerte si les conditions ne sont pas réunies.
