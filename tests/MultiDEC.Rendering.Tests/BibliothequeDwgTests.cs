@@ -157,7 +157,7 @@ public class BibliothequeDwgTests
         var projet = ProjetStructure.Nouveau(face: new ParametresFacade { LongueurTotaleSouhaitee = 15, HauteurDernierPlancher = 6, NombreAcces = 1 });
         var face = projet.S1;
         int acces = face.Mailles.FindIndex(m => m.Type == TypeMaille.Acces);
-        face.Mailles[acces].Pignon = 4;
+        face.Mailles[acces].EcartHauteur = 4;
         int i = acces >= 3 ? 1 : acces + 2; // deux mailles de travail hors des extrémités
         face.Mailles[i].Poutre = 4;
         var s = GenerateurStructure.Generer(projet);

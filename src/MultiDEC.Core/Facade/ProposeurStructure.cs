@@ -158,17 +158,16 @@ public static class ProposeurStructure
     /// Grille d'une face qui commence par le carré d'angle (jonction avec la face précédente) :
     /// une maille de longueur = largeur de maille, comprise dans la longueur souhaitée, puis la proposition habituelle.
     /// </summary>
-    public static List<MailleDefinition> ProposerMailles(ParametresFacade p, bool carreDAngle)
+    public static List<MailleDefinition> ProposerMailles(ParametresFacade p, bool carreDAngle, double? largeurFacePrecedente = null)
     {
-        if (!carreDAngle)
+        var mailles = ProposerMailles(p);
+        if (carreDAngle)
         {
-            return ProposerMailles(p);
+            // La longueur saisie ne comprend jamais le carré d'angle (Laurent, 24/11/2026) : il s'ajoute devant,
+            // de longueur = largeur de la face précédente (ex. 20 m saisis derrière une face de 0,70 m → 20,70 m).
+            mailles.Insert(0, new MailleDefinition(largeurFacePrecedente ?? p.LargeurMaille, TypeMaille.Travail));
         }
 
-        var q = p.Copie();
-        q.LongueurTotaleSouhaitee = Cotes.Arrondi(p.LongueurTotaleSouhaitee - p.LargeurMaille);
-        var mailles = ProposerMailles(q);
-        mailles.Insert(0, new MailleDefinition(p.LargeurMaille, TypeMaille.Travail));
         return mailles;
     }
 

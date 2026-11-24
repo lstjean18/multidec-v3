@@ -23,7 +23,7 @@ public sealed class MailleDefinition : INotifyPropertyChanged
     private string _jonction = string.Empty;
     private double _profondeurRecette = 2.0;
     private double _stabilisation;
-    private double _pignon;
+    private double _ecart;
     private double _poutre;
 
     public MailleDefinition()
@@ -56,7 +56,6 @@ public sealed class MailleDefinition : INotifyPropertyChanged
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(LargeurRapportee)));
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(EstTravail)));
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(EstEscalier)));
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(PignonEffectif)));
             }
         }
     }
@@ -104,27 +103,43 @@ public sealed class MailleDefinition : INotifyPropertyChanged
     }
 
     /// <summary>
-    /// Pignon (colonne « Pignon (+m) », mailles d'accès seulement, v2 CanPignon) : la maille monte de cette hauteur
-    /// au-dessus du dernier plancher de la face, avec un plancher tous les 2 m. 0 = pas de pignon.
+    /// Colonne « Ht max » (remplace la colonne Pignon, Laurent 24/11/2026) : écart entre le dernier plancher de la maille
+    /// et celui de la face, multiple de 2 m, vers le haut (planchers tous les 2 m au-dessus, comme l'ancien pignon)
+    /// ou vers le bas (maille arrêtée plus bas). 0 = maille à la hauteur de la face.
     /// </summary>
-    public double Pignon
+    public double EcartHauteur
     {
-        get => _pignon;
+        get => _ecart;
         set
         {
-            if (Changer(ref _pignon, value))
+            if (Changer(ref _ecart, Cotes.Arrondi(value)))
             {
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(PignonEffectif)));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(EcartValide)));
             }
         }
     }
 
-    /// <summary>Pignon pris en compte : seulement sur une maille d'accès, par pas de 2 m.</summary>
+    /// <summary>Écart utilisable : multiple de 2 m (sinon la maille reste à la hauteur de la face, avec une alerte).</summary>
     [JsonIgnore]
-    public double PignonEffectif => _type == TypeMaille.Acces && _pignon > Cotes.Tolerance ? 2.0 * Math.Floor((_pignon + Cotes.Tolerance) / 2.0) : 0;
+    public bool EcartValide => Math.Abs(_ecart / 2.0 - Math.Round(_ecart / 2.0)) < Cotes.Tolerance;
+
+    /// <summary>Ancienne colonne « Pignon (+m) » (fichiers du 24/11/2026 au matin) : relue comme un écart vers le haut.</summary>
+    [JsonPropertyName("Pignon")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public double PignonAncien
+    {
+        get => 0;
+        set
+        {
+            if (value > Cotes.Tolerance)
+            {
+                EcartHauteur = value;
+            }
+        }
+    }
 
     /// <summary>Dernier plancher de cette maille pour une face dont le dernier plancher est <paramref name="hauteurFace"/> (colonne « Ht max »).</summary>
-    public double HauteurMax(double hauteurFace) => Cotes.Arrondi(hauteurFace + PignonEffectif);
+    public double HauteurMax(double hauteurFace) => Cotes.Arrondi(hauteurFace + (EcartValide && hauteurFace + _ecart > Cotes.Tolerance ? _ecart : 0));
 
     /// <summary>
     /// Poutre de franchissement (colonne « Poutre ») : hauteur du plancher porté par une poutre qui couvre cette maille
@@ -217,12 +232,12 @@ public sealed class MailleDefinition : INotifyPropertyChanged
         Consoles = new List<double>(_consoles),
         ProfondeurRecette = ProfondeurRecette,
         Stabilisation = Stabilisation,
-        Pignon = Pignon,
+        EcartHauteur = EcartHauteur,
         Poutre = Poutre,
     };
 
     public override string ToString() =>
-        FormattableString.Invariant($"{Longueur:0.00} m {Type}{(Diagonale ? " + diagonale" : string.Empty)}{(LargeurRapportee > 0 ? $" ({LargeurRapportee:0.00})" : string.Empty)}{(Stabilisation > 0 ? $" + stab. {Stabilisation:0.00}" : string.Empty)}{(PignonEffectif > 0 ? $" + pignon {PignonEffectif:0}" : string.Empty)}{(Poutre > 0 ? $" + poutre à {Poutre:0.00}" : string.Empty)}{(_consoles.Count > 0 ? " + consoles " + string.Join("/", _consoles) : string.Empty)}");
+        FormattableString.Invariant($"{Longueur:0.00} m {Type}{(Diagonale ? " + diagonale" : string.Empty)}{(LargeurRapportee > 0 ? $" ({LargeurRapportee:0.00})" : string.Empty)}{(Stabilisation > 0 ? $" + stab. {Stabilisation:0.00}" : string.Empty)}{(EcartHauteur != 0 ? $" + ht {EcartHauteur:+0;-0}" : string.Empty)}{(Poutre > 0 ? $" + poutre à {Poutre:0.00}" : string.Empty)}{(_consoles.Count > 0 ? " + consoles " + string.Join("/", _consoles) : string.Empty)}");
 
     private static double Lire(string hauteur) => double.Parse(hauteur, CultureInfo.InvariantCulture);
 

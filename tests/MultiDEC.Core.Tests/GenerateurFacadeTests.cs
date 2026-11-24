@@ -431,8 +431,7 @@ public class GenerateurFacadeTests
     {
         var face = Standard(); // accès en maille 4 (index 3), dernier plancher 10 m
         int acces = face.Mailles.FindIndex(m => m.Type == TypeMaille.Acces);
-        face.Mailles[acces].Pignon = 4;
-        face.Mailles[0].Pignon = 4; // maille de travail : ignoré (v2 : pignon seulement sur un accès)
+        face.Mailles[acces].EcartHauteur = 4; // colonne « Ht max » à 14 m
         var s = GenerateurFacade.Generer(face);
         var x = face.AbscissesFiles();
 
@@ -440,6 +439,7 @@ public class GenerateurFacadeTests
         Assert.Equal(15.0, Sommet(s, x[acces + 1], 0), 3);
         Assert.Equal(11.0, Sommet(s, x[0], -0.70), 3);
         Assert.Equal(7, s.Elements.Count(e => e.Famille == Famille.Trappe && e.NumeroMaille == acces + 1)); // 2 à 14
+
         foreach (double z in new[] { 12.0, 14.0 })
         {
             Assert.Equal(2, s.Elements.Count(e => e.Axe == Axe.Y && e.Famille == Famille.GardeCorps && Math.Abs(e.Origine.Z - z) < 1e-6));
@@ -449,6 +449,48 @@ public class GenerateurFacadeTests
         Assert.DoesNotContain(s.Elements, e => e.Origine.Z > 11.5 && e.NumeroMaille != acces + 1 && e.NumeroMaille != 0);
         Assert.Equal(14.0, face.Mailles[acces].HauteurMax(10), 6);
         Assert.Equal(10.0, face.Mailles[0].HauteurMax(10), 6);
+    }
+
+    [Fact]
+    public void Ht_max_maille_plus_basse_et_plus_haute_avec_abouts_cote_vide()
+    {
+        var face = Standard(); // dernier plancher 10 m, mailles de 2,50, accès en maille 4
+        face.Mailles[1].EcartHauteur = -4; // maille 2 arrêtée à 6 m
+        face.Mailles[6].EcartHauteur = 2;  // maille 7 montée à 12 m (plancher complet)
+        face.Mailles[7].EcartHauteur = 3;  // refusé : pas un multiple de 2 m
+        var s = GenerateurFacade.Generer(face);
+        var x = face.AbscissesFiles();
+        bool A(ElementPlace e, double xf, double z) => Math.Abs(e.Origine.X - xf) < 1e-6 && Math.Abs(e.Origine.Z - z) < 1e-6;
+
+        // Maille 2 : rien au-dessus de 6 m ; ses voisines ont un about côté maille 2 à 8 et 10 m.
+        Assert.DoesNotContain(s.Elements, e => e.NumeroMaille == 2 && e.Famille == Famille.Plateau && e.Origine.Z > 6.5);
+        Assert.DoesNotContain(s.Elements, e => e.NumeroMaille == 2 && e.Famille == Famille.DiagonaleVerticale && e.Origine.Z > 5);
+        foreach (double z in new[] { 8.0, 10.0 })
+        {
+            Assert.Contains(s.Elements, e => e.Axe == Axe.Y && e.Famille == Famille.GardeCorps && e.NumeroMaille == 1 && A(e, x[1], z));
+            Assert.Contains(s.Elements, e => e.Axe == Axe.Y && e.Famille == Famille.GardeCorps && e.NumeroMaille == 3 && A(e, x[2], z));
+        }
+
+        Assert.Contains(s.Elements, e => e.Famille == Famille.GardeCorps && e.NumeroMaille == 2 && Math.Abs(e.Origine.Z - 6) < 1e-6 && e.Axe == Axe.X);
+
+        // Maille 7 : plancher complet à 12 m, abouts des deux côtés, poteaux jusqu'à 13 m.
+        Assert.Contains(s.Elements, e => e.NumeroMaille == 7 && e.Famille == Famille.Plateau && Math.Abs(e.Origine.Z - 12) < 1e-6);
+        Assert.Contains(s.Elements, e => e.Axe == Axe.Y && e.Famille == Famille.GardeCorps && A(e, x[6], 12));
+        Assert.Contains(s.Elements, e => e.Axe == Axe.Y && e.Famille == Famille.GardeCorps && A(e, x[7], 12));
+        Assert.Equal(13.0, Sommet(s, x[7], -0.70), 3);
+        Assert.Contains(s.Alertes, a => a.Contains("multiple de 2 m"));
+        Assert.Equal(10.0, face.Mailles[7].HauteurMax(10), 6);
+    }
+
+    [Fact]
+    public void Poteau_interieur_sans_garde_corps_arrete_au_plancher()
+    {
+        var face = Standard(p => p.AboutDroit = false); // protection intérieure « Sans » par défaut
+        var s = GenerateurFacade.Generer(face);
+        var x = face.AbscissesFiles();
+        Assert.Equal(11.0, Sommet(s, x[0], 0), 3);              // about gauche : garde-corps → +1 m
+        Assert.Equal(10.0, Sommet(s, x[x.Count - 1], 0), 3);    // pas d'about : s'arrête au plancher
+        Assert.Equal(10.0, Sommet(s, x[3], 0), 3);
     }
 
     [Fact]

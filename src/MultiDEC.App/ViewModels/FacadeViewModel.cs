@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
+using System.Globalization;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using MultiDEC.Core.Catalogue;
@@ -56,8 +57,6 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
     /// <summary>Largeurs de stabilisation proposées (0 = sans).</summary>
     public static IReadOnlyList<double> LargeursStabilisation { get; } = new[] { 0.0, 0.70, 1.00, 1.50, 2.00, 2.50, 3.00 };
 
-    /// <summary>Hauteurs de pignon proposées (planchers tous les 2 m au-dessus du dernier plancher, mailles d'accès).</summary>
-    public static IReadOnlyList<double> HauteursPignon { get; } = new[] { 0.0, 2.0, 4.0, 6.0, 8.0, 10.0 };
 
     /// <summary>Profondeurs de recette proposées.</summary>
     public static IReadOnlyList<double> ProfondeursRecette { get; } = new[] { 0.70, 1.00, 1.50, 2.00, 2.50, 3.00 };
@@ -272,6 +271,29 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
         : $"{NomFaceActive} : {Mailles.Count} mailles — {LongueurObtenue:0.00} m — structure : {_structure.Elements.Count} éléments — {_structure.Amarrages.Amarrages.Count} amarrages";
 
     public double LongueurObtenue => Mailles.Sum(m => m.Longueur);
+
+    /// <summary>
+    /// Colonne « Ht max » : hauteurs proposées pour une maille, à un multiple de 2 m du dernier plancher de la face
+    /// (Laurent, 24/11/2026), de 2 m (ou du premier plancher) jusqu'à 10 m au-dessus. Clé = écart, valeur = hauteur affichée.
+    /// </summary>
+    public IReadOnlyList<KeyValuePair<double, string>> ChoixHauteursMaille
+    {
+        get
+        {
+            double h = Parametres.HauteurDernierPlancher;
+            var choix = new List<KeyValuePair<double, string>>();
+            for (double ecart = -2.0 * Math.Floor((h - 1.0 + Cotes.Tolerance) / 2.0); ecart <= 10.0 + Cotes.Tolerance; ecart += 2.0)
+            {
+                double ht = Cotes.Arrondi(h + ecart);
+                if (ht > Cotes.Tolerance)
+                {
+                    choix.Add(new KeyValuePair<double, string>(Cotes.Arrondi(ecart), ht.ToString("0.00", CultureInfo.CurrentCulture) + (Cotes.Egal(ecart, 0) ? " (face)" : string.Empty)));
+                }
+            }
+
+            return choix;
+        }
+    }
 
     /// <summary>Hauteurs proposées pour une poutre de franchissement : niveaux de 2 m et plus (0 = sans).</summary>
     public IReadOnlyList<double> HauteursPoutre =>

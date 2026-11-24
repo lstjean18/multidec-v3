@@ -139,7 +139,14 @@ public sealed class ProjetStructure
         var face = Faces[indexFace];
         face.Parametres.AppliquerGeneraux(General);
         face.Niveaux = ProposeurStructure.ProposerNiveaux(face.Parametres);
-        face.Mailles = ProposeurStructure.ProposerMailles(face.Parametres, CommenceParCarreDAngle(indexFace));
+        face.Mailles = ProposeurStructure.ProposerMailles(face.Parametres, CommenceParCarreDAngle(indexFace), LargeurFacePrecedente(indexFace));
+    }
+
+    /// <summary>Largeur de la face à laquelle se raccorde le carré d'angle de la face <paramref name="indexFace"/>.</summary>
+    public double LargeurFacePrecedente(int indexFace)
+    {
+        int precedente = indexFace == 0 ? Faces.Count - 1 : indexFace - 1;
+        return Faces[precedente].Parametres.LargeurMaille;
     }
 
     /// <summary>Recopie les paramètres propres à S1 et ses grilles dans une autre face (bouton « Copier depuis S1 »).</summary>
@@ -154,7 +161,7 @@ public sealed class ProjetStructure
         copie.Nom = Faces[indexFace].Nom;
         if (CommenceParCarreDAngle(indexFace) && !CommenceParCarreDAngle(0) && copie.Mailles.Count > 0)
         {
-            copie.Mailles.Insert(0, new MailleDefinition(copie.Parametres.LargeurMaille, TypeMaille.Travail));
+            copie.Mailles.Insert(0, new MailleDefinition(LargeurFacePrecedente(indexFace), TypeMaille.Travail));
         }
 
         Faces[indexFace] = copie;

@@ -33,6 +33,7 @@ public static class GenerateurStructure
     public static StructureFacade Generer(ProjetStructure projet)
     {
         projet.AppliquerGeneraux();
+        VerifierPremiersPlanchers(projet);
         var poses = Poses(projet);
         var elements = new List<ElementPlace>();
         var amarrages = new List<Amarrage>();
@@ -66,8 +67,10 @@ public static class GenerateurStructure
             }
             else if (plusieurs)
             {
-                // Pas d'about là où la face se raccorde à la précédente ou à la suivante.
-                p.AboutGauche = aboutGauche && !RaccordeeAvant(projet, i);
+                // Raccords (Laurent, 24/11/2026) : le bout de la face qui touche le carré d'angle de la suivante n'a pas
+                // d'about (passage) ; le côté extérieur du carré d'angle donne dans le vide, il a toujours son about.
+                p.CarreDAngleEnTete = projet.CommenceParCarreDAngle(i);
+                p.AboutGauche = aboutGauche || p.CarreDAngleEnTete;
                 p.AboutDroit = aboutDroit && !RaccordeeApres(projet, i);
             }
 
@@ -80,6 +83,7 @@ public static class GenerateurStructure
             {
                 p.AboutGauche = aboutGauche;
                 p.AboutDroit = aboutDroit;
+                p.CarreDAngleEnTete = false;
                 p.ModuleVolumique = null;
                 p.NombreModules = 1;
                 p.PlanchersDamier = false;
@@ -115,6 +119,33 @@ public static class GenerateurStructure
         }
 
         return new StructureFacade(elements, new BilanAmarrages(amarrages, Cotes.Arrondi(surface), mini, note), alertes.Distinct().ToList());
+    }
+
+    /// <summary>
+    /// Toutes les faces doivent avoir leur premier plancher à la même hauteur, sinon on ne passe pas de l'une
+    /// à l'autre (Laurent, 24/11/2026) : message et refus de dessiner.
+    /// </summary>
+    public static void VerifierPremiersPlanchers(ProjetStructure projet)
+    {
+        if (projet.Faces.Count < 2)
+        {
+            return;
+        }
+
+        var premiers = projet.Faces
+            .Select(f => (f.Nom, Premier: f.Niveaux.Where(n => n.Hauteur > Cotes.Tolerance).Select(n => n.Hauteur).DefaultIfEmpty(0).Min()))
+            .ToList();
+        double reference = premiers[0].Premier;
+        var ecarts = premiers.Where(f => !Cotes.Egal(f.Premier, reference)).ToList();
+        if (ecarts.Count == 0)
+        {
+            return;
+        }
+
+        string detail = string.Join(", ", premiers.Select(f => FormattableString.Invariant($"{f.Nom} {f.Premier:0.00} m")));
+        throw new InvalidOperationException(
+            "Les faces n'ont pas leur premier plancher à la même hauteur (" + detail.Replace('.', ',') + ") : on ne pourrait pas passer d'une face à l'autre. " +
+            "Ajustez la hauteur du dernier plancher (écart multiple de 2 m) ou les niveaux des faces concernées ; la structure n'est pas dessinée.");
     }
 
     /// <summary>Position de chaque face : S1 à l'origine, chaque face suivante au bout de la précédente, tournée de +90°.</summary>
@@ -181,8 +212,16 @@ public static class GenerateurStructure
     /// </summary>
     private static List<ElementPlace> SansPoteauxCommuns(List<ElementPlace> face, List<ElementPlace> dejaPoses)
     {
-        var occupes = new HashSet<(double, double)>(dejaPoses.Where(EstVertical).Select(Cle));
-        return face.Where(e => !(EstVertical(e) && occupes.Contains(Cle(e)))).ToList();
+        // Poteau d'angle commun : on garde la pile qui monte le plus haut (garde-corps accroché d'un seul côté).
+        var hautDeja = dejaPoses.Where(EstVertical).GroupBy(Cle).ToDictionary(g => g.Key, g => g.Max(e => e.Origine.Z));
+        var hautFace = face.Where(EstVertical).GroupBy(Cle).ToDictionary(g => g.Key, g => g.Max(e => e.Origine.Z));
+        var remplaces = new HashSet<(double, double)>(hautFace.Where(kv => hautDeja.TryGetValue(kv.Key, out double z) && kv.Value > z + Cotes.Tolerance).Select(kv => kv.Key));
+        if (remplaces.Count > 0)
+        {
+            dejaPoses.RemoveAll(e => EstVertical(e) && remplaces.Contains(Cle(e)));
+        }
+
+        return face.Where(e => !(EstVertical(e) && hautDeja.ContainsKey(Cle(e)) && !remplaces.Contains(Cle(e)))).ToList();
     }
 
     private static bool EstVertical(ElementPlace e) => e.Axe == Axe.Z && e.Famille switch

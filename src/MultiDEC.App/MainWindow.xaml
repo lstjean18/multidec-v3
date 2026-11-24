@@ -483,39 +483,26 @@
                       </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                   </DataGridTemplateColumn>
-                  <DataGridTemplateColumn Header="Pignon (+m)" Width="80">
+                  <DataGridTemplateColumn Header="Ht max" Width="70">
                     <DataGridTemplateColumn.CellTemplate>
                       <DataTemplate>
-                        <TextBlock Text="{Binding PignonEffectif, Converter={StaticResource CoteOptionnelle}}" Margin="2,0"
-                                   ToolTip="Maille d'accès qui monte au-dessus du dernier plancher (pignon), plancher tous les 2 m" />
-                      </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                    <DataGridTemplateColumn.CellEditingTemplate>
-                      <DataTemplate>
-                        <ComboBox ItemsSource="{x:Static vm:FacadeViewModel.HauteursPignon}" SelectedItem="{Binding Pignon, UpdateSourceTrigger=PropertyChanged}"
-                                  IsEnabled="{Binding Type, Converter={StaticResource Egal}, ConverterParameter=Acces}">
-                          <ComboBox.ItemTemplate>
-                            <DataTemplate>
-                              <TextBlock Text="{Binding Converter={StaticResource CoteOptionnelle}}" />
-                            </DataTemplate>
-                          </ComboBox.ItemTemplate>
-                        </ComboBox>
-                      </DataTemplate>
-                    </DataGridTemplateColumn.CellEditingTemplate>
-                  </DataGridTemplateColumn>
-                  <DataGridTemplateColumn Header="Ht max" Width="60" IsReadOnly="True">
-                    <DataGridTemplateColumn.CellTemplate>
-                      <DataTemplate>
-                        <TextBlock Margin="2,0" Foreground="#57606A" ToolTip="Dernier plancher de la maille (pignon compris)">
+                        <TextBlock Margin="2,0" ToolTip="Dernier plancher de la maille : à un multiple de 2 m du dernier plancher de la face, plus haut (planchers tous les 2 m) ou plus bas">
                           <TextBlock.Text>
                             <MultiBinding Converter="{StaticResource HauteurMax}">
-                              <Binding Path="PignonEffectif" />
+                              <Binding Path="EcartHauteur" />
                               <Binding Path="DataContext.Parametres.HauteurDernierPlancher" RelativeSource="{RelativeSource AncestorType=DataGrid}" />
                             </MultiBinding>
                           </TextBlock.Text>
                         </TextBlock>
                       </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
+                    <DataGridTemplateColumn.CellEditingTemplate>
+                      <DataTemplate>
+                        <ComboBox ItemsSource="{Binding DataContext.ChoixHauteursMaille, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                  SelectedValuePath="Key" DisplayMemberPath="Value"
+                                  SelectedValue="{Binding EcartHauteur, UpdateSourceTrigger=PropertyChanged}" />
+                      </DataTemplate>
+                    </DataGridTemplateColumn.CellEditingTemplate>
                   </DataGridTemplateColumn>
                   <DataGridTemplateColumn Header="Stab." Width="60">
                     <DataGridTemplateColumn.CellTemplate>

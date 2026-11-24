@@ -158,10 +158,11 @@ public sealed partial class GenerateurFacade
         }
 
         ValiderPoutres();
+        ValiderHauteurs();
         PlacerFiles(niveaux);
         for (int i = 0; i < _projet.Mailles.Count; i++)
         {
-            PlacerMaille(i, niveaux.Concat(NiveauxPignon(_projet.Mailles[i])).ToList());
+            PlacerMaille(i, NiveauxMaille(_projet.Mailles[i], niveaux));
         }
 
         PlacerSousMailles(niveaux);
@@ -216,9 +217,10 @@ public sealed partial class GenerateurFacade
             bool extremite = f == 0 || f == DerniereFile;
             double x = _x[f];
 
-            // Pignon d'une maille d'accès voisine : la file monte jusqu'à son dernier plancher.
+            // Colonne « Ht max » : la file monte (ou s'arrête) au dernier plancher de la plus haute maille voisine.
             double hFile = HauteurFile(f);
-            double? sommetPignon = hFile > _h + Cotes.Tolerance ? hFile + 1.0 + (_p.GardeCorpsCouvreur ? 0.5 : 0.0) : (double?)null;
+            bool hauteurPropre = !Cotes.Egal(hFile, _h);
+            double? sommetPignon = hauteurPropre ? hFile + 1.0 + (_p.GardeCorpsCouvreur ? 0.5 : 0.0) : (double?)null;
 
             // File du milieu d'une poutre de franchissement : poteaux posés sur la poutre, rien dessous.
             double? zPoutre = PoutreSousFile(f);
@@ -226,13 +228,18 @@ public sealed partial class GenerateurFacade
             // Côté extérieur : garde-corps en tête ; départ 3 m si option.
             Empiler(x, -_l, Face.Exterieure, _p.Depart3mExterieur, gardeCorps: true, sommetPignon, zPoutre);
 
-            // Côté intérieur : garde-corps si extrémité, ou protection intérieure sur une maille voisine
-            // sans console au dernier niveau.
-            bool gcInt = extremite || (_p.SecuriteInterieure != TypeSecurite.Sans && MaillesVoisines(f).Any(m => ConsoleSommet(m) == null));
-            Empiler(x, 0, Face.Interieure, _p.Depart3mExterieur && extremite, gcInt || sommetPignon != null, sommetPignon, zPoutre);
+            // Côté intérieur : garde-corps seulement s'il y en a un qui s'y accroche en tête (Laurent 24/11/2026 :
+            // sinon le poteau s'arrête au plancher) : about à cette extrémité, protection intérieure sur une maille voisine
+            // sans console au dernier niveau, ou différence de hauteur avec la maille voisine (about).
+            bool aboutIci = (f == 0 && _p.AboutGauche) || (f == DerniereFile && _p.AboutDroit);
+            bool gcInt = aboutIci
+                || (_p.SecuriteInterieure != TypeSecurite.Sans && MaillesVoisines(f).Any(m => ConsoleSommet(m) == null && Cotes.Egal(m.HauteurMax(_h), hFile)))
+                || (f > 0 && f < DerniereFile && !Cotes.Egal(_projet.Mailles[f - 1].HauteurMax(_h), _projet.Mailles[f].HauteurMax(_h)));
+            Empiler(x, 0, Face.Interieure, _p.Depart3mExterieur && extremite, gcInt, gcInt ? sommetPignon : hFile, zPoutre);
 
             // Traverses à chaque niveau (renforcées aux planchers complets si demandé).
-            foreach (var n in niveaux.Concat(NiveauxPignon(hFile)).Where(n => zPoutre == null || n.Hauteur >= zPoutre.Value - Cotes.Tolerance))
+            foreach (var n in niveaux.Where(n => n.Hauteur <= hFile + Cotes.Tolerance).Concat(NiveauxPignon(hFile, TypePlancher.Complet))
+                                     .Where(n => zPoutre == null || n.Hauteur >= zPoutre.Value - Cotes.Tolerance))
             {
                 var type = n.Hauteur > Cotes.Tolerance && !n.EstAccesSeul ? _p.Traverses : TypeTraverse.Lisse;
                 Ajouter(References.LisseOuTraverse(_l, type), Famille.Traverse, new Point3(x, 0, n.Hauteur), Axe.Y);
@@ -254,15 +261,45 @@ public sealed partial class GenerateurFacade
     /// Planchers du pignon d'une maille d'accès (v2 : niveaux ajoutés tous les 2 m au-dessus du plancher commun),
     /// traités comme des niveaux « accès seul » : trappe, échelle et abouts des deux côtés.
     /// </summary>
-    private IEnumerable<Niveau> NiveauxPignon(MailleDefinition m) => NiveauxPignon(m.HauteurMax(_h));
+    private IEnumerable<Niveau> NiveauxPignon(MailleDefinition m) =>
+        NiveauxPignon(m.HauteurMax(_h), m.Type == TypeMaille.Acces ? TypePlancher.AccesSeul : TypePlancher.Complet);
 
-    private IEnumerable<Niveau> NiveauxPignon(double hauteurMax)
+    private IEnumerable<Niveau> NiveauxPignon(double hauteurMax, TypePlancher type)
     {
         for (double z = _h + 2.0; z <= hauteurMax + Cotes.Tolerance; z = Cotes.Arrondi(z + 2.0))
         {
-            yield return new Niveau(Cotes.Arrondi(z), TypePlancher.AccesSeul);
+            yield return new Niveau(Cotes.Arrondi(z), type);
         }
     }
+
+    /// <summary>Niveaux d'une maille : ceux de la face jusqu'à sa hauteur (colonne « Ht max »), puis ceux qui la dépassent.</summary>
+    private List<Niveau> NiveauxMaille(MailleDefinition m, List<Niveau> niveaux)
+    {
+        double hm = m.HauteurMax(_h);
+        return niveaux.Where(n => n.Hauteur <= hm + Cotes.Tolerance).Concat(NiveauxPignon(m)).ToList();
+    }
+
+    /// <summary>Colonne « Ht max » : l'écart au dernier plancher de la face doit être un multiple de 2 m.</summary>
+    private void ValiderHauteurs()
+    {
+        for (int i = 0; i < _projet.Mailles.Count; i++)
+        {
+            var m = _projet.Mailles[i];
+            if (!m.EcartValide)
+            {
+                _alertes.Add(FormattableString.Invariant(
+                    $"Maille {i + 1} : hauteur {_h + m.EcartHauteur:0.00} m ignorée, l'écart avec le dernier plancher ({_h:0.00} m) doit être un multiple de 2 m."));
+            }
+            else if (_h + m.EcartHauteur <= Cotes.Tolerance)
+            {
+                _alertes.Add(FormattableString.Invariant($"Maille {i + 1} : hauteur {_h + m.EcartHauteur:0.00} m ignorée (sous le premier plancher)."));
+            }
+        }
+    }
+
+    /// <summary>Maille voisine (index) arrêtée sous la cote z, ou absente : son côté donne dans le vide à ce niveau.</summary>
+    private bool VoisineSous(int indexVoisine, double z) =>
+        indexVoisine >= 0 && indexVoisine < _projet.Mailles.Count && _projet.Mailles[indexVoisine].HauteurMax(_h) < z - Cotes.Tolerance;
 
     /// <summary>Dernier plancher atteint à une file (pignon d'une maille voisine compris).</summary>
     private double HauteurFile(int file) => MaillesVoisines(file).Select(m => m.HauteurMax(_h)).DefaultIfEmpty(_h).Max();
@@ -358,9 +395,26 @@ public sealed partial class GenerateurFacade
                 }
 
                 // v3 : même règle côté intérieur (l'ancienne version posait le GC intérieur même sans plancher).
-                if (console == null)
+                // Carré d'angle : son côté intérieur donne sur le bout de la face précédente (passage), pas de garde-corps.
+                if (console == null && !(index == 0 && _p.CarreDAngleEnTete))
                 {
                     PlacerGardeCorps(surPoutre ? GardeCorpsSurPoutre(_p.SecuriteInterieure) : _p.SecuriteInterieure, _p.PlintheInterieure, x0, 0, z, lm, Face.Interieure, num);
+                }
+            }
+
+            // Tout about qui donne dans le vide a un garde-corps (Laurent, 24/11/2026) : ici, maille voisine arrêtée
+            // plus bas (colonne « Ht max »). Les niveaux « accès seul » d'une maille d'accès ont déjà leurs abouts.
+            bool plancher = m.EstTravail ? n.Type == TypePlancher.Complet && !SansPlancherDamier(index) : !n.EstAccesSeul;
+            if (z > Cotes.Tolerance && plancher && !surPoutre)
+            {
+                if (VoisineSous(index - 1, z))
+                {
+                    PlacerAbout(x0, z, _l, gauche: true, console: false, num);
+                }
+
+                if (VoisineSous(index + 1, z))
+                {
+                    PlacerAbout(x0 + lm, z, _l, gauche: false, console: false, num);
                 }
             }
 
@@ -877,7 +931,9 @@ public sealed partial class GenerateurFacade
                 cotes.Add(0);
             }
 
-            for (double z = debut; z <= _h - 1.0 + Cotes.Tolerance; z = Cotes.Arrondi(z + 2.0))
+            // Toute la hauteur de la maille (colonne « Ht max »).
+            double hm = maille.HauteurMax(_h);
+            for (double z = debut; z <= hm - 1.0 + Cotes.Tolerance; z = Cotes.Arrondi(z + 2.0))
             {
                 cotes.Add(z);
             }
@@ -921,6 +977,13 @@ public sealed partial class GenerateurFacade
     private BilanAmarrages PlacerAmarrages()
     {
         var bilan = SansAmarragesSousPoutres(RegleAmarrages.Calculer(_projet));
+        if (_projet.Mailles.Any(m => !Cotes.Egal(m.HauteurMax(_h), _h)))
+        {
+            // Colonne « Ht max » : pas d'amarrage au-dessus du dernier plancher atteint par la file.
+            var restants = bilan.Amarrages.Where(a => a.Hauteur <= HauteurFile(a.File) + Cotes.Tolerance).ToList();
+            bilan = new BilanAmarrages(restants, bilan.Surface, bilan.MinimumParSurface, bilan.NoteDeCalculObligatoire);
+        }
+
         if (_p.ModuleVolumique > 0)
         {
             // Volumique : seul le module contre la façade est amarré.

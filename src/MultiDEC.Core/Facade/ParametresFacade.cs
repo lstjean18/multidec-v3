@@ -12,6 +12,13 @@ public sealed class ParametresFacade
 {
     // ---- Structure -------------------------------------------------------------------------
 
+    /// <summary>
+    /// Renseigné par <see cref="GenerateurStructure"/> : la 1re maille est le carré d'angle qui raccorde la face
+    /// à la précédente (son côté intérieur donne sur le bout de la face précédente).
+    /// </summary>
+    [JsonIgnore]
+    public bool CarreDAngleEnTete { get; set; }
+
     [JsonIgnore] // paramètre général : vient de ParametresGeneraux
     public ModeleEchafaudage Modele { get; set; } = ModeleEchafaudage.MultiSystem;
 

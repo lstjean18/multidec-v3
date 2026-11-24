@@ -32,12 +32,12 @@ public sealed class ConvertisseurCoteOptionnelle : IValueConverter
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
 }
 
-/// <summary>Colonne « Ht max » : dernier plancher de la face + pignon effectif de la maille.</summary>
+/// <summary>Colonne « Ht max » : dernier plancher de la face + écart de la maille.</summary>
 public sealed class ConvertisseurHauteurMax : IMultiValueConverter
 {
     public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture) =>
-        values.Length == 2 && values[0] is double pignon && values[1] is double h
-            ? (h + pignon).ToString("0.00", CultureInfo.CurrentCulture)
+        values.Length == 2 && values[0] is double ecart && values[1] is double h
+            ? (h + ecart).ToString("0.00", CultureInfo.CurrentCulture)
             : string.Empty;
 
     public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture) => throw new NotSupportedException();

@@ -38,7 +38,7 @@ public class StructureTests
     {
         var projet = Projet(FormeStructure.EnL);
         Assert.Equal(0.70, projet.Faces[1].Mailles[0].Longueur);
-        Assert.Equal(12.0, projet.Faces[1].LongueurObtenue, 2);
+        Assert.Equal(12.70, projet.Faces[1].LongueurObtenue, 2); // 12 m saisis + carré d'angle (Laurent, 24/11/2026)
         Assert.False(projet.CommenceParCarreDAngle(0));
         Assert.True(projet.CommenceParCarreDAngle(1));
     }
@@ -79,6 +79,24 @@ public class StructureTests
         Assert.True(AboutEn("S1", 0));
         Assert.False(AboutEn("S1", l1));
         Assert.Contains(s.Elements, e => e.NomFace == "S2" && e.Famille == Famille.GardeCorps && e.Axe == Axe.Y);
+
+        // Côté extérieur du carré d'angle de S2 (dans le prolongement du garde-corps extérieur de S1) : about (Laurent 24/11/2026).
+        Assert.Contains(s.Elements, e => e.NomFace == "S2" && e.NumeroMaille == 1 && e.Famille == Famille.GardeCorps && e.Axe == Axe.Y
+                                         && Cotes.Egal(e.Origine.Y, -0.70) && Cotes.Egal(e.Origine.X, l1));
+
+        // Poteau intérieur du bout de S1 (angle intérieur) : aucun garde-corps n'y est accroché, il s'arrête au plancher.
+        double sommet = s.Elements.Where(e => e.Famille == Famille.Poteau && Cotes.Egal(e.Origine.X, l1) && Cotes.Egal(e.Origine.Y, 0))
+                                  .Max(e => e.Origine.Z);
+        Assert.True(sommet < projet.S1.Parametres.HauteurDernierPlancher - 1.0 + 0.1);
+    }
+
+    [Fact]
+    public void Premier_plancher_different_entre_faces_refuse()
+    {
+        var projet = Projet(FormeStructure.EnL);
+        projet.Faces[1].Niveaux.RemoveAll(n => n.Hauteur < 2.5 && n.Hauteur > 0);
+        var ex = Assert.Throws<InvalidOperationException>(() => GenerateurStructure.Generer(projet));
+        Assert.Contains("premier plancher", ex.Message);
     }
 
     [Fact]
@@ -87,7 +105,8 @@ public class StructureTests
         var projet = Projet(FormeStructure.Fermee);
         var s = GenerateurStructure.Generer(projet);
 
-        Assert.DoesNotContain(s.Elements, e => e.Famille == Famille.GardeCorps && e.Axe == Axe.Y);
+        // Seuls les côtés extérieurs des carrés d'angle (1re maille de chaque face) ont un about.
+        Assert.All(s.Elements.Where(e => e.Famille == Famille.GardeCorps && e.Axe == Axe.Y), e => Assert.Equal(1, e.NumeroMaille));
         Assert.DoesNotContain(s.Alertes, a => a.Contains("ne se referme pas"));
 
         projet.Faces[2].Mailles.Add(new MailleDefinition(1.5));
@@ -143,7 +162,7 @@ public class StructureTests
         vm.IndexFaceActive = 1;
         Assert.Equal("S2", vm.NomFaceActive);
         Assert.Equal("S1", vm.Mailles[0].Jonction);
-        Assert.NotEqual(s1, vm.Mailles.Count);
+        Assert.Equal(vm.Projet.Faces[1].Mailles.Count, vm.Mailles.Count);
 
         vm.IndexFaceActive = 0;
         Assert.Equal(s1, vm.Mailles.Count);
