@@ -113,7 +113,45 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
             Remplir(Faces, _projet.Faces);
             _structure = null;
             Notifier();
+            Notifier(nameof(EstVolumique));
             ChargerFace(Math.Min(_indexFace, Faces.Count - 1));
+        }
+    }
+
+    public bool EstVolumique => _projet.EstVolumique;
+
+    public static IReadOnlyList<int> ChoixModules { get; } = new[] { 2, 3, 4, 5, 6 };
+
+    /// <summary>Structure volumique : nombre de modules M1… (crée ou retire des onglets).</summary>
+    public int NombreModules
+    {
+        get => _projet.NombreModules;
+        set
+        {
+            if (_projet.NombreModules == value)
+            {
+                return;
+            }
+
+            SauverGrilles();
+            _projet.NombreModules = value;
+            _projet.AjusterFaces();
+            Remplir(Faces, _projet.Faces);
+            _structure = null;
+            Notifier();
+            ChargerFace(Math.Min(_indexFace, Faces.Count - 1));
+        }
+    }
+
+    /// <summary>Structure volumique : planchers en damier.</summary>
+    public bool PlanchersDamier
+    {
+        get => _projet.PlanchersDamier;
+        set
+        {
+            _projet.PlanchersDamier = value;
+            _structure = null;
+            Notifier();
         }
     }
 

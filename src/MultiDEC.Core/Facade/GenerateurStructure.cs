@@ -54,7 +54,17 @@ public static class GenerateurStructure
             var p = face.Parametres;
             bool aboutGauche = p.AboutGauche;
             bool aboutDroit = p.AboutDroit;
-            if (plusieurs)
+            if (projet.EstVolumique)
+            {
+                p.ModuleVolumique = i;
+                p.NombreModules = projet.Faces.Count;
+                p.PlanchersDamier = projet.PlanchersDamier;
+                if (i > 0 && !MemesMailles(face, projet.S1))
+                {
+                    alertes.Add($"{face.Nom} : mailles différentes de M1, les modules ne tombent pas sur les mêmes files.");
+                }
+            }
+            else if (plusieurs)
             {
                 // Pas d'about là où la face se raccorde à la précédente ou à la suivante.
                 p.AboutGauche = aboutGauche && !RaccordeeAvant(projet, i);
@@ -70,6 +80,9 @@ public static class GenerateurStructure
             {
                 p.AboutGauche = aboutGauche;
                 p.AboutDroit = aboutDroit;
+                p.ModuleVolumique = null;
+                p.NombreModules = 1;
+                p.PlanchersDamier = false;
             }
 
             var pose = poses[i];
@@ -77,6 +90,10 @@ public static class GenerateurStructure
             if (i > 0)
             {
                 places = SansPoteauxCommuns(places, elements);
+                if (projet.EstVolumique)
+                {
+                    places = SansDoublons(places, elements);
+                }
             }
 
             elements.AddRange(places);
@@ -104,6 +121,19 @@ public static class GenerateurStructure
     public static IReadOnlyList<PoseFace> Poses(ProjetStructure projet)
     {
         var poses = new List<PoseFace>();
+        if (projet.EstVolumique)
+        {
+            // Modules côte à côte en profondeur : M1 contre la façade, chacun derrière le précédent.
+            double y = 0;
+            foreach (var f in projet.Faces)
+            {
+                poses.Add(new PoseFace(0, new Point3(0, Cotes.Arrondi(y), 0)));
+                y -= f.Parametres.LargeurMaille;
+            }
+
+            return poses;
+        }
+
         double angle = 0;
         var origine = new Point3(0, 0, 0);
         for (int i = 0; i < projet.Faces.Count; i++)
@@ -126,11 +156,24 @@ public static class GenerateurStructure
 
     /// <summary>La face <paramref name="i"/> se raccorde à la précédente (ou à S4 pour S1 d'une structure fermée).</summary>
     public static bool RaccordeeAvant(ProjetStructure projet, int i) =>
-        i > 0 || (projet.Forme == FormeStructure.Fermee && projet.Faces.Count == 4);
+        !projet.EstVolumique && (i > 0 || (projet.Forme == FormeStructure.Fermee && projet.Faces.Count == 4));
 
     /// <summary>La face <paramref name="i"/> se raccorde à la suivante (ou à S1 pour S4 d'une structure fermée).</summary>
     public static bool RaccordeeApres(ProjetStructure projet, int i) =>
-        i < projet.Faces.Count - 1 || (projet.Forme == FormeStructure.Fermee && projet.Faces.Count == 4);
+        !projet.EstVolumique && (i < projet.Faces.Count - 1 || (projet.Forme == FormeStructure.Fermee && projet.Faces.Count == 4));
+
+    private static bool MemesMailles(FaceEchafaudage a, FaceEchafaudage b) =>
+        a.Mailles.Count == b.Mailles.Count && a.Mailles.Zip(b.Mailles, (x, y) => Cotes.Egal(x.Longueur, y.Longueur)).All(ok => ok);
+
+    /// <summary>Volumique : retire les pièces identiques déjà posées par le module voisin (lisses sur la file commune…).</summary>
+    private static List<ElementPlace> SansDoublons(List<ElementPlace> face, List<ElementPlace> dejaPoses)
+    {
+        var poses = new HashSet<(string, double, double, double, Axe)>(dejaPoses.Select(CleComplete));
+        return face.Where(e => !poses.Contains(CleComplete(e))).ToList();
+    }
+
+    private static (string, double, double, double, Axe) CleComplete(ElementPlace e) =>
+        (e.Reference, Math.Round(e.Origine.X, 3), Math.Round(e.Origine.Y, 3), Math.Round(e.Origine.Z, 3), e.Axe);
 
     /// <summary>
     /// Retire d'une face les pièces verticales (calage, pied, poteaux…) d'une file déjà posée par une face

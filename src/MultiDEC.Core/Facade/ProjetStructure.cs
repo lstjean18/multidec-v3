@@ -19,6 +19,12 @@ public enum FormeStructure
 
     /// <summary>Quatre faces fermées, S1 à S4.</summary>
     Fermee,
+
+    /// <summary>
+    /// Structure volumique (v2) : plusieurs modules M1, M2… côte à côte en profondeur, M1 contre la façade,
+    /// mêmes mailles, largeur propre à chaque module, poteaux communs entre modules.
+    /// </summary>
+    Volumique,
 }
 
 /// <summary>
@@ -38,6 +44,12 @@ public sealed class ProjetStructure
 
     public FormeStructure Forme { get; set; } = FormeStructure.Droite;
 
+    /// <summary>Nombre de modules d'une structure volumique (2 à 6).</summary>
+    public int NombreModules { get; set; } = 2;
+
+    /// <summary>Structure volumique : planchers en damier (une maille sur deux, décalée d'un module à l'autre, v2).</summary>
+    public bool PlanchersDamier { get; set; }
+
     /// <summary>Faces de la structure, S1 d'abord.</summary>
     public List<FaceEchafaudage> Faces { get; set; } = new List<FaceEchafaudage>();
 
@@ -52,6 +64,16 @@ public sealed class ProjetStructure
 
     [JsonIgnore]
     public FaceEchafaudage S1 => Faces[0];
+
+    [JsonIgnore]
+    public bool EstVolumique => Forme == FormeStructure.Volumique;
+
+    /// <summary>Nombre de faces (ou de modules) voulu pour la forme.</summary>
+    [JsonIgnore]
+    public int NombreDeFacesVoulu => EstVolumique ? Math.Max(2, Math.Min(6, NombreModules)) : NombreDeFaces(Forme);
+
+    /// <summary>Nom d'une face : S1…S4, ou M1…M6 pour les modules d'une structure volumique.</summary>
+    public string NomFace(int index) => (EstVolumique ? "M" : "S") + (index + 1);
 
     /// <summary>Recopie les paramètres généraux dans chaque face (avant génération ou affichage).</summary>
     public void AppliquerGeneraux()
@@ -68,7 +90,7 @@ public sealed class ProjetStructure
     /// </summary>
     public void AjusterFaces()
     {
-        int n = NombreDeFaces(Forme);
+        int n = NombreDeFacesVoulu;
         while (Faces.Count > n)
         {
             Faces.RemoveAt(Faces.Count - 1);
@@ -76,20 +98,29 @@ public sealed class ProjetStructure
 
         while (Faces.Count < n)
         {
-            // Nouvelle face : mêmes paramètres que la précédente, grilles proposées (avec le carré d'angle).
+            // Nouvelle face : mêmes paramètres que la précédente, grilles proposées (avec le carré d'angle) ;
+            // nouveau module d'une structure volumique : mêmes grilles que M1.
             var modele = Faces.LastOrDefault();
             var face = new FaceEchafaudage
             {
-                Nom = "S" + (Faces.Count + 1),
+                Nom = NomFace(Faces.Count),
                 Parametres = modele?.Parametres.Copie() ?? new ParametresFacade(),
             };
             Faces.Add(face);
-            ProposerFace(Faces.Count - 1);
+            if (EstVolumique && Faces.Count > 1)
+            {
+                CopierDepuisS1(Faces.Count - 1);
+                Faces[Faces.Count - 1].Parametres.LargeurMaille = face.Parametres.LargeurMaille;
+            }
+            else
+            {
+                ProposerFace(Faces.Count - 1);
+            }
         }
 
         for (int i = 0; i < Faces.Count; i++)
         {
-            Faces[i].Nom = "S" + (i + 1);
+            Faces[i].Nom = NomFace(i);
         }
 
         AppliquerGeneraux();
@@ -100,7 +131,7 @@ public sealed class ProjetStructure
     /// et S1 dans une structure fermée (raccord avec S4).
     /// </summary>
     public bool CommenceParCarreDAngle(int indexFace) =>
-        indexFace > 0 || (Forme == FormeStructure.Fermee && Faces.Count == 4);
+        !EstVolumique && (indexFace > 0 || (Forme == FormeStructure.Fermee && Faces.Count == 4));
 
     /// <summary>Remplace les grilles d'une face par la proposition calculée depuis ses paramètres.</summary>
     public void ProposerFace(int indexFace)

@@ -196,4 +196,57 @@ public class StructureTests
         Assert.Equal("Standard NF", Libelles.De(GammePlateaux.StandardNF));
         Assert.Equal("En L", Libelles.De(FormeStructure.EnL));
     }
+
+    [Fact]
+    public void Volumique_modules_cote_a_cote_poteaux_communs_sans_protection_entre_modules()
+    {
+        var projet = ProjetStructure.Nouveau(face: new ParametresFacade { LongueurTotaleSouhaitee = 10, HauteurDernierPlancher = 4, NombreAcces = 0 });
+        projet.Forme = FormeStructure.Volumique;
+        projet.NombreModules = 3;
+        projet.AjusterFaces();
+        Assert.Equal(new[] { "M1", "M2", "M3" }, projet.Faces.Select(f => f.Nom));
+        projet.Faces[1].Parametres.LargeurMaille = 1.05;
+        Assert.All(projet.Faces, f => Assert.Equal(projet.S1.Mailles.Select(m => m.Longueur), f.Mailles.Select(m => m.Longueur)));
+        Assert.False(projet.CommenceParCarreDAngle(1));
+
+        var s = GenerateurStructure.Generer(projet);
+        int files = projet.S1.Mailles.Count + 1;
+        var lignes = new[] { 0.0, -0.70, -1.75, -2.45 };
+        foreach (double y in lignes)
+        {
+            Assert.Equal(files, s.Elements.Count(e => e.Famille == Famille.Socle && Math.Abs(e.Origine.Y - y) < 1e-6));
+        }
+
+        Assert.Equal(4 * files, s.Elements.Count(e => e.Famille == Famille.Socle));
+
+        // Garde-corps de façade seulement sur les côtés extérieurs du volume (pas sur les lignes communes).
+        bool gc(double y) => s.Elements.Any(e => e.Famille == Famille.GardeCorps && e.Axe == Axe.X && Math.Abs(e.Origine.Y - y) < 1e-6);
+        Assert.True(gc(-2.45));
+        Assert.False(gc(-0.70));
+        Assert.False(gc(-1.75));
+
+        // Abouts à chaque module, aux deux bouts ; amarrages du seul module M1.
+        Assert.Equal(3, s.Elements.Count(e => e.Axe == Axe.Y && e.Famille == Famille.GardeCorps && Math.Abs(e.Origine.X) < 1e-6 && Math.Abs(e.Origine.Z - 4) < 1e-6));
+        Assert.All(s.Amarrages.Amarrages, a => Assert.Equal("M1", a.NomFace));
+        Assert.DoesNotContain(s.Alertes, a => a.Contains("Aucun garde-corps"));
+
+        // Diagonales en travers dans le module de 1,05 m ? non (seulement au-delà de 1,05 m).
+        Assert.DoesNotContain(s.Elements, e => e.Reference == "HMDIA1052");
+    }
+
+    [Fact]
+    public void Volumique_planchers_en_damier_decales_d_un_module_a_l_autre()
+    {
+        var projet = ProjetStructure.Nouveau(face: new ParametresFacade { LongueurTotaleSouhaitee = 10, HauteurDernierPlancher = 4, NombreAcces = 0 });
+        projet.Forme = FormeStructure.Volumique;
+        projet.PlanchersDamier = true;
+        projet.AjusterFaces();
+        var s = GenerateurStructure.Generer(projet);
+
+        bool plancher(string face, int maille) => s.Elements.Any(e => e.NomFace == face && e.Famille == Famille.Plateau && e.NumeroMaille == maille && Math.Abs(e.Origine.Z - 4) < 1e-6);
+        Assert.True(plancher("M1", 1));
+        Assert.False(plancher("M1", 2));
+        Assert.False(plancher("M2", 1));
+        Assert.True(plancher("M2", 2));
+    }
 }

@@ -18,6 +18,7 @@
   <Window.Resources>
     <app:ConvertisseurLibelle x:Key="Libelle" />
     <app:ConvertisseurEgal x:Key="Egal" />
+    <BooleanToVisibilityConverter x:Key="VisibleSi" />
     <app:ConvertisseurCoteOptionnelle x:Key="CoteOptionnelle" />
     <app:ConvertisseurHauteurMax x:Key="HauteurMax" />
     <SolidColorBrush x:Key="Bordure" Color="#D5D9E0" />
@@ -335,7 +336,7 @@
               </Grid>
 
               <TextBlock Style="{StaticResource Section}" Text="FORME DE LA STRUCTURE" />
-              <UniformGrid Columns="4">
+              <UniformGrid Columns="5">
                 <RadioButton Style="{StaticResource BoutonForme}" GroupName="Forme" IsChecked="{Binding Forme, Converter={StaticResource Egal}, ConverterParameter=Droite}">
                   <StackPanel>
                     <Path Data="M2,18 H38 V25 H2 Z" Stroke="{StaticResource Accent}" StrokeThickness="2" Width="40" Height="28" HorizontalAlignment="Center" />
@@ -360,9 +361,22 @@
                     <TextBlock Text="Fermée" FontSize="12" HorizontalAlignment="Center" />
                   </StackPanel>
                 </RadioButton>
+                <RadioButton Style="{StaticResource BoutonForme}" GroupName="Forme" IsChecked="{Binding Forme, Converter={StaticResource Egal}, ConverterParameter=Volumique}">
+                  <StackPanel>
+                    <Path Data="M2,2 H38 V25 H2 Z M2,11 H38 M2,18 H38" Stroke="{StaticResource Accent}" StrokeThickness="2" Width="40" Height="28" HorizontalAlignment="Center" />
+                    <TextBlock Text="Volumique" FontSize="12" HorizontalAlignment="Center" />
+                  </StackPanel>
+                </RadioButton>
               </UniformGrid>
-              <TextBlock Text="La forme crée les onglets S1 à S4. À partir de S2, la 1re maille est le carré d'angle qui raccorde la face à la précédente."
+              <TextBlock Text="La forme crée les onglets S1 à S4. À partir de S2, la 1re maille est le carré d'angle qui raccorde la face à la précédente. Volumique : modules M1 (contre la façade), M2… côte à côte en profondeur, mêmes mailles, largeur propre à chaque module."
                          TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource Discret}" Margin="0,6,0,0" />
+              <StackPanel Orientation="Horizontal" Margin="0,6,0,0"
+                          Visibility="{Binding EstVolumique, Converter={StaticResource VisibleSi}}">
+                <TextBlock Text="Modules" VerticalAlignment="Center" Margin="0,0,8,0" />
+                <ComboBox Width="60" ItemsSource="{x:Static vm:FacadeViewModel.ChoixModules}" SelectedItem="{Binding NombreModules}" />
+                <CheckBox Content="Planchers en damier" IsChecked="{Binding PlanchersDamier}" VerticalAlignment="Center" Margin="16,0,0,0"
+                          ToolTip="Une maille sur deux sans plancher, décalée d'un module à l'autre (v2)" />
+              </StackPanel>
 
               <TextBlock Style="{StaticResource Section}" Text="GARDE-CORPS ET PLINTHES" />
               <Grid>

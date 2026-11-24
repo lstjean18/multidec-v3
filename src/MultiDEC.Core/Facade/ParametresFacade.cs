@@ -173,5 +173,20 @@ public sealed class ParametresFacade
         SeuilNoteDeCalcul = g.SeuilNoteDeCalcul;
     }
 
+    /// <summary>
+    /// Place de la face dans une structure volumique (0 = module côté façade), null hors volumique.
+    /// Fixé par <see cref="GenerateurStructure"/> le temps de la génération.
+    /// </summary>
+    [JsonIgnore]
+    public int? ModuleVolumique { get; set; }
+
+    /// <summary>Nombre de modules de la structure volumique (avec <see cref="ModuleVolumique"/>).</summary>
+    [JsonIgnore]
+    public int NombreModules { get; set; } = 1;
+
+    /// <summary>Planchers en damier (structure volumique) : une maille sur deux, décalée d'un module à l'autre.</summary>
+    [JsonIgnore]
+    public bool PlanchersDamier { get; set; }
+
     public ParametresFacade Copie() => (ParametresFacade)MemberwiseClone();
 }

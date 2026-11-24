@@ -99,6 +99,28 @@ public sealed partial class GenerateurFacade
             _alertes.Add("Trappes et plateaux acier : garde-corps MDS remplacés par des lisses (incompatibles, comme dans la v2).");
         }
 
+        if (_p.ModuleVolumique is int module)
+        {
+            // Structure volumique : pas de protection sur les côtés communs à deux modules.
+            bool interieurCommun = module > 0;
+            bool exterieurCommun = module < _p.NombreModules - 1;
+            if (interieurCommun || exterieurCommun)
+            {
+                _p = _p.Copie();
+                if (interieurCommun)
+                {
+                    _p.SecuriteInterieure = TypeSecurite.Sans;
+                    _p.PlintheInterieure = TypePlinthe.Sans;
+                }
+
+                if (exterieurCommun)
+                {
+                    _p.SecuriteExterieure = TypeSecurite.Sans;
+                    _p.PlintheExterieure = TypePlinthe.Sans;
+                }
+            }
+        }
+
         _x = projet.AbscissesFiles();
         _l = _p.LargeurMaille;
         _h = _p.HauteurDernierPlancher;
@@ -170,7 +192,7 @@ public sealed partial class GenerateurFacade
             _alertes.Add("Socles à roue : seulement sur une structure à 4 pieds (une maille), comme dans la v2.");
         }
 
-        if (_p.SecuriteExterieure == TypeSecurite.Sans && _p.SecuriteInterieure == TypeSecurite.Sans)
+        if (_p.SecuriteExterieure == TypeSecurite.Sans && _p.SecuriteInterieure == TypeSecurite.Sans && _p.ModuleVolumique == null)
         {
             _alertes.Add("Aucun garde-corps : pas de diagonale verticale posée, contreventement à prévoir.");
         }
@@ -344,7 +366,7 @@ public sealed partial class GenerateurFacade
 
             if (m.EstTravail)
             {
-                if (n.Type == TypePlancher.Complet && z > Cotes.Tolerance)
+                if (n.Type == TypePlancher.Complet && z > Cotes.Tolerance && !SansPlancherDamier(index))
                 {
                     PlacerPlateaux(x0, 0, z, _l, lm, num);
                 }
@@ -380,6 +402,10 @@ public sealed partial class GenerateurFacade
             }
         }
     }
+
+    /// <summary>Planchers en damier (volumique, v2 IsMailleDamier) : pas de plancher une maille sur deux, décalé par module.</summary>
+    private bool SansPlancherDamier(int indexMaille) =>
+        _p.PlanchersDamier && _p.ModuleVolumique is int module && (indexMaille + module) % 2 == 1;
 
     private static TypeSecurite GardeCorpsSurPoutre(TypeSecurite type) => type == TypeSecurite.GardeCorpsMds2 ? TypeSecurite.Lisses : type;
 
@@ -856,6 +882,10 @@ public sealed partial class GenerateurFacade
                 cotes.Add(z);
             }
 
+            // Diagonales en travers (v2) : structure volumique de plus de 1,05 m ou socles à roues,
+            // à la file gauche de la maille, et à la file droite pour la dernière maille.
+            bool enTravers = (_p.ModuleVolumique != null && _l > 1.05 + Cotes.Tolerance) || CatalogueSocles.De(_p.Socle).AvecRoues;
+
             // Sens inversé : origine à droite de la maille, bloc symétrisé (diagonale montant vers la gauche).
             double xDia = d.Inverse ? x0 + lm : x0;
             foreach (double z in cotes.Where(z => !SousPoutre(i, z)))
@@ -870,6 +900,16 @@ public sealed partial class GenerateurFacade
                 {
                     Ajouter(refDia, Famille.DiagonaleVerticale, new Point3(xDia, DemiTube, z), Axe.X, Face.Interieure, d.NumeroMaille, d.Inverse);
                 }
+
+                if (enTravers)
+                {
+                    string diaL = References.DiagonaleVerticale(_l);
+                    Ajouter(diaL, Famille.DiagonaleVerticale, new Point3(Cotes.Arrondi(x0 + DemiTube), 0, z), Axe.Y, Face.Aucune, d.NumeroMaille, d.Inverse);
+                    if (i == _projet.Mailles.Count - 1)
+                    {
+                        Ajouter(diaL, Famille.DiagonaleVerticale, new Point3(Cotes.Arrondi(x0 + lm - DemiTube), 0, z), Axe.Y, Face.Aucune, d.NumeroMaille, !d.Inverse);
+                    }
+                }
             }
         }
     }
@@ -881,6 +921,12 @@ public sealed partial class GenerateurFacade
     private BilanAmarrages PlacerAmarrages()
     {
         var bilan = SansAmarragesSousPoutres(RegleAmarrages.Calculer(_projet));
+        if (_p.ModuleVolumique > 0)
+        {
+            // Volumique : seul le module contre la façade est amarré.
+            return new BilanAmarrages(Array.Empty<Amarrage>(), 0, 0, bilan.NoteDeCalculObligatoire);
+        }
+
         string tube = References.TubeAmarrage(_l + _p.DistanceFacade + 0.10);
         foreach (var a in bilan.Amarrages)
         {
