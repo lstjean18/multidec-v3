@@ -422,7 +422,13 @@ public class GenerateurFacadeTests
         Assert.Equal(2, Pieds(s, y).Count);
         Assert.Equal(8.0, Sommet(s, 0, y), 3);
         Assert.Equal(4, s.Elements.Count(e => e.Reference == "HMDIA2502" && Math.Abs(e.Origine.Y - (y - GenerateurFacade.DemiTube)) < 1e-6));
-        Assert.Equal(8, s.Elements.Count(e => e.Reference == "HMDIA1502" && e.Axe == Axe.Y)); // 2 bouts x 4 niveaux
+        // En travers : 2 bouts x 5 (0, 2, 4, 6 et la dernière de 8 m au dernier plancher), posées depuis la file de
+        // stabilisation vers la façade (pied côté stabilisation, haut côté structure, Laurent 24/11/2026).
+        var travers = s.Elements.Where(e => e.Reference == "HMDIA1502" && e.Axe == Axe.Y).ToList();
+        Assert.Equal(10, travers.Count);
+        Assert.All(travers, e => Assert.Equal(y, e.Origine.Y, 6));
+        Assert.All(travers, e => Assert.Equal(180, e.Rotation, 6));
+        Assert.Equal(8.0, travers.Max(e => e.Origine.Z), 6);
         Assert.Equal(5, s.Elements.Count(e => e.Famille == Famille.Lisse && e.Axe == Axe.X && Math.Abs(e.Origine.Y - y) < 1e-6)); // 0, 2, 4, 6, 8
     }
 
@@ -474,12 +480,71 @@ public class GenerateurFacadeTests
         Assert.Contains(s.Elements, e => e.Famille == Famille.GardeCorps && e.NumeroMaille == 2 && Math.Abs(e.Origine.Z - 6) < 1e-6 && e.Axe == Axe.X);
 
         // Maille 7 : plancher complet à 12 m, abouts des deux côtés, poteaux jusqu'à 13 m.
-        Assert.Contains(s.Elements, e => e.NumeroMaille == 7 && e.Famille == Famille.Plateau && Math.Abs(e.Origine.Z - 12) < 1e-6);
+        // (plus haute que ses voisines : plancher avec plateau d'accès)
+        Assert.Contains(s.Elements, e => e.NumeroMaille == 7 && e.Famille == Famille.Trappe && Math.Abs(e.Origine.Z - 12) < 1e-6);
         Assert.Contains(s.Elements, e => e.Axe == Axe.Y && e.Famille == Famille.GardeCorps && A(e, x[6], 12));
         Assert.Contains(s.Elements, e => e.Axe == Axe.Y && e.Famille == Famille.GardeCorps && A(e, x[7], 12));
         Assert.Equal(13.0, Sommet(s, x[7], -0.70), 3);
         Assert.Contains(s.Alertes, a => a.Contains("multiple de 2 m"));
         Assert.Equal(10.0, face.Mailles[7].HauteurMax(10), 6);
+    }
+
+    [Fact]
+    public void Maille_plus_haute_que_ses_voisines_plateau_d_acces_et_abouts_a_sa_hauteur()
+    {
+        var face = Standard(); // mailles de 2,50 m, dernier plancher 10 m
+        face.Mailles[5].EcartHauteur = 4;  // maille 6 montée à 14 m : plus haute que ses deux voisines
+        face.Mailles[0].EcartHauteur = -4; // maille 1 (bout gauche) arrêtée à 6 m
+        var s = GenerateurFacade.Generer(face);
+        var x = face.AbscissesFiles();
+
+        // Un plateau à trappe à 12 et 14 m (aucune voisine n'y arrive), sens alterné ; pas à 10 m.
+        var trappes = s.Elements.Where(e => e.NumeroMaille == 6 && e.Famille == Famille.Trappe).OrderBy(e => e.Origine.Z).ToList();
+        Assert.Equal(new[] { 12.0, 14.0 }, trappes.Select(e => e.Origine.Z));
+        Assert.NotEqual(trappes[0].Inverse, trappes[1].Inverse);
+        Assert.DoesNotContain(s.Elements, e => e.NumeroMaille != 6 && e.Famille == Famille.Trappe && e.Origine.Z > 10.5);
+
+        // About de bout de face : aux planchers de la maille 1 seulement (rien dans le vide au-dessus de 6 m).
+        var aboutsGauche = s.Elements.Where(e => e.Axe == Axe.Y && e.Famille == Famille.GardeCorps && Math.Abs(e.Origine.X) < 1e-6).ToList();
+        Assert.NotEmpty(aboutsGauche);
+        Assert.All(aboutsGauche, e => Assert.True(e.Origine.Z <= 7.0 + 1e-6));
+        Assert.Equal(7.0, Sommet(s, x[0], 0), 3);
+        Assert.Equal(7.0, Sommet(s, x[0], -0.70), 3);
+    }
+
+    [Fact]
+    public void Garde_corps_toujours_tenu_par_un_poteau_de_chaque_cote()
+    {
+        var face = Standard(p => { p.AboutDroit = false; p.SecuriteInterieure = TypeSecurite.GardeCorpsMds2; });
+        Consoles(face, "HMCON700E", 2);
+        var s = GenerateurFacade.Generer(face);
+        var x = face.AbscissesFiles();
+
+        // Protection intérieure : tous les poteaux intérieurs montent à 11 m, sauf sous la console du dernier niveau…
+        Assert.Equal(11.0, Sommet(s, x[0], 0), 3);
+        Assert.Equal(11.0, Sommet(s, x[1], 0), 3);
+        // … où l'about en lisses de la console s'accroche aussi au poteau de la file intérieure.
+        Assert.Equal(11.0, Sommet(s, x[2], 0), 3);
+        Assert.Equal(11.0, Sommet(s, x[3], 0), 3);
+    }
+
+    [Fact]
+    public void Portillon_au_premier_plancher_entre_0_50_et_1_50_m_meme_sans_maille_d_acces()
+    {
+        var face = Standard(p => p.HauteurDernierPlancher = 9.5); // planchers 1,5 / 3,5 / … / 9,5
+        foreach (var m in face.Mailles)
+        {
+            m.Type = TypeMaille.Travail;
+        }
+
+        var s = GenerateurFacade.Generer(face);
+        var portillon = Assert.Single(s.Elements, e => e.Reference.StartsWith("HMPORTILLONPLIN", StringComparison.Ordinal));
+        Assert.Equal(2.5, portillon.Origine.Z, 6);
+        Assert.Single(s.Elements, e => e.Reference == "HMECH150LIS");
+
+        // Premier plancher à 2 m ou plus : pas de portillon ; plancher sous 0,50 m non plus.
+        var haut = Standard(p => p.HauteurDernierPlancher = 10);
+        Assert.DoesNotContain(GenerateurFacade.Generer(haut).Elements, e => e.Reference.StartsWith("HMPORTILLON", StringComparison.Ordinal));
     }
 
     [Fact]

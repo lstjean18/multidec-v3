@@ -174,7 +174,6 @@ public sealed partial class GenerateurFacade
 
         ValiderPoutres();
         ValiderHauteurs();
-        PlacerFiles(niveaux);
         for (int i = 0; i < _projet.Mailles.Count; i++)
         {
             PlacerMaille(i, NiveauxMaille(_projet.Mailles[i], niveaux));
@@ -186,6 +185,10 @@ public sealed partial class GenerateurFacade
         PlacerPoutres(niveaux);
         PlacerAbouts(niveaux);
         PlacerPareGravois(niveaux);
+
+        // Poteaux en dernier : chacun monte jusqu'à la plus haute protection qui s'y accroche (Laurent, 24/11/2026 :
+        // un garde-corps a forcément un poteau de chaque côté ; sans garde-corps, le poteau s'arrête au plancher).
+        PlacerFiles(niveaux);
         var bilan = PlacerAmarrages();
 
         if (bilan.NoteDeCalculObligatoire)
@@ -234,24 +237,17 @@ public sealed partial class GenerateurFacade
 
             // Colonne « Ht max » : la file monte (ou s'arrête) au dernier plancher de la plus haute maille voisine.
             double hFile = HauteurFile(f);
-            bool hauteurPropre = !Cotes.Egal(hFile, _h);
-            double? sommetPignon = hauteurPropre ? hFile + 1.0 + (_p.GardeCorpsCouvreur ? 0.5 : 0.0) : (double?)null;
 
             // File du milieu d'une poutre de franchissement : poteaux posés sur la poutre, rien dessous.
             double? zPoutre = PoutreSousFile(f);
 
-            // Côté extérieur : garde-corps en tête ; départ 3 m si option.
-            bool gcExt = !IndexVoisines(f).All(ExterieurCommun) || (f == 0 && _p.AboutGauche) || (f == DerniereFile && _p.AboutDroit);
-            Empiler(x, -_l, Face.Exterieure, _p.Depart3mExterieur, gcExt, gcExt ? sommetPignon : hFile, zPoutre);
+            // Chaque poteau monte au moins au plancher de la file, et jusqu'à la plus haute protection
+            // (garde-corps, lisse, about, diagonale) qui s'y accroche. Départ 3 m côté extérieur si option.
+            double sommetExt = Math.Max(hFile, SommetProtections(x, -_l));
+            Empiler(x, -_l, Face.Exterieure, _p.Depart3mExterieur, sommetExt > hFile + Cotes.Tolerance, sommetExt, zPoutre);
 
-            // Côté intérieur : garde-corps seulement s'il y en a un qui s'y accroche en tête (Laurent 24/11/2026 :
-            // sinon le poteau s'arrête au plancher) : about à cette extrémité, protection intérieure sur une maille voisine
-            // sans console au dernier niveau, ou différence de hauteur avec la maille voisine (about).
-            bool aboutIci = (f == 0 && _p.AboutGauche) || (f == DerniereFile && _p.AboutDroit);
-            bool gcInt = aboutIci
-                || IndexVoisines(f).Any(i => SecuriteInterieure(i) != TypeSecurite.Sans && ConsoleSommet(_projet.Mailles[i]) == null && Cotes.Egal(_projet.Mailles[i].HauteurMax(_h), hFile))
-                || (f > 0 && f < DerniereFile && !Cotes.Egal(_projet.Mailles[f - 1].HauteurMax(_h), _projet.Mailles[f].HauteurMax(_h)));
-            Empiler(x, 0, Face.Interieure, _p.Depart3mExterieur && extremite, gcInt, gcInt ? sommetPignon : hFile, zPoutre);
+            double sommetInt = Math.Max(hFile, SommetProtections(x, 0));
+            Empiler(x, 0, Face.Interieure, _p.Depart3mExterieur && extremite, sommetInt > hFile + Cotes.Tolerance, sommetInt, zPoutre);
 
             // Traverses à chaque niveau (renforcées aux planchers complets si demandé).
             foreach (var n in niveaux.Where(n => n.Hauteur <= hFile + Cotes.Tolerance).Concat(NiveauxPignon(hFile, TypePlancher.Complet))
@@ -266,7 +262,7 @@ public sealed partial class GenerateurFacade
                 Ajouter(References.LisseOuTraverse(_l), Famille.Traverse, new Point3(x, 0, 0), Axe.Y);
             }
 
-            if (_p.GardeCorpsCouvreur && (extremite || sommetPignon != null))
+            if (_p.GardeCorpsCouvreur && (extremite || !Cotes.Egal(hFile, _h)))
             {
                 Ajouter(References.LisseOuTraverse(_l), Famille.Traverse, new Point3(x, 0, hFile + 1.5), Axe.Y);
             }
@@ -319,6 +315,56 @@ public sealed partial class GenerateurFacade
 
     /// <summary>Dernier plancher atteint à une file (pignon d'une maille voisine compris).</summary>
     private double HauteurFile(int file) => MaillesVoisines(file).Select(m => m.HauteurMax(_h)).DefaultIfEmpty(_h).Max();
+
+    /// <summary>
+    /// Plus haute cote atteinte par les protections déjà posées qui s'accrochent au poteau (x, y) : garde-corps
+    /// (cadre MDS = plancher + 1 m), lisses et plinthes le long d'une maille dont c'est une extrémité, abouts
+    /// et lisses en travers partant de ce poteau ou y arrivant, diagonales verticales. 0 si aucune.
+    /// </summary>
+    private double SommetProtections(double x, double y)
+    {
+        const double ecart = DemiTube + Cotes.Tolerance;
+        double sommet = 0;
+        foreach (var e in _el)
+        {
+            double haut;
+            if (e.Axe == Axe.X && (e.Famille == Famille.GardeCorps || e.Famille == Famille.Lisse || e.Famille == Famille.Plinthe || e.Famille == Famille.DiagonaleVerticale))
+            {
+                int i = e.NumeroMaille - 1;
+                if (i < 0 || i >= _projet.Mailles.Count || Math.Abs(e.Origine.Y - y) > ecart
+                    || !(Cotes.Egal(x, _x[i]) || Cotes.Egal(x, _x[i + 1])))
+                {
+                    continue;
+                }
+
+                haut = e.Famille == Famille.DiagonaleVerticale ? e.Origine.Z + 2.0 : e.Origine.Z;
+            }
+            else if (e.Axe == Axe.Y && (e.Famille == Famille.GardeCorps || e.Famille == Famille.Traverse || e.Famille == Famille.Plinthe))
+            {
+                // About : de son origine vers l'extérieur sur la largeur de la maille ; about de console : de son bout à la façade.
+                double yFin = e.Origine.Y > Cotes.Tolerance ? 0 : e.Origine.Y - _l;
+                if (!Cotes.Egal(e.Origine.X, x) || !(Cotes.Egal(e.Origine.Y, y) || Cotes.Egal(yFin, y)))
+                {
+                    continue;
+                }
+
+                haut = e.Origine.Z;
+            }
+            else
+            {
+                continue;
+            }
+
+            if (e.Famille == Famille.GardeCorps && e.Reference.StartsWith("HMGCSE", StringComparison.OrdinalIgnoreCase))
+            {
+                haut += 1.0; // cadre MDS posé au plancher, lisse haute à 1 m
+            }
+
+            sommet = Math.Max(sommet, haut);
+        }
+
+        return Cotes.Arrondi(sommet);
+    }
 
     private IEnumerable<MailleDefinition> MaillesVoisines(int file)
     {
@@ -438,7 +484,16 @@ public sealed partial class GenerateurFacade
             {
                 if (n.Type == TypePlancher.Complet && z > Cotes.Tolerance && !SansPlancherDamier(index))
                 {
-                    PlacerPlateaux(x0, 0, z, _l, lm, num);
+                    if (AccesParTrappe(index, z))
+                    {
+                        // Maille plus haute que ses voisines (Laurent, 24/11/2026) : plateau d'accès pour y monter.
+                        PlacerPlancherTrappe(x0, lm, 0, _l, z, num, inverseTrappe);
+                        inverseTrappe = !inverseTrappe;
+                    }
+                    else
+                    {
+                        PlacerPlateaux(x0, 0, z, _l, lm, num);
+                    }
                 }
 
                 if (n.DiagoH && z > Cotes.Tolerance)
@@ -475,6 +530,16 @@ public sealed partial class GenerateurFacade
                 Ajouter(lisse, Famille.Lisse, new Point3(x0, 0, hm + 1.5), Axe.X, Face.Interieure, num);
             }
         }
+    }
+
+    /// <summary>
+    /// Plancher d'une maille de travail plus haute que ses voisines (colonne « Ht max ») : aucune voisine n'y arrive,
+    /// il faut un plateau d'accès pour y monter depuis le plancher du dessous.
+    /// </summary>
+    private bool AccesParTrappe(int index, double z)
+    {
+        var voisines = new[] { index - 1, index + 1 }.Where(i => i >= 0 && i < _projet.Mailles.Count).ToList();
+        return voisines.Count > 0 && voisines.All(i => VoisineSous(i, z)) && z >= 2.0 - Cotes.Tolerance;
     }
 
     /// <summary>Planchers en damier (volumique, v2 IsMailleDamier) : pas de plancher une maille sur deux, décalé par module.</summary>
@@ -623,6 +688,36 @@ public sealed partial class GenerateurFacade
             return;
         }
 
+        PlacerPlancherTrappe(x0, lm, yBord, largeur, z, num, inverse);
+
+        bool premierAcces = Cotes.Egal(z, 2.0) || Cotes.Egal(z, 3.0);
+        if (premierAcces)
+        {
+            // Plateaux de départ au pied de l'échelle.
+            PlacerPlateaux(x0, yBord, z - 2.0, largeur, lm, num, premierRang: 0, dernierRang: 1);
+        }
+        else
+        {
+            // Lisse de sécurité au droit de la trémie (1,50 m au-dessus des plateaux) : lisse ordinaire
+            // dans le plan des poteaux, montée sur leurs rosaces (tous les 0,50 m), sans collier (Laurent, 23/11/2026).
+            string secu = References.LisseOuTraverse(lm);
+            Ajouter(secu, Famille.Lisse, new Point3(x0, yExt, z - 0.5), Axe.X, Face.Exterieure, num);
+
+            if (secuCoteBord)
+            {
+                Ajouter(secu, Famille.Lisse, new Point3(x0, yBord, z - 0.5), Axe.X, Face.Interieure, num);
+            }
+        }
+
+        inverse = !inverse;
+    }
+
+    /// <summary>
+    /// Plancher avec trappe : plateau à trappe (bande intérieure de 0,60 m) + échelle (seulement jusqu'à 2,00 m de maille),
+    /// puis plateaux de complément. En sens inversé, l'origine est à droite de la maille et le bloc est symétrisé.
+    /// </summary>
+    private void PlacerPlancherTrappe(double x0, double lm, double yBord, double largeur, double z, int num, bool inverse)
+    {
         // Plateau à trappe (bande intérieure de 0,60 m) + échelle (seulement jusqu'à 2,00 m de maille),
         // puis plateaux de complément. Sens alterné d'un niveau à l'autre : en sens inversé, l'origine
         // est à droite de la maille et le bloc est symétrisé.
@@ -649,27 +744,6 @@ public sealed partial class GenerateurFacade
 
             PlacerPlateaux(x0, yBord, z, largeur, lm, num, premierRang: 2);
         }
-
-        bool premierAcces = Cotes.Egal(z, 2.0) || Cotes.Egal(z, 3.0);
-        if (premierAcces)
-        {
-            // Plateaux de départ au pied de l'échelle.
-            PlacerPlateaux(x0, yBord, z - 2.0, largeur, lm, num, premierRang: 0, dernierRang: 1);
-        }
-        else
-        {
-            // Lisse de sécurité au droit de la trémie (1,50 m au-dessus des plateaux) : lisse ordinaire
-            // dans le plan des poteaux, montée sur leurs rosaces (tous les 0,50 m), sans collier (Laurent, 23/11/2026).
-            string secu = References.LisseOuTraverse(lm);
-            Ajouter(secu, Famille.Lisse, new Point3(x0, yExt, z - 0.5), Axe.X, Face.Exterieure, num);
-
-            if (secuCoteBord)
-            {
-                Ajouter(secu, Famille.Lisse, new Point3(x0, yBord, z - 0.5), Axe.X, Face.Interieure, num);
-            }
-        }
-
-        inverse = !inverse;
     }
 
     // ------------------------------------------------------------------------------------------
@@ -811,49 +885,83 @@ public sealed partial class GenerateurFacade
 
     private void PlacerAbouts(List<Niveau> niveaux)
     {
-        foreach (var n in niveaux.Where(n => n.Type == TypePlancher.Complet && n.Hauteur > Cotes.Tolerance))
+        // Abouts de bout de face aux planchers de la maille d'extrémité (colonne « Ht max » : pas de garde-corps dans le vide).
+        var premiere = _projet.Mailles[0];
+        var derniere = _projet.Mailles[_projet.Mailles.Count - 1];
+        bool portillonPose = false;
+
+        // Portillon + échelle au premier plancher (Laurent, 24/11/2026) : about de départ de la face, sinon about de fin ;
+        // pas au carré d'angle (passage vers la face précédente).
+        bool portillonGauche = _p.AboutGauche && !_p.CarreDAngleEnTete && premiere.EstTravail;
+        bool portillonDroit = !portillonGauche && _p.AboutDroit && derniere.EstTravail;
+
+        if (_p.AboutGauche && premiere.EstTravail)
         {
-            if (_p.AboutGauche && _projet.Mailles[0].EstTravail)
+            foreach (var n in NiveauxMaille(premiere, niveaux).Where(n => n.Type == TypePlancher.Complet && n.Hauteur > Cotes.Tolerance))
             {
-                if (PortillonNecessaire(n))
+                if (portillonGauche && PortillonNecessaire(n))
                 {
-                    PlacerPortillon(0, n.Hauteur, 1);
+                    PlacerPortillon(0, n.Hauteur, 1, gauche: true);
+                    portillonPose = true;
                 }
                 else
                 {
                     PlacerAbout(0, n.Hauteur, _l, gauche: true, console: false, 1);
                 }
             }
+        }
 
-            if (_p.AboutDroit && _projet.Mailles[_projet.Mailles.Count - 1].EstTravail)
+        if (_p.AboutDroit && derniere.EstTravail)
+        {
+            foreach (var n in NiveauxMaille(derniere, niveaux).Where(n => n.Type == TypePlancher.Complet && n.Hauteur > Cotes.Tolerance))
             {
-                PlacerAbout(LongueurTotale, n.Hauteur, _l, gauche: false, console: false, _projet.Mailles.Count);
+                if (portillonDroit && PortillonNecessaire(n))
+                {
+                    PlacerPortillon(LongueurTotale, n.Hauteur, _projet.Mailles.Count, gauche: false);
+                    portillonPose = true;
+                }
+                else
+                {
+                    PlacerAbout(LongueurTotale, n.Hauteur, _l, gauche: false, console: false, _projet.Mailles.Count);
+                }
             }
+        }
+
+        var premier = PremierPlancher(niveaux);
+        if (premier != null && PortillonNecessaire(premier) && !portillonPose && !_p.CarreDAngleEnTete
+            && !_projet.Mailles.Any(m => m.Type == TypeMaille.Acces && NiveauxMaille(m, niveaux).Any(n => n.EstAccesSeul && Cotes.Egal(n.Hauteur, premier.Hauteur))))
+        {
+            _alertes.Add(FormattableString.Invariant(
+                $"Premier plancher à {premier.Hauteur:0.00} m : pas d'about libre en bout de face pour le portillon et l'échelle d'accès."));
         }
     }
 
+    /// <summary>Premier plancher au-dessus du sol (le plus bas), ou null.</summary>
+    private static Niveau? PremierPlancher(List<Niveau> niveaux) => niveaux.FirstOrDefault(n => n.Hauteur > Cotes.Tolerance);
+
     /// <summary>
-    /// Portillon d'about (v2 : NeedPortillon) : sur un plancher entre 0 et 2 m, quand la face a des accès,
-    /// l'about de gauche est remplacé par un portillon et une échelle depuis le sol.
+    /// Portillon d'about (Laurent, 24/11/2026) : premier plancher entre 0,50 et 1,50 m, avec ou sans maille d'accès ;
+    /// l'about est remplacé par un portillon et une échelle entre lisses (HMECH050LIS / 100LIS / 150LIS) depuis le sol.
     /// </summary>
     private bool PortillonNecessaire(Niveau n) =>
-        n.Hauteur > Cotes.Tolerance && n.Hauteur < 2.0 - Cotes.Tolerance && _projet.Mailles.Any(m => m.Type == TypeMaille.Acces || m.Type == TypeMaille.AccesRapporte);
+        n.Hauteur >= 0.5 - Cotes.Tolerance && n.Hauteur <= 1.5 + Cotes.Tolerance
+        && Cotes.Egal(n.Hauteur, PremierPlancher(_projet.Niveaux.OrderBy(v => v.Hauteur).ToList())?.Hauteur ?? -1);
 
-    /// <summary>Portillon HMPORTILLONPLIN + échelle HMECH…LIS, à l'about gauche d'une maille (posés d'office).</summary>
-    private void PlacerPortillon(double x, double z, int num)
+    /// <summary>Portillon HMPORTILLONPLIN + échelle HMECH…LIS, à un about de maille (posés d'office).</summary>
+    private void PlacerPortillon(double x, double z, int num, bool gauche = true)
     {
         double largeur = _l > 1.05 + Cotes.Tolerance ? 1.00 : _l;
         string? echelle = References.EchelleAbout(z);
         if (echelle != null)
         {
-            Ajouter(echelle, Famille.Echelle, new Point3(x, 0, z), Axe.Y, Face.Aucune, num, inverse: true);
+            Ajouter(echelle, Famille.Echelle, new Point3(x, 0, z), Axe.Y, Face.Aucune, num, inverse: gauche);
         }
         else
         {
             _alertes.Add(FormattableString.Invariant($"Portillon au niveau {z:0.00} m : pas d'échelle d'about de cette hauteur."));
         }
 
-        Ajouter(References.Portillon(largeur), Famille.GardeCorps, new Point3(x, 0, z + 1.0), Axe.Y, Face.Aucune, num, inverse: true);
+        Ajouter(References.Portillon(largeur), Famille.GardeCorps, new Point3(x, 0, z + 1.0), Axe.Y, Face.Aucune, num, inverse: gauche);
     }
 
     /// <summary>

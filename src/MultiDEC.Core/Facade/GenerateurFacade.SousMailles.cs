@@ -290,12 +290,13 @@ public sealed partial class GenerateurFacade
     }
 
     /// <summary>Pièce en travers (axe Y) posée une seule fois à un endroit donné.</summary>
-    private void Travers(string reference, Famille famille, double x, double y, double z, int num)
+    /// <param name="versLaFacade">Élément posé à partir de <paramref name="y"/> vers la façade (+Y), tourné d'un demi-tour.</param>
+    private void Travers(string reference, Famille famille, double x, double y, double z, int num, bool versLaFacade = false)
     {
         string cle = FormattableString.Invariant($"{reference}|{Cotes.Arrondi(x)}|{Cotes.Arrondi(y)}|{Cotes.Arrondi(z)}");
         if (_travers.Add(cle))
         {
-            Ajouter(reference, famille, new Point3(Cotes.Arrondi(x), y, z), Axe.Y, Face.Exterieure, num);
+            Ajouter(reference, famille, new Point3(Cotes.Arrondi(x), y, z), Axe.Y, Face.Exterieure, num, rotation: versLaFacade ? 180 : 0);
         }
     }
 
@@ -347,11 +348,14 @@ public sealed partial class GenerateurFacade
                 if (z < hs - Cotes.Tolerance)
                 {
                     Ajouter(References.DiagonaleVerticale(lm), Famille.DiagonaleVerticale, new Point3(x0, y - DemiTube, z), Axe.X, Face.Exterieure, num);
-                    Travers(References.DiagonaleVerticale(s), Famille.DiagonaleVerticale, memeAGauche ? x0 + DemiTube : x0 - DemiTube, y1, z, num);
-                    if (!memeADroite)
-                    {
-                        Travers(References.DiagonaleVerticale(s), Famille.DiagonaleVerticale, x1 + DemiTube, y1, z, num);
-                    }
+                }
+
+                // Diagonales en travers : du pied côté stabilisation vers le haut côté structure (Laurent, 24/11/2026),
+                // la dernière relie le haut de la stabilisation au dernier plancher de la structure.
+                Travers(References.DiagonaleVerticale(s), Famille.DiagonaleVerticale, memeAGauche ? x0 + DemiTube : x0 - DemiTube, y, z, num, versLaFacade: true);
+                if (!memeADroite)
+                {
+                    Travers(References.DiagonaleVerticale(s), Famille.DiagonaleVerticale, x1 + DemiTube, y, z, num, versLaFacade: true);
                 }
             }
         }

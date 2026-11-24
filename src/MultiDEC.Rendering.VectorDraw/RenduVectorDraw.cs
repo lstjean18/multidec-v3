@@ -333,7 +333,7 @@ public sealed class RenduVectorDraw
                 ins.Zscale = -1;
             }
 
-            ins.PenColor = new vdColor(PaletteFamilles.Couleur(e.Famille));
+            ins.PenColor = new vdColor(PaletteFamilles.Couleur(e));
             ins.Label = e.NumeroMaille.ToString();
             _doc.Model.Entities.AddItem(ins);
             rapport.Inserts.Add((e, ins));
@@ -360,7 +360,7 @@ public sealed class RenduVectorDraw
         foreach (var (element, insert) in _dernierRendu.Inserts)
         {
             bool active = nomFace == null || !plusieurs || element.NomFace == nomFace;
-            insert.PenColor = new vdColor(active ? PaletteFamilles.Couleur(element.Famille) : CouleurEstompee);
+            insert.PenColor = new vdColor(active ? PaletteFamilles.Couleur(element) : CouleurEstompee);
         }
 
         _doc.Redraw(true);

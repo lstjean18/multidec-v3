@@ -122,6 +122,35 @@ public class BibliothequeDwgTests
         PoutreEtPignon(rendu, doc, Path.GetFileNameWithoutExtension(fichier));
         Escaliers(rendu, doc, Path.GetFileNameWithoutExtension(fichier));
         VolumiqueEtHauteurs(rendu, doc, Path.GetFileNameWithoutExtension(fichier));
+        AngleEnL(rendu, doc, Path.GetFileNameWithoutExtension(fichier));
+    }
+
+    /// <summary>
+    /// Petit L (S1 5 m, S2 3 m, 2 niveaux) vu de près sous plusieurs angles : sens des cadres d'about au carré d'angle,
+    /// poteaux de chaque côté des garde-corps, stabilisation et portillon.
+    /// </summary>
+    private void AngleEnL(RenduVectorDraw rendu, vdDocument doc, string nom)
+    {
+        var projet = ProjetStructure.Nouveau(face: new ParametresFacade { LongueurTotaleSouhaitee = 5, LongueurMaillePreferee = 2.5, HauteurDernierPlancher = 4, NombreAcces = 0 });
+        projet.Forme = FormeStructure.EnL;
+        projet.AjusterFaces();
+        projet.Faces[1].Parametres.LongueurTotaleSouhaitee = 3;
+        projet.ProposerFace(1);
+        var s = GenerateurStructure.Generer(projet);
+        rendu.Dessiner(s, TableOrientations.ParDefaut());
+        foreach (var e in s.Elements.Where(e => e.Axe == Axe.Y && (e.Famille == Famille.GardeCorps || e.Famille == Famille.Plinthe)))
+        {
+            _sortie.WriteLine(string.Format(CultureInfo.InvariantCulture, "AN {0} {1,-16} ({2:0.00}; {3:0.00}; {4:0.00}) inv {5} angle {6}", e.NomFace, e.Reference, e.Origine.X, e.Origine.Y, e.Origine.Z, e.Inverse, e.AngleFace));
+        }
+
+        rendu.Rendu(ModeRendu.OmbreAretes);
+        foreach (var v in new[] { "VISE", "VISW", "VINE", "VINW" })
+        {
+            doc.CommandAction.View3D(v);
+            doc.Model.ZoomExtents();
+            doc.Redraw(true);
+            Image(doc, nom + "-AN-" + v);
+        }
     }
 
     /// <summary>
