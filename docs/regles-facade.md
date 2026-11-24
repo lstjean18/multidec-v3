@@ -53,30 +53,42 @@ Les points marqués **[à valider]** sont des choix faits en v3 faute de règle 
 - Dessin : bloc provisoire « cercle barré d'une croix » tant que les blocs HMTUBAMA manquent dans la bibliothèque.
 
 ## Fonctions reprises de la v2 version2024 (codées le 24/11/2026)
-- **Structure** : formes droite, en L, en U, fermée (faces S1…S4 en équerre, carré d'angle) et **volumique** (2 à 6 modules M1…
-  côte à côte en profondeur, mêmes mailles que M1, largeur par module, poteaux et lisses communs dédoublonnés, protections
-  seulement sur les côtés extérieurs, amarrages sur M1, diagonales en travers au-delà de 1,05 m ou sur socles à roues).
+- **Structure** : formes droite, en L, en U, fermée (faces S1…S4 en équerre, carré d'angle) et **volumique** (modules M1, M2…
+  côte à côte en profondeur, bouton « + Module » jusqu'à 12, largeur par module, poteaux et lisses communs dédoublonnés,
+  amarrages sur M1, diagonales en travers au-delà de 1,05 m ou sur socles à roues).
   Option « planchers en damier » : pas de plancher une maille sur deux, décalé d'un module à l'autre.
+  - Toutes les faces ont leur **premier plancher à la même hauteur**, sinon message et la structure n'est pas dessinée.
+  - La longueur saisie pour S2, S3… **n'inclut pas le carré d'angle** : S1 de 0,70 m de large et 20 m saisis → 20,70 m.
+  - **Tout about qui donne sur le vide a un garde-corps**, seul le côté façade en est dispensé (bout de S2 côté S1 compris).
+    Les cadres d'about HMGCSE…GT sont tournés vers l'extérieur.
+  - Un poteau sans garde-corps qui s'y accroche (angle) s'arrête à hauteur du plancher.
+  - Volumique uniquement : largeurs 1,50 / 2,00 / 2,50 / 3,00 en plus de 0,70 à 1,05. Les modules peuvent avoir des longueurs
+    différentes : la partie qui dépasse du module voisin a ses garde-corps côté vide. Accès proposés sur M1 seulement
+    (l'utilisateur peut en ajouter). Pas de diagonale ni de protection à l'interface entre deux modules.
 - **Pare-gravois** (case par niveau) : consoles HMPARGRA sur toute la face, tôles HMTOG200 inclinées tous les 0,80 m
   (dernière calée à L - 0,90), crochets et lisses.
 - **Sous-mailles rapportées côté extérieur** (type de maille) : file de poteaux supplémentaire à y = -largeur - profondeur.
   - Accès rapporté 0,70 m : trappes et échelles en sens alterné sur toute la hauteur, garde-corps extérieur sur la file rapportée.
   - Module d'appro 2,00 m (niveaux cochés « Appro ») : plancher, poutrelles, garde-corps basculant HMGCAPPROSUP / -C / GC.
   - Recette (profondeur choisie, niveaux cochés « Recette ») : plancher et garde-corps en lisses.
+  - Choisir « Travail + recette » (ou « + appro ») coche le dernier niveau ; si aucun niveau n'est coché, alerte
+    « la recette ne sera pas représentée… ».
   - Aux niveaux desservis, la maille principale n'a pas de garde-corps extérieur.
 - **Escaliers** (type de maille, mailles de 2,50 m ; 3,00 m sans garde-corps de volée, absent de la bibliothèque) :
   - Escalier 1,50 m : une volée HMESCALU…200 par niveau, alternativement côté façade et côté extérieur, en sens opposés ;
     la dernière arrive côté façade. Garde-corps HMGCESCALU des deux côtés de la volée, extrémités HMGCESCALUEXTR au pied
-    de la première et en haut de la dernière. Montée de 1,00 m : volée HMESCALU175100.
+    de la première, et en haut de la dernière côté vide seulement (on sort côté maille). Montée de 1,00 m : volée HMESCALU175100.
   - Demi-escalier 0,70 m (volées 0,65) ou 1,00 m (volées 88D) : une volée par niveau, toujours dans le même sens, garde-corps
-    côté maille seulement.
+    côté maille seulement, pas de garde-corps d'extrémité HMGCESCALUEXTR en haut, pas de diagonale devant l'entrée.
   - Tour : traverses renforcées aux deux bouts à chaque niveau, lisses tous les 0,50 m le long de la file extérieure et en
-    travers au bout du palier (aux deux bouts pour un demi-escalier et au dernier niveau), plinthes, diagonales extérieure et en travers.
+    travers au bout du palier (aux deux bouts pour un demi-escalier et au dernier niveau), plinthes, diagonales extérieure et en travers (côté extérieur de la tour, pas devant l'entrée du pied).
   - Côté maille : garde-corps extérieur remplacé par la lisse de plancher et une fermeture (montant HMMONTGC(E) + 2 lisses + plinthe)
     sur 1,50 m (2,00 m en maille de 3 m), ouverte sur 1,00 m au bout d'arrivée ; demi-escalier aux niveaux intermédiaires :
     garde-corps central sur piquages HMPIQLIS(-E) + poteaux de 1 m, ouvert sur 0,75 m aux deux bouts.
 - **Stabilisation** (colonne « Stab. ») : file à la distance choisie, lisses et diagonales jusqu'à 2 m sous le dernier plancher.
-- **Pignon** (maille d'accès) : tour montée de +2, +4… m au-dessus du dernier plancher, planchers tous les 2 m et abouts.
+- **Colonne « Ht max »** (remplace Pignon le 24/11/2026) : dernier plancher de chaque maille, écart avec celui de la face
+  par multiple de 2 m (sinon alerte et hauteur de la face). Au-dessus : planchers tous les 2 m (accès seul pour une maille
+  d'accès). En dessous : maille arrêtée plus bas. Abouts avec garde-corps sur la maille plus haute, côté de la voisine plus basse.
 - **Poutre de franchissement** (colonne « Poutre », sur la maille de gauche d'une paire de mailles de travail identiques) :
   deux poutres HMPOUT à 0,50 m sous le plancher choisi, file du milieu supprimée dessous, tubes en diagonale horizontale,
   diagonales en V au-dessus, abouts sur les mailles voisines ; refus avec alerte si les conditions ne sont pas réunies.
