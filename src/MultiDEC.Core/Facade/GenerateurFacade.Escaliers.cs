@@ -170,6 +170,10 @@ public sealed partial class GenerateurFacade
             else
             {
                 PlacerVolee(num, x0, x1, lm, z, montee, yVolee, largeurVolee, large, demi, miroir, premiere: k == 1, derniere: haut, ref gardeCorpsManquant);
+                if (k == 1 && Cotes.Egal(montee, 1.0))
+                {
+                    PlacerPiedVolee1mDansTour(num, x0, x1, w, miroir);
+                }
             }
 
             var n = niveaux.FirstOrDefault(v => Cotes.Egal(v.Hauteur, z));
@@ -182,6 +186,37 @@ public sealed partial class GenerateurFacade
         if (gardeCorpsManquant)
         {
             _alertes.Add(FormattableString.Invariant($"Maille {num} : garde-corps de volée de {lm:0.00} m absent de la bibliothèque, volées posées sans garde-corps."));
+        }
+    }
+
+    /// <summary>
+    /// Volée de 1 m restée dans la tour : son pied repose sur une traverse intermédiaire HMTIP (largeur de la tour),
+    /// et le reste de la tour jusqu'au bout d'entrée est couvert de plateaux acier posés en travers, de la largeur
+    /// de la tour, sur les lisses de pied (Laurent, 24/11/2026 : HMTIP150 et plateaux de 1,50 m).
+    /// </summary>
+    private void PlacerPiedVolee1mDansTour(int num, double x0, double x1, double w, bool miroir)
+    {
+        double y1 = -_l;
+        double xHaut = miroir ? x1 : x0;
+        double xEntree = miroir ? x0 : x1;
+        double xPied = Cotes.Arrondi(xHaut + (miroir ? -1 : 1) * LongueurVolee1m);
+        Ajouter(References.TraverseIntermediaire(w), Famille.Traverse, new Point3(xPied, y1, 0), Axe.Y, Face.Exterieure, num);
+
+        double reste = Cotes.Arrondi(Math.Abs(xEntree - xPied));
+        if (!new[] { 0.75, 1.0, 1.05, 1.5, 1.75 }.Any(l => Cotes.Egal(l, w)))
+        {
+            _alertes.Add(FormattableString.Invariant(
+                $"Maille {num} : pas de plateau acier de {w:0.00} m pour couvrir le pied de la volée de 1 m dans la tour, à compléter."));
+            return;
+        }
+
+        // Plateau en travers : il part de y1 vers l'extérieur, sa largeur vers les X décroissants.
+        foreach (var (_, rang) in RepartitionPlateaux(reste, GammePlateaux.Standard))
+        {
+            double x = miroir
+                ? Cotes.Arrondi(xEntree + RetraitPlateau + LargeurPlateau * (rang + 1))
+                : Cotes.Arrondi(xEntree - RetraitPlateau - LargeurPlateau * rang);
+            Ajouter(References.PlateauAcierComplement(w), Famille.Plateau, new Point3(x, y1, 0), Axe.Y, Face.Aucune, num);
         }
     }
 
@@ -231,10 +266,13 @@ public sealed partial class GenerateurFacade
         // Pied : traverse intermédiaire au sol, plateaux acier jusqu'au bout de la maille, lisse et traverse de pied.
         Ajouter(References.TraverseIntermediaire(w), Famille.Traverse, new Point3(xPied, y1, 0), Axe.Y, Face.Exterieure, num);
         Travers(References.LisseOuTraverse(w), Famille.Traverse, xBout, y1, 0, num);
-        Ajouter(References.LisseOuTraverse(lv), Famille.Lisse, new Point3(_x[voisine], y2, 0), Axe.X, Face.Exterieure, num);
-        Ajouter(References.LisseOuTraverse(lv), Famille.Lisse, new Point3(_x[voisine], y2, 1.0), Axe.X, Face.Exterieure, num);
+        // Côté extérieur : lisses au sol, au palier (1 m), et garde-corps 1 m au-dessus du palier (Laurent, 24/11/2026).
+        foreach (double zl in new[] { 0.0, 1.0, 1.5, 2.0 })
+        {
+            Ajouter(References.LisseOuTraverse(lv), Famille.Lisse, new Point3(_x[voisine], y2, zl), Axe.X, Face.Exterieure, num);
+        }
 
-        foreach (var t in ReglePoteaux.Empiler(_p, false, false, 1.0))
+        foreach (var t in ReglePoteaux.Empiler(_p, false, false, 2.0))
         {
             Ajouter(t.Reference, t.Famille, new Point3(xBout, y2, t.Z), Axe.Z, Face.Exterieure, num);
         }
