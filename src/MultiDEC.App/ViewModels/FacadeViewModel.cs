@@ -639,6 +639,19 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
 
         MarquerJonctions();
         NotifierLongueur();
+        NotifierColonnesNiveaux();
+    }
+
+    /// <summary>Colonne « Appro » de la grille des niveaux : seulement si la face a une maille d'appro (Laurent, 24/11/2026).</summary>
+    public bool ColonneApproVisible => Mailles.Any(m => m.Type == TypeMaille.Appro);
+
+    /// <summary>Colonne « Recette » de la grille des niveaux : seulement si la face a une maille de recette.</summary>
+    public bool ColonneRecetteVisible => Mailles.Any(m => m.Type == TypeMaille.Recette);
+
+    private void NotifierColonnesNiveaux()
+    {
+        Notifier(nameof(ColonneApproVisible));
+        Notifier(nameof(ColonneRecetteVisible));
     }
 
     private void Maille_PropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -650,6 +663,7 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
         else if (e.PropertyName == nameof(MailleDefinition.Type))
         {
             CocherDernierNiveau((MailleDefinition)sender!);
+            NotifierColonnesNiveaux();
         }
     }
 

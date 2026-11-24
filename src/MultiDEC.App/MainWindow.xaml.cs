@@ -42,6 +42,7 @@ public partial class MainWindow : Window
         Vm.Faces.CollectionChanged += (_, _) => ReconstruireOnglets();
         Vm.Mailles.CollectionChanged += (_, _) => Dispatcher.BeginInvoke(new Action(NumeroterMailles));
         Vm.PropertyChanged += Vm_PropertyChanged;
+        Vm_PropertyChanged(Vm, new System.ComponentModel.PropertyChangedEventArgs(string.Empty));
         OngletsFaces();
         _orientations = TableOrientations.Charger(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "orientations-blocs.json"));
         Loaded += (_, _) => ChargerBibliotheque(Reglages.CheminBibliotheque);
@@ -172,6 +173,12 @@ public partial class MainWindow : Window
 
     private void Vm_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
+        if (e.PropertyName is nameof(FacadeViewModel.ColonneApproVisible) or nameof(FacadeViewModel.ColonneRecetteVisible) or "" or null)
+        {
+            ColonneAppro.Visibility = Vm.ColonneApproVisible ? Visibility.Visible : Visibility.Collapsed;
+            ColonneRecette.Visibility = Vm.ColonneRecetteVisible ? Visibility.Visible : Visibility.Collapsed;
+        }
+
         if (e.PropertyName == nameof(FacadeViewModel.IndexFaceActive) && Onglets.SelectedIndex > 0 && Onglets.SelectedIndex != Vm.IndexFaceActive + 1)
         {
             Onglets.SelectedIndex = Vm.IndexFaceActive + 1;

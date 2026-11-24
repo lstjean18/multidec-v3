@@ -196,6 +196,26 @@ public class FacadeViewModelTests
     }
 
     [Fact]
+    public void Colonnes_appro_et_recette_seulement_avec_une_maille_du_type()
+    {
+        var vm = new FacadeViewModel();
+        var changees = new List<string?>();
+        vm.PropertyChanged += (_, e) => changees.Add(e.PropertyName);
+        Assert.False(vm.ColonneApproVisible);
+        Assert.False(vm.ColonneRecetteVisible);
+
+        vm.Mailles[1].Type = TypeMaille.Appro;
+        Assert.True(vm.ColonneApproVisible);
+        Assert.False(vm.ColonneRecetteVisible);
+        Assert.Contains(nameof(FacadeViewModel.ColonneApproVisible), changees);
+
+        vm.Mailles[1].Type = TypeMaille.Travail;
+        Assert.False(vm.ColonneApproVisible);
+        vm.Mailles.Add(new MailleDefinition(2.5) { Type = TypeMaille.Recette });
+        Assert.True(vm.ColonneRecetteVisible);
+    }
+
+    [Fact]
     public void Garde_corps_mds1_absent_des_choix()
     {
         Assert.DoesNotContain("GardeCorpsMds1", FacadeViewModel.Securites.Cast<object>().Select(o => o.ToString()));

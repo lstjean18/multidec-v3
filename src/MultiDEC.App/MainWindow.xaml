@@ -631,7 +631,7 @@
                       </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                   </DataGridTemplateColumn>
-                  <DataGridTemplateColumn Header="Appro" Width="Auto">
+                  <DataGridTemplateColumn x:Name="ColonneAppro" Header="Appro" Width="Auto" Visibility="Collapsed">
                     <DataGridTemplateColumn.CellTemplate>
                       <DataTemplate>
                         <CheckBox IsChecked="{Binding Appro, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Center"
@@ -639,7 +639,7 @@
                       </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                   </DataGridTemplateColumn>
-                  <DataGridTemplateColumn Header="Recette" Width="Auto">
+                  <DataGridTemplateColumn x:Name="ColonneRecette" Header="Recette" Width="Auto" Visibility="Collapsed">
                     <DataGridTemplateColumn.CellTemplate>
                       <DataTemplate>
                         <CheckBox IsChecked="{Binding Recette, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Center"
