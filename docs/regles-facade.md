@@ -39,7 +39,7 @@ Les points marqués **[à valider]** sont des choix faits en v3 faute de règle 
 - Plateaux au niveau 0 : lisses de pied des deux côtés de la maille (validé le 23/11/2026). Une seule paire de lisses de pied par maille, même avec diagonale ou option « lisses en pied ».
 
 ## Diagonales verticales
-- Mailles choisies par la case « Diagonale » de la grille, pré-cochée une maille sur 5 (garde-corps MDS) ou sur 3 (lisses) ; renforcées : sur 3 ou sur 2. Sens alterné d'une maille cochée à la suivante.
+- Mailles choisies par la case « Diagonale » de la grille, pré-cochée une maille sur 5, ou une sur 2 avec l'option « diagonales 1 maille sur 2 », quel que soit le garde-corps (règle v2 version2024, Laurent 23/11/2026). Sens alterné d'une maille cochée à la suivante.
 - Toute la hauteur ; hauteur non multiple de 2 m : une diagonale en pied puis colonne décalée.
 - **Nouveau v3** : protection intérieure → diagonales aussi côté intérieur, mêmes mailles.
 - Pas de diagonale sur un côté sans garde-corps (protection « Sans ») ; aucun des deux côtés → aucune diagonale et alerte (validé par Laurent le 23/11/2026). Le pas suit la protection extérieure, ou celle du côté façade si l'extérieur est sans.

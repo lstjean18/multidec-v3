@@ -22,8 +22,8 @@ public class ReglesTests
 
     [Theory]
     [InlineData(TypeSecurite.GardeCorpsMds2, false, 5)]
-    [InlineData(TypeSecurite.Lisses, false, 3)]
-    [InlineData(TypeSecurite.GardeCorpsMds2, true, 3)]
+    [InlineData(TypeSecurite.Lisses, false, 5)]
+    [InlineData(TypeSecurite.GardeCorpsMds2, true, 2)]
     [InlineData(TypeSecurite.Lisses, true, 2)]
     public void Pas_des_diagonales(TypeSecurite secu, bool renforce, int pas)
     {

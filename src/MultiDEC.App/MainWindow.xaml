@@ -98,7 +98,7 @@
 
           <GroupBox Header="Diagonales">
             <StackPanel>
-              <CheckBox Content="Diagonales renforcées" IsChecked="{Binding Parametres.DiagonalesRenforcees}" />
+              <CheckBox Content="Diagonales 1 maille sur 2" IsChecked="{Binding Parametres.DiagonalesRenforcees}" />
               <CheckBox Content="Diagonale dans la 1re maille" IsChecked="{Binding Parametres.DiagonalePremiereMaille}" />
               <Button Content="Proposer les diagonales" Command="{Binding ProposerLesDiagonales}" Margin="0,6,0,0"
                       ToolTip="Recoche les cases « Diagonale » de la grille des mailles selon la règle (une maille sur 5 ou sur 3…)" />

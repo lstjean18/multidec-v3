@@ -147,7 +147,7 @@ public sealed class GenerateurFacade
 
         if (RegleDiagonales.RenforcementConseille(niveaux) && !_p.DiagonalesRenforcees)
         {
-            _alertes.Add("Beaucoup de niveaux « accès seul » : diagonales renforcées conseillées.");
+            _alertes.Add("Beaucoup de niveaux « accès seul » : option « diagonales 1 maille sur 2 » conseillée.");
         }
 
         return new StructureFacade(_el, bilan, _alertes);

@@ -130,9 +130,9 @@ public class FacadeViewModelTests
             m.Diagonale = false;
         }
 
-        vm.Parametres.SecuriteExterieure = TypeSecurite.Lisses; // une maille sur 3
+        vm.Parametres.DiagonalesRenforcees = true; // une maille sur 2 (règle v2)
         vm.ProposerLesDiagonales.Execute(null);
-        Assert.Equal(new[] { 1, 4, 7 }, vm.Mailles.Select((m, i) => (m, i)).Where(x => x.m.Diagonale).Select(x => x.i + 1));
+        Assert.Equal(new[] { 1, 3, 5, 7 }, vm.Mailles.Select((m, i) => (m, i)).Where(x => x.m.Diagonale).Select(x => x.i + 1));
     }
 
     [Fact]

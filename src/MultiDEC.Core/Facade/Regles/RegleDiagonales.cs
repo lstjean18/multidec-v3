@@ -28,30 +28,22 @@ public sealed class MailleDiagonale
 }
 
 /// <summary>
-/// Répartition des diagonales verticales (NT-Echafaudage + ancien MultiRETO/MultiSystem) :
-/// une maille sur 5 avec garde-corps MDS (1 m), une sur 3 avec lisse + sous-lisse ;
-/// diagonales renforcées : une sur 3 (MDS) ou une sur 2 (lisses).
+/// Répartition des diagonales verticales : une maille sur 5, ou une sur 2 avec l'option
+/// « diagonales 1 maille sur 2 » (règle MultiDEC v2 version2024).
 /// Les diagonales occupent toute la hauteur de la maille.
 /// Nouveauté v3 : avec une protection intérieure, mêmes mailles côté intérieur.
 /// Pas de diagonale sur un côté sans garde-corps ; mailles choisies par case à cocher, pré-cochées par la règle (Laurent, 23/11/2026).
 /// </summary>
 public static class RegleDiagonales
 {
-    public static int Pas(ParametresFacade p)
-    {
-        // Type de protection qui porte les diagonales : l'extérieur, sinon le côté façade.
-        var securite = p.SecuriteExterieure != TypeSecurite.Sans ? p.SecuriteExterieure : p.SecuriteInterieure;
-        bool mds = securite == TypeSecurite.GardeCorpsMds2;
-        if (p.DiagonalesRenforcees)
-        {
-            return mds ? 3 : 2;
-        }
-
-        return mds ? 5 : 3;
-    }
+    /// <summary>
+    /// Pas des diagonales, règle de MultiDEC v2 (branche version2024, retenue par Laurent le 23/11/2026) :
+    /// une maille sur 5, ou une sur 2 avec l'option « diagonales 1 maille sur 2 », quel que soit le garde-corps.
+    /// </summary>
+    public static int Pas(ParametresFacade p) => p.DiagonalesRenforcees ? 2 : 5;
 
     /// <summary>
-    /// Pré-coche la case « Diagonale » des mailles selon la règle (une sur 5 / 3, renforcées une sur 3 / 2).
+    /// Pré-coche la case « Diagonale » des mailles selon la règle (une sur 5, ou une sur 2 avec l'option).
     /// L'utilisateur coche ou décoche ensuite librement dans la grille des mailles.
     /// </summary>
     public static void Proposer(ParametresFacade p, IList<MailleDefinition> mailles)

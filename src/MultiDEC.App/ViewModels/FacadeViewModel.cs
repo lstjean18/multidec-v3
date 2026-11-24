@@ -142,7 +142,7 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
         Notifier(nameof(Resume));
     }
 
-    /// <summary>Recoche les cases « Diagonale » selon la règle (pas selon la protection, diagonales renforcées).</summary>
+    /// <summary>Recoche les cases « Diagonale » selon la règle (une maille sur 5, ou sur 2 avec l'option).</summary>
     public void ProposerDiagonales() => RegleDiagonales.Proposer(Parametres, Mailles);
 
     /// <summary>Recopie les grilles éditées dans le projet et génère la structure.</summary>

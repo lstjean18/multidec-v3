@@ -68,7 +68,7 @@ public sealed class ParametresFacade
 
     // ---- Diagonales ------------------------------------------------------------------------
 
-    /// <summary>Diagonales renforcées (ancien DIAGOPLUS) : pas de 2 (lisses) ou 3 (garde-corps MDS).</summary>
+    /// <summary>Option « Diagonales 1 maille sur 2 » (ancien DIAGOPLUS) ; sinon une maille sur 5.</summary>
     public bool DiagonalesRenforcees { get; set; }
 
     /// <summary>Force une diagonale dans la première maille, même quand il y a peu de mailles.</summary>
