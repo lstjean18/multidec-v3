@@ -427,6 +427,31 @@ public class GenerateurFacadeTests
     }
 
     [Fact]
+    public void Pignon_sur_maille_d_acces_planchers_tous_les_2_m_et_abouts()
+    {
+        var face = Standard(); // accès en maille 4 (index 3), dernier plancher 10 m
+        int acces = face.Mailles.FindIndex(m => m.Type == TypeMaille.Acces);
+        face.Mailles[acces].Pignon = 4;
+        face.Mailles[0].Pignon = 4; // maille de travail : ignoré (v2 : pignon seulement sur un accès)
+        var s = GenerateurFacade.Generer(face);
+        var x = face.AbscissesFiles();
+
+        Assert.Equal(15.0, Sommet(s, x[acces], -0.70), 3);
+        Assert.Equal(15.0, Sommet(s, x[acces + 1], 0), 3);
+        Assert.Equal(11.0, Sommet(s, x[0], -0.70), 3);
+        Assert.Equal(7, s.Elements.Count(e => e.Famille == Famille.Trappe && e.NumeroMaille == acces + 1)); // 2 à 14
+        foreach (double z in new[] { 12.0, 14.0 })
+        {
+            Assert.Equal(2, s.Elements.Count(e => e.Axe == Axe.Y && e.Famille == Famille.GardeCorps && Math.Abs(e.Origine.Z - z) < 1e-6));
+            Assert.Contains(s.Elements, e => e.Famille == Famille.Traverse && Math.Abs(e.Origine.X - x[acces]) < 1e-6 && Math.Abs(e.Origine.Z - z) < 1e-6);
+        }
+
+        Assert.DoesNotContain(s.Elements, e => e.Origine.Z > 11.5 && e.NumeroMaille != acces + 1 && e.NumeroMaille != 0);
+        Assert.Equal(14.0, face.Mailles[acces].HauteurMax(10), 6);
+        Assert.Equal(10.0, face.Mailles[0].HauteurMax(10), 6);
+    }
+
+    [Fact]
     public void Sous_mailles_references_presentes_dans_la_bibliotheque()
     {
         var biblio = BibliothequeBlocs.DepuisFichier("blocs-EM-3D.txt");

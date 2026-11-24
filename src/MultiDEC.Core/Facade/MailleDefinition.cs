@@ -23,6 +23,7 @@ public sealed class MailleDefinition : INotifyPropertyChanged
     private string _jonction = string.Empty;
     private double _profondeurRecette = 2.0;
     private double _stabilisation;
+    private double _pignon;
 
     public MailleDefinition()
     {
@@ -53,6 +54,7 @@ public sealed class MailleDefinition : INotifyPropertyChanged
             {
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(LargeurRapportee)));
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(EstTravail)));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(PignonEffectif)));
             }
         }
     }
@@ -90,6 +92,29 @@ public sealed class MailleDefinition : INotifyPropertyChanged
         get => _stabilisation;
         set => Changer(ref _stabilisation, value);
     }
+
+    /// <summary>
+    /// Pignon (colonne « Pignon (+m) », mailles d'accès seulement, v2 CanPignon) : la maille monte de cette hauteur
+    /// au-dessus du dernier plancher de la face, avec un plancher tous les 2 m. 0 = pas de pignon.
+    /// </summary>
+    public double Pignon
+    {
+        get => _pignon;
+        set
+        {
+            if (Changer(ref _pignon, value))
+            {
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(PignonEffectif)));
+            }
+        }
+    }
+
+    /// <summary>Pignon pris en compte : seulement sur une maille d'accès, par pas de 2 m.</summary>
+    [JsonIgnore]
+    public double PignonEffectif => _type == TypeMaille.Acces && _pignon > Cotes.Tolerance ? 2.0 * Math.Floor((_pignon + Cotes.Tolerance) / 2.0) : 0;
+
+    /// <summary>Dernier plancher de cette maille pour une face dont le dernier plancher est <paramref name="hauteurFace"/> (colonne « Ht max »).</summary>
+    public double HauteurMax(double hauteurFace) => Cotes.Arrondi(hauteurFace + PignonEffectif);
 
     /// <summary>Diagonales verticales sur toute la hauteur de la maille.</summary>
     public bool Diagonale
@@ -172,10 +197,11 @@ public sealed class MailleDefinition : INotifyPropertyChanged
         Consoles = new List<double>(_consoles),
         ProfondeurRecette = ProfondeurRecette,
         Stabilisation = Stabilisation,
+        Pignon = Pignon,
     };
 
     public override string ToString() =>
-        FormattableString.Invariant($"{Longueur:0.00} m {Type}{(Diagonale ? " + diagonale" : string.Empty)}{(LargeurRapportee > 0 ? $" ({LargeurRapportee:0.00})" : string.Empty)}{(Stabilisation > 0 ? $" + stab. {Stabilisation:0.00}" : string.Empty)}{(_consoles.Count > 0 ? " + consoles " + string.Join("/", _consoles) : string.Empty)}");
+        FormattableString.Invariant($"{Longueur:0.00} m {Type}{(Diagonale ? " + diagonale" : string.Empty)}{(LargeurRapportee > 0 ? $" ({LargeurRapportee:0.00})" : string.Empty)}{(Stabilisation > 0 ? $" + stab. {Stabilisation:0.00}" : string.Empty)}{(PignonEffectif > 0 ? $" + pignon {PignonEffectif:0}" : string.Empty)}{(_consoles.Count > 0 ? " + consoles " + string.Join("/", _consoles) : string.Empty)}");
 
     private static double Lire(string hauteur) => double.Parse(hauteur, CultureInfo.InvariantCulture);
 

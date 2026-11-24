@@ -138,7 +138,7 @@ public sealed partial class GenerateurFacade
         PlacerFiles(niveaux);
         for (int i = 0; i < _projet.Mailles.Count; i++)
         {
-            PlacerMaille(i, niveaux);
+            PlacerMaille(i, niveaux.Concat(NiveauxPignon(_projet.Mailles[i])).ToList());
         }
 
         PlacerSousMailles(niveaux);
@@ -192,16 +192,20 @@ public sealed partial class GenerateurFacade
             bool extremite = f == 0 || f == DerniereFile;
             double x = _x[f];
 
+            // Pignon d'une maille d'accès voisine : la file monte jusqu'à son dernier plancher.
+            double hFile = HauteurFile(f);
+            double? sommetPignon = hFile > _h + Cotes.Tolerance ? hFile + 1.0 + (_p.GardeCorpsCouvreur ? 0.5 : 0.0) : (double?)null;
+
             // Côté extérieur : garde-corps en tête ; départ 3 m si option.
-            Empiler(x, -_l, Face.Exterieure, _p.Depart3mExterieur, gardeCorps: true);
+            Empiler(x, -_l, Face.Exterieure, _p.Depart3mExterieur, gardeCorps: true, sommetPignon);
 
             // Côté intérieur : garde-corps si extrémité, ou protection intérieure sur une maille voisine
             // sans console au dernier niveau.
             bool gcInt = extremite || (_p.SecuriteInterieure != TypeSecurite.Sans && MaillesVoisines(f).Any(m => ConsoleSommet(m) == null));
-            Empiler(x, 0, Face.Interieure, _p.Depart3mExterieur && extremite, gcInt);
+            Empiler(x, 0, Face.Interieure, _p.Depart3mExterieur && extremite, gcInt || sommetPignon != null, sommetPignon);
 
             // Traverses à chaque niveau (renforcées aux planchers complets si demandé).
-            foreach (var n in niveaux)
+            foreach (var n in niveaux.Concat(NiveauxPignon(hFile)))
             {
                 var type = n.Hauteur > Cotes.Tolerance && !n.EstAccesSeul ? _p.Traverses : TypeTraverse.Lisse;
                 Ajouter(References.LisseOuTraverse(_l, type), Famille.Traverse, new Point3(x, 0, n.Hauteur), Axe.Y);
@@ -212,12 +216,29 @@ public sealed partial class GenerateurFacade
                 Ajouter(References.LisseOuTraverse(_l), Famille.Traverse, new Point3(x, 0, 0), Axe.Y);
             }
 
-            if (_p.GardeCorpsCouvreur && extremite)
+            if (_p.GardeCorpsCouvreur && (extremite || sommetPignon != null))
             {
-                Ajouter(References.LisseOuTraverse(_l), Famille.Traverse, new Point3(x, 0, _h + 1.5), Axe.Y);
+                Ajouter(References.LisseOuTraverse(_l), Famille.Traverse, new Point3(x, 0, hFile + 1.5), Axe.Y);
             }
         }
     }
+
+    /// <summary>
+    /// Planchers du pignon d'une maille d'accès (v2 : niveaux ajoutés tous les 2 m au-dessus du plancher commun),
+    /// traités comme des niveaux « accès seul » : trappe, échelle et abouts des deux côtés.
+    /// </summary>
+    private IEnumerable<Niveau> NiveauxPignon(MailleDefinition m) => NiveauxPignon(m.HauteurMax(_h));
+
+    private IEnumerable<Niveau> NiveauxPignon(double hauteurMax)
+    {
+        for (double z = _h + 2.0; z <= hauteurMax + Cotes.Tolerance; z = Cotes.Arrondi(z + 2.0))
+        {
+            yield return new Niveau(Cotes.Arrondi(z), TypePlancher.AccesSeul);
+        }
+    }
+
+    /// <summary>Dernier plancher atteint à une file (pignon d'une maille voisine compris).</summary>
+    private double HauteurFile(int file) => MaillesVoisines(file).Select(m => m.HauteurMax(_h)).DefaultIfEmpty(_h).Max();
 
     private IEnumerable<MailleDefinition> MaillesVoisines(int file)
     {
@@ -241,9 +262,9 @@ public sealed partial class GenerateurFacade
 
     private ConsoleInfo? ConsoleSommet(MailleDefinition m) => _niveauSommet == null ? null : ConsoleDe(m, _niveauSommet);
 
-    private void Empiler(double x, double y, Face face, bool depart3m, bool gardeCorps)
+    private void Empiler(double x, double y, Face face, bool depart3m, bool gardeCorps, double? sommet = null)
     {
-        foreach (var t in ReglePoteaux.Empiler(_p, depart3m, gardeCorps))
+        foreach (var t in ReglePoteaux.Empiler(_p, depart3m, gardeCorps, sommet))
         {
             Ajouter(t.Reference, t.Famille, new Point3(x, y, t.Z), Axe.Z, face);
         }
@@ -335,10 +356,11 @@ public sealed partial class GenerateurFacade
 
         if (_p.GardeCorpsCouvreur)
         {
-            Ajouter(lisse, Famille.Lisse, new Point3(x0, -_l, _h + 1.5), Axe.X, Face.Exterieure, num);
-            if (_p.SecuriteInterieure != TypeSecurite.Sans && ConsoleSommet(m) == null)
+            double hm = m.HauteurMax(_h);
+            Ajouter(lisse, Famille.Lisse, new Point3(x0, -_l, hm + 1.5), Axe.X, Face.Exterieure, num);
+            if (_p.SecuriteInterieure != TypeSecurite.Sans && (ConsoleSommet(m) == null || hm > _h + Cotes.Tolerance))
             {
-                Ajouter(lisse, Famille.Lisse, new Point3(x0, 0, _h + 1.5), Axe.X, Face.Interieure, num);
+                Ajouter(lisse, Famille.Lisse, new Point3(x0, 0, hm + 1.5), Axe.X, Face.Interieure, num);
             }
         }
     }

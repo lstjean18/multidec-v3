@@ -56,6 +56,9 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
     /// <summary>Largeurs de stabilisation proposées (0 = sans).</summary>
     public static IReadOnlyList<double> LargeursStabilisation { get; } = new[] { 0.0, 0.70, 1.00, 1.50, 2.00, 2.50, 3.00 };
 
+    /// <summary>Hauteurs de pignon proposées (planchers tous les 2 m au-dessus du dernier plancher, mailles d'accès).</summary>
+    public static IReadOnlyList<double> HauteursPignon { get; } = new[] { 0.0, 2.0, 4.0, 6.0, 8.0, 10.0 };
+
     /// <summary>Profondeurs de recette proposées.</summary>
     public static IReadOnlyList<double> ProfondeursRecette { get; } = new[] { 0.70, 1.00, 1.50, 2.00, 2.50, 3.00 };
 
