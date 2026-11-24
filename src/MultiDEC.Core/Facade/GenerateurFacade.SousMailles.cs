@@ -258,8 +258,10 @@ public sealed partial class GenerateurFacade
             return;
         }
 
-        Ajouter(References.SupportAppro, Famille.GardeCorps, new Point3(x0, yMilieu, z + 1.0), Axe.Z, Face.Exterieure, num);
-        Ajouter(References.SupportAppro, Famille.GardeCorps, new Point3(x1, yMilieu, z + 1.0), Axe.Z, Face.Exterieure, num, inverse: true);
+        // Support relevé sur le serveur : montant de 0,63 m sous la lisse, bras de 0,29 m vers +X → posé en axe X
+        // (symétrisé à droite pour que le bras parte vers l'intérieur de la maille).
+        Ajouter(References.SupportAppro, Famille.GardeCorps, new Point3(x0, yMilieu, z + 1.0), Axe.X, Face.Exterieure, num);
+        Ajouter(References.SupportAppro, Famille.GardeCorps, new Point3(x1, yMilieu, z + 1.0), Axe.X, Face.Exterieure, num, inverse: true);
         Ajouter(References.CadreAppro, Famille.GardeCorps, new Point3(x0 + 0.25, yMilieu, z + 0.9), Axe.Y, Face.Exterieure, num);
         Ajouter(References.CadreAppro, Famille.GardeCorps, new Point3(x1 - 0.25, yMilieu, z + 0.9), Axe.Y, Face.Exterieure, num, inverse: true);
         Ajouter(References.GardeCorpsAppro(lgc), Famille.GardeCorps, new Point3(x0 + 0.25, Cotes.Arrondi(-_l - 2.0), z + 0.5), Axe.X, Face.Exterieure, num);
