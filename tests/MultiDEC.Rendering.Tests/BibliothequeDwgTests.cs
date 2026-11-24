@@ -208,9 +208,22 @@ public class BibliothequeDwgTests
             Image(doc, nom + "-AN-" + v);
         }
 
-        // Même L inversé (bâtiment dans l'angle rentrant).
+        // Case « Dessiner façade » : murs du bâtiment à 0,20 m des files intérieures, raccordés dans l'angle.
+        rendu.DessinerFacade(MursFacade.Calculer(projet), true);
+        foreach (var m in MursFacade.Calculer(projet))
+        {
+            _sortie.WriteLine("FA " + m);
+        }
+
+        rendu.Vue(Vues.Iso);
+        Image(doc, nom + "-FA-iso");
+        rendu.Vue(Vues.Dessus);
+        Image(doc, nom + "-FA-dessus");
+
+        // Même L inversé (bâtiment dans l'angle rentrant), avec la façade.
         projet.Inversee = true;
         rendu.Dessiner(GenerateurStructure.Generer(projet), TableOrientations.ParDefaut());
+        rendu.DessinerFacade(MursFacade.Calculer(projet), true);
         rendu.Vue(Vues.Iso);
         Image(doc, nom + "-AI-iso");
         rendu.Vue(Vues.Dessus);

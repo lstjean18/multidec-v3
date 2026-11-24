@@ -396,4 +396,59 @@ public class StructureTests
         vm.Forme = FormeStructure.EnL;
         Assert.DoesNotContain(2.00, vm.LargeursProposees);
     }
+
+    [Fact]
+    public void Facade_droite_a_la_distance_de_la_file_interieure()
+    {
+        var projet = Projet(FormeStructure.Droite);
+        var f = projet.S1;
+        f.Parametres.DistanceFacade = 0.30;
+        var mur = Assert.Single(MursFacade.Calculer(projet));
+        Assert.Equal(new Point3(0, 0.30, 0), mur.Debut);
+        Assert.Equal(new Point3(f.LongueurObtenue, 0.30, 0), mur.Fin);
+        Assert.Equal(f.HauteurTotale, mur.Hauteur);
+    }
+
+    [Fact]
+    public void Facade_en_L_murs_raccordes_dans_l_angle_sortant()
+    {
+        var projet = Projet(FormeStructure.EnL);
+        foreach (var f in projet.Faces)
+        {
+            f.Parametres.DistanceFacade = 0.20;
+        }
+
+        var murs = MursFacade.Calculer(projet);
+        Assert.Equal(2, murs.Count);
+        double l1 = projet.S1.LongueurObtenue;
+        Assert.Equal(new Point3(l1 - 0.20, 0.20, 0), murs[0].Fin);
+        Assert.Equal(murs[0].Fin, murs[1].Debut);
+        Assert.Equal(projet.Faces[1].LongueurObtenue - projet.S1.Parametres.LargeurMaille - 0.20, murs[1].Longueur, 3);
+    }
+
+    [Theory]
+    [InlineData(FormeStructure.EnU, false)]
+    [InlineData(FormeStructure.Fermee, false)]
+    [InlineData(FormeStructure.EnL, true)]
+    [InlineData(FormeStructure.EnU, true)]
+    public void Facade_les_murs_se_rejoignent_aux_angles(FormeStructure forme, bool inversee)
+    {
+        var projet = Projet(forme);
+        projet.Inversee = inversee;
+        var murs = MursFacade.Calculer(projet);
+        Assert.Equal(projet.Faces.Count, murs.Count);
+        for (int i = 1; i < murs.Count; i++)
+        {
+            Assert.Equal(murs[i - 1].Fin, murs[i].Debut);
+        }
+
+        if (forme == FormeStructure.Fermee)
+        {
+            Assert.Equal(murs[3].Fin, murs[0].Debut);
+        }
+
+        // Angle rentrant (inversée) : le mur de S1 dépasse la face ; angle sortant : il s'arrête avant.
+        double l1 = projet.S1.LongueurObtenue;
+        Assert.True(inversee ? murs[0].Longueur > l1 : murs[0].Longueur < l1);
+    }
 }

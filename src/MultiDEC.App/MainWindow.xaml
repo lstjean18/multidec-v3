@@ -289,6 +289,8 @@
               </ComboBox>
               <CheckBox x:Name="CaseAxes" Content="Axes filaires" IsChecked="True" IsEnabled="False" Margin="0,4,0,0"
                         ToolTip="Les axes filaires sont toujours affichés" />
+              <CheckBox Content="Dessiner façade" IsChecked="{Binding DessinerFacade}" Click="Facade_Click"
+                        ToolTip="Représente le mur du bâtiment à la distance à la façade de chaque face" />
             </StackPanel>
             <TextBlock Style="{StaticResource TitreGroupe}" Text="Affichage" />
           </StackPanel>

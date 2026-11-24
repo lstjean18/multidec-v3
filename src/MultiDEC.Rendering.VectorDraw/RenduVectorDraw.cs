@@ -67,6 +67,15 @@ public sealed class RenduVectorDraw
     /// <summary>Calque créé au chargement : axes filaires des blocs qui ont aussi des volumes (masqué par défaut).</summary>
     public const string CalqueAxesMdc = "MDC-Axes";
 
+    /// <summary>Calque des murs du bâtiment (case « Dessiner façade »).</summary>
+    public const string CalqueFacade = "MDC-Facade";
+
+    /// <summary>Épaisseur dessinée des murs de façade (m), côté bâtiment.</summary>
+    public const double EpaisseurMur = 0.10;
+
+    /// <summary>Couleur des murs de façade.</summary>
+    public static readonly System.Drawing.Color CouleurMur = System.Drawing.Color.FromArgb(214, 204, 188);
+
     /// <summary>Messages de préparation de la bibliothèque (repère, calques, couleurs) : utiles aux tests du serveur.</summary>
     public List<string> Diagnostic { get; } = new List<string>();
 
@@ -407,6 +416,48 @@ public sealed class RenduVectorDraw
         if (calque != null)
         {
             calque.On = visibles;
+            _doc.Redraw(true);
+        }
+    }
+
+    /// <summary>
+    /// Dessine les murs du bâtiment (<see cref="MursFacade"/>) sur le calque <see cref="CalqueFacade"/>,
+    /// juste après <see cref="Dessiner"/> (qui vide le dessin), puis affiche ou masque le calque.
+    /// </summary>
+    public void DessinerFacade(IEnumerable<MurFacade> murs, bool visible)
+    {
+        var calque = _doc.Layers.FindName(CalqueFacade);
+        if (calque == null)
+        {
+            calque = new vdLayer();
+            calque.SetUnRegisterDocument(_doc);
+            calque.setDocumentDefaults();
+            calque.Name = CalqueFacade;
+            _doc.Layers.AddItem(calque);
+        }
+
+        foreach (var mur in murs)
+        {
+            // Boîte posée sur le segment du mur, épaisseur vers le bâtiment (à gauche du sens Début → Fin).
+            var boite = new vdPolyface();
+            boite.SetUnRegisterDocument(_doc);
+            boite.setDocumentDefaults();
+            boite.CreateBox(new gPoint(mur.Debut.X, mur.Debut.Y, 0), mur.Longueur, EpaisseurMur, mur.Hauteur, mur.Angle);
+            boite.Layer = calque;
+            boite.PenColor = new vdColor(CouleurMur);
+            _doc.Model.Entities.AddItem(boite);
+        }
+
+        AfficherFacade(visible);
+    }
+
+    /// <summary>Affiche ou masque les murs de façade sans redessiner la structure.</summary>
+    public void AfficherFacade(bool visible)
+    {
+        var calque = _doc.Layers.FindName(CalqueFacade);
+        if (calque != null)
+        {
+            calque.On = visible;
             _doc.Redraw(true);
         }
     }

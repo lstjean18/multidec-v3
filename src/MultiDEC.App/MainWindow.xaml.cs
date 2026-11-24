@@ -111,6 +111,7 @@ public partial class MainWindow : Window
             }
 
             var rapport = _rendu.Dessiner(structure, _orientations);
+            _rendu.DessinerFacade(Vm.MursDuBatiment(), Vm.DessinerFacade); // masqués si la case est décochée
             if (rapport.BlocsManquants.Count > 0)
             {
                 Vm.Alertes.Add("Blocs absents de la bibliothèque : " + string.Join(", ", rapport.BlocsManquants));
@@ -123,6 +124,8 @@ public partial class MainWindow : Window
             MessageBox.Show(this, ex.Message, "Dessin de la façade", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
+
+    private void Facade_Click(object sender, RoutedEventArgs e) => _rendu?.AfficherFacade(Vm.DessinerFacade);
 
     // ---- Onglets des faces ----------------------------------------------------------------------
 

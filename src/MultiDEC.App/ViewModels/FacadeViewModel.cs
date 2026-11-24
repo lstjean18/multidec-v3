@@ -333,6 +333,20 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
         set { Parametres.HauteurDernierPlancher = value; Notifier(); NotifierValidation(); }
     }
 
+    /// <summary>Case « Dessiner façade » : murs du bâtiment affichés dans le dessin.</summary>
+    public bool DessinerFacade
+    {
+        get => _dessinerFacade;
+        set { _dessinerFacade = value; Notifier(); }
+    }
+
+    /// <summary>Murs du bâtiment devant chaque face, à la distance à la façade (grilles actuelles).</summary>
+    public IReadOnlyList<MurFacade> MursDuBatiment()
+    {
+        SauverGrilles();
+        return MursFacade.Calculer(_projet);
+    }
+
     // ---- « Valider la structure » : rouge si un paramètre a changé depuis la dernière validation ----
 
     /// <summary>La face active doit être revalidée (bouton rouge), sinon le bouton est vert.</summary>
@@ -370,6 +384,8 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
     }
 
     private CatalogueArticles _articles = CatalogueArticles.Vide;
+
+    private bool _dessinerFacade;
 
     public ObservableCollection<MailleDefinition> Mailles { get; } = new ObservableCollection<MailleDefinition>();
 
