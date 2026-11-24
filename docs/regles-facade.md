@@ -13,7 +13,7 @@ Les points marqués **[à valider]** sont des choix faits en v3 faute de règle 
   chaque niveau à console ajoute à la grille des mailles une colonne de cases « Con » + hauteur (ex. « Con4m », « Con4,5m »),
   cochée sur toutes les mailles à l'ajout, puis décochable. Cochée = la maille porte la console à ce niveau (niveaux complets seulement).
 - Case « Diagonale » par maille : cochée = diagonales verticales sur toute la hauteur de la maille. Pré-cochée selon la règle
-  (voir Diagonales verticales), bouton « Proposer les diagonales » pour recocher.
+  (voir Diagonales verticales), bouton « Recocher les cases Diago » pour recocher.
 
 ## Niveaux
 - Du dernier plancher vers le bas, tous les 2 m ; niveau 0 en « accès seul ». Éditables (complet / accès seul / accès seul + diagonale horizontale).
@@ -112,3 +112,26 @@ Les points marqués **[à valider]** sont des choix faits en v3 faute de règle 
 - **Poutre de franchissement** (colonne « Poutre », sur la maille de gauche d'une paire de mailles de travail identiques) :
   deux poutres HMPOUT à 0,50 m sous le plancher choisi, file du milieu supprimée dessous, tubes en diagonale horizontale,
   diagonales en V au-dessus, abouts sur les mailles voisines ; refus avec alerte si les conditions ne sont pas réunies.
+
+## Remarques 23 à 34 (codées le 24/11/2026 au soir)
+
+- **Bibliothèque** : « Blocs 3D - Echafaudage.dwg » (catalogue `catalogue/blocs-3D-echafaudage.txt`). Standard NF = HMPLAF…3NF,
+  Anti Contamination NF = HMPLAF…3CL6-AC, compléments de 0,20 m = HMPLAF…2CL6 dans les deux gammes.
+- **Consoles** : liste par modèle et fixation en bout (platine : ni poteau ni garde-corps ; chape/nipple : poteau 1 m + garde-corps),
+  `CatalogueConsoles`.
+- **Maille plus haute que sa maille rapportée** : la partie qui dépasse reçoit les garde-corps des paramètres.
+- **Pare-gravois** : coché dans les niveaux, puis colonne « PareGrav Xm » par maille (toutes cochées à la création).
+- **Décompte** : désignation, poids unitaire et poids total lus dans `multidec.bib` (à côté de la bibliothèque de blocs),
+  ordre du champ Classement ; prix du fichier ignorés (tarif 06/2016 obsolète).
+- **Plinthe** proposée au choix de la protection : MDS 2 → bois, lisses → axée, sans → sans (modifiable ensuite).
+- **Axes filaires** toujours affichés. Colonnes **Appro** / **Recette** des niveaux affichées seulement si une maille de ce type existe.
+- **Couleurs** pastel par face (S1 bleu, S2 vert, S3 pêche, S4 lavande), reprises sur l'onglet « Mailles et niveaux ».
+- **Valider la structure** (ancien « Proposer la face ») : vert quand la face est à jour, rouge si longueur, largeur, maille préférée,
+  accès, dernier plancher, carré d'angle ou forme ont changé depuis la validation. « Dessiner » refuse et ouvre l'onglet de la
+  première face rouge. Les modifications faites à la main dans les grilles ne passent pas le bouton au rouge.
+- **Dessiner façade** : mur du bâtiment à « Distance à la façade » de la file intérieure, côté bâtiment, haut comme l'échafaudage ;
+  les murs de deux faces raccordées se rejoignent (angle sortant ou rentrant). Calque MDC-Facade.
+- **Paramètres par défaut** (menu Outils) : par utilisateur (`%APPDATA%\MultiDEC\v3\parametres-par-defaut.json`), export/import
+  `.mdcpar`. Valeurs de toutes les cases et listes au « Nouveau » et au démarrage, valeurs retirées des listes (la valeur utilisée
+  par un projet ouvert reste proposée), bibliothèque de blocs chargée au démarrage, trame Excel des devis, références clients,
+  logo client. « Lisses en pied » cochée en sortie d'usine.
