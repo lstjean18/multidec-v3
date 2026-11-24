@@ -62,14 +62,17 @@ public class BibliothequeDwgTests
                 var texte = File.ReadAllText(f);
                 var lignes = texte.Split('\n');
                 _sortie.WriteLine($"BIB {Path.GetFileName(f)} : {new FileInfo(f).Length} octets, {lignes.Length} lignes");
-                foreach (var l in lignes.Take(80))
+                // Fichier sur une seule ligne possible : on découpe le début en tranches de 200 caractères.
+                var debut = texte.Substring(0, Math.Min(texte.Length, 8000)).Replace("\r", "");
+                foreach (var l in debut.Split('\n').SelectMany(l => Enumerable.Range(0, (l.Length + 199) / 200 + (l.Length == 0 ? 1 : 0)).Select(i => l.Substring(i * 200, Math.Min(200, l.Length - i * 200)))))
                 {
-                    _sortie.WriteLine("BIB| " + l.TrimEnd('\r'));
+                    _sortie.WriteLine("BIB| " + l);
                 }
 
-                foreach (var l in lignes.Where(l => l.Contains("HMPOT20") || l.Contains("HMPLAF2503NF") || l.Contains("HMCON700E\"")).Take(20))
+                foreach (var cle in new[] { "HMPOT20", "HMPLAF2503NF", "HMCON700E" })
                 {
-                    _sortie.WriteLine("BIB* " + l.TrimEnd('\r'));
+                    int i = texte.IndexOf(cle, StringComparison.Ordinal);
+                    _sortie.WriteLine("BIB* " + cle + " : " + (i < 0 ? "absent" : texte.Substring(Math.Max(0, i - 150), Math.Min(500, texte.Length - Math.Max(0, i - 150))).Replace("\r", " ").Replace("\n", " ")));
                 }
             }
         }
