@@ -117,7 +117,7 @@ public sealed class TableOrientations
         }
 
         // 3. Orientation dans le plan.
-        double angle = AngleStandard(e) + (r?.RotationZ ?? 0);
+        double angle = AngleStandard(e) + (r?.RotationZ ?? 0) + e.Rotation;
         m = Matrices.Produit(Matrices.RotationZ(angle), m);
 
         // 4. Rotation de la face dans la structure (S2, S3… en équerre) : l'origine est déjà tournée.

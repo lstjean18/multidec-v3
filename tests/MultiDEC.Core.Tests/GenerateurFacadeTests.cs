@@ -452,6 +452,33 @@ public class GenerateurFacadeTests
     }
 
     [Fact]
+    public void Poutre_de_franchissement_supprime_la_file_du_milieu_sous_le_plancher()
+    {
+        var face = Standard(); // 8 mailles de 2,50, accès en maille 4
+        face.Mailles[5].Poutre = 4; // mailles 6 et 7, file 7 (index 6) supprimée sous 4 m
+        face.Mailles[0].Poutre = 4; // refusée : première maille
+        var s = GenerateurFacade.Generer(face);
+        var x = face.AbscissesFiles();
+        bool A(ElementPlace e, double xx) => Math.Abs(e.Origine.X - xx) < 1e-6;
+
+        Assert.Equal(2, Nb(s, "HMPOUT500E"));
+        Assert.All(s.Elements.Where(e => e.Reference == "HMPOUT500E"), e => { Assert.Equal(3.5, e.Origine.Z, 6); Assert.Equal(x[5], e.Origine.X, 6); });
+        Assert.DoesNotContain(s.Elements, e => A(e, x[6]) && e.Axe == Axe.Z && e.Famille != Famille.Poutre && e.Origine.Z < 4 - 1e-6);
+        Assert.Contains(s.Elements, e => A(e, x[6]) && e.Famille == Famille.Poteau && Math.Abs(e.Origine.Z - 4) < 1e-6);
+        Assert.DoesNotContain(s.Elements, e => (e.NumeroMaille == 6 || e.NumeroMaille == 7) && e.Famille != Famille.Poutre && e.Famille != Famille.Traverse && e.Origine.Z < 4 - 1e-6);
+        Assert.Equal(2, Nb(s, "HMTUB300"));
+        Assert.Equal(4, Nb(s, References.CollierFixe));
+        Assert.All(s.Elements.Where(e => e.Reference == "HMTUB300"), e => Assert.Equal(Math.Atan2(0.7, 2.5) * 180 / Math.PI, e.Rotation, 6));
+
+        // Abouts des mailles voisines (5 à droite, 8 à gauche) au niveau 2, sous la poutre.
+        Assert.Contains(s.Elements, e => e.Axe == Axe.Y && e.Famille == Famille.GardeCorps && A(e, x[5]) && Math.Abs(e.Origine.Z - 2) < 1e-6 && !e.Inverse);
+        Assert.Contains(s.Elements, e => e.Axe == Axe.Y && e.Famille == Famille.GardeCorps && A(e, x[7]) && Math.Abs(e.Origine.Z - 2) < 1e-6 && e.Inverse);
+        Assert.DoesNotContain(s.Amarrages.Amarrages, a => a.File == 6 && a.Hauteur < 4);
+        Assert.Contains(s.Alertes, a => a.Contains("Maille 1 : poutre"));
+        Assert.Equal(0, Nb(s, "HMPOUT500"));
+    }
+
+    [Fact]
     public void Sous_mailles_references_presentes_dans_la_bibliotheque()
     {
         var biblio = BibliothequeBlocs.DepuisFichier("blocs-EM-3D.txt");
@@ -463,6 +490,7 @@ public class GenerateurFacadeTests
             face.Mailles[2].Type = TypeMaille.Recette;
             face.Mailles[2].ProfondeurRecette = 2.5;
             face.Mailles[5].Stabilisation = 2.0;
+            face.Mailles[4].Poutre = 4;
             foreach (var n in face.Niveaux)
             {
                 n.Recette = true;

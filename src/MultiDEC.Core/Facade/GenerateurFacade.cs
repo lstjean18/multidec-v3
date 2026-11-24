@@ -135,6 +135,7 @@ public sealed partial class GenerateurFacade
             _consolesNiveau[n] = info;
         }
 
+        ValiderPoutres();
         PlacerFiles(niveaux);
         for (int i = 0; i < _projet.Mailles.Count; i++)
         {
@@ -144,6 +145,7 @@ public sealed partial class GenerateurFacade
         PlacerSousMailles(niveaux);
         PlacerStabilisations(niveaux);
         PlacerDiagonales();
+        PlacerPoutres(niveaux);
         PlacerAbouts(niveaux);
         PlacerPareGravois(niveaux);
         var bilan = PlacerAmarrages();
@@ -196,22 +198,25 @@ public sealed partial class GenerateurFacade
             double hFile = HauteurFile(f);
             double? sommetPignon = hFile > _h + Cotes.Tolerance ? hFile + 1.0 + (_p.GardeCorpsCouvreur ? 0.5 : 0.0) : (double?)null;
 
+            // File du milieu d'une poutre de franchissement : poteaux posés sur la poutre, rien dessous.
+            double? zPoutre = PoutreSousFile(f);
+
             // Côté extérieur : garde-corps en tête ; départ 3 m si option.
-            Empiler(x, -_l, Face.Exterieure, _p.Depart3mExterieur, gardeCorps: true, sommetPignon);
+            Empiler(x, -_l, Face.Exterieure, _p.Depart3mExterieur, gardeCorps: true, sommetPignon, zPoutre);
 
             // Côté intérieur : garde-corps si extrémité, ou protection intérieure sur une maille voisine
             // sans console au dernier niveau.
             bool gcInt = extremite || (_p.SecuriteInterieure != TypeSecurite.Sans && MaillesVoisines(f).Any(m => ConsoleSommet(m) == null));
-            Empiler(x, 0, Face.Interieure, _p.Depart3mExterieur && extremite, gcInt || sommetPignon != null, sommetPignon);
+            Empiler(x, 0, Face.Interieure, _p.Depart3mExterieur && extremite, gcInt || sommetPignon != null, sommetPignon, zPoutre);
 
             // Traverses à chaque niveau (renforcées aux planchers complets si demandé).
-            foreach (var n in niveaux.Concat(NiveauxPignon(hFile)))
+            foreach (var n in niveaux.Concat(NiveauxPignon(hFile)).Where(n => zPoutre == null || n.Hauteur >= zPoutre.Value - Cotes.Tolerance))
             {
                 var type = n.Hauteur > Cotes.Tolerance && !n.EstAccesSeul ? _p.Traverses : TypeTraverse.Lisse;
                 Ajouter(References.LisseOuTraverse(_l, type), Famille.Traverse, new Point3(x, 0, n.Hauteur), Axe.Y);
             }
 
-            if (!niveaux.Any(n => Cotes.Egal(n.Hauteur, 0)))
+            if (!niveaux.Any(n => Cotes.Egal(n.Hauteur, 0)) && zPoutre == null)
             {
                 Ajouter(References.LisseOuTraverse(_l), Famille.Traverse, new Point3(x, 0, 0), Axe.Y);
             }
@@ -262,9 +267,12 @@ public sealed partial class GenerateurFacade
 
     private ConsoleInfo? ConsoleSommet(MailleDefinition m) => _niveauSommet == null ? null : ConsoleDe(m, _niveauSommet);
 
-    private void Empiler(double x, double y, Face face, bool depart3m, bool gardeCorps, double? sommet = null)
+    private void Empiler(double x, double y, Face face, bool depart3m, bool gardeCorps, double? sommet = null, double? surPoutre = null)
     {
-        foreach (var t in ReglePoteaux.Empiler(_p, depart3m, gardeCorps, sommet))
+        var troncons = surPoutre is double zp
+            ? ReglePoteaux.EmpilerDepuis(_p, zp, sommet ?? _h + (gardeCorps ? 1.0 : 0.0) + (gardeCorps && _p.GardeCorpsCouvreur ? 0.5 : 0.0))
+            : ReglePoteaux.Empiler(_p, depart3m, gardeCorps, sommet);
+        foreach (var t in troncons)
         {
             Ajouter(t.Reference, t.Famille, new Point3(x, y, t.Z), Axe.Z, face);
         }
@@ -283,7 +291,8 @@ public sealed partial class GenerateurFacade
         string lisse = References.LisseOuTraverse(lm);
         bool inverseTrappe = false;
 
-        if (_p.LissesEnPied)
+        double? zPoutre = PoutreSous(index);
+        if (_p.LissesEnPied && zPoutre == null)
         {
             LissesDePied(num, x0, lm);
         }
@@ -291,10 +300,16 @@ public sealed partial class GenerateurFacade
         foreach (var n in niveaux)
         {
             double z = n.Hauteur;
+            if (SousPoutre(index, z))
+            {
+                continue; // passage sous une poutre de franchissement
+            }
+
+            bool surPoutre = zPoutre is double zp0 && Cotes.Egal(z, zp0);
             bool sansPlancher = n.EstAccesSeul && m.EstTravail;
             var console = ConsoleDe(m, n);
 
-            if (z > Cotes.Tolerance)
+            if (z > Cotes.Tolerance && !surPoutre) // sur une poutre, sa membrure haute fait la lisse
             {
                 Ajouter(lisse, Famille.Lisse, new Point3(x0, 0, z), Axe.X, Face.Interieure, num);
 
@@ -316,13 +331,14 @@ public sealed partial class GenerateurFacade
                 else if (!SousMailleDesservie(m, n))
                 {
                     // Appro / recette desservis : la maille s'ouvre sur la sous-maille, pas de garde-corps extérieur.
-                    PlacerGardeCorps(_p.SecuriteExterieure, plintheExt, x0, -_l, z, lm, Face.Exterieure, num);
+                    // Sur une poutre : garde-corps en lisses (v2 remplace les cadres MDS).
+                    PlacerGardeCorps(surPoutre ? GardeCorpsSurPoutre(_p.SecuriteExterieure) : _p.SecuriteExterieure, plintheExt, x0, -_l, z, lm, Face.Exterieure, num);
                 }
 
                 // v3 : même règle côté intérieur (l'ancienne version posait le GC intérieur même sans plancher).
                 if (console == null)
                 {
-                    PlacerGardeCorps(_p.SecuriteInterieure, _p.PlintheInterieure, x0, 0, z, lm, Face.Interieure, num);
+                    PlacerGardeCorps(surPoutre ? GardeCorpsSurPoutre(_p.SecuriteInterieure) : _p.SecuriteInterieure, _p.PlintheInterieure, x0, 0, z, lm, Face.Interieure, num);
                 }
             }
 
@@ -364,6 +380,8 @@ public sealed partial class GenerateurFacade
             }
         }
     }
+
+    private static TypeSecurite GardeCorpsSurPoutre(TypeSecurite type) => type == TypeSecurite.GardeCorpsMds2 ? TypeSecurite.Lisses : type;
 
     private void PlacerGardeCorps(TypeSecurite type, TypePlinthe plinthe, double x0, double y, double z, double lm, Face face, int num)
     {
@@ -576,6 +594,11 @@ public sealed partial class GenerateurFacade
             // Une console HMPARGRA à chaque file, sur la file extérieure, tournée vers l'extérieur.
             for (int f = 0; f <= DerniereFile; f++)
             {
+                if (PoutreSousFile(f) is double zp && z < zp - Cotes.Tolerance)
+                {
+                    continue;
+                }
+
                 Ajouter(References.ConsolePareGravois, Famille.PareGravois, new Point3(_x[f], -_l, z), Axe.Y, Face.Exterieure);
             }
 
@@ -817,7 +840,10 @@ public sealed partial class GenerateurFacade
             // Sous-maille rapportée : la diagonale extérieure passe sur la file rapportée, jusqu'à son dernier plancher.
             double hs = maille.LargeurRapportee > Cotes.Tolerance ? HauteurSousMaille(maille, _projet.Niveaux) : 0;
 
-            LissesDePied(d.NumeroMaille, x0, lm);
+            if (PoutreSous(i) == null)
+            {
+                LissesDePied(d.NumeroMaille, x0, lm);
+            }
 
             var cotes = new List<double>();
             if (debut > Cotes.Tolerance)
@@ -832,7 +858,7 @@ public sealed partial class GenerateurFacade
 
             // Sens inversé : origine à droite de la maille, bloc symétrisé (diagonale montant vers la gauche).
             double xDia = d.Inverse ? x0 + lm : x0;
-            foreach (double z in cotes)
+            foreach (double z in cotes.Where(z => !SousPoutre(i, z)))
             {
                 if (d.Exterieure)
                 {
@@ -854,7 +880,7 @@ public sealed partial class GenerateurFacade
 
     private BilanAmarrages PlacerAmarrages()
     {
-        var bilan = RegleAmarrages.Calculer(_projet);
+        var bilan = SansAmarragesSousPoutres(RegleAmarrages.Calculer(_projet));
         string tube = References.TubeAmarrage(_l + _p.DistanceFacade + 0.10);
         foreach (var a in bilan.Amarrages)
         {
@@ -877,6 +903,6 @@ public sealed partial class GenerateurFacade
         Ajouter(lisse, Famille.Lisse, new Point3(x0, -_l, 0), Axe.X, Face.Exterieure, num);
     }
 
-    private void Ajouter(string reference, Famille famille, Point3 origine, Axe axe, Face face = Face.Aucune, int numeroMaille = 0, bool inverse = false, double inclinaison = 0) =>
-        _el.Add(new ElementPlace(reference, famille, origine, axe, face, numeroMaille, inverse, inclinaison));
+    private void Ajouter(string reference, Famille famille, Point3 origine, Axe axe, Face face = Face.Aucune, int numeroMaille = 0, bool inverse = false, double inclinaison = 0, double rotation = 0) =>
+        _el.Add(new ElementPlace(reference, famille, origine, axe, face, numeroMaille, inverse, inclinaison, rotation));
 }

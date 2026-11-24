@@ -24,6 +24,7 @@ public sealed class MailleDefinition : INotifyPropertyChanged
     private double _profondeurRecette = 2.0;
     private double _stabilisation;
     private double _pignon;
+    private double _poutre;
 
     public MailleDefinition()
     {
@@ -116,6 +117,16 @@ public sealed class MailleDefinition : INotifyPropertyChanged
     /// <summary>Dernier plancher de cette maille pour une face dont le dernier plancher est <paramref name="hauteurFace"/> (colonne « Ht max »).</summary>
     public double HauteurMax(double hauteurFace) => Cotes.Arrondi(hauteurFace + PignonEffectif);
 
+    /// <summary>
+    /// Poutre de franchissement (colonne « Poutre ») : hauteur du plancher porté par une poutre qui couvre cette maille
+    /// et la suivante ; la file entre les deux est supprimée sous ce plancher (v2 clPoutre). 0 = pas de poutre.
+    /// </summary>
+    public double Poutre
+    {
+        get => _poutre;
+        set => Changer(ref _poutre, value);
+    }
+
     /// <summary>Diagonales verticales sur toute la hauteur de la maille.</summary>
     public bool Diagonale
     {
@@ -198,10 +209,11 @@ public sealed class MailleDefinition : INotifyPropertyChanged
         ProfondeurRecette = ProfondeurRecette,
         Stabilisation = Stabilisation,
         Pignon = Pignon,
+        Poutre = Poutre,
     };
 
     public override string ToString() =>
-        FormattableString.Invariant($"{Longueur:0.00} m {Type}{(Diagonale ? " + diagonale" : string.Empty)}{(LargeurRapportee > 0 ? $" ({LargeurRapportee:0.00})" : string.Empty)}{(Stabilisation > 0 ? $" + stab. {Stabilisation:0.00}" : string.Empty)}{(PignonEffectif > 0 ? $" + pignon {PignonEffectif:0}" : string.Empty)}{(_consoles.Count > 0 ? " + consoles " + string.Join("/", _consoles) : string.Empty)}");
+        FormattableString.Invariant($"{Longueur:0.00} m {Type}{(Diagonale ? " + diagonale" : string.Empty)}{(LargeurRapportee > 0 ? $" ({LargeurRapportee:0.00})" : string.Empty)}{(Stabilisation > 0 ? $" + stab. {Stabilisation:0.00}" : string.Empty)}{(PignonEffectif > 0 ? $" + pignon {PignonEffectif:0}" : string.Empty)}{(Poutre > 0 ? $" + poutre à {Poutre:0.00}" : string.Empty)}{(_consoles.Count > 0 ? " + consoles " + string.Join("/", _consoles) : string.Empty)}");
 
     private static double Lire(string hauteur) => double.Parse(hauteur, CultureInfo.InvariantCulture);
 

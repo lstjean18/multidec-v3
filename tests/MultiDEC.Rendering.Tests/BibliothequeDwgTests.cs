@@ -119,6 +119,35 @@ public class BibliothequeDwgTests
         BoitesDesBlocs(doc);
         StructureEnL(rendu, doc, Path.GetFileNameWithoutExtension(fichier));
         SousMailles(rendu, doc, Path.GetFileNameWithoutExtension(fichier));
+        PoutreEtPignon(rendu, doc, Path.GetFileNameWithoutExtension(fichier));
+    }
+
+    /// <summary>Façade de 15 m : poutre de franchissement à 4 m sur deux mailles, pignon de +4 m sur la maille d'accès.</summary>
+    private void PoutreEtPignon(RenduVectorDraw rendu, vdDocument doc, string nom)
+    {
+        var projet = ProjetStructure.Nouveau(face: new ParametresFacade { LongueurTotaleSouhaitee = 15, HauteurDernierPlancher = 6, NombreAcces = 1 });
+        var face = projet.S1;
+        int acces = face.Mailles.FindIndex(m => m.Type == TypeMaille.Acces);
+        face.Mailles[acces].Pignon = 4;
+        int i = acces >= 3 ? 1 : acces + 2; // deux mailles de travail hors des extrémités
+        face.Mailles[i].Poutre = 4;
+        var s = GenerateurStructure.Generer(projet);
+        var rapport = rendu.Dessiner(s, TableOrientations.ParDefaut());
+        _sortie.WriteLine($"PF : mailles {string.Join(" ", face.Mailles)} ; poutre sur {i + 1}, {rapport.Inseres} insérés, alertes : {string.Join(" | ", s.Alertes)}");
+        foreach (var x in rapport.Inserts.Where(x => x.Element.Famille == Famille.Poutre))
+        {
+            var b = x.Insert.BoundingBox;
+            _sortie.WriteLine(string.Format(CultureInfo.InvariantCulture, "PF {0,-12} o=({1:0.00},{2:0.00},{3:0.00}) r={4:0.0}  X {5:0.00}..{6:0.00}  Y {7:0.00}..{8:0.00}  Z {9:0.00}..{10:0.00}",
+                x.Element.Reference, x.Element.Origine.X, x.Element.Origine.Y, x.Element.Origine.Z, x.Element.Rotation, b.Min.x, b.Max.x, b.Min.y, b.Max.y, b.Min.z, b.Max.z));
+        }
+
+        rendu.Rendu(ModeRendu.OmbreAretes);
+        rendu.Vue(Vues.Iso);
+        Image(doc, nom + "-PF-iso");
+        rendu.Vue(Vues.Facade);
+        Image(doc, nom + "-PF-facade");
+        rendu.Vue(Vues.Dessus);
+        Image(doc, nom + "-PF-dessus");
     }
 
     /// <summary>
@@ -164,8 +193,8 @@ public class BibliothequeDwgTests
     private void BoitesDesBlocs(vdDocument doc)
     {
         var table = TableOrientations.ParDefaut();
-        var verticaux = new[] { "HMCALEBOIS", "HMSOCREG", "HMSOCREG800", "HMSOCROU", "HMSOCROU200-1200", "HMSOCROUFC", "HMVERORI38780", "HMVERORI38500B019", "HMEMB", "HMSUPSUNI", "HMCOLLEV", "VSZ10070", "VEF10", "OECGOUP8S", "HMGCAPPROSUP" };
-        var long_x = new[] { "HMPORTILLONPLIN070", "HMPORTILLONPLIN100", "HMPARGRA", "HMTOG200", "HMCROCHE", "HMECH100LIS", "HMPOUT500", "HMPTRL250", "HMLISR250", "HMLIS250", "HMTRAP250", "HMPLAA250", "HMTRA070", "HMGCAPPRO-C", "HMGCAPPROGC200" };
+        var verticaux = new[] { "HMCALEBOIS", "HMSOCREG", "HMSOCREG800", "HMSOCROU", "HMSOCROU200-1200", "HMSOCROUFC", "HMVERORI38780", "HMVERORI38500B019", "HMEMB", "HMSUPSUNI", "HMCOLLEV", "VSZ10070", "VEF10", "OECGOUP8S", "HMGCAPPROSUP", "HMCOLF49" };
+        var long_x = new[] { "HMPORTILLONPLIN070", "HMPORTILLONPLIN100", "HMPARGRA", "HMTOG200", "HMCROCHE", "HMECH100LIS", "HMPOUT500", "HMPTRL250", "HMLISR250", "HMLIS250", "HMTRAP250", "HMPLAA250", "HMTRA070", "HMGCAPPRO-C", "HMGCAPPROGC200", "HMPOUT500E", "HMTUB300" };
         foreach (var (refs, axe) in new[] { (verticaux, Axe.Z), (long_x, Axe.X) })
         {
             foreach (var nom in refs)

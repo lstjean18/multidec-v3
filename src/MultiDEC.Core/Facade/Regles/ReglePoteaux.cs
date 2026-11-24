@@ -122,4 +122,36 @@ public static class ReglePoteaux
 
         return t;
     }
+
+    /// <summary>
+    /// Poteaux posés sur une poutre de franchissement (v2 clPoutre) : de <paramref name="zDepart"/> au sommet,
+    /// poteaux de 2 m puis complément, sans pied ; goupilles (ou vis et écrou si grutable) en Multi-SYSTEM.
+    /// </summary>
+    public static List<TronconPoteau> EmpilerDepuis(ParametresFacade p, double zDepart, double sommet)
+    {
+        var t = new List<TronconPoteau>();
+        bool goupilles = p.Modele == ModeleEchafaudage.MultiSystem;
+        double z = zDepart;
+        while (sommet - z > Cotes.Tolerance)
+        {
+            double l = sommet - z >= 2.0 - Cotes.Tolerance ? 2.0 : Cotes.Arrondi(sommet - z);
+            t.Add(new TronconPoteau(References.Poteau(p.Modele, l), Famille.Poteau, Cotes.Arrondi(z)));
+            if (goupilles)
+            {
+                if (p.Grutable)
+                {
+                    t.Add(new TronconPoteau(References.VisGrutable, Famille.Goupille, Cotes.Arrondi(z)));
+                    t.Add(new TronconPoteau(References.EcrouGrutable, Famille.Goupille, Cotes.Arrondi(z)));
+                }
+                else
+                {
+                    t.Add(new TronconPoteau(References.Goupille, Famille.Goupille, Cotes.Arrondi(z)));
+                }
+            }
+
+            z = Cotes.Arrondi(z + l);
+        }
+
+        return t;
+    }
 }

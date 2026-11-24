@@ -522,6 +522,26 @@
                       </DataTemplate>
                     </DataGridTemplateColumn.CellEditingTemplate>
                   </DataGridTemplateColumn>
+                  <DataGridTemplateColumn Header="Poutre" Width="70">
+                    <DataGridTemplateColumn.CellTemplate>
+                      <DataTemplate>
+                        <TextBlock Text="{Binding Poutre, Converter={StaticResource CoteOptionnelle}}" Margin="2,0"
+                                   ToolTip="Poutre de franchissement sous ce niveau, sur cette maille et la suivante : la file entre les deux est supprimée dessous" />
+                      </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                    <DataGridTemplateColumn.CellEditingTemplate>
+                      <DataTemplate>
+                        <ComboBox ItemsSource="{Binding DataContext.HauteursPoutre, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                  SelectedItem="{Binding Poutre, UpdateSourceTrigger=PropertyChanged}">
+                          <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                              <TextBlock Text="{Binding Converter={StaticResource CoteOptionnelle}}" />
+                            </DataTemplate>
+                          </ComboBox.ItemTemplate>
+                        </ComboBox>
+                      </DataTemplate>
+                    </DataGridTemplateColumn.CellEditingTemplate>
+                  </DataGridTemplateColumn>
                   <DataGridTemplateColumn Header="Prof. recette" Width="80">
                     <DataGridTemplateColumn.CellTemplate>
                       <DataTemplate>

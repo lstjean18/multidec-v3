@@ -235,6 +235,10 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
 
     public double LongueurObtenue => Mailles.Sum(m => m.Longueur);
 
+    /// <summary>Hauteurs proposées pour une poutre de franchissement : niveaux de 2 m et plus (0 = sans).</summary>
+    public IReadOnlyList<double> HauteursPoutre =>
+        new[] { 0.0 }.Concat(Niveaux.Where(n => n.Hauteur >= 2.0 - Cotes.Tolerance).Select(n => n.Hauteur).Distinct().OrderBy(h => h)).ToList();
+
     /// <summary>Niveaux qui ont une console : une colonne de cases « ConXm » chacun dans la grille des mailles.</summary>
     public IReadOnlyList<Niveau> NiveauxAvecConsole => Niveaux.Where(n => n.AConsole).OrderBy(n => n.Hauteur).ToList();
 

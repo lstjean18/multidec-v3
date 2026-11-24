@@ -25,6 +25,9 @@ public enum Famille
 
     /// <summary>Pare-gravois : consoles HMPARGRA, tôles, crochets et lisses inclinées.</summary>
     PareGravois,
+
+    /// <summary>Poutres de franchissement (HMPOUT…) et leurs tubes de contreventement.</summary>
+    Poutre,
 }
 
 /// <summary>Direction principale d'un élément.</summary>
@@ -47,9 +50,10 @@ public enum Axe
 /// </summary>
 public sealed class ElementPlace
 {
-    public ElementPlace(string reference, Famille famille, Point3 origine, Axe axe, Face face = Face.Aucune, int numeroMaille = 0, bool inverse = false, double inclinaison = 0)
+    public ElementPlace(string reference, Famille famille, Point3 origine, Axe axe, Face face = Face.Aucune, int numeroMaille = 0, bool inverse = false, double inclinaison = 0, double rotation = 0)
     {
         Inclinaison = inclinaison;
+        Rotation = rotation;
         Reference = reference;
         Famille = famille;
         Origine = origine;
@@ -84,6 +88,12 @@ public sealed class ElementPlace
     /// </summary>
     public double Inclinaison { get; }
 
+    /// <summary>
+    /// Rotation supplémentaire dans le plan, autour de Z, en degrés (sens trigonométrique), après l'orientation
+    /// standard de l'axe : tubes en diagonale horizontale sous une poutre de franchissement.
+    /// </summary>
+    public double Rotation { get; }
+
     /// <summary>Face de la structure (S1…S4) qui a produit l'élément.</summary>
     public string NomFace { get; private set; } = "S1";
 
@@ -106,7 +116,7 @@ public sealed class ElementPlace
             origineFace.X + Origine.X * c - Origine.Y * s,
             origineFace.Y + Origine.X * s + Origine.Y * c,
             Origine.Z);
-        return new ElementPlace(Reference, Famille, o, Axe, Face, NumeroMaille, Inverse, Inclinaison)
+        return new ElementPlace(Reference, Famille, o, Axe, Face, NumeroMaille, Inverse, Inclinaison, Rotation)
         {
             NomFace = nomFace,
             AngleFace = angle,

@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using MultiDEC.Core.Facade;
 using MultiDEC.Core.Geometrie;
 
@@ -67,6 +68,23 @@ public static class References
 
     /// <summary>Garde-corps d'approvisionnement entre les cadres : longueur de maille - 0,50 m (HMGCAPPROGC150 / 200 / 250).</summary>
     public static string GardeCorpsAppro(double longueur) => "HMGCAPPROGC" + Cotes.EnCm3(longueur);
+
+    /// <summary>Poutre de franchissement (v2 GetRefPoutre) : HMPOUT + longueur, suffixe E en Multi-SYSTEM.</summary>
+    public static string PoutreFranchissement(ModeleEchafaudage modele, double longueur) =>
+        "HMPOUT" + Cotes.EnCm3(longueur) + (modele == ModeleEchafaudage.MultiSystem ? "E" : string.Empty);
+
+    /// <summary>Tubes acier disponibles (HMTUB + longueur en cm).</summary>
+    public static readonly double[] LongueursTubes = { 0.70, 1.00, 1.20, 1.50, 2.00, 2.50, 3.00, 4.00, 5.00, 6.00 };
+
+    /// <summary>Longueur du tube le plus court couvrant une longueur, ou null au-delà de 6,00 m.</summary>
+    public static double? LongueurTube(double longueur) =>
+        LongueursTubes.Where(l => l >= longueur - Cotes.Tolerance).Select(l => (double?)l).FirstOrDefault();
+
+    /// <summary>Tube acier : HMTUB + longueur en cm (ex. HMTUB300).</summary>
+    public static string Tube(double longueur) => "HMTUB" + Cotes.EnCm3(longueur);
+
+    /// <summary>Collier fixe pour tube de 49.</summary>
+    public const string CollierFixe = "HMCOLF49";
 
     /// <summary>Diagonale verticale de 2 m de haut : HMDIA + longueur + "2" (ex. HMDIA2502).</summary>
     public static string DiagonaleVerticale(double longueurMaille) => "HMDIA" + Cotes.EnCm3(longueurMaille) + "2";
