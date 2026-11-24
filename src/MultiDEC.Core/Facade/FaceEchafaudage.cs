@@ -76,7 +76,7 @@ public sealed class FaceEchafaudage
         Nom = Nom,
         Parametres = Parametres.Copie(),
         Mailles = Mailles.Select(m => m.Copie()).ToList(),
-        Niveaux = Niveaux.Select(n => new Niveau(n.Hauteur, n.Type, n.Console)).ToList(),
+        Niveaux = Niveaux.Select(n => new Niveau(n.Hauteur, n.Type, n.Console, n.DiagoH)).ToList(),
     };
 
     /// <summary>Abscisses des files de poteaux (n mailles → n+1 files).</summary>

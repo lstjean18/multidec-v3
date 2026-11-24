@@ -54,7 +54,7 @@ public enum TypePlancher
     /// <summary>Plancher seulement dans les mailles d'accès.</summary>
     AccesSeul,
 
-    /// <summary>Accès seul + diagonale horizontale HMDHO dans les mailles de travail.</summary>
+    /// <summary>Ancien type (fichiers v1/v2) : lu comme « accès seul » avec la case Diago H cochée.</summary>
     AccesSeulDiagoH,
 }
 

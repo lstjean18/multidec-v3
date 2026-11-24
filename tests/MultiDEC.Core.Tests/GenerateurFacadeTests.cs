@@ -60,6 +60,35 @@ public class GenerateurFacadeTests
         Assert.DoesNotContain(s.Elements, e => e.Reference == References.Echelle); // maille > 2 m : pas d'échelle intégrée
     }
 
+    [Fact]
+    public void Diago_H_par_niveau_dans_les_mailles_de_travail_sens_alterne()
+    {
+        var projet = Standard();
+        var n4 = projet.Niveaux.Single(n => Math.Abs(n.Hauteur - 4) < 0.001);
+        n4.DiagoH = true;
+        var s = GenerateurFacade.Generer(projet);
+
+        var diagos = s.Elements.Where(e => e.Famille == Famille.DiagonaleHorizontale).OrderBy(e => e.NumeroMaille).ToList();
+        var travail = projet.Mailles.Select((m, i) => (m, i)).Where(x => x.m.Type == TypeMaille.Travail).ToList();
+        Assert.Equal(travail.Count, diagos.Count);
+        Assert.All(diagos, d => Assert.Equal(4, d.Origine.Z, 3));
+        Assert.Equal(diagos.Select((d, i) => i % 2 == 1), diagos.Select(d => d.Inverse));
+
+        // Inversée : origine au bout droit de la maille.
+        var inv = diagos.First(d => d.Inverse);
+        var x = projet.AbscissesFiles();
+        Assert.Equal(x[inv.NumeroMaille], inv.Origine.X, 3);
+        Assert.Equal(TypePlancher.Complet, n4.Type); // possible aussi sur un niveau complet, comme la v2
+    }
+
+    [Fact]
+    public void Ancien_type_acces_seul_diago_h_devient_la_case()
+    {
+        var n = new Niveau(4, TypePlancher.AccesSeulDiagoH);
+        Assert.Equal(TypePlancher.AccesSeul, n.Type);
+        Assert.True(n.DiagoH);
+    }
+
     private static int LissesA(StructureFacade s, int maille, double y, double z) =>
         s.Elements.Count(e => e.Famille == Famille.Lisse && e.NumeroMaille == maille && e.Axe == Axe.X
                               && Math.Abs(e.Origine.Y - y) < 0.001 && Math.Abs(e.Origine.Z - z) < 0.001);

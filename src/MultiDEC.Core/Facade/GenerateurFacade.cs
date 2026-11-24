@@ -75,6 +75,9 @@ public sealed class GenerateurFacade
 
     private Niveau? _niveauSommet;
 
+    /// <summary>Diagonales horizontales déjà posées par niveau (pour alterner le sens).</summary>
+    private readonly Dictionary<Niveau, int> _diagosH = new Dictionary<Niveau, int>();
+
     private GenerateurFacade(FaceEchafaudage projet)
     {
         _projet = projet;
@@ -274,9 +277,15 @@ public sealed class GenerateurFacade
                 {
                     PlacerPlateaux(x0, 0, z, _l, lm, num);
                 }
-                else if (n.Type == TypePlancher.AccesSeulDiagoH && z > Cotes.Tolerance)
+
+                if (n.DiagoH && z > Cotes.Tolerance)
                 {
-                    Ajouter(References.DiagonaleHorizontale(_l, lm), Famille.DiagonaleHorizontale, new Point3(x0, 0, z), Axe.X, Face.Aucune, num);
+                    // Sens alterné d'une maille de travail à l'autre ; inversée = origine à droite.
+                    _diagosH.TryGetValue(n, out int rang);
+                    _diagosH[n] = rang + 1;
+                    bool inverse = rang % 2 == 1;
+                    Ajouter(References.DiagonaleHorizontale(_l, lm), Famille.DiagonaleHorizontale,
+                        new Point3(inverse ? x0 + lm : x0, 0, z), Axe.X, Face.Aucune, num, inverse);
                 }
             }
             else

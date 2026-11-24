@@ -17,16 +17,18 @@ public sealed class Niveau : INotifyPropertyChanged
     private double _hauteur;
     private TypePlancher _type = TypePlancher.Complet;
     private string? _console;
+    private bool _diagoH;
 
     public Niveau()
     {
     }
 
-    public Niveau(double hauteur, TypePlancher type, string? console = null)
+    public Niveau(double hauteur, TypePlancher type, string? console = null, bool diagoH = false)
     {
         _hauteur = hauteur;
-        _type = type;
         _console = console;
+        _diagoH = diagoH;
+        Type = type;
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -40,7 +42,27 @@ public sealed class Niveau : INotifyPropertyChanged
     public TypePlancher Type
     {
         get => _type;
-        set => Changer(ref _type, value);
+        set
+        {
+            // Ancien type « accès seul + diagonale H » : remplacé par la case Diago H (maquette du 24/11/2026).
+            if (value == TypePlancher.AccesSeulDiagoH)
+            {
+                value = TypePlancher.AccesSeul;
+                DiagoH = true;
+            }
+
+            Changer(ref _type, value);
+        }
+    }
+
+    /// <summary>
+    /// Diagonales horizontales à ce niveau, dans toutes les mailles de travail (comme la v2),
+    /// sens alterné d'une maille à l'autre.
+    /// </summary>
+    public bool DiagoH
+    {
+        get => _diagoH;
+        set => Changer(ref _diagoH, value);
     }
 
     /// <summary>Référence de la console de ce niveau (ex. HMCON700E), ou null si aucune.</summary>
@@ -64,7 +86,7 @@ public sealed class Niveau : INotifyPropertyChanged
         "Con" + Cotes.Arrondi(hauteur).ToString("0.##", CultureInfo.InvariantCulture).Replace('.', ',') + "m";
 
     public override string ToString() =>
-        FormattableString.Invariant($"{Hauteur:0.00} m {Type}{(AConsole ? " + " + Console : string.Empty)}");
+        FormattableString.Invariant($"{Hauteur:0.00} m {Type}{(DiagoH ? " + diago H" : string.Empty)}{(AConsole ? " + " + Console : string.Empty)}");
 
     private void Changer<T>(ref T champ, T valeur, string? autre = null, [CallerMemberName] string? nom = null)
     {

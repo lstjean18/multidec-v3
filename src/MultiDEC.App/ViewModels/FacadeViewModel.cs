@@ -61,7 +61,8 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
 
     public static Array TypesMaille { get; } = Enum.GetValues(typeof(TypeMaille));
 
-    public static Array TypesPlancher { get; } = Enum.GetValues(typeof(TypePlancher));
+    /// <summary>« Accès seul + diago H » n'est plus un type : c'est la case Diago H du niveau.</summary>
+    public static IReadOnlyList<TypePlancher> TypesPlancher { get; } = new[] { TypePlancher.Complet, TypePlancher.AccesSeul };
 
     public static Array Formes { get; } = Enum.GetValues(typeof(FormeStructure));
 

@@ -494,6 +494,14 @@
                       </DataTemplate>
                     </DataGridTemplateColumn.CellEditingTemplate>
                   </DataGridTemplateColumn>
+                  <DataGridTemplateColumn Header="Diago H" Width="Auto">
+                    <DataGridTemplateColumn.CellTemplate>
+                      <DataTemplate>
+                        <CheckBox IsChecked="{Binding DiagoH, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Center"
+                                  ToolTip="Diagonales horizontales à ce niveau dans les mailles de travail, sens alterné automatiquement" />
+                      </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                  </DataGridTemplateColumn>
                 </DataGrid.Columns>
               </DataGrid>
             </DockPanel>
