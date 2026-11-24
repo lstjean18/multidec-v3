@@ -40,7 +40,8 @@ Les points marqués **[à valider]** sont des choix faits en v3 faute de règle 
 - Plateaux : 2 (0,70/0,75) ou 3 (1,00/1,05) plateaux de 0,30. Gammes : Optissimo, Standard, Standard NF (HMPLAF…CL6, par défaut) et Anti Contamination NF (HMPLAF…CL6-AC) ; la gamme alu/bois est supprimée (Laurent, 23/11/2026).
 - Accès : trappe HMPLAL…602TR / 650TR (+EC > 2 m) côté intérieur, sens alterné par niveau, échelle si maille ≤ 2 m, 2 plateaux de départ au pied du 1er accès, lisse de sécurité 1,50 m au-dessus des plateaux : lisse ordinaire dans le plan des poteaux, montée sur les rosaces (tous les 0,50 m), sans collier.
 - Niveau « accès seul » (au-dessus du sol) : chaque maille a une lisse des deux côtés, façade et extérieur (validé par Laurent le 23/11/2026).
-- Plateaux au niveau 0 : lisses de pied des deux côtés de la maille (validé le 23/11/2026). Une seule paire de lisses de pied par maille, même avec diagonale ou option « lisses en pied ».
+- Plateaux au niveau 0 : lisses de pied des deux côtés de la maille (validé le 23/11/2026). Maille de jonction (carré
+  d'angle) et maille escalier : toujours des lisses de pied sur les 4 côtés (24/11/2026). Une seule paire de lisses de pied par maille, même avec diagonale ou option « lisses en pied ».
 
 ## Diagonales verticales
 - Mailles choisies par la case « Diagonale » de la grille, pré-cochée une maille sur 5, ou une sur 2 avec l'option « diagonales 1 maille sur 2 », quel que soit le garde-corps (règle v2 version2024, Laurent 23/11/2026). Sens alterné d'une maille cochée à la suivante.
@@ -64,7 +65,8 @@ Les points marqués **[à valider]** sont des choix faits en v3 faute de règle 
   - Toutes les faces ont leur **premier plancher à la même hauteur**, sinon message et la structure n'est pas dessinée.
   - La longueur saisie pour S2, S3… **n'inclut pas le carré d'angle** : S1 de 0,70 m de large et 20 m saisis → 20,70 m.
   - **Tout about qui donne sur le vide a un garde-corps**, seul le côté façade en est dispensé (bout de S2 côté S1 compris).
-    Les cadres d'about HMGCSE…GT sont tournés vers l'extérieur.
+    Les cadres d'about HMGCSE…GT sont tournés vers l'extérieur : leur profondeur de 10 cm part hors de la structure, aux
+    bouts de face, au carré d'angle et aux Ht max ; idem pour les cadres courts (0,70 à 1,05 m) posés en long (24/11/2026).
   - Un poteau sans garde-corps qui s'y accroche (angle) s'arrête à hauteur du plancher.
   - Case « Inverser la structure » (onglet Général, L / U / fermée) : bâtiment dans l'angle rentrant. Les faces tournent
     vers la droite (-90°), chacune garde son côté mur côté bâtiment, donc garde-corps et sous-mailles rapportées passent de

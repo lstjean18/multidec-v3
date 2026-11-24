@@ -684,6 +684,42 @@ public class GenerateurFacadeTests
     }
 
     [Fact]
+    public void Maille_escalier_lisses_de_pied_sur_ses_4_faces()
+    {
+        // Laurent 24/11/2026 : toujours des lisses de pied sur les 4 faces d'une maille escalier (option décochée).
+        var face = Standard();
+        Assert.False(face.Parametres.LissesEnPied);
+        face.Mailles[5].Type = TypeMaille.DemiEscalier070;
+        var s = GenerateurFacade.Generer(face);
+        var pied = s.Elements.Where(e => e.NumeroMaille == 6 && e.Famille == Famille.Lisse && Math.Abs(e.Origine.Z) < 1e-6).Select(e => Math.Round(e.Origine.Y, 3)).ToList();
+        Assert.Contains(0.0, pied);
+        Assert.Contains(-0.70, pied);
+        Assert.Contains(-1.40, pied);
+        Assert.DoesNotContain(s.Elements, e => e.NumeroMaille == 4 && e.Famille == Famille.Lisse && Math.Abs(e.Origine.Z) < 1e-6);
+    }
+
+    [Fact]
+    public void Escalier_premier_plancher_a_1_m_entree_libre_jusqu_a_2_m()
+    {
+        // Volée de 1 m restée dans la tour (stabilisation sur la maille voisine) : pas de traverse ni de diagonale
+        // sous 2 m au bout d'entrée, première traverse à 2 m (Laurent, 24/11/2026).
+        var face = Standard(p => p.HauteurDernierPlancher = 7); // planchers 1, 3, 5, 7
+        face.Mailles[5].Type = TypeMaille.Escalier;
+        face.Mailles[6].Stabilisation = 1.5;
+        face.Mailles[4].Stabilisation = 1.5;
+        var s = GenerateurFacade.Generer(face);
+        var x = face.AbscissesFiles();
+        Assert.Contains(s.Elements, e => e.Reference == "HMESCALU175100");
+
+        var premiere = s.Elements.Where(e => e.Famille == Famille.Escalier && e.Reference.StartsWith("HMESCALU", StringComparison.Ordinal)).OrderBy(e => e.Origine.Z).First();
+        double xEntree = premiere.Inverse ? x[5] : x[6]; // bout du pied de la première volée
+        var auBout = s.Elements.Where(e => e.NumeroMaille == 6 && e.Axe == Axe.Y && e.Origine.Y < -0.70 + 1e-6 && Math.Abs(e.Origine.X - xEntree) < 1e-6).ToList();
+        Assert.DoesNotContain(auBout, e => e.Origine.Z > 1e-6 && e.Origine.Z < 2 - 1e-6);
+        Assert.Contains(auBout, e => e.Famille == Famille.Traverse && Math.Abs(e.Origine.Z - 2) < 1e-6);
+        Assert.Contains(auBout, e => e.Famille == Famille.Traverse && Math.Abs(e.Origine.Z) < 1e-6);
+    }
+
+    [Fact]
     public void Escalier_sur_maille_de_2_m_ignore_avec_alerte()
     {
         var face = Standard();

@@ -118,6 +118,24 @@ public class StructureTests
         Assert.Contains(s.Elements, e => e.NomFace == "S2" && e.NumeroMaille == 2 && e.Famille == Famille.GardeCorps && e.Face == Face.Exterieure && Cotes.Egal(e.Origine.X, l1));
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void Maille_de_jonction_lisses_de_pied_sur_ses_4_cotes(bool inversee)
+    {
+        // Laurent 24/11/2026 : toujours des lisses de pied sur les 4 côtés de la maille de jonction (option décochée).
+        var projet = Projet(FormeStructure.EnL);
+        projet.Inversee = inversee;
+        Assert.False(projet.S1.Parametres.LissesEnPied);
+        var s = GenerateurStructure.Generer(projet);
+        double l1 = projet.S1.LongueurObtenue;
+
+        // Le côté posé sur la dernière file de S1 garde la traverse de pied de cette file ; l'autre côté long reçoit une lisse.
+        var lisse = Assert.Single(s.Elements, e => e.NomFace == "S2" && e.NumeroMaille == 1 && e.Famille == Famille.Lisse && Math.Abs(e.Origine.Z) < 1e-6);
+        Assert.Equal(inversee ? Face.Interieure : Face.Exterieure, lisse.Face);
+        Assert.Single(s.Elements, e => e.NomFace == "S1" && e.Famille == Famille.Traverse && Math.Abs(e.Origine.Z) < 1e-6 && Cotes.Egal(e.Origine.X, l1));
+    }
+
     [Fact]
     public void Structure_fermee_inversee_se_referme_dans_la_cour()
     {

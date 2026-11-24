@@ -412,8 +412,10 @@ public sealed partial class GenerateurFacade
         string lisse = References.LisseOuTraverse(lm);
         bool inverseTrappe = false;
 
+        // Lisses de pied : option générale, et toujours sur la maille de jonction (carré d'angle) et la maille
+        // escalier, qui ont ainsi des lisses de pied sur leurs 4 côtés avec les traverses des files (Laurent, 24/11/2026).
         double? zPoutre = PoutreSous(index);
-        if (_p.LissesEnPied && zPoutre == null)
+        if ((_p.LissesEnPied || CarreDAngle(index) || (m.EstEscalier && EscalierPossible(m))) && zPoutre == null)
         {
             LissesDePied(num, x0, lm);
         }
@@ -548,6 +550,9 @@ public sealed partial class GenerateurFacade
 
     /// <summary>Carré d'angle d'une structure inversée : son côté extérieur est le passage vers la face précédente.</summary>
     private bool CarreDAngleInverse(int index) => index == 0 && _p.CarreDAngleEnTete && _p.CarreDAngleInverse;
+
+    /// <summary>Maille de jonction (carré d'angle) en tête de face.</summary>
+    private bool CarreDAngle(int index) => index == 0 && _p.CarreDAngleEnTete;
 
     /// <summary>Planchers en damier (volumique, v2 IsMailleDamier) : pas de plancher une maille sur deux, décalé par module.</summary>
     private bool SansPlancherDamier(int indexMaille) =>
@@ -1146,9 +1151,19 @@ public sealed partial class GenerateurFacade
             return;
         }
 
+        // Carré d'angle : le côté posé sur la dernière file de la face précédente (côté intérieur, côté extérieur
+        // si la structure est inversée) a déjà la traverse de pied de cette file.
         string lisse = References.LisseOuTraverse(lm);
-        Ajouter(lisse, Famille.Lisse, new Point3(x0, 0, 0), Axe.X, Face.Interieure, num);
-        Ajouter(lisse, Famille.Lisse, new Point3(x0, -_l, 0), Axe.X, Face.Exterieure, num);
+        bool carre = CarreDAngle(num - 1);
+        if (!carre || _p.CarreDAngleInverse)
+        {
+            Ajouter(lisse, Famille.Lisse, new Point3(x0, 0, 0), Axe.X, Face.Interieure, num);
+        }
+
+        if (!carre || !_p.CarreDAngleInverse)
+        {
+            Ajouter(lisse, Famille.Lisse, new Point3(x0, -_l, 0), Axe.X, Face.Exterieure, num);
+        }
     }
 
     private void Ajouter(string reference, Famille famille, Point3 origine, Axe axe, Face face = Face.Aucune, int numeroMaille = 0, bool inverse = false, double inclinaison = 0, double rotation = 0) =>

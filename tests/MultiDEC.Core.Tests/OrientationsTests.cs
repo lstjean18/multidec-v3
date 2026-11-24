@@ -52,15 +52,59 @@ public class OrientationsTests
     }
 
     [Fact]
-    public void Cadre_d_about_retourne_vers_l_exterieur()
+    public void Cadres_d_about_profondeur_vers_l_exterieur_de_la_structure()
     {
-        // Laurent 24/11/2026 : les cadres HMGCSE…GT étaient tournés vers l'intérieur ; l'about gauche reste le miroir du droit.
+        // Laurent 24/11/2026 : « tous les garde-corps d'about doivent subir un miroir ». La profondeur des cadres
+        // courts (10 cm, vers -Z local du bloc, relevé serveur) part vers l'extérieur de la structure.
         var droit = new ElementPlace("HMGCSE070GT", Famille.GardeCorps, new Point3(20, 0, 2), Axe.Y);
         var gauche = new ElementPlace("HMGCSE070GT", Famille.GardeCorps, new Point3(0, 0, 2), Axe.Y, Face.Aucune, 1, inverse: true);
-        var lisse = new ElementPlace("HMTRA070", Famille.Traverse, new Point3(20, 0, 2), Axe.Y);
-        var lisseGauche = new ElementPlace("HMTRA070", Famille.Traverse, new Point3(0, 0, 2), Axe.Y, Face.Aucune, 1, inverse: true);
-        Assert.Equal(-Transforme(lisse, 0.3, 0, 0.2).X + 40, Transforme(droit, 0.3, 0, 0.2).X, 6);
-        Assert.Equal(-Transforme(lisseGauche, 0.3, 0, 0.2).X, Transforme(gauche, 0.3, 0, 0.2).X, 6);
+        Assert.Equal(20.1, Transforme(droit, 0, 0, -0.1).X, 6);
+        Assert.Equal(-0.1, Transforme(gauche, 0, 0, -0.1).X, 6);
+
+        // Cadre court posé en long (côté vide du carré d'angle) : vers le vide, et vers la façade côté intérieur.
+        var ext = new ElementPlace("HMGCSE070GT", Famille.GardeCorps, new Point3(0, -0.7, 2), Axe.X, Face.Exterieure);
+        var inte = new ElementPlace("HMGCSE100GT", Famille.GardeCorps, new Point3(0, 0, 2), Axe.X, Face.Interieure);
+        Assert.Equal(-0.8, Transforme(ext, 0, 0, -0.1).Y, 6);
+        Assert.Equal(0.1, Transforme(inte, 0, 0, -0.1).Y, 6);
+
+        // Les grands cadres (centrés sur la file) ne bougent pas.
+        var long250 = new ElementPlace("HMGCSE250GT", Famille.GardeCorps, new Point3(0, -0.7, 2), Axe.X, Face.Exterieure);
+        Assert.Equal(-0.6, Transforme(long250, 0, 0, -0.1).Y, 6);
+    }
+
+    [Fact]
+    public void Fichier_de_reglages_complete_les_reglages_par_defaut()
+    {
+        var t = TableOrientations.Fusionner(
+            new[] { new OrientationBloc { Prefixe = "HMPLA", MiroirZ = true }, new OrientationBloc { Prefixe = "HMDIA", MiroirFaceInterieure = true } },
+            new[] { new OrientationBloc { Prefixe = "HMDIA", RotationZ = 5 }, new OrientationBloc { Prefixe = "HMCON", RotationZ = 10 } });
+        Assert.True(t.Reglage("HMPLA250298CL6")!.MiroirZ);
+        Assert.Equal(5, t.Reglage("HMDIA2502")!.RotationZ);
+        Assert.False(t.Reglage("HMDIA2502")!.MiroirFaceInterieure);
+        Assert.Equal(10, t.Reglage("HMCON700E")!.RotationZ);
+    }
+
+    [Fact]
+    public void Fichier_livre_avec_l_appli_ne_change_pas_les_reglages_par_defaut()
+    {
+        string chemin = System.IO.Path.Combine(Racine(), "src", "MultiDEC.Rendering.VectorDraw", "orientations-blocs.json");
+        var charge = TableOrientations.Charger(chemin);
+        foreach (var reference in new[] { "HMGCSE070GT", "HMGCSE250GT", "HMESCALU25020088D", "HMPLA250298CL6", "HMPLAL250596TR", "HMDIA2502" })
+        {
+            var e = new ElementPlace(reference, Famille.GardeCorps, new Point3(1, -0.7, 2), Axe.X, Face.Interieure);
+            Assert.Equal(Table.Matrice(e), charge.Matrice(e));
+        }
+    }
+
+    private static string Racine()
+    {
+        var d = new System.IO.DirectoryInfo(System.AppContext.BaseDirectory);
+        while (d != null && !System.IO.File.Exists(System.IO.Path.Combine(d.FullName, "CLAUDE.md")))
+        {
+            d = d.Parent;
+        }
+
+        return d!.FullName;
     }
 
     [Fact]

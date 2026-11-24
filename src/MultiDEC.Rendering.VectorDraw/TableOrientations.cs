@@ -41,6 +41,13 @@ public sealed class OrientationBloc
     /// </summary>
     public bool RetourneEnTravers { get; set; }
 
+    /// <summary>
+    /// Bloc posé en long (axe X) dont la face est retournée : cadres courts HMGCSE070/075/100/105, dont la
+    /// profondeur de 10 cm partait vers la structure (relevé serveur et Laurent, 24/11/2026). Se cumule avec
+    /// <see cref="MiroirFaceInterieure"/>, si bien que le cadre reste tourné vers l'extérieur de la structure des deux côtés.
+    /// </summary>
+    public bool RetourneEnLong { get; set; }
+
     /// <summary>Décalage en mètres dans le repère monde, appliqué en dernier.</summary>
     public double[] Decalage { get; set; } = new double[3];
 }
@@ -69,7 +76,11 @@ public sealed class TableOrientations
     {
         new OrientationBloc { Prefixe = "HMPLA", MiroirZ = true },
         new OrientationBloc { Prefixe = "HMPLAL", MiroirZ = false },
-        new OrientationBloc { Prefixe = "HMGCSE", MiroirFaceInterieure = true, RetourneEnTravers = true },
+        new OrientationBloc { Prefixe = "HMGCSE", MiroirFaceInterieure = true },
+        new OrientationBloc { Prefixe = "HMGCSE070", MiroirFaceInterieure = true, RetourneEnLong = true },
+        new OrientationBloc { Prefixe = "HMGCSE075", MiroirFaceInterieure = true, RetourneEnLong = true },
+        new OrientationBloc { Prefixe = "HMGCSE100", MiroirFaceInterieure = true, RetourneEnLong = true },
+        new OrientationBloc { Prefixe = "HMGCSE105", MiroirFaceInterieure = true, RetourneEnLong = true },
         new OrientationBloc { Prefixe = "HMPLIM", MiroirFaceInterieure = true },
         new OrientationBloc { Prefixe = "HMPLINBO", MiroirFaceInterieure = true },
         new OrientationBloc { Prefixe = "HMDIA", MiroirFaceInterieure = true },
@@ -78,7 +89,12 @@ public sealed class TableOrientations
         new OrientationBloc { Prefixe = "HMESCALU30020088D", RotationX = -90 },
     });
 
-    /// <summary>Charge un fichier JSON (tableau d'<see cref="OrientationBloc"/>) ; fichier absent = réglages par défaut.</summary>
+    /// <summary>
+    /// Charge un fichier JSON (tableau d'<see cref="OrientationBloc"/>) qui complète les réglages par défaut :
+    /// une entrée remplace le réglage par défaut de même préfixe, les autres réglages par défaut restent.
+    /// Fichier absent = réglages par défaut. (Avant le 24/11/2026 le fichier remplaçait tout, et l'appli
+    /// ne suivait plus les corrections faites dans <see cref="ParDefaut"/>.)
+    /// </summary>
     public static TableOrientations Charger(string chemin)
     {
         if (!File.Exists(chemin))
@@ -86,9 +102,21 @@ public sealed class TableOrientations
             return ParDefaut();
         }
 
-        var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true, ReadCommentHandling = JsonCommentHandling.Skip };
-        var liste = JsonSerializer.Deserialize<List<OrientationBloc>>(File.ReadAllText(chemin), options);
-        return new TableOrientations(liste);
+        var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true, ReadCommentHandling = JsonCommentHandling.Skip, AllowTrailingCommas = true };
+        var liste = JsonSerializer.Deserialize<List<OrientationBloc>>(File.ReadAllText(chemin), options) ?? new List<OrientationBloc>();
+        return Fusionner(ParDefaut()._reglages, liste);
+    }
+
+    /// <summary>Réglages par défaut complétés ou remplacés (même préfixe) par <paramref name="surcharges"/>.</summary>
+    public static TableOrientations Fusionner(IEnumerable<OrientationBloc> parDefaut, IEnumerable<OrientationBloc> surcharges)
+    {
+        var parPrefixe = new Dictionary<string, OrientationBloc>(StringComparer.OrdinalIgnoreCase);
+        foreach (var r in parDefaut.Concat(surcharges))
+        {
+            parPrefixe[r.Prefixe] = r;
+        }
+
+        return new TableOrientations(parPrefixe.Values);
     }
 
     public OrientationBloc? Reglage(string reference) =>
@@ -117,6 +145,11 @@ public sealed class TableOrientations
             m = Matrices.Produit(Matrices.Echelle(1, -1, 1), m); // retourne la face (axe Y monde = ancien Z local)
         }
 
+        if (r?.RetourneEnLong == true && e.Axe == Axe.X)
+        {
+            m = Matrices.Produit(Matrices.Echelle(1, -1, 1), m); // cadre court : profondeur vers l'extérieur de la structure
+        }
+
         if (e.Inverse && e.Axe == Axe.X)
         {
             m = Matrices.Produit(Matrices.Echelle(-1, 1, 1), m); // origine à droite, part vers la gauche
@@ -125,7 +158,8 @@ public sealed class TableOrientations
         if (e.Axe == Axe.Y && (e.Inverse ^ (r?.RetourneEnTravers == true)))
         {
             // About de l'extrémité gauche (x = 0) : miroir de l'about droit selon X monde
-            // (les garde-corps d'about ont un sens, Laurent 23/11/2026).
+            // (les garde-corps d'about ont un sens, Laurent 23/11/2026). Sans réglage, la profondeur des cadres
+            // HMGCSE part vers l'extérieur de la structure (relevé serveur et Laurent, 24/11/2026).
             m = Matrices.Produit(Matrices.Echelle(1, -1, 1), m);
         }
 

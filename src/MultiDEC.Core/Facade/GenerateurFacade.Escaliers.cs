@@ -57,6 +57,13 @@ public sealed partial class GenerateurFacade
         bool miroirSuivante = !demi && cotes.Count > 2 && (cotes.Count - 3) % 2 == 1;
         int? voisineDehors = Cotes.Egal(cotes[1], 1.0) ? VoisinePourVoleeDehors(index, miroirSuivante ? index - 1 : index + 1) : null;
 
+        // Premier plancher sous 2 m, volée restée dans la tour (escalier) : on entre au sol par le bout du pied de la
+        // première volée, sans traverse sous 2 m de ce côté (Laurent, 24/11/2026). Le demi-escalier y pose le pied de sa
+        // volée suivante : sa traverse reste.
+        bool entreeBasse = !demi && voisineDehors == null && cotes[1] < 2.0 - Cotes.Tolerance;
+        double xEntree = PiedPremiereVoleeAGauche(demi, cotes.Count) ? x0 : x1;
+        bool Entree(double x, double zt) => entreeBasse && Cotes.Egal(x, xEntree) && zt > Cotes.Tolerance && zt < 2.0 - Cotes.Tolerance;
+
         bool gardeCorpsManquant = false;
         for (int k = 0; k < cotes.Count; k++)
         {
@@ -79,9 +86,16 @@ public sealed partial class GenerateurFacade
 
             // Plancher : traverses renforcées aux deux bouts (les volées s'y accrochent), lisse de la file rapportée.
             string traverseVolee = References.LisseOuTraverse(w, TypeTraverse.Renforce);
-            Travers(traverseVolee, Famille.Traverse, x0, y1, z, num);
-            Travers(traverseVolee, Famille.Traverse, x1, y1, z, num);
+            foreach (double xt in new[] { x0, x1 }.Where(xt => !Entree(xt, z)))
+            {
+                Travers(traverseVolee, Famille.Traverse, xt, y1, z, num);
+            }
+
             Ajouter(lisse, Famille.Lisse, new Point3(x0, y2, z), Axe.X, Face.Exterieure, num);
+            if (k == 1 && entreeBasse)
+            {
+                Travers(References.LisseOuTraverse(w), Famille.Traverse, xEntree, y1, 2.0, num);
+            }
 
             if (z > Cotes.Tolerance)
             {
@@ -93,7 +107,7 @@ public sealed partial class GenerateurFacade
                 if (plintheCote != null)
                 {
                     Ajouter(plintheCote, Famille.Plinthe, new Point3(xPalier, y1, z), Axe.Y, Face.Aucune, num, xPalier < x1 - Cotes.Tolerance);
-                    if (deuxBouts)
+                    if (deuxBouts && !Entree(xAutre, z))
                     {
                         Ajouter(plintheCote, Famille.Plinthe, new Point3(xAutre, y1, z), Axe.Y, Face.Aucune, num, xAutre < x1 - Cotes.Tolerance);
                     }
@@ -111,7 +125,7 @@ public sealed partial class GenerateurFacade
                 {
                     string traverse = References.LisseOuTraverse(w);
                     Travers(traverse, Famille.Traverse, xPalier, y1, zh, num);
-                    if (deuxBouts)
+                    if (deuxBouts && !Entree(xAutre, zh))
                     {
                         Travers(traverse, Famille.Traverse, xAutre, y1, zh, num);
                     }
@@ -124,8 +138,9 @@ public sealed partial class GenerateurFacade
             {
                 Ajouter(References.DiagonaleVerticale(lm), Famille.DiagonaleVerticale, new Point3(x0, Cotes.Arrondi(y2 - DemiTube), z), Axe.X, Face.Exterieure, num);
                 // Volée de 1 m sortie de la tour : l'entrée est au plancher de 1 m, du côté de la maille voisine.
-                bool entreeAGauche = voisineDehors != null ? k == 1 && miroirSuivante : k == 0 && PiedPremiereVoleeAGauche(demi, cotes.Count);
-                bool entreeADroite = voisineDehors != null ? k == 1 && !miroirSuivante : k == 0 && !entreeAGauche;
+                // Entrée au sol sous un premier plancher bas : pas de diagonale non plus dans le passage, au-dessus.
+                bool entreeAGauche = voisineDehors != null ? k == 1 && miroirSuivante : (k == 0 || (k == 1 && entreeBasse)) && PiedPremiereVoleeAGauche(demi, cotes.Count);
+                bool entreeADroite = voisineDehors != null ? k == 1 && !miroirSuivante : (k == 0 || (k == 1 && entreeBasse)) && !PiedPremiereVoleeAGauche(demi, cotes.Count);
                 if (!entreeAGauche)
                 {
                     Travers(References.DiagonaleVerticale(w), Famille.DiagonaleVerticale, gaucheLibre ? x0 - DemiTube : x0 + DemiTube, y1, z, num);

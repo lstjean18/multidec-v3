@@ -1,12 +1,9 @@
-// Réglages d'orientation des blocs de Blocs-EM-3D.dxf, modifiables sans recompiler.
+// Réglages d'orientation des blocs, modifiables sans recompiler. Ils complètent les réglages par défaut
+// du programme (TableOrientations.ParDefaut) : une entrée remplace le réglage par défaut de même préfixe.
 // prefixe : début de la référence ; le préfixe le plus long l'emporte.
-// rotationZ : rotation supplémentaire en degrés ; miroirFaceInterieure : retourne le bloc côté intérieur ;
-// decalage : [dx, dy, dz] en mètres.
+// rotationZ / rotationX : rotations supplémentaires en degrés ; miroirZ : retourne toujours le bloc ;
+// miroirFaceInterieure : retourne le bloc côté intérieur ; retourneEnTravers / retourneEnLong : retourne le bloc
+// posé en travers / en long ; decalage : [dx, dy, dz] en mètres.
+// Exemple : { "prefixe": "HMCON700", "rotationZ": 180 }
 [
-  { "prefixe": "HMPLA", "miroirZ": true },
-  { "prefixe": "HMPLAL", "miroirZ": false },
-  { "prefixe": "HMGCSE", "miroirFaceInterieure": true },
-  { "prefixe": "HMPLIM", "miroirFaceInterieure": true },
-  { "prefixe": "HMPLINBO", "miroirFaceInterieure": true },
-  { "prefixe": "HMDIA", "miroirFaceInterieure": true }
 ]
