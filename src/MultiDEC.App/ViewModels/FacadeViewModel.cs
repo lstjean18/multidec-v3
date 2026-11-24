@@ -273,11 +273,51 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
         }
     }
 
+    private CatalogueArticles _articles = CatalogueArticles.Vide;
+
     public ObservableCollection<MailleDefinition> Mailles { get; } = new ObservableCollection<MailleDefinition>();
 
     public ObservableCollection<Niveau> Niveaux { get; } = new ObservableCollection<Niveau>();
 
     public ObservableCollection<LigneDecompte> Decompte { get; } = new ObservableCollection<LigneDecompte>();
+
+    /// <summary>Articles de multidec.bib (désignations, poids, classement) utilisés par le décompte.</summary>
+    public CatalogueArticles Articles
+    {
+        get => _articles;
+        set
+        {
+            _articles = value ?? CatalogueArticles.Vide;
+            if (_structure != null)
+            {
+                CalculerDecompte();
+            }
+
+            Notifier(nameof(ResumeDecompte));
+        }
+    }
+
+    /// <summary>Bas de l'onglet « Décompte » : nombre de pièces, poids total, références sans poids.</summary>
+    public string ResumeDecompte
+    {
+        get
+        {
+            if (_articles.Nombre == 0)
+            {
+                return "Désignations et poids indisponibles : fichier multidec.bib introuvable à côté de la bibliothèque de blocs.";
+            }
+
+            if (Decompte.Count == 0)
+            {
+                return $"multidec.bib : {_articles.Nombre} articles.";
+            }
+
+            int pieces = Decompte.Sum(l => l.Quantite);
+            var sansPoids = CalculDecompte.SansPoids(Decompte).ToList();
+            string texte = $"{Decompte.Count} références, {pieces} pièces, poids total {CalculDecompte.PoidsTotal(Decompte):N1} kg";
+            return sansPoids.Count == 0 ? texte : texte + $" (poids inconnu pour : {string.Join(", ", sansPoids)})";
+        }
+    }
 
     public ObservableCollection<string> Alertes { get; } = new ObservableCollection<string>();
 
@@ -378,7 +418,7 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
         SauverGrilles();
         _structure = GenerateurStructure.Generer(_projet);
 
-        Remplir(Decompte, CalculDecompte.Calculer(_structure.Elements));
+        CalculerDecompte();
         Remplir(Alertes, _structure.Alertes);
         Remplir(ListeAmarrages, _structure.Amarrages.Amarrages);
         Notifier(nameof(Structure));
@@ -423,6 +463,12 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
         return m;
     }
 
+    private void CalculerDecompte()
+    {
+        Remplir(Decompte, _structure == null ? new List<LigneDecompte>() : CalculDecompte.Calculer(_structure.Elements, _articles));
+        Notifier(nameof(ResumeDecompte));
+    }
+
     /// <summary>Retire de la structure les pièces supprimées dans le dessin et recalcule le décompte.</summary>
     public void RetirerElements(IReadOnlyCollection<ElementPlace> retires)
     {
@@ -432,7 +478,7 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
         }
 
         _structure = _structure.SansElements(retires);
-        Remplir(Decompte, CalculDecompte.Calculer(_structure.Elements));
+        CalculerDecompte();
         Notifier(nameof(Structure));
         Notifier(nameof(Resume));
     }
@@ -470,6 +516,7 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
         _structure = null;
         Remplir(Faces, projet.Faces);
         Decompte.Clear();
+        Notifier(nameof(ResumeDecompte));
         Alertes.Clear();
         ListeAmarrages.Clear();
         Notifier(string.Empty); // tout rafraîchir

@@ -69,6 +69,16 @@ public class BibliothequeDwgTests
                     _sortie.WriteLine("BIB| " + l);
                 }
 
+                var articles = MultiDEC.Core.Decompte.CatalogueArticles.Charger(f);
+                _sortie.WriteLine($"BIB lu : {articles.Nombre} articles, version {articles.Version}, {articles.Articles.Count(a => a.PoidsUnitaire is > 0)} avec poids");
+                var catalogue = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "blocs-3D-echafaudage.txt");
+                if (File.Exists(catalogue))
+                {
+                    var absents = File.ReadAllLines(catalogue).Select(l => l.Trim())
+                                      .Where(l => l.Length > 0 && !l.StartsWith("#") && !articles.TryGet(l, out _)).ToList();
+                    _sortie.WriteLine($"BIB blocs absents de {Path.GetFileName(f)} ({absents.Count}) : {string.Join(" ", absents)}");
+                }
+
                 foreach (var cle in new[] { "HMPOT20", "HMPLAF2503NF", "HMCON700E" })
                 {
                     int i = texte.IndexOf(cle, StringComparison.Ordinal);

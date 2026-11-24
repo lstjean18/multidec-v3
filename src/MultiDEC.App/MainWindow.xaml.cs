@@ -8,6 +8,7 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using Microsoft.Win32;
 using MultiDEC.App.ViewModels;
+using MultiDEC.Core.Decompte;
 using MultiDEC.Core.Facade;
 using MultiDEC.Core.Persistance;
 using MultiDEC.Rendering.VectorDraw;
@@ -64,11 +65,26 @@ public partial class MainWindow : Window
             _vd.ReFillTabs(); // onglets des présentations masqués : seul le modèle reste
             Reglages.CheminBibliotheque = chemin;
             TexteBibliotheque.Text = "Bibliothèque : " + Path.GetFileName(chemin);
+            ChargerArticles(Path.Combine(Path.GetDirectoryName(chemin)!, CatalogueArticles.NomFichier));
         }
         catch (Exception ex)
         {
             _rendu = null;
             MessageBox.Show(this, ex.Message, "Bibliothèque de blocs", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    /// <summary>Charge multidec.bib (désignations et poids du décompte) ; décompte sans désignations s'il manque.</summary>
+    private void ChargerArticles(string chemin)
+    {
+        try
+        {
+            Vm.Articles = File.Exists(chemin) ? CatalogueArticles.Charger(chemin) : CatalogueArticles.Vide;
+        }
+        catch (Exception ex)
+        {
+            Vm.Articles = CatalogueArticles.Vide;
+            MessageBox.Show(this, "Lecture de " + chemin + " impossible : " + ex.Message, "Désignations et poids", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
 

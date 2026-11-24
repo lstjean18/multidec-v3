@@ -27,6 +27,7 @@
   <ItemGroup>
     <None Include="Donnees\blocs-facade-test.dxf.gz" CopyToOutputDirectory="PreserveNewest" />
     <None Include="Donnees\*.dwg" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\catalogue\blocs-3D-echafaudage.txt" Link="blocs-3D-echafaudage.txt" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <!--
     Toutes les DLL VectorDraw à côté de l'exécutable, y compris celles chargées dynamiquement

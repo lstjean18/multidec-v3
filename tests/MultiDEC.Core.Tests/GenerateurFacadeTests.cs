@@ -929,6 +929,55 @@ public class GenerateurFacadeTests
         Assert.Equal(d.Count, d.Select(l => l.Reference).Distinct().Count());
     }
 
+    /// <summary>Extrait du multidec.bib de Laurent (24/11/2026) : DataSet .NET, prix ignorés.</summary>
+    private const string ExtraitBib = @"<?xml version=""1.0"" standalone=""yes""?>
+<MultiDECDataSet xmlns=""http://tempuri.org/MultiDECDataSet.xsd"">
+  <xs:schema id=""MultiDECDataSet"" targetNamespace=""http://tempuri.org/MultiDECDataSet.xsd"" xmlns:xs=""http://www.w3.org/2001/XMLSchema""><xs:element name=""Tarif"" /></xs:schema>
+  <Tarif><Référence>TARIF</Référence><Désignation>Tarif général échafaudage 06/2016</Désignation><Prix_x0020_U>0.0000</Prix_x0020_U><Poids_x0020_U>0</Poids_x0020_U><Famille>2.2.0</Famille><Classement>0</Classement></Tarif>
+  <Tarif><Référence>HMPOT20</Référence><Désignation>Poteau de 2,00m</Désignation><Prix_x0020_U>30.5</Prix_x0020_U><Poids_x0020_U>9.1</Poids_x0020_U><Famille>Poteaux</Famille><Classement>2.06</Classement></Tarif>
+  <Tarif><Référence>HMSOCREG</Référence><Désignation>Socle réglable</Désignation><Poids_x0020_U>3.5</Poids_x0020_U><Famille>Socles</Famille><Classement>1.01</Classement></Tarif>
+  <Tarif><Référence>HMCHAPEDOUBLE</Référence><Désignation>Double tête</Désignation><Poids_x0020_U>0.9</Poids_x0020_U><Famille>Accessoires</Famille><Classement>21.18</Classement><RefClient>DT-01</RefClient></Tarif>
+</MultiDECDataSet>";
+
+    [Fact]
+    public void Multidec_bib_lu_sans_les_prix()
+    {
+        var c = CatalogueArticles.LireTexte(ExtraitBib);
+        Assert.Equal(3, c.Nombre);
+        Assert.Equal("2.2.0", c.Version);
+        Assert.False(c.TryGet("TARIF", out _));
+        Assert.True(c.TryGet("hmpot20", out var pot));
+        Assert.Equal("Poteau de 2,00m", pot.Designation);
+        Assert.Equal(9.1, pot.PoidsUnitaire);
+        Assert.Equal("Poteaux", pot.Famille);
+        Assert.Equal(2.06, pot.Classement);
+        Assert.True(c.TryGet("HMCHAPEDOUBLE", out var dt));
+        Assert.Equal("DT-01", dt.RefClient);
+    }
+
+    [Fact]
+    public void Decompte_avec_designations_et_poids()
+    {
+        var c = CatalogueArticles.LireTexte(ExtraitBib);
+        var s = GenerateurFacade.Generer(Standard());
+        var d = CalculDecompte.Calculer(s.Elements, c);
+
+        // Les articles du fichier d'abord, dans l'ordre du classement (socles 1.01 avant poteaux 2.06).
+        Assert.Equal("HMSOCREG", d[0].Reference);
+        Assert.Equal("Socles", d[0].FamilleAffichee);
+        var pot = d.Single(l => l.Reference == "HMPOT20");
+        Assert.Equal("Poteau de 2,00m", pot.Designation);
+        Assert.Equal(9.1 * pot.Quantite, pot.PoidsTotal!.Value, 6);
+        Assert.Same(pot, d[1]);
+
+        // Références absentes : sans poids, en fin de liste, famille interne.
+        var autre = d.First(l => l.Article == null);
+        Assert.Null(autre.PoidsTotal);
+        Assert.Equal(autre.Famille.ToString(), autre.FamilleAffichee);
+        Assert.Contains(autre.Reference, CalculDecompte.SansPoids(d));
+        Assert.Equal(d.Where(l => l.PoidsTotal != null).Sum(l => l.PoidsTotal!.Value), CalculDecompte.PoidsTotal(d), 6);
+    }
+
     [Fact]
     public void Enregistrer_puis_ouvrir_donne_le_meme_projet()
     {

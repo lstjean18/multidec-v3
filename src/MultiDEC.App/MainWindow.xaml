@@ -653,13 +653,31 @@
         </TabItem>
 
         <TabItem Header="Décompte">
-          <DataGrid ItemsSource="{Binding Decompte}" AutoGenerateColumns="False" IsReadOnly="True">
-            <DataGrid.Columns>
-              <DataGridTextColumn Header="Famille" Binding="{Binding Famille}" Width="150" />
-              <DataGridTextColumn Header="Référence" Binding="{Binding Reference}" Width="200" />
-              <DataGridTextColumn Header="Quantité" Binding="{Binding Quantite}" Width="80" />
-            </DataGrid.Columns>
-          </DataGrid>
+          <DockPanel>
+            <TextBlock DockPanel.Dock="Bottom" Margin="6,4" TextWrapping="Wrap" FontWeight="SemiBold" Text="{Binding ResumeDecompte}" />
+            <DataGrid ItemsSource="{Binding Decompte}" AutoGenerateColumns="False" IsReadOnly="True">
+              <DataGrid.Columns>
+                <DataGridTextColumn Header="Famille" Binding="{Binding FamilleAffichee}" Width="130" />
+                <DataGridTextColumn Header="Référence" Binding="{Binding Reference}" Width="150" />
+                <DataGridTextColumn Header="Désignation" Binding="{Binding Designation}" Width="*" MinWidth="200" />
+                <DataGridTextColumn Header="Quantité" Binding="{Binding Quantite}" Width="70">
+                  <DataGridTextColumn.ElementStyle>
+                    <Style TargetType="TextBlock"><Setter Property="HorizontalAlignment" Value="Right" /></Style>
+                  </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+                <DataGridTextColumn Header="Poids U (kg)" Binding="{Binding PoidsUnitaire, StringFormat=N2}" Width="90">
+                  <DataGridTextColumn.ElementStyle>
+                    <Style TargetType="TextBlock"><Setter Property="HorizontalAlignment" Value="Right" /></Style>
+                  </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+                <DataGridTextColumn Header="Poids total (kg)" Binding="{Binding PoidsTotal, StringFormat=N1}" Width="110">
+                  <DataGridTextColumn.ElementStyle>
+                    <Style TargetType="TextBlock"><Setter Property="HorizontalAlignment" Value="Right" /></Style>
+                  </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+              </DataGrid.Columns>
+            </DataGrid>
+          </DockPanel>
         </TabItem>
 
         <TabItem Header="Amarrages">
