@@ -86,6 +86,28 @@ public static class References
     /// <summary>Collier fixe pour tube de 49.</summary>
     public const string CollierFixe = "HMCOLF49";
 
+    /// <summary>
+    /// Volée d'escalier alu (v2) : HMESCALU + longueur de maille en cm + montée en cm (+ "88D" pour la volée large
+    /// des demi-escaliers de 1,00 m). Montée de 1,00 m : volée courte de 1,75 m (HMESCALU175100).
+    /// </summary>
+    public static string Volee(double longueurMaille, double montee, bool large) =>
+        "HMESCALU" + (montee < 1.5 ? "175" : Cotes.EnCm3(longueurMaille)) + Cotes.EnCm3(montee) + (large ? "88D" : string.Empty);
+
+    /// <summary>Garde-corps de volée (HMGCESCALU200 / 100) ; seule la maille de 2,50 m en a un dans la bibliothèque.</summary>
+    public static string? GardeCorpsVolee(double longueurMaille, double montee) =>
+        montee < 1.5 ? "HMGCESCALU100" : Cotes.Egal(longueurMaille, 2.5) ? "HMGCESCALU200" : null;
+
+    /// <summary>Extrémité de garde-corps de volée (pied de la première volée, haut de la dernière).</summary>
+    public const string GardeCorpsVoleeExtremite = "HMGCESCALUEXTR";
+
+    /// <summary>Montant de garde-corps sur lisse (ouverture sur l'escalier) : HMMONTGCE en MS, HMMONTGC sinon.</summary>
+    public static string MontantGardeCorps(ModeleEchafaudage modele) =>
+        modele == ModeleEchafaudage.MultiSystem ? "HMMONTGCE" : "HMMONTGC";
+
+    /// <summary>Piquage sur lisse (poteau de 1 m du garde-corps central des demi-escaliers) : HMPIQLIS-E en MS.</summary>
+    public static string PiquageLisse(ModeleEchafaudage modele) =>
+        modele == ModeleEchafaudage.MultiSystem ? "HMPIQLIS-E" : "HMPIQLIS";
+
     /// <summary>Diagonale verticale de 2 m de haut : HMDIA + longueur + "2" (ex. HMDIA2502).</summary>
     public static string DiagonaleVerticale(double longueurMaille) => "HMDIA" + Cotes.EnCm3(longueurMaille) + "2";
 

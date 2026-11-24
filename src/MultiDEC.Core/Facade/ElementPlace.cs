@@ -28,6 +28,9 @@ public enum Famille
 
     /// <summary>Poutres de franchissement (HMPOUT…) et leurs tubes de contreventement.</summary>
     Poutre,
+
+    /// <summary>Volées d'escalier (HMESCALU…) et leurs garde-corps (HMGCESCALU…).</summary>
+    Escalier,
 }
 
 /// <summary>Direction principale d'un élément.</summary>

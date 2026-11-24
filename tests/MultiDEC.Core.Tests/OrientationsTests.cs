@@ -52,6 +52,15 @@ public class OrientationsTests
     }
 
     [Fact]
+    public void Volee_large_88D_deja_debout_non_relevee()
+    {
+        // Relevé serveur du 24/11/2026 : les volées 88D relevées étaient couchées (largeur selon Z) ;
+        // la correction de -90° autour de X les remet comme les volées de 0,65 m (descente selon -Z, largeur selon +Y).
+        var e = new ElementPlace("HMESCALU25020088D", Famille.Escalier, new Point3(5, -1.0, 4), Axe.X);
+        Assert.Equal(new Point3(7.5, -0.1, 2), Transforme(e, 2.5, 0.9, -2.0));
+    }
+
+    [Fact]
     public void Diagonale_inversee_monte_vers_la_gauche()
     {
         var e = new ElementPlace("HMDIA2502", Famille.DiagonaleVerticale, new Point3(2.5, -0.75, 0), Axe.X, Face.Exterieure, 1, inverse: true);

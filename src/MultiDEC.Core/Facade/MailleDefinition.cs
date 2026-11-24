@@ -55,6 +55,7 @@ public sealed class MailleDefinition : INotifyPropertyChanged
             {
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(LargeurRapportee)));
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(EstTravail)));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(EstEscalier)));
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(PignonEffectif)));
             }
         }
@@ -66,7 +67,8 @@ public sealed class MailleDefinition : INotifyPropertyChanged
 
     /// <summary>
     /// Profondeur de la sous-maille rapportée côté extérieur (v2 LargeurSousMaille) : 0,70 m pour un accès
-    /// rapporté, 2,00 m pour un module d'appro, la profondeur choisie pour une recette, 0 sinon.
+    /// rapporté, 2,00 m pour un module d'appro, la profondeur choisie pour une recette, 1,50 m pour un escalier,
+    /// 0,70 ou 1,00 m pour un demi-escalier, 0 sinon.
     /// </summary>
     [JsonIgnore]
     public double LargeurRapportee => _type switch
@@ -74,8 +76,15 @@ public sealed class MailleDefinition : INotifyPropertyChanged
         TypeMaille.AccesRapporte => 0.70,
         TypeMaille.Appro => 2.00,
         TypeMaille.Recette => _profondeurRecette,
+        TypeMaille.Escalier => 1.50,
+        TypeMaille.DemiEscalier070 => 0.70,
+        TypeMaille.DemiEscalier100 => 1.00,
         _ => 0,
     };
+
+    /// <summary>Maille avec escalier ou demi-escalier rapporté côté extérieur.</summary>
+    [JsonIgnore]
+    public bool EstEscalier => _type == TypeMaille.Escalier || _type == TypeMaille.DemiEscalier070 || _type == TypeMaille.DemiEscalier100;
 
     /// <summary>Profondeur de la recette (colonne « Prof. recette », utilisée si la maille est une recette).</summary>
     public double ProfondeurRecette

@@ -52,6 +52,15 @@ public enum TypeMaille
 
     /// <summary>Maille de travail + recette de profondeur variable côté extérieur (plancher et garde-corps), v2.</summary>
     Recette,
+
+    /// <summary>Maille de travail + tour d'escalier de 1,50 m côté extérieur : deux volées par niveau en sens alterné (v2 Esca).</summary>
+    Escalier,
+
+    /// <summary>Maille de travail + demi-escalier de 0,70 m côté extérieur : une volée par niveau, toujours dans le même sens (v2 DemiEsca).</summary>
+    DemiEscalier070,
+
+    /// <summary>Maille de travail + demi-escalier de 1,00 m côté extérieur (volées larges 88D), v2 DemiEsca.</summary>
+    DemiEscalier100,
 }
 
 /// <summary>Type de plancher à un niveau (reprend les choix de l'ancienne grille des niveaux).</summary>

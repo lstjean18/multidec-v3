@@ -20,6 +20,12 @@ public sealed class OrientationBloc
     /// <summary>Rotation supplémentaire autour de Z, en degrés, appliquée après la rotation standard.</summary>
     public double RotationZ { get; set; }
 
+    /// <summary>
+    /// Rotation supplémentaire autour de X monde, en degrés, appliquée juste après le relevage : pour un bloc
+    /// déjà dessiné debout (volées larges HMESCALU…88D, relevé serveur du 24/11/2026 : -90°).
+    /// </summary>
+    public double RotationX { get; set; }
+
     /// <summary>Retourne le bloc (symétrie de son axe Z local) quand l'élément est côté intérieur.</summary>
     public bool MiroirFaceInterieure { get; set; }
 
@@ -61,6 +67,9 @@ public sealed class TableOrientations
         new OrientationBloc { Prefixe = "HMPLIM", MiroirFaceInterieure = true },
         new OrientationBloc { Prefixe = "HMPLINBO", MiroirFaceInterieure = true },
         new OrientationBloc { Prefixe = "HMDIA", MiroirFaceInterieure = true },
+        new OrientationBloc { Prefixe = "HMESCALU17510088D", RotationX = -90 },
+        new OrientationBloc { Prefixe = "HMESCALU25020088D", RotationX = -90 },
+        new OrientationBloc { Prefixe = "HMESCALU30020088D", RotationX = -90 },
     });
 
     /// <summary>Charge un fichier JSON (tableau d'<see cref="OrientationBloc"/>) ; fichier absent = réglages par défaut.</summary>
@@ -86,6 +95,10 @@ public sealed class TableOrientations
 
         // 1. Relever le bloc.
         var m = Matrices.RotationX(90);
+        if (r != null && Math.Abs(r.RotationX) > 1e-9)
+        {
+            m = Matrices.Produit(Matrices.RotationX(r.RotationX), m);
+        }
 
         // 2. Symétries (appliquées dans le repère relevé : l'axe Z local est devenu -Y monde).
         if (r?.MiroirZ == true)

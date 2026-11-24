@@ -345,7 +345,7 @@ public sealed partial class GenerateurFacade
             if (z >= 0.5 - Cotes.Tolerance && !sansPlancher)
             {
                 var plintheExt = n.EstAccesSeul ? TypePlinthe.Sans : _p.PlintheExterieure;
-                if (m.Type == TypeMaille.AccesRapporte)
+                if (m.Type == TypeMaille.AccesRapporte || (m.EstEscalier && EscalierPossible(m)))
                 {
                     // Garde-corps extérieur reporté sur la file de l'accès rapporté ; lisse de plancher ici (v2).
                     Ajouter(lisse, Famille.Lisse, new Point3(x0, -_l, z), Axe.X, Face.Exterieure, num);
@@ -890,7 +890,7 @@ public sealed partial class GenerateurFacade
             double xDia = d.Inverse ? x0 + lm : x0;
             foreach (double z in cotes.Where(z => !SousPoutre(i, z)))
             {
-                if (d.Exterieure)
+                if (d.Exterieure && !(maille.EstEscalier && hs > Cotes.Tolerance)) // la tour d'escalier a ses propres diagonales
                 {
                     double yExt = z < hs - Cotes.Tolerance ? -_l - maille.LargeurRapportee : -_l;
                     Ajouter(refDia, Famille.DiagonaleVerticale, new Point3(xDia, Cotes.Arrondi(yExt - DemiTube), z), Axe.X, Face.Exterieure, d.NumeroMaille, d.Inverse);

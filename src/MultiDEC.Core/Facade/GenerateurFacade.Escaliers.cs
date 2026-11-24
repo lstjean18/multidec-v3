@@ -1,0 +1,225 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using MultiDEC.Core.Catalogue;
+using MultiDEC.Core.Geometrie;
+
+namespace MultiDEC.Core.Facade;
+
+/// <summary>
+/// Escaliers rapportés côté extérieur (port de clModuleMaille v2 : AjouteSousMailleEsca, AjouteSousMailleDemiEsca).
+/// - Escalier 1,50 m : tour de deux demi-largeurs ; à chaque niveau une volée HMESCALU de 2 m de montée,
+///   alternativement dans la moitié côté façade et dans la moitié extérieure, en sens opposés (la dernière volée
+///   arrive côté façade). L'ouverture vers la maille de travail est au bout où la volée arrive.
+/// - Demi-escalier 0,70 / 1,00 m : une volée par niveau, toujours dans le même sens ; on repart du plancher
+///   de la maille de travail. Garde-corps central sur piquages aux niveaux intermédiaires, ouverture aux deux bouts.
+/// Convention relevée sur le serveur (BOITE) : une volée posée en axe X à (x, y, z) descend de z à z - 2,
+///   sur la longueur de la maille (x → x + longueur), largeur vers +Y ; non symétrisée, elle arrive en haut côté x.
+/// </summary>
+public sealed partial class GenerateurFacade
+{
+    /// <summary>Escalier réalisable : volées de 2,50 ou 3,00 m dans la bibliothèque.</summary>
+    private bool EscalierPossible(MailleDefinition m) =>
+        m.EstEscalier && (Cotes.Egal(m.Longueur, 2.5) || Cotes.Egal(m.Longueur, 3.0)) && _h >= 1.0 - Cotes.Tolerance;
+
+    private void PlacerEscalier(int index, MailleDefinition m, double w, List<Niveau> niveaux)
+    {
+        int num = index + 1;
+        double x0 = _x[index];
+        double x1 = _x[index + 1];
+        double lm = m.Longueur;
+        double y1 = -_l;
+        double y2 = Cotes.Arrondi(-_l - w);
+        bool demi = m.Type != TypeMaille.Escalier;
+        bool large = m.Type == TypeMaille.DemiEscalier100;
+        bool droiteLibre = !MemeSousMaille(index + 1, m);
+
+        // v2 : DecGC = largeur de volée (0,65 ou 0,88), volée à 5 cm de la file extérieure.
+        double largeurVolee = large ? 0.88 : 0.65;
+        double yVolee = Cotes.Arrondi(-_l - largeurVolee - 0.05);
+        string lisse = References.LisseOuTraverse(lm);
+        string? plintheLong = References.Plinthe(_p.PlintheExterieure, lm);
+        string? plintheCote = References.Plinthe(_p.PlintheAbouts == TypePlinthe.Sans ? _p.PlintheExterieure : _p.PlintheAbouts, w);
+
+        var cotes = new List<double> { 0 };
+        cotes.AddRange(niveaux.Select(n => n.Hauteur)
+            .Where(z => z > Cotes.Tolerance && z <= _h + Cotes.Tolerance)
+            .Select(Cotes.Arrondi).Distinct().OrderBy(z => z));
+        if (cotes.Count < 2)
+        {
+            return;
+        }
+
+        bool gardeCorpsManquant = false;
+        for (int k = 0; k < cotes.Count; k++)
+        {
+            double z = cotes[k];
+            bool haut = k == cotes.Count - 1;
+
+            // Escalier : sens alterné, la volée du dernier niveau arrive côté façade non symétrisée.
+            bool miroir = !demi && (cotes.Count - 1 - k) % 2 == 1;
+            double xPalier = miroir ? x1 : x0;
+            double xAutre = miroir ? x0 : x1;
+            bool deuxBouts = demi || haut;
+
+            // Plancher : traverses renforcées aux deux bouts (les volées s'y accrochent), lisse de la file rapportée.
+            string traverseVolee = References.LisseOuTraverse(w, TypeTraverse.Renforce);
+            Travers(traverseVolee, Famille.Traverse, x0, y1, z, num);
+            Travers(traverseVolee, Famille.Traverse, x1, y1, z, num);
+            Ajouter(lisse, Famille.Lisse, new Point3(x0, y2, z), Axe.X, Face.Exterieure, num);
+
+            if (z > Cotes.Tolerance)
+            {
+                if (plintheLong != null)
+                {
+                    Ajouter(plintheLong, Famille.Plinthe, new Point3(x0, y2, z), Axe.X, Face.Exterieure, num);
+                }
+
+                if (plintheCote != null)
+                {
+                    Ajouter(plintheCote, Famille.Plinthe, new Point3(xPalier, y1, z), Axe.Y, Face.Aucune, num, xPalier < x1 - Cotes.Tolerance);
+                    if (deuxBouts)
+                    {
+                        Ajouter(plintheCote, Famille.Plinthe, new Point3(xAutre, y1, z), Axe.Y, Face.Aucune, num, xAutre < x1 - Cotes.Tolerance);
+                    }
+                }
+            }
+
+            // Protection tous les 0,50 m jusqu'au niveau suivant (1,00 m au-dessus du dernier) :
+            // le long de la file rapportée, et en travers au bout du palier (aux deux bouts pour un demi-escalier).
+            double hp = haut ? 1.0 : Cotes.Arrondi(cotes[k + 1] - z - 0.5);
+            for (double h = 0.5; h <= hp + Cotes.Tolerance; h = Cotes.Arrondi(h + 0.5))
+            {
+                double zh = Cotes.Arrondi(z + h);
+                Ajouter(lisse, Famille.Lisse, new Point3(x0, y2, zh), Axe.X, Face.Exterieure, num);
+                if (z > Cotes.Tolerance)
+                {
+                    string traverse = References.LisseOuTraverse(w);
+                    Travers(traverse, Famille.Traverse, xPalier, y1, zh, num);
+                    if (deuxBouts)
+                    {
+                        Travers(traverse, Famille.Traverse, xAutre, y1, zh, num);
+                    }
+                }
+            }
+
+            // Diagonales de la tour sur 2 m : face extérieure et en travers aux deux bouts.
+            if (!haut && cotes[k + 1] - z >= 2.0 - Cotes.Tolerance)
+            {
+                Ajouter(References.DiagonaleVerticale(lm), Famille.DiagonaleVerticale, new Point3(x0, Cotes.Arrondi(y2 - DemiTube), z), Axe.X, Face.Exterieure, num);
+                Travers(References.DiagonaleVerticale(w), Famille.DiagonaleVerticale, x0 + DemiTube, y1, z, num);
+                if (droiteLibre)
+                {
+                    Travers(References.DiagonaleVerticale(w), Famille.DiagonaleVerticale, x1 - DemiTube, y1, z, num);
+                }
+            }
+
+            if (k == 0)
+            {
+                continue;
+            }
+
+            // Volée arrivant à ce niveau.
+            double montee = Cotes.Arrondi(z - cotes[k - 1]);
+            if (!Cotes.Egal(montee, 2.0) && !Cotes.Egal(montee, 1.0))
+            {
+                _alertes.Add(FormattableString.Invariant($"Maille {num} : montée de {montee:0.00} m sous le niveau {z:0.00} m, pas de volée d'escalier (1,00 ou 2,00 m)."));
+            }
+            else
+            {
+                PlacerVolee(num, x0, x1, lm, z, montee, yVolee, largeurVolee, large, demi, miroir, premiere: k == 1, derniere: haut, ref gardeCorpsManquant);
+            }
+
+            var n = niveaux.FirstOrDefault(v => Cotes.Egal(v.Hauteur, z));
+            if (n != null)
+            {
+                PlacerOuvertureEscalier(num, x0, x1, lm, z, n, demi && !haut, miroir);
+            }
+        }
+
+        if (gardeCorpsManquant)
+        {
+            _alertes.Add(FormattableString.Invariant($"Maille {num} : garde-corps de volée de {lm:0.00} m absent de la bibliothèque, volées posées sans garde-corps."));
+        }
+    }
+
+    /// <summary>
+    /// Volée et ses garde-corps (HMGCESCALU, posé 0,50 m après le haut de la volée), extrémités HMGCESCALUEXTR
+    /// au pied de la première volée et en haut de la dernière.
+    /// </summary>
+    private void PlacerVolee(int num, double x0, double x1, double lm, double z, double montee, double yVolee, double largeurVolee,
+        bool large, bool demi, bool miroir, bool premiere, bool derniere, ref bool gardeCorpsManquant)
+    {
+        // Escalier : la volée symétrisée passe dans la moitié extérieure (v2 : décalage de largeur + 5 cm).
+        double yv = miroir ? Cotes.Arrondi(yVolee - largeurVolee - 0.05) : yVolee;
+        Ajouter(References.Volee(lm, montee, large), Famille.Escalier, new Point3(miroir ? x1 : x0, yv, z), Axe.X, Face.Exterieure, num, miroir);
+
+        string? gc = References.GardeCorpsVolee(lm, montee);
+        if (gc == null)
+        {
+            gardeCorpsManquant = true;
+            return;
+        }
+
+        // Demi-escalier : garde-corps côté maille seulement (le côté extérieur est tenu par les lisses de la tour).
+        var cotesGc = demi ? new[] { Cotes.Arrondi(yv + largeurVolee) } : new[] { yv, Cotes.Arrondi(yv + largeurVolee) };
+        double longueurGc = montee < 1.5 ? 0.75 : 1.5;
+        double sens = miroir ? -1 : 1;
+        double xHaut = miroir ? x1 : x0;
+        foreach (double y in cotesGc)
+        {
+            Ajouter(gc, Famille.Escalier, new Point3(Cotes.Arrondi(xHaut + sens * 0.5), y, z), Axe.X, Face.Exterieure, num, miroir);
+            if (premiere)
+            {
+                Ajouter(References.GardeCorpsVoleeExtremite, Famille.Escalier,
+                    new Point3(Cotes.Arrondi(xHaut + sens * (0.5 + longueurGc)), y, Cotes.Arrondi(z - montee + 1.0)), Axe.X, Face.Exterieure, num, !miroir);
+            }
+
+            if (derniere)
+            {
+                Ajouter(References.GardeCorpsVoleeExtremite, Famille.Escalier,
+                    new Point3(Cotes.Arrondi(xHaut + sens * 0.5), y, Cotes.Arrondi(z + 1.0)), Axe.X, Face.Exterieure, num, miroir);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Côté maille de travail (file extérieure), le garde-corps est remplacé :
+    /// - escalier et haut d'un demi-escalier : fermé par un montant HMMONTGC(E), deux lisses et une plinthe
+    ///   sur 1,50 m (2,00 m pour une maille de 3,00 m), ouvert sur 1,00 m au bout où la volée arrive ;
+    /// - niveau intermédiaire d'un demi-escalier : garde-corps central sur deux piquages et poteaux de 1 m,
+    ///   ouvert sur 0,75 m aux deux bouts (on arrive d'un côté, on repart de l'autre).
+    /// Niveau « accès seul » : fermé par des lisses.
+    /// </summary>
+    private void PlacerOuvertureEscalier(int num, double x0, double x1, double lm, double z, Niveau n, bool piquages, bool ouvertADroite)
+    {
+        double y1 = -_l;
+        if (n.EstAccesSeul)
+        {
+            PlacerGardeCorps(TypeSecurite.Lisses, TypePlinthe.Sans, x0, y1, z, lm, Face.Exterieure, num);
+            return;
+        }
+
+        double longueur;
+        double xDebut;
+        if (piquages)
+        {
+            longueur = Cotes.Arrondi(lm - 1.5);
+            xDebut = Cotes.Arrondi(x0 + 0.75);
+            foreach (double x in new[] { xDebut, Cotes.Arrondi(xDebut + longueur) })
+            {
+                Ajouter(References.PiquageLisse(_p.Modele), Famille.GardeCorps, new Point3(x, y1, z), Axe.Z, Face.Exterieure, num);
+                Ajouter(References.Poteau(_p.Modele, 1.0), Famille.GardeCorps, new Point3(x, y1, Cotes.Arrondi(z + 0.04)), Axe.Z, Face.Exterieure, num);
+            }
+        }
+        else
+        {
+            longueur = Cotes.Egal(lm, 3.0) ? 2.0 : 1.5;
+            xDebut = ouvertADroite ? x0 : Cotes.Arrondi(x1 - longueur);
+            double xMontant = ouvertADroite ? Cotes.Arrondi(x0 + longueur) : xDebut;
+            Ajouter(References.MontantGardeCorps(_p.Modele), Famille.GardeCorps, new Point3(xMontant, y1, z), Axe.Z, Face.Exterieure, num);
+        }
+
+        PlacerGardeCorps(TypeSecurite.Lisses, _p.PlintheExterieure, xDebut, y1, z, longueur, Face.Exterieure, num);
+    }
+}

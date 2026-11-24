@@ -479,6 +479,70 @@ public class GenerateurFacadeTests
     }
 
     [Fact]
+    public void Escalier_1_50_volees_alternees_derniere_cote_facade()
+    {
+        var face = Standard(); // dernier plancher 10 m, niveaux tous les 2 m, mailles de 2,50 m
+        face.Mailles[1].Type = TypeMaille.Escalier;
+        var s = GenerateurFacade.Generer(face);
+        double x0 = face.AbscissesFiles()[1];
+        double x1 = face.AbscissesFiles()[2];
+        double y2 = -0.70 - 1.5;
+
+        var volees = s.Elements.Where(e => e.Reference == "HMESCALU250200").OrderBy(e => e.Origine.Z).ToList();
+        Assert.Equal(new[] { 2.0, 4, 6, 8, 10 }, volees.Select(e => Math.Round(e.Origine.Z, 3)));
+        var haut = volees.Last();
+        Assert.False(haut.Inverse); // arrive côté façade, en haut côté x0
+        Assert.Equal(x0, haut.Origine.X, 6);
+        Assert.Equal(-1.40, haut.Origine.Y, 6);
+        var avant = volees[3];
+        Assert.True(avant.Inverse); // moitié extérieure, sens opposé
+        Assert.Equal(x1, avant.Origine.X, 6);
+        Assert.Equal(-2.10, avant.Origine.Y, 6);
+
+        Assert.Equal(10, s.Elements.Count(e => e.Reference == "HMGCESCALU200"));
+        Assert.Equal(4, s.Elements.Count(e => e.Reference == "HMGCESCALUEXTR")); // pied de la 1re volée, haut de la dernière, 2 côtés
+        Assert.Equal(5, s.Elements.Count(e => e.Reference == "HMMONTGCE"));
+        Assert.Equal(2, Pieds(s, y2).Count);
+        Assert.Equal(11.0, Sommet(s, x0, y2), 3);
+
+        // Pas de garde-corps MDS côté extérieur sur la maille d'escalier : lisse de plancher + fermeture sur 1,50 m.
+        Assert.DoesNotContain(s.Elements, e => e.NumeroMaille == 2 && e.Famille == Famille.GardeCorps && e.Reference.StartsWith("HMGCSE", StringComparison.Ordinal));
+        Assert.Contains(s.Elements, e => e.Reference == "HMLIS150" && Math.Abs(e.Origine.Z - 10.5) < 1e-6 && Math.Abs(e.Origine.X - (x1 - 1.5)) < 1e-6);
+        Assert.Contains(s.Elements, e => e.Reference == "HMLIS150" && Math.Abs(e.Origine.Z - 8.5) < 1e-6 && Math.Abs(e.Origine.X - x0) < 1e-6);
+        Assert.DoesNotContain(s.Elements, e => e.NumeroMaille == 2 && e.Famille == Famille.DiagonaleVerticale && Math.Abs(e.Origine.Y + 0.70 + GenerateurFacade.DemiTube) < 1e-6);
+    }
+
+    [Fact]
+    public void Demi_escalier_volees_dans_le_meme_sens_et_garde_corps_central()
+    {
+        var face = Standard();
+        face.Mailles[5].Type = TypeMaille.DemiEscalier100;
+        var s = GenerateurFacade.Generer(face);
+
+        var volees = s.Elements.Where(e => e.Reference == "HMESCALU25020088D").ToList();
+        Assert.Equal(5, volees.Count);
+        Assert.All(volees, e => Assert.False(e.Inverse));
+        Assert.All(volees, e => Assert.Equal(-0.70 - 0.93, e.Origine.Y, 6));
+        Assert.Equal(5, s.Elements.Count(e => e.Reference == "HMGCESCALU200")); // côté maille seulement
+        Assert.Equal(8, s.Elements.Count(e => e.Reference == "HMPIQLIS-E")); // 2 par niveau de 2 à 8 m
+        Assert.Equal(8, s.Elements.Count(e => e.Reference == "HMPOT10" && e.Famille == Famille.GardeCorps));
+        Assert.Single(s.Elements, e => e.Reference == "HMMONTGCE"); // ouverture au dernier niveau
+        Assert.Equal(2, Pieds(s, -0.70 - 1.0).Count);
+    }
+
+    [Fact]
+    public void Escalier_sur_maille_de_2_m_ignore_avec_alerte()
+    {
+        var face = Standard();
+        face.Mailles[0].Longueur = 2.0;
+        face.Mailles[0].Type = TypeMaille.Escalier;
+        var s = GenerateurFacade.Generer(face);
+        Assert.DoesNotContain(s.Elements, e => e.Famille == Famille.Escalier);
+        Assert.Contains(s.Alertes, a => a.Contains("escalier impossible", StringComparison.Ordinal));
+        Assert.Contains(s.Elements, e => e.NumeroMaille == 1 && e.Reference.StartsWith("HMGCSE", StringComparison.Ordinal)); // garde-corps normal
+    }
+
+    [Fact]
     public void Sous_mailles_references_presentes_dans_la_bibliotheque()
     {
         var biblio = BibliothequeBlocs.DepuisFichier("blocs-EM-3D.txt");
@@ -491,6 +555,8 @@ public class GenerateurFacadeTests
             face.Mailles[2].ProfondeurRecette = 2.5;
             face.Mailles[5].Stabilisation = 2.0;
             face.Mailles[4].Poutre = 4;
+            face.Mailles[6].Type = TypeMaille.Escalier;
+            face.Mailles[7].Type = acier ? TypeMaille.DemiEscalier100 : TypeMaille.DemiEscalier070;
             foreach (var n in face.Niveaux)
             {
                 n.Recette = true;

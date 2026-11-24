@@ -120,6 +120,35 @@ public class BibliothequeDwgTests
         StructureEnL(rendu, doc, Path.GetFileNameWithoutExtension(fichier));
         SousMailles(rendu, doc, Path.GetFileNameWithoutExtension(fichier));
         PoutreEtPignon(rendu, doc, Path.GetFileNameWithoutExtension(fichier));
+        Escaliers(rendu, doc, Path.GetFileNameWithoutExtension(fichier));
+    }
+
+    /// <summary>Façade de 15 m, dernier plancher 6 m : escalier 1,50 m (maille 2) et demi-escalier 1,00 m (maille 5).</summary>
+    private void Escaliers(RenduVectorDraw rendu, vdDocument doc, string nom)
+    {
+        var projet = ProjetStructure.Nouveau(face: new ParametresFacade { LongueurTotaleSouhaitee = 15, HauteurDernierPlancher = 6, NombreAcces = 0 });
+        var face = projet.S1;
+        face.Mailles[1].Type = TypeMaille.Escalier;
+        face.Mailles[4].Type = TypeMaille.DemiEscalier100;
+        var s = GenerateurStructure.Generer(projet);
+        var rapport = rendu.Dessiner(s, TableOrientations.ParDefaut());
+        _sortie.WriteLine($"ES : mailles {string.Join(" ", face.Mailles)} ; {rapport.Inseres} insérés, alertes : {string.Join(" | ", s.Alertes)}");
+        foreach (var x in rapport.Inserts.Where(x => x.Element.Famille == Famille.Escalier || x.Element.Reference.StartsWith("HMMONTGC", StringComparison.Ordinal)))
+        {
+            var b = x.Insert.BoundingBox;
+            _sortie.WriteLine(string.Format(CultureInfo.InvariantCulture, "ES {0,-18} o=({1:0.00},{2:0.00},{3:0.00}) inv={4}  X {5:0.00}..{6:0.00}  Y {7:0.00}..{8:0.00}  Z {9:0.00}..{10:0.00}",
+                x.Element.Reference, x.Element.Origine.X, x.Element.Origine.Y, x.Element.Origine.Z, x.Element.Inverse, b.Min.x, b.Max.x, b.Min.y, b.Max.y, b.Min.z, b.Max.z));
+        }
+
+        rendu.Rendu(ModeRendu.OmbreAretes);
+        rendu.Vue(Vues.Iso);
+        Image(doc, nom + "-ES-iso");
+        rendu.Vue(Vues.Facade);
+        Image(doc, nom + "-ES-facade");
+        rendu.Vue(Vues.Dessus);
+        Image(doc, nom + "-ES-dessus");
+        rendu.Vue(Vues.CoteGauche);
+        Image(doc, nom + "-ES-cote");
     }
 
     /// <summary>Façade de 15 m : poutre de franchissement à 4 m sur deux mailles, pignon de +4 m sur la maille d'accès.</summary>

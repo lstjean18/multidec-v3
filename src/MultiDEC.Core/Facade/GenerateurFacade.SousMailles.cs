@@ -36,6 +36,11 @@ public sealed partial class GenerateurFacade
             case TypeMaille.AccesRapporte:
                 return _h;
 
+            case TypeMaille.Escalier:
+            case TypeMaille.DemiEscalier070:
+            case TypeMaille.DemiEscalier100:
+                return EscalierPossible(m) ? _h : 0;
+
             case TypeMaille.Appro:
                 return niveaux.Where(n => n.Appro && !n.EstAccesSeul && n.Hauteur > Cotes.Tolerance).Select(n => n.Hauteur).DefaultIfEmpty(0).Max();
 
@@ -74,7 +79,9 @@ public sealed partial class GenerateurFacade
             double hs = HauteurSousMaille(m, niveaux);
             if (hs <= Cotes.Tolerance)
             {
-                _alertes.Add($"Maille {i + 1} : {(m.Type == TypeMaille.Appro ? "module d'appro" : "recette")} sans niveau desservi, ignoré(e).");
+                _alertes.Add(m.EstEscalier
+                    ? FormattableString.Invariant($"Maille {i + 1} : escalier impossible sur une maille de {m.Longueur:0.00} m (volées de 2,50 ou 3,00 m), ignoré.")
+                    : $"Maille {i + 1} : {(m.Type == TypeMaille.Appro ? "module d'appro" : "recette")} sans niveau desservi, ignoré(e).");
                 continue;
             }
 
@@ -84,7 +91,14 @@ public sealed partial class GenerateurFacade
                 files[cle] = files.TryGetValue(cle, out double h) ? Math.Max(h, hs) : hs;
             }
 
-            PlacerSousMaille(i, m, w, hs, niveaux);
+            if (m.EstEscalier)
+            {
+                PlacerEscalier(i, m, w, niveaux);
+            }
+            else
+            {
+                PlacerSousMaille(i, m, w, hs, niveaux);
+            }
         }
 
         foreach (var kv in files)
