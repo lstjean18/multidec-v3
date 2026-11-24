@@ -510,6 +510,14 @@
                       </DataTemplate>
                     </DataGridTemplateColumn.CellEditingTemplate>
                   </DataGridTemplateColumn>
+                  <DataGridTemplateColumn Header="Pare-grav." Width="Auto">
+                    <DataGridTemplateColumn.CellTemplate>
+                      <DataTemplate>
+                        <CheckBox IsChecked="{Binding PareGravois, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Center"
+                                  ToolTip="Pare-gravois à ce niveau sur toute la longueur de la face (consoles, tôles, lisses)" />
+                      </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                  </DataGridTemplateColumn>
                   <DataGridTemplateColumn Header="Diago H" Width="Auto">
                     <DataGridTemplateColumn.CellTemplate>
                       <DataTemplate>

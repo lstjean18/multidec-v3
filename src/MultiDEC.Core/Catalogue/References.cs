@@ -17,6 +17,11 @@ public static class References
 
     /// <summary>Structure grutable : support au pied, vis et écrou à la place des goupilles (v2).</summary>
     public const string SupportGrutable = "HMSUPSUNI";
+
+    /// <summary>Pare-gravois (v2) : console à chaque file, tôles de 2,00 m posées tous les 0,80 m, crochets.</summary>
+    public const string ConsolePareGravois = "HMPARGRA";
+    public const string TolePareGravois = "HMTOG200";
+    public const string CrochetPareGravois = "HMCROCHE";
     public const string VisGrutable = "VSZ10070";
     public const string EcrouGrutable = "VEF10";
     public const string Echelle = "HMPLALECHELLE";

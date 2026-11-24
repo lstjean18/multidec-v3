@@ -143,6 +143,7 @@ public sealed class GenerateurFacade
 
         PlacerDiagonales();
         PlacerAbouts(niveaux);
+        PlacerPareGravois(niveaux);
         var bilan = PlacerAmarrages();
 
         if (bilan.NoteDeCalculObligatoire)
@@ -501,6 +502,59 @@ public sealed class GenerateurFacade
         inverse = !inverse;
     }
 
+    // ------------------------------------------------------------------------------------------
+    // Pare-gravois (v2 : clJonction + AjouteLissesPargra + PlacePareGravoisToles)
+    // ------------------------------------------------------------------------------------------
+
+    /// <summary>Inclinaison des consoles de pare-gravois : 35° (lisses), tôles à 55° de l'horizontale.</summary>
+    public const double AnglePareGravois = 35.0;
+
+    /// <summary>Pas de pose des tôles (largeur utile 0,80 m).</summary>
+    public const double PasTolesPareGravois = 0.80;
+
+    private void PlacerPareGravois(List<Niveau> niveaux)
+    {
+        foreach (var n in niveaux.Where(n => n.PareGravois && n.Hauteur > Cotes.Tolerance))
+        {
+            double z = n.Hauteur;
+
+            // Une console HMPARGRA à chaque file, sur la file extérieure, tournée vers l'extérieur.
+            for (int f = 0; f <= DerniereFile; f++)
+            {
+                Ajouter(References.ConsolePareGravois, Famille.PareGravois, new Point3(_x[f], -_l, z), Axe.Y, Face.Exterieure);
+            }
+
+            // Trois lisses par maille le long des consoles (cotes v2 : 0,27 / 1,20 / 2,15 m au-dessus du plancher,
+            // 0,10 m devant la file, le tout tourné de 35° autour de la file extérieure).
+            foreach (var (dy, dz) in new[] { (-0.10, 0.27), (-0.10, 1.20), (-0.10, 2.15) })
+            {
+                var (y, zz) = Tourner(dy, dz, AnglePareGravois);
+                for (int i = 0; i < _projet.Mailles.Count; i++)
+                {
+                    var m = _projet.Mailles[i];
+                    Ajouter(References.LisseOuTraverse(m.Longueur), Famille.PareGravois, new Point3(_x[i], Cotes.Arrondi(-_l + y), Cotes.Arrondi(z + zz)), Axe.X, Face.Exterieure, i + 1);
+                }
+            }
+
+            // Tôles tous les 0,80 m sur toute la longueur (la dernière calée au bout), 3 crochets chacune.
+            for (double x = 0; x <= LongueurTotale + Cotes.Tolerance; x = Cotes.Arrondi(x + PasTolesPareGravois))
+            {
+                double xTole = Math.Min(x + PasTolesPareGravois, LongueurTotale);
+                Ajouter(References.TolePareGravois, Famille.PareGravois, new Point3(xTole, -_l - 0.10, z + 0.10), Axe.X, Face.Exterieure, 0, inverse: false, inclinaison: -(90 - AnglePareGravois));
+                Ajouter(References.CrochetPareGravois, Famille.PareGravois, new Point3(x, -_l, z + 0.30), Axe.X, Face.Exterieure);
+                Ajouter(References.CrochetPareGravois, Famille.PareGravois, new Point3(x, -_l, z + 0.30), Axe.X, Face.Exterieure);
+                Ajouter(References.CrochetPareGravois, Famille.PareGravois, new Point3(x, -_l, z + 0.075), Axe.X, Face.Exterieure);
+            }
+        }
+    }
+
+    /// <summary>Rotation d'un point (dy, dz) autour de l'axe X de <paramref name="angle"/> degrés (sens v2 : Y vers Z).</summary>
+    private static (double Y, double Z) Tourner(double dy, double dz, double angle)
+    {
+        double a = angle * Math.PI / 180;
+        return (dy * Math.Cos(a) - dz * Math.Sin(a), dy * Math.Sin(a) + dz * Math.Cos(a));
+    }
+
     private void PlacerConsole(ConsoleInfo c, int index, double x0, double lm, Niveau n, int num)
     {
         double z = n.Hauteur;
@@ -726,6 +780,6 @@ public sealed class GenerateurFacade
         Ajouter(lisse, Famille.Lisse, new Point3(x0, -_l, 0), Axe.X, Face.Exterieure, num);
     }
 
-    private void Ajouter(string reference, Famille famille, Point3 origine, Axe axe, Face face = Face.Aucune, int numeroMaille = 0, bool inverse = false) =>
-        _el.Add(new ElementPlace(reference, famille, origine, axe, face, numeroMaille, inverse));
+    private void Ajouter(string reference, Famille famille, Point3 origine, Axe axe, Face face = Face.Aucune, int numeroMaille = 0, bool inverse = false, double inclinaison = 0) =>
+        _el.Add(new ElementPlace(reference, famille, origine, axe, face, numeroMaille, inverse, inclinaison));
 }

@@ -18,6 +18,7 @@ public sealed class Niveau : INotifyPropertyChanged
     private TypePlancher _type = TypePlancher.Complet;
     private string? _console;
     private bool _diagoH;
+    private bool _pareGravois;
 
     public Niveau()
     {
@@ -55,6 +56,13 @@ public sealed class Niveau : INotifyPropertyChanged
         }
     }
 
+    /// <summary>Pare-gravois à ce niveau, sur toute la longueur de la face, côté extérieur (v2).</summary>
+    public bool PareGravois
+    {
+        get => _pareGravois;
+        set => Changer(ref _pareGravois, value);
+    }
+
     /// <summary>
     /// Diagonales horizontales à ce niveau, dans toutes les mailles de travail (comme la v2),
     /// sens alterné d'une maille à l'autre.
@@ -86,7 +94,7 @@ public sealed class Niveau : INotifyPropertyChanged
         "Con" + Cotes.Arrondi(hauteur).ToString("0.##", CultureInfo.InvariantCulture).Replace('.', ',') + "m";
 
     public override string ToString() =>
-        FormattableString.Invariant($"{Hauteur:0.00} m {Type}{(DiagoH ? " + diago H" : string.Empty)}{(AConsole ? " + " + Console : string.Empty)}");
+        FormattableString.Invariant($"{Hauteur:0.00} m {Type}{(DiagoH ? " + diago H" : string.Empty)}{(PareGravois ? " + pare-gravois" : string.Empty)}{(AConsole ? " + " + Console : string.Empty)}");
 
     private void Changer<T>(ref T champ, T valeur, string? autre = null, [CallerMemberName] string? nom = null)
     {

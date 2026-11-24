@@ -110,6 +110,12 @@ public sealed class TableOrientations
             m = Matrices.Produit(Matrices.Echelle(1, -1, 1), m);
         }
 
+        // 2 bis. Inclinaison autour de l'axe de l'élément (tôles de pare-gravois), avant l'orientation dans le plan.
+        if (Math.Abs(e.Inclinaison) > 1e-9)
+        {
+            m = Matrices.Produit(Matrices.RotationX(e.Inclinaison), m);
+        }
+
         // 3. Orientation dans le plan.
         double angle = AngleStandard(e) + (r?.RotationZ ?? 0);
         m = Matrices.Produit(Matrices.RotationZ(angle), m);

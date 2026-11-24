@@ -109,6 +109,23 @@ public class GenerateurFacadeTests
     }
 
     [Fact]
+    public void Pare_gravois_consoles_a_chaque_file_toles_et_lisses()
+    {
+        var face = Standard();
+        face.Niveaux.Single(n => Math.Abs(n.Hauteur - 2) < 0.001).PareGravois = true;
+        var s = GenerateurFacade.Generer(face);
+        var pg = s.Elements.Where(e => e.Famille == Famille.PareGravois).ToList();
+
+        Assert.Equal(face.Mailles.Count + 1, pg.Count(e => e.Reference == "HMPARGRA"));
+        Assert.Equal(3 * face.Mailles.Count, pg.Count(e => e.Axe == Axe.X && e.Reference.StartsWith("HMLIS", StringComparison.Ordinal)));
+        int toles = (int)Math.Floor(face.LongueurObtenue / 0.8 + 1e-6) + 1;
+        Assert.Equal(toles, pg.Count(e => e.Reference == "HMTOG200"));
+        Assert.Equal(3 * toles, pg.Count(e => e.Reference == "HMCROCHE"));
+        Assert.All(pg.Where(e => e.Reference == "HMTOG200"), e => Assert.Equal(-55, e.Inclinaison));
+        Assert.All(pg, e => Assert.True(e.Origine.Y <= -0.70 + 1e-6)); // côté extérieur
+    }
+
+    [Fact]
     public void Ecran_trappes_acier_coche_les_diagonales_1_sur_2()
     {
         var vm = new MultiDEC.App.ViewModels.FacadeViewModel();
@@ -282,6 +299,7 @@ public class GenerateurFacadeTests
             {
                 var face = Standard(p => { p.Modele = modele; p.Socle = socle.Reference; p.Grutable = true; p.Traverses = TypeTraverse.Renforce; p.TrappesAcier = true; p.LisseGcAccesNiveau0 = true; });
                 face.Niveaux.First(n => n.Hauteur > 0).DiagoH = true;
+                face.Niveaux.First(n => n.Hauteur > 0).PareGravois = true;
                 var manquantes = biblio.Manquantes(GenerateurFacade.Generer(face).Elements.Select(e => e.Reference))
                                        .Where(r => !r.StartsWith("HMTUBAMA", StringComparison.Ordinal)).ToList();
                 Assert.True(manquantes.Count == 0, $"{modele} {socle.Reference} : blocs manquants {string.Join(", ", manquantes)}");

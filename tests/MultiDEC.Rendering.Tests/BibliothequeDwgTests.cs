@@ -128,7 +128,7 @@ public class BibliothequeDwgTests
     {
         var table = TableOrientations.ParDefaut();
         var verticaux = new[] { "HMCALEBOIS", "HMSOCREG", "HMSOCREG800", "HMSOCROU", "HMSOCROU200-1200", "HMSOCROUFC", "HMVERORI38780", "HMVERORI38500B019", "HMEMB", "HMSUPSUNI", "HMCOLLEV", "VSZ10070", "VEF10", "OECGOUP8S" };
-        var long_x = new[] { "HMPORTILLONPLIN070", "HMPORTILLONPLIN100", "HMPARGRA", "HMPOUT500", "HMPTRL250", "HMLISR250", "HMLIS250", "HMTRAP250", "HMPLAA250", "HMTRA070" };
+        var long_x = new[] { "HMPORTILLONPLIN070", "HMPORTILLONPLIN100", "HMPARGRA", "HMTOG200", "HMCROCHE", "HMECH100LIS", "HMPOUT500", "HMPTRL250", "HMLISR250", "HMLIS250", "HMTRAP250", "HMPLAA250", "HMTRA070" };
         foreach (var (refs, axe) in new[] { (verticaux, Axe.Z), (long_x, Axe.X) })
         {
             foreach (var nom in refs)
@@ -165,6 +165,9 @@ public class BibliothequeDwgTests
         projet.Faces[1].Parametres.LongueurTotaleSouhaitee = 6;
         projet.ProposerFace(1);
         projet.Faces[1].Niveaux.First(n => n.Hauteur == 4).DiagoH = true;
+        projet.S1.Niveaux.First(n => n.Hauteur == 2).PareGravois = true;
+        projet.S1.Parametres.TrappesAcier = true;
+        projet.General.Socle = "HMSOCROU";
         var s = GenerateurStructure.Generer(projet);
         var rapport = rendu.Dessiner(s, TableOrientations.ParDefaut());
         _sortie.WriteLine($"L : {rapport.Inseres} insérés, alertes : {string.Join(" | ", s.Alertes)}");
@@ -180,6 +183,10 @@ public class BibliothequeDwgTests
         Image(doc, nom + "-L-iso");
         rendu.Vue(Vues.Dessus);
         Image(doc, nom + "-L-dessus");
+        rendu.Vue(Vues.Facade);
+        Image(doc, nom + "-L-facade");
+        rendu.Vue(Vues.CoteGauche);
+        Image(doc, nom + "-L-cote");
         rendu.MettreEnEvidence("S2");
         rendu.Vue(Vues.Iso);
         Image(doc, nom + "-L-S2");
