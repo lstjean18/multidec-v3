@@ -427,6 +427,22 @@ public sealed class GenerateurFacade
 
         if (z <= Cotes.Tolerance)
         {
+            // Option « lisse GC accès 1,50 m au niveau 0 » (v2) : lisse à 1,50 m au départ de l'échelle,
+            // du côté où il y a un garde-corps.
+            if (_p.LisseGcAccesNiveau0)
+            {
+                string lisseGc = References.LisseOuTraverse(lm);
+                if (_p.SecuriteExterieure != TypeSecurite.Sans)
+                {
+                    Ajouter(lisseGc, Famille.Lisse, new Point3(x0, -_l, 1.5), Axe.X, Face.Exterieure, num);
+                }
+
+                if (_p.SecuriteInterieure != TypeSecurite.Sans)
+                {
+                    Ajouter(lisseGc, Famille.Lisse, new Point3(x0, 0, 1.5), Axe.X, Face.Interieure, num);
+                }
+            }
+
             return;
         }
 

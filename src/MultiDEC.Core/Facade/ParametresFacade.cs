@@ -62,6 +62,9 @@ public sealed class ParametresFacade
     /// </summary>
     public bool TrappesAcier { get; set; }
 
+    /// <summary>Lisse de garde-corps à 1,50 m au niveau 0 dans les mailles d'accès (option v2).</summary>
+    public bool LisseGcAccesNiveau0 { get; set; }
+
     /// <summary>
     /// Structure grutable (accessoires de levage, v2) : support HMSUPSUNI au pied de chaque poteau et
     /// goupilles remplacées par vis VSZ10070 + écrou VEF10.

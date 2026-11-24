@@ -137,6 +137,8 @@
           <TextBlock Style="{StaticResource Section}" Text="ACCÈS" />
           <CheckBox Content="Trappes et plateaux acier" IsChecked="{Binding TrappesAcier}"
                     ToolTip="Mailles d'accès de 2 m et plus : trappe de 1,00 m + traverse intermédiaire + plateaux" />
+          <CheckBox Content="Lisse GC accès 1,50 m au niveau 0" IsChecked="{Binding Parametres.LisseGcAccesNiveau0}"
+                    ToolTip="Lisse à 1,50 m au pied des échelles, du côté où il y a un garde-corps" />
           <TextBlock Text="Trappes acier : les garde-corps MDS de la face passent en lisses (règle v2)." TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource Discret}" Margin="0,4" />
 
           <TextBlock Style="{StaticResource Section}" Text="OPTIONS" />

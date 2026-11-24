@@ -98,6 +98,17 @@ public class GenerateurFacadeTests
     }
 
     [Fact]
+    public void Lisse_gc_acces_a_1_50_au_niveau_0()
+    {
+        int Lisses150(FaceEchafaudage f) => GenerateurFacade.Generer(f).Elements
+            .Count(e => e.Famille == Famille.Lisse && Math.Abs(e.Origine.Z - 1.5) < 0.001);
+        Assert.Equal(0, Lisses150(Standard()));
+
+        var face = Standard(p => p.LisseGcAccesNiveau0 = true);
+        Assert.Equal(face.Mailles.Count(m => m.Type == TypeMaille.Acces), Lisses150(face)); // GC extérieur seulement
+    }
+
+    [Fact]
     public void Ecran_trappes_acier_coche_les_diagonales_1_sur_2()
     {
         var vm = new MultiDEC.App.ViewModels.FacadeViewModel();
