@@ -142,7 +142,11 @@
           <TextBlock Text="Trappes acier : les garde-corps MDS de la face passent en lisses (règle v2)." TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource Discret}" Margin="0,4" />
 
           <TextBlock Style="{StaticResource Section}" Text="OPTIONS" />
-          <CheckBox Content="Traverses renforcées" IsChecked="{Binding Parametres.Renforce}" />
+          <DockPanel Margin="0,2,0,4">
+            <ComboBox DockPanel.Dock="Right" Width="110" Style="{StaticResource ListeLibelles}" ItemsSource="{x:Static vm:FacadeViewModel.TypesTraverse}" SelectedItem="{Binding Parametres.Traverses}"
+                      ToolTip="Traverses des files aux planchers complets ; poutrelle et poutre au-delà de 1,05 m de largeur" />
+            <TextBlock Style="{StaticResource Etiquette}" Text="Traverses" />
+          </DockPanel>
           <CheckBox Content="Lisses en pied" IsChecked="{Binding Parametres.LissesEnPied}" />
           <CheckBox Content="Départ poteaux 3 m côté extérieur" IsChecked="{Binding Parametres.Depart3mExterieur}" />
           <CheckBox Content="Garde-corps 1,50 m au dernier niveau" IsChecked="{Binding Parametres.GardeCorpsCouvreur}" />

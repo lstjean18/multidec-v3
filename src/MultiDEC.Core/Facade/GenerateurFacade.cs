@@ -200,8 +200,8 @@ public sealed class GenerateurFacade
             // Traverses à chaque niveau (renforcées aux planchers complets si demandé).
             foreach (var n in niveaux)
             {
-                bool renforce = _p.Renforce && n.Hauteur > Cotes.Tolerance && !n.EstAccesSeul;
-                Ajouter(References.LisseOuTraverse(_l, renforce), Famille.Traverse, new Point3(x, 0, n.Hauteur), Axe.Y);
+                var type = n.Hauteur > Cotes.Tolerance && !n.EstAccesSeul ? _p.Traverses : TypeTraverse.Lisse;
+                Ajouter(References.LisseOuTraverse(_l, type), Famille.Traverse, new Point3(x, 0, n.Hauteur), Axe.Y);
             }
 
             if (!niveaux.Any(n => Cotes.Egal(n.Hauteur, 0)))

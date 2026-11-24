@@ -25,15 +25,33 @@ public static class References
     /// Lisse (L &gt; 1,05 m) ou traverse (L ≤ 1,05 m) : HMLIS250, HMTRA070.
     /// Version renforcée : HMLISR250 pour une lisse, HMTRA100R pour une traverse (nommage du DXF).
     /// </summary>
-    public static string LisseOuTraverse(double longueur, bool renforce = false)
+    public static string LisseOuTraverse(double longueur, bool renforce = false) =>
+        LisseOuTraverse(longueur, renforce ? TypeTraverse.Renforce : TypeTraverse.Lisse);
+
+    /// <summary>
+    /// Lisse ou traverse selon le type (GetRefLisse de la v2) : jusqu'à 1,05 m HMTRA, suffixe R au-delà de 0,75 m
+    /// si elle n'est pas simple ; au-delà, HMLIS / HMLISR / HMPTRL (renforcé jusqu'à 1,50 m) / HMPOUT.
+    /// </summary>
+    public static string LisseOuTraverse(double longueur, TypeTraverse type)
     {
         string cm = Cotes.EnCm3(longueur);
-        if (longueur > 1.05 + Cotes.Tolerance)
+        if (longueur <= 1.05 + Cotes.Tolerance)
         {
-            return renforce ? "HMLISR" + cm : "HMLIS" + cm;
+            return "HMTRA" + cm + (longueur > 0.75 + Cotes.Tolerance && type != TypeTraverse.Lisse ? "R" : string.Empty);
         }
 
-        return renforce ? "HMTRA" + cm + "R" : "HMTRA" + cm;
+        if (type == TypeTraverse.Poutrelle && longueur <= 1.50 + Cotes.Tolerance)
+        {
+            type = TypeTraverse.Renforce;
+        }
+
+        return type switch
+        {
+            TypeTraverse.Renforce => "HMLISR" + cm,
+            TypeTraverse.Poutrelle => "HMPTRL" + cm,
+            TypeTraverse.Poutre => "HMPOUT" + cm,
+            _ => "HMLIS" + cm,
+        };
     }
 
     /// <summary>Diagonale verticale de 2 m de haut : HMDIA + longueur + "2" (ex. HMDIA2502).</summary>

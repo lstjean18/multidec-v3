@@ -280,7 +280,7 @@ public class GenerateurFacadeTests
         {
             foreach (var modele in Enum.GetValues<ModeleEchafaudage>())
             {
-                var face = Standard(p => { p.Modele = modele; p.Socle = socle.Reference; p.Grutable = true; });
+                var face = Standard(p => { p.Modele = modele; p.Socle = socle.Reference; p.Grutable = true; p.Traverses = TypeTraverse.Renforce; p.TrappesAcier = true; p.LisseGcAccesNiveau0 = true; });
                 face.Niveaux.First(n => n.Hauteur > 0).DiagoH = true;
                 var manquantes = biblio.Manquantes(GenerateurFacade.Generer(face).Elements.Select(e => e.Reference))
                                        .Where(r => !r.StartsWith("HMTUBAMA", StringComparison.Ordinal)).ToList();
@@ -438,6 +438,7 @@ public class GenerateurFacadeTests
         facade["chantier"] = "Ancien";
         facade["parametres"]!["securiteExterieure"] = "GardeCorpsMds1";
         facade["parametres"]!["bache"] = true;
+        facade["parametres"]!["renforce"] = true;
         facade["mailles"]![0]!["console"] = "HMCON700E";
         var racine = new JsonObject { ["application"] = "MultiDEC", ["version"] = 1, ["facade"] = facade };
 
@@ -449,6 +450,8 @@ public class GenerateurFacadeTests
         Assert.True(projet.General.Bache);
         Assert.Equal(TypeSecurite.GardeCorpsMds2, projet.General.SecuriteExterieure);
         Assert.Equal(TypeSecurite.GardeCorpsMds2, relu.Parametres.SecuriteExterieure);
+        Assert.Equal(TypeTraverse.Renforce, relu.Parametres.Traverses);
+        Assert.DoesNotContain("\"renforce\"", FichierProjet.VersJson(projet));
         Assert.All(relu.Niveaux.Where(n => n.Type == TypePlancher.Complet), n => Assert.Equal("HMCON700E", n.Console));
         Assert.Equal(new[] { 2.0, 4, 6, 8, 10 }, relu.Mailles[0].Consoles);
         Assert.Empty(relu.Mailles[1].Consoles);

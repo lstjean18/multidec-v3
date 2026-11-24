@@ -18,8 +18,24 @@ public sealed class ParametresFacade
     /// <summary>Largeur de maille (distance entre file intérieure et file extérieure) : 0,70 / 0,75 / 1,00 / 1,05.</summary>
     public double LargeurMaille { get; set; } = 0.70;
 
-    /// <summary>Traverses renforcées (suffixe R) aux niveaux de plancher complets.</summary>
-    public bool Renforce { get; set; }
+    /// <summary>Type des traverses des files aux niveaux de plancher complets (Lisse, Renforcé, Poutrelle, Poutre).</summary>
+    public TypeTraverse Traverses { get; set; } = TypeTraverse.Lisse;
+
+    /// <summary>Ancienne case « Traverses renforcées » (fichiers v1 à v3 du 23/11) : lue, jamais écrite.</summary>
+    [JsonInclude]
+    [JsonPropertyName("renforce")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    internal bool? AncienRenforce
+    {
+        get => null;
+        set
+        {
+            if (value == true && Traverses == TypeTraverse.Lisse)
+            {
+                Traverses = TypeTraverse.Renforce;
+            }
+        }
+    }
 
     /// <summary>Longueur de façade souhaitée, utilisée pour proposer la grille des mailles.</summary>
     public double LongueurTotaleSouhaitee { get; set; } = 20.0;

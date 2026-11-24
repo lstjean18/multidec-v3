@@ -153,4 +153,17 @@ public class ReglesTests
         var blocs = File.ReadAllLines(Path.Combine(AppContext.BaseDirectory, "blocs-EM-3D.txt"));
         Assert.All(CatalogueSocles.Tous, s => Assert.Contains(s.Reference, blocs));
     }
+
+    [Theory]
+    [InlineData(0.70, TypeTraverse.Renforce, "HMTRA070")]   // pas de R jusqu'à 0,75 m (v2)
+    [InlineData(1.00, TypeTraverse.Renforce, "HMTRA100R")]
+    [InlineData(1.00, TypeTraverse.Poutre, "HMTRA100R")]
+    [InlineData(1.00, TypeTraverse.Lisse, "HMTRA100")]
+    [InlineData(2.50, TypeTraverse.Renforce, "HMLISR250")]
+    [InlineData(2.50, TypeTraverse.Poutrelle, "HMPTRL250")]
+    [InlineData(1.50, TypeTraverse.Poutrelle, "HMLISR150")]
+    [InlineData(3.00, TypeTraverse.Poutre, "HMPOUT300")]
+    [InlineData(2.00, TypeTraverse.Lisse, "HMLIS200")]
+    public void Reference_des_traverses_comme_la_v2(double l, TypeTraverse type, string attendu) =>
+        Assert.Equal(attendu, References.LisseOuTraverse(l, type));
 }

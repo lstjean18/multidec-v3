@@ -99,3 +99,15 @@ public enum Face
     Interieure,
     Exterieure,
 }
+
+/// <summary>
+/// Type des traverses des files aux niveaux de plancher complets (liste « Traverses » de la v2).
+/// Poutrelle et poutre ne servent qu'au-delà de 1,05 m de largeur (volumique) ; en dessous, renforcé.
+/// </summary>
+public enum TypeTraverse
+{
+    Lisse,
+    Renforce,
+    Poutrelle,
+    Poutre,
+}
