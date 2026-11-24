@@ -24,6 +24,12 @@ public sealed class FaceEchafaudage
     /// <summary>Niveaux de plancher (toutes hauteurs, y compris 0). Éditable.</summary>
     public List<Niveau> Niveaux { get; set; } = new List<Niveau>();
 
+    /// <summary>
+    /// Paramètres de la face au moment de « Valider la structure » (<see cref="ProjetStructure.SignatureProposition"/>).
+    /// Null pour un projet enregistré avant ce bouton : la face est considérée comme validée.
+    /// </summary>
+    public string? SignatureValidee { get; set; }
+
     [JsonIgnore]
     public double LongueurObtenue => Cotes.Arrondi(Mailles.Sum(m => m.Longueur));
 
@@ -95,7 +101,8 @@ public sealed class FaceEchafaudage
         Nom = Nom,
         Parametres = Parametres.Copie(),
         Mailles = Mailles.Select(m => m.Copie()).ToList(),
-        Niveaux = Niveaux.Select(n => new Niveau(n.Hauteur, n.Type, n.Console, n.DiagoH) { PareGravois = n.PareGravois }).ToList(),
+        Niveaux = Niveaux.Select(n => new Niveau(n.Hauteur, n.Type, n.Console, n.DiagoH) { PareGravois = n.PareGravois, Appro = n.Appro, Recette = n.Recette }).ToList(),
+        SignatureValidee = SignatureValidee,
     };
 
     /// <summary>Abscisses des files de poteaux (n mailles → n+1 files).</summary>

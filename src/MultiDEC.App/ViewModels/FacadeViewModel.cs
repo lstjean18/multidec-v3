@@ -194,6 +194,7 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
             Notifier(nameof(InversionPossible));
             Notifier(nameof(LargeursProposees));
             ChargerFace(Math.Min(_indexFace, Faces.Count - 1));
+            NotifierValidation();
         }
     }
 
@@ -294,6 +295,7 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
             Parametres.LongueurTotaleSouhaitee = value;
             Notifier();
             NombreAcces = RegleAcces.NombreConseille(value);
+            NotifierValidation();
         }
     }
 
@@ -307,9 +309,39 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
             {
                 Parametres.NombreAcces = value;
                 Notifier();
+                NotifierValidation();
             }
         }
     }
+
+    /// <summary>Largeur de maille de la face active (change aussi le carré d'angle de la face suivante).</summary>
+    public double LargeurMaille
+    {
+        get => Parametres.LargeurMaille;
+        set { Parametres.LargeurMaille = value; Notifier(); NotifierValidation(); }
+    }
+
+    public double LongueurMaillePreferee
+    {
+        get => Parametres.LongueurMaillePreferee;
+        set { Parametres.LongueurMaillePreferee = value; Notifier(); NotifierValidation(); }
+    }
+
+    public double HauteurDernierPlancher
+    {
+        get => Parametres.HauteurDernierPlancher;
+        set { Parametres.HauteurDernierPlancher = value; Notifier(); NotifierValidation(); }
+    }
+
+    // ---- « Valider la structure » : rouge si un paramètre a changé depuis la dernière validation ----
+
+    /// <summary>La face active doit être revalidée (bouton rouge), sinon le bouton est vert.</summary>
+    public bool FaceActiveAValider => _projet.FaceAValider(_indexFace);
+
+    /// <summary>Première face à valider (-1 si aucune) : « Dessiner » ouvre son onglet.</summary>
+    public int PremiereFaceAValider() => _projet.PremiereFaceAValider();
+
+    private void NotifierValidation() => Notifier(nameof(FaceActiveAValider));
 
     /// <summary>
     /// Trappes et plateaux acier : avec des garde-corps MDS à l'extérieur, l'option « diagonales 1 maille sur 2 »
@@ -585,6 +617,7 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
     {
         _projet = projet;
         _projet.AppliquerGeneraux();
+        _projet.MarquerFacesSansSignature();
         _structure = null;
         Remplir(Faces, projet.Faces);
         Decompte.Clear();
@@ -628,6 +661,7 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
         Notifier(nameof(Resume));
         Notifier(nameof(TitreGrilles));
         Notifier(nameof(CouleurFaceActive));
+        NotifierValidation();
         Notifier(nameof(ResumeFace));
         ColonnesConsolesChangees?.Invoke(this, EventArgs.Empty);
     }

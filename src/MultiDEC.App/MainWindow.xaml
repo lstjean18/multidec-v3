@@ -74,6 +74,29 @@
       <Setter Property="Margin" Value="0,3" />
     </Style>
 
+    <!-- « Valider la structure » : vert quand la face est à jour, rouge dès qu'un paramètre demande de la revalider. -->
+    <Style x:Key="BoutonValider" TargetType="Button">
+      <Setter Property="Foreground" Value="White" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border x:Name="Fond" Background="#2E7D32" CornerRadius="3" Padding="{TemplateBinding Padding}">
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Border>
+            <ControlTemplate.Triggers>
+              <DataTrigger Binding="{Binding FaceActiveAValider}" Value="True">
+                <Setter TargetName="Fond" Property="Background" Value="#C62828" />
+              </DataTrigger>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="Fond" Property="Opacity" Value="0.85" />
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
     <!-- Bouton de forme (Droite, En L, En U, Fermée). -->
     <Style x:Key="BoutonForme" TargetType="RadioButton">
       <Setter Property="Template">
@@ -109,13 +132,13 @@
             <TextBlock Style="{StaticResource Etiquette}" Text="Longueur souhaitée (m)" />
             <TextBox Grid.Column="1" Margin="0,2" Text="{Binding LongueurFacade, StringFormat=0.00}" />
             <TextBlock Grid.Row="1" Style="{StaticResource Etiquette}" Text="Largeur de maille (m)" />
-            <ComboBox Grid.Row="1" Grid.Column="1" Margin="0,2" ItemsSource="{Binding LargeursProposees}" SelectedItem="{Binding Parametres.LargeurMaille}" ItemStringFormat="0.00" />
+            <ComboBox Grid.Row="1" Grid.Column="1" Margin="0,2" ItemsSource="{Binding LargeursProposees}" SelectedItem="{Binding LargeurMaille}" ItemStringFormat="0.00" />
             <TextBlock Grid.Row="2" Style="{StaticResource Etiquette}" Text="Maille préférée (m)" />
-            <ComboBox Grid.Row="2" Grid.Column="1" Margin="0,2" ItemsSource="{x:Static vm:FacadeViewModel.LongueursMaille}" SelectedItem="{Binding Parametres.LongueurMaillePreferee}" ItemStringFormat="0.00" />
+            <ComboBox Grid.Row="2" Grid.Column="1" Margin="0,2" ItemsSource="{x:Static vm:FacadeViewModel.LongueursMaille}" SelectedItem="{Binding LongueurMaillePreferee}" ItemStringFormat="0.00" />
             <TextBlock Grid.Row="3" Style="{StaticResource Etiquette}" Text="Nombre d'accès" />
             <TextBox Grid.Row="3" Grid.Column="1" Margin="0,2" Text="{Binding NombreAcces}" />
             <TextBlock Grid.Row="4" Style="{StaticResource Etiquette}" Text="Dernier plancher (m)" />
-            <TextBox Grid.Row="4" Grid.Column="1" Margin="0,2" Text="{Binding Parametres.HauteurDernierPlancher, StringFormat=0.00}" />
+            <TextBox Grid.Row="4" Grid.Column="1" Margin="0,2" Text="{Binding HauteurDernierPlancher, StringFormat=0.00}" />
             <TextBlock Grid.Row="5" Style="{StaticResource Etiquette}" Text="Distance à la façade (m)" />
             <TextBox Grid.Row="5" Grid.Column="1" Margin="0,2" Text="{Binding Parametres.DistanceFacade, StringFormat=0.00}" />
           </Grid>
@@ -124,8 +147,8 @@
             <TextBlock Text="{Binding ResumeFace}" TextWrapping="Wrap" FontSize="12" />
           </Border>
           <UniformGrid Columns="2" Margin="0,6,0,0">
-            <Button Content="Proposer la face" Command="{Binding Proposer}" Padding="6" Margin="0,0,4,0" Foreground="{StaticResource Accent}" BorderBrush="{StaticResource Accent}"
-                    ToolTip="Remplace les grilles de cette face par la proposition calculée depuis les dimensions" />
+            <Button Content="Valider la structure" Command="{Binding Proposer}" Padding="6" Margin="0,0,4,0" Style="{StaticResource BoutonValider}"
+                    ToolTip="Recalcule les grilles de cette face depuis les dimensions (rouge : un paramètre a changé, à valider)" />
             <Button Content="Copier depuis S1" Command="{Binding CopierS1}" IsEnabled="{Binding PeutCopierS1}" Padding="6" Margin="4,0,0,0"
                     ToolTip="Reprend les paramètres et les grilles de S1 (le carré d'angle est conservé)" />
           </UniformGrid>
@@ -207,8 +230,22 @@
         <Border Style="{StaticResource GroupeRuban}">
           <StackPanel>
             <StackPanel Orientation="Horizontal">
-              <Button Style="{StaticResource BoutonRuban}" Command="{Binding Proposer}" ToolTip="Proposer les grilles de la face active">
-                <StackPanel><TextBlock Style="{StaticResource Picto}" Text="&#xE82F;" /><TextBlock Text="Proposer la face" /></StackPanel>
+              <Button Style="{StaticResource BoutonRuban}" Command="{Binding Proposer}" ToolTip="Recalcule les grilles de la face active depuis ses dimensions">
+                <StackPanel>
+                  <TextBlock Text="&#xE82F;">
+                    <TextBlock.Style>
+                      <Style TargetType="TextBlock" BasedOn="{StaticResource Picto}">
+                        <Setter Property="Foreground" Value="#2E7D32" />
+                        <Style.Triggers>
+                          <DataTrigger Binding="{Binding FaceActiveAValider}" Value="True">
+                            <Setter Property="Foreground" Value="#C62828" />
+                          </DataTrigger>
+                        </Style.Triggers>
+                      </Style>
+                    </TextBlock.Style>
+                  </TextBlock>
+                  <TextBlock Text="Valider la structure" />
+                </StackPanel>
               </Button>
               <Button Style="{StaticResource BoutonRuban}" Click="Dessiner_Click" ToolTip="Générer et dessiner toute la structure">
                 <StackPanel><TextBlock Style="{StaticResource Picto}" Text="&#xE768;" /><TextBlock Text="Dessiner" FontWeight="SemiBold" /></StackPanel>
@@ -502,7 +539,7 @@
                             <TextBlock.Text>
                               <MultiBinding Converter="{StaticResource HauteurMax}">
                                 <Binding Path="EcartHauteur" />
-                                <Binding Path="DataContext.Parametres.HauteurDernierPlancher" RelativeSource="{RelativeSource AncestorType=DataGrid}" />
+                                <Binding Path="DataContext.HauteurDernierPlancher" RelativeSource="{RelativeSource AncestorType=DataGrid}" />
                               </MultiBinding>
                             </TextBlock.Text>
                           </TextBlock>

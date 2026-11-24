@@ -216,6 +216,48 @@ public class FacadeViewModelTests
     }
 
     [Fact]
+    public void Valider_la_structure_rouge_apres_un_changement_de_parametre()
+    {
+        var vm = new FacadeViewModel();
+        Assert.False(vm.FaceActiveAValider);
+        var changees = new List<string?>();
+        vm.PropertyChanged += (_, e) => changees.Add(e.PropertyName);
+
+        vm.LongueurFacade += 5;
+        Assert.True(vm.FaceActiveAValider);
+        Assert.Contains(nameof(FacadeViewModel.FaceActiveAValider), changees);
+        Assert.Equal(0, vm.PremiereFaceAValider());
+
+        vm.Proposer.Execute(null);
+        Assert.False(vm.FaceActiveAValider);
+        Assert.Equal(-1, vm.PremiereFaceAValider());
+
+        // Revenir à la valeur validée remet le bouton au vert ; les grilles éditées à la main ne comptent pas.
+        double h = vm.HauteurDernierPlancher;
+        vm.HauteurDernierPlancher = h + 2;
+        Assert.True(vm.FaceActiveAValider);
+        vm.HauteurDernierPlancher = h;
+        Assert.False(vm.FaceActiveAValider);
+        vm.Mailles.Add(new MailleDefinition(1.5));
+        Assert.False(vm.FaceActiveAValider);
+    }
+
+    [Fact]
+    public void Largeur_de_S1_changee_S2_a_valider()
+    {
+        var vm = new FacadeViewModel();
+        vm.Forme = FormeStructure.EnL;
+        Assert.Equal(-1, vm.PremiereFaceAValider());
+        vm.IndexFaceActive = 0;
+        vm.LargeurMaille = vm.LargeurMaille > 0.8 ? 0.7 : 1.0;
+        Assert.Equal(0, vm.PremiereFaceAValider());
+        vm.Proposer.Execute(null);
+        Assert.Equal(1, vm.PremiereFaceAValider()); // carré d'angle de S2 à refaire
+        vm.IndexFaceActive = 1;
+        Assert.True(vm.FaceActiveAValider);
+    }
+
+    [Fact]
     public void Garde_corps_mds1_absent_des_choix()
     {
         Assert.DoesNotContain("GardeCorpsMds1", FacadeViewModel.Securites.Cast<object>().Select(o => o.ToString()));

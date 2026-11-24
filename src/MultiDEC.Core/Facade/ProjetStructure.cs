@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text.Json.Serialization;
+using MultiDEC.Core.Geometrie;
 
 namespace MultiDEC.Core.Facade;
 
@@ -130,6 +132,7 @@ public sealed class ProjetStructure
                 CopierDepuisS1(Faces.Count - 1);
                 Faces[Faces.Count - 1].Parametres.LargeurMaille = face.Parametres.LargeurMaille;
                 SansAcces(Faces[Faces.Count - 1]);
+                MarquerValidee(Faces.Count - 1);
             }
             else
             {
@@ -164,7 +167,60 @@ public sealed class ProjetStructure
 
         face.Niveaux = ProposeurStructure.ProposerNiveaux(face.Parametres);
         face.Mailles = ProposeurStructure.ProposerMailles(face.Parametres, CommenceParCarreDAngle(indexFace), LargeurFacePrecedente(indexFace));
+        MarquerValidee(indexFace);
     }
+
+    // ---- « Valider la structure » (Laurent, 24/11/2026) ----------------------------------------
+
+    /// <summary>
+    /// Paramètres dont dépend la proposition des grilles d'une face : longueur, largeur, maille préférée,
+    /// accès, dernier plancher, carré d'angle (et largeur de la face précédente), structure volumique.
+    /// </summary>
+    public string SignatureProposition(int indexFace)
+    {
+        var p = Faces[indexFace].Parametres;
+        bool carre = CommenceParCarreDAngle(indexFace);
+        return string.Join("|", new[]
+        {
+            Texte(p.LongueurTotaleSouhaitee), Texte(p.LargeurMaille), Texte(p.LongueurMaillePreferee),
+            p.NombreAcces.ToString(CultureInfo.InvariantCulture), Texte(p.HauteurDernierPlancher),
+            carre ? "angle " + Texte(LargeurFacePrecedente(indexFace)) : "-", EstVolumique ? "volumique" : "-",
+        });
+    }
+
+    /// <summary>Un paramètre de la face a changé depuis sa dernière validation : le bouton passe au rouge.</summary>
+    public bool FaceAValider(int indexFace) =>
+        Faces[indexFace].SignatureValidee is string s && s != SignatureProposition(indexFace);
+
+    /// <summary>Première face à valider, -1 si toutes sont à jour.</summary>
+    public int PremiereFaceAValider()
+    {
+        for (int i = 0; i < Faces.Count; i++)
+        {
+            if (FaceAValider(i))
+            {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+    public void MarquerValidee(int indexFace) => Faces[indexFace].SignatureValidee = SignatureProposition(indexFace);
+
+    /// <summary>Projet ouvert sans signature (enregistré avant le bouton) : faces considérées comme validées.</summary>
+    public void MarquerFacesSansSignature()
+    {
+        for (int i = 0; i < Faces.Count; i++)
+        {
+            if (Faces[i].SignatureValidee == null)
+            {
+                MarquerValidee(i);
+            }
+        }
+    }
+
+    private static string Texte(double v) => Cotes.Arrondi(v).ToString("0.###", CultureInfo.InvariantCulture);
 
     /// <summary>Largeur de la face à laquelle se raccorde le carré d'angle de la face <paramref name="indexFace"/>.</summary>
     public double LargeurFacePrecedente(int indexFace)
@@ -190,6 +246,7 @@ public sealed class ProjetStructure
 
         Faces[indexFace] = copie;
         copie.Parametres.AppliquerGeneraux(General);
+        MarquerValidee(indexFace);
     }
 
     /// <summary>
@@ -212,6 +269,7 @@ public sealed class ProjetStructure
         var p = face ?? new ParametresFacade();
         p.AppliquerGeneraux(projet.General);
         projet.Faces.Add(ProposeurStructure.NouveauProjet(p));
+        projet.MarquerValidee(0);
         return projet;
     }
 }

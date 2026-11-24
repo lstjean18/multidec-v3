@@ -91,12 +91,22 @@ public partial class MainWindow : Window
 
     private void Dessiner_Click(object sender, RoutedEventArgs e)
     {
+        // Un bouton « Valider la structure » est rouge : on prévient et on ouvre l'onglet de la face concernée.
+        int aValider = Vm.PremiereFaceAValider();
+        if (aValider >= 0)
+        {
+            Onglets.SelectedIndex = aValider + 1;
+            MessageBox.Show(this, $"Les paramètres de {Vm.Faces[aValider].Nom} ont changé : cliquez sur « Valider la structure » (bouton rouge) avant de dessiner.",
+                            "Dessin", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
         try
         {
             var structure = Vm.Generer();
             if (_rendu == null)
             {
-                MessageBox.Show(this, "Choisissez d'abord la bibliothèque de blocs (Blocs-EM-3D.dxf). Le décompte est calculé.", "Dessin", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show(this, "Choisissez d'abord la bibliothèque de blocs (Blocs 3D - Echafaudage.dwg). Le décompte est calculé.", "Dessin", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
 
