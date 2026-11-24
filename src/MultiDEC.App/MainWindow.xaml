@@ -139,6 +139,8 @@
           <CheckBox Content="Lisses en pied" IsChecked="{Binding Parametres.LissesEnPied}" />
           <CheckBox Content="Départ poteaux 3 m côté extérieur" IsChecked="{Binding Parametres.Depart3mExterieur}" />
           <CheckBox Content="Garde-corps 1,50 m au dernier niveau" IsChecked="{Binding Parametres.GardeCorpsCouvreur}" />
+          <CheckBox Content="Grutable (accessoires de levage)" IsChecked="{Binding Parametres.Grutable}"
+                    ToolTip="Support HMSUPSUNI au pied des poteaux, vis VSZ10070 + écrou VEF10 à la place des goupilles" />
         </StackPanel>
       </ScrollViewer>
     </DataTemplate>
@@ -306,7 +308,7 @@
                   <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
                 <Grid.RowDefinitions>
-                  <RowDefinition /><RowDefinition />
+                  <RowDefinition /><RowDefinition /><RowDefinition />
                 </Grid.RowDefinitions>
                 <TextBlock Style="{StaticResource Etiquette}" Text="Modèle" />
                 <ComboBox Grid.Column="1" Margin="0,2" Style="{StaticResource ListeLibelles}" ItemsSource="{x:Static vm:FacadeViewModel.Modeles}"
@@ -314,6 +316,9 @@
                 <TextBlock Grid.Row="1" Style="{StaticResource Etiquette}" Text="Plateaux" />
                 <ComboBox Grid.Row="1" Grid.Column="1" Margin="0,2" ItemsSource="{x:Static vm:FacadeViewModel.ChoixPlateaux}" DisplayMemberPath="Value" SelectedValuePath="Key"
                           SelectedValue="{Binding General.Plateaux}" />
+                <TextBlock Grid.Row="2" Style="{StaticResource Etiquette}" Text="Socles" />
+                <ComboBox Grid.Row="2" Grid.Column="1" Margin="0,2" ItemsSource="{x:Static vm:FacadeViewModel.Socles}" DisplayMemberPath="Libelle" SelectedValuePath="Reference"
+                          SelectedValue="{Binding General.Socle}" />
               </Grid>
 
               <TextBlock Style="{StaticResource Section}" Text="FORME DE LA STRUCTURE" />

@@ -143,6 +143,11 @@ public sealed class GenerateurFacade
             _alertes.Add($"Amarrages : {bilan.Amarrages.Count} placés pour {bilan.MinimumParSurface} requis par la surface ({bilan.Surface:0.#} m²).");
         }
 
+        if (CatalogueSocles.De(_p.Socle).AvecRoues && _projet.Mailles.Count > 1)
+        {
+            _alertes.Add("Socles à roue : seulement sur une structure à 4 pieds (une maille), comme dans la v2.");
+        }
+
         if (_p.SecuriteExterieure == TypeSecurite.Sans && _p.SecuriteInterieure == TypeSecurite.Sans)
         {
             _alertes.Add("Aucun garde-corps : pas de diagonale verticale posée, contreventement à prévoir.");

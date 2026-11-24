@@ -66,6 +66,8 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
 
     public static Array Formes { get; } = Enum.GetValues(typeof(FormeStructure));
 
+    public static IReadOnlyList<SocleInfo> Socles => CatalogueSocles.Tous;
+
     /// <summary>Gammes de plateaux avec leur libellé (« Standard NF », « Anti Contamination NF »…).</summary>
     public static IReadOnlyList<KeyValuePair<GammePlateaux, string>> ChoixPlateaux { get; } =
         Enum.GetValues(typeof(GammePlateaux)).Cast<GammePlateaux>()

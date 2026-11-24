@@ -9,6 +9,7 @@ using MultiDEC.Core.Facade;
 using MultiDEC.Rendering.VectorDraw;
 using VectorDraw.Professional.Components;
 using VectorDraw.Professional.vdObjects;
+using VectorDraw.Professional.vdFigures;
 using VectorDraw.Professional.vdPrimaries;
 using Xunit;
 using Xunit.Abstractions;
@@ -144,8 +145,8 @@ public class BibliothequeDwgTests
                 ins.SetUnRegisterDocument(doc);
                 ins.setDocumentDefaults();
                 ins.Block = b;
-                ins.InsertionPoint = new VectorDraw.Geometry.gPoint(0, 0, 0);
-                ins.ExtrusionVector = new VectorDraw.Geometry.Vector(pose.Extrusion.X, pose.Extrusion.Y, pose.Extrusion.Z);
+                ins.InsertionPoint = new global::VectorDraw.Geometry.gPoint(0, 0, 0);
+                ins.ExtrusionVector = new global::VectorDraw.Geometry.Vector(pose.Extrusion.X, pose.Extrusion.Y, pose.Extrusion.Z);
                 ins.Rotation = pose.Rotation;
                 ins.Update();
                 var bx = ins.BoundingBox;

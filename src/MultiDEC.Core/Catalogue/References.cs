@@ -14,6 +14,11 @@ public static class References
     public const string SocleReglable = "HMSOCREG";
     public const string Embase = "HMEMB";
     public const string Goupille = "OECGOUP8S";
+
+    /// <summary>Structure grutable : support au pied, vis et écrou à la place des goupilles (v2).</summary>
+    public const string SupportGrutable = "HMSUPSUNI";
+    public const string VisGrutable = "VSZ10070";
+    public const string EcrouGrutable = "VEF10";
     public const string Echelle = "HMPLALECHELLE";
 
     /// <summary>

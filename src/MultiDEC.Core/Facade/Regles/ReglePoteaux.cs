@@ -46,11 +46,18 @@ public static class ReglePoteaux
     /// <param name="gardeCorps">Le poteau porte un garde-corps au dernier niveau.</param>
     public static List<TronconPoteau> Empiler(ParametresFacade p, bool depart3m, bool gardeCorps)
     {
-        var t = new List<TronconPoteau>
+        var socle = CatalogueSocles.De(p.Socle);
+        var t = new List<TronconPoteau>();
+        if (socle.ZCale is double zCale)
         {
-            new TronconPoteau(References.CaleBois, Famille.Calage, ZCaleBois),
-            new TronconPoteau(References.SocleReglable, Famille.Socle, ZSocle),
-        };
+            t.Add(new TronconPoteau(References.CaleBois, Famille.Calage, zCale));
+        }
+
+        t.Add(new TronconPoteau(socle.Reference, Famille.Socle, socle.ZSocle));
+        if (p.Grutable)
+        {
+            t.Add(new TronconPoteau(References.SupportGrutable, Famille.Socle, 0.13)); // v2 : +0,20 avec HMSOCREG à +0,07
+        }
 
         double h = p.HauteurDernierPlancher;
         double sommet = h + (gardeCorps ? 1.0 : 0.0) + (gardeCorps && p.GardeCorpsCouvreur ? 0.5 : 0.0);
@@ -97,7 +104,16 @@ public static class ReglePoteaux
             t.Add(new TronconPoteau(References.Poteau(p.Modele, l), Famille.Poteau, zReel));
             if (goupilles && z > Cotes.Tolerance)
             {
-                t.Add(new TronconPoteau(References.Goupille, Famille.Goupille, zReel));
+                if (p.Grutable)
+                {
+                    // Grutable : vis + écrou à la place de la goupille (v2).
+                    t.Add(new TronconPoteau(References.VisGrutable, Famille.Goupille, zReel));
+                    t.Add(new TronconPoteau(References.EcrouGrutable, Famille.Goupille, zReel));
+                }
+                else
+                {
+                    t.Add(new TronconPoteau(References.Goupille, Famille.Goupille, zReel));
+                }
             }
 
             z = Cotes.Arrondi(z + l);

@@ -51,6 +51,16 @@ public sealed class ParametresFacade
     [JsonIgnore] // paramètre général : vient de ParametresGeneraux
     public int QualitePlateaux { get; set; } = 1;
 
+    /// <summary>Socle ou vérin sous chaque poteau.</summary>
+    [JsonIgnore] // paramètre général : vient de ParametresGeneraux
+    public string Socle { get; set; } = Catalogue.CatalogueSocles.ParDefaut;
+
+    /// <summary>
+    /// Structure grutable (accessoires de levage, v2) : support HMSUPSUNI au pied de chaque poteau et
+    /// goupilles remplacées par vis VSZ10070 + écrou VEF10.
+    /// </summary>
+    public bool Grutable { get; set; }
+
     // ---- Sécurité --------------------------------------------------------------------------
 
     [JsonIgnore] // paramètre général : vient de ParametresGeneraux
@@ -120,6 +130,7 @@ public sealed class ParametresFacade
         Modele = g.Modele;
         Plateaux = g.Plateaux;
         QualitePlateaux = g.QualitePlateaux;
+        Socle = g.Socle;
         SecuriteExterieure = g.SecuriteExterieure;
         SecuriteInterieure = g.SecuriteInterieure;
         SecuriteAbouts = g.SecuriteAbouts;

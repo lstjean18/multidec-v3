@@ -16,6 +16,9 @@ public sealed class ParametresGeneraux
     /// <summary>Qualité plateau (1 ou 2), utilisée par la gamme Standard pour 2,50 et 3,00 m.</summary>
     public int QualitePlateaux { get; set; } = 1;
 
+    /// <summary>Socle ou vérin sous chaque poteau (référence de <see cref="Catalogue.CatalogueSocles"/>).</summary>
+    public string Socle { get; set; } = Catalogue.CatalogueSocles.ParDefaut;
+
     // ---- Protections -------------------------------------------------------------------------
 
     public TypeSecurite SecuriteExterieure { get; set; } = TypeSecurite.GardeCorpsMds2;

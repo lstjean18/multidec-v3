@@ -1,3 +1,4 @@
+using MultiDEC.Core.Catalogue;
 using MultiDEC.Core.Facade;
 using MultiDEC.Core.Facade.Regles;
 using Xunit;
@@ -122,5 +123,34 @@ public class ReglesTests
         var t = ReglePoteaux.Empiler(p, depart3m: true, gardeCorps: true).Where(x => x.Famille != Famille.Calage && x.Famille != Famille.Socle);
         // départ 3 m sans effet en MRE ; 1,00 + 2,00 + 2,00 = 5,00
         Assert.Equal(new[] { "HMEMB", "HMPOTDP10E", "HMPOTST20", "HMPOTST20" }, t.Select(x => x.Reference));
+    }
+
+    [Fact]
+    public void Socle_a_roue_sans_cale_et_verin_avec_cale()
+    {
+        var roue = ReglePoteaux.Empiler(new ParametresFacade { Socle = "HMSOCROU" }, false, true);
+        Assert.DoesNotContain(roue, x => x.Famille == Famille.Calage);
+        Assert.Equal("HMSOCROU", roue.Single(x => x.Famille == Famille.Socle).Reference);
+
+        var verin = ReglePoteaux.Empiler(new ParametresFacade { Socle = "HMVERORI38780" }, false, true);
+        Assert.Contains(verin, x => x.Famille == Famille.Calage);
+        Assert.Equal("HMVERORI38780", verin.Single(x => x.Famille == Famille.Socle).Reference);
+    }
+
+    [Fact]
+    public void Grutable_support_au_pied_et_vis_ecrou_a_la_place_des_goupilles()
+    {
+        var t = ReglePoteaux.Empiler(new ParametresFacade { Grutable = true }, false, true);
+        Assert.Contains(t, x => x.Reference == "HMSUPSUNI");
+        Assert.DoesNotContain(t, x => x.Reference == "OECGOUP8S");
+        Assert.Equal(t.Count(x => x.Reference == "VSZ10070"), t.Count(x => x.Reference == "VEF10"));
+        Assert.True(t.Count(x => x.Reference == "VSZ10070") > 0);
+    }
+
+    [Fact]
+    public void Socles_du_catalogue_dans_la_bibliotheque()
+    {
+        var blocs = File.ReadAllLines(Path.Combine(AppContext.BaseDirectory, "blocs-EM-3D.txt"));
+        Assert.All(CatalogueSocles.Tous, s => Assert.Contains(s.Reference, blocs));
     }
 }

@@ -237,6 +237,23 @@ public class GenerateurFacadeTests
     }
 
     [Fact]
+    public void References_des_options_presentes_dans_la_bibliotheque()
+    {
+        var biblio = BibliothequeBlocs.DepuisFichier("blocs-EM-3D.txt");
+        foreach (var socle in CatalogueSocles.Tous)
+        {
+            foreach (var modele in Enum.GetValues<ModeleEchafaudage>())
+            {
+                var face = Standard(p => { p.Modele = modele; p.Socle = socle.Reference; p.Grutable = true; });
+                face.Niveaux.First(n => n.Hauteur > 0).DiagoH = true;
+                var manquantes = biblio.Manquantes(GenerateurFacade.Generer(face).Elements.Select(e => e.Reference))
+                                       .Where(r => !r.StartsWith("HMTUBAMA", StringComparison.Ordinal)).ToList();
+                Assert.True(manquantes.Count == 0, $"{modele} {socle.Reference} : blocs manquants {string.Join(", ", manquantes)}");
+            }
+        }
+    }
+
+    [Fact]
     public void References_generees_presentes_dans_la_bibliotheque()
     {
         var biblio = BibliothequeBlocs.DepuisFichier("blocs-EM-3D.txt");
