@@ -114,6 +114,74 @@ public class BibliothequeDwgTests
             rendu.Vue(Vues.Iso);
             Image(doc, Path.GetFileNameWithoutExtension(fichier) + "-" + mode);
         }
+
+        BoitesDesBlocs(doc);
+        StructureEnL(rendu, doc, Path.GetFileNameWithoutExtension(fichier));
+    }
+
+    /// <summary>
+    /// Boîte englobante de blocs à caler (socles, vérins, portillons, poutres…) insérés debout à l'origine,
+    /// comme le rendu insère un élément vertical : sert à relever leurs points de base dans la bibliothèque.
+    /// </summary>
+    private void BoitesDesBlocs(vdDocument doc)
+    {
+        var table = TableOrientations.ParDefaut();
+        var verticaux = new[] { "HMCALEBOIS", "HMSOCREG", "HMSOCREG800", "HMSOCROU", "HMSOCROU200-1200", "HMSOCROUFC", "HMVERORI38780", "HMVERORI38500B019", "HMEMB", "HMSUPSUNI", "HMCOLLEV", "VSZ10070", "VEF10", "OECGOUP8S" };
+        var long_x = new[] { "HMPORTILLONPLIN070", "HMPORTILLONPLIN100", "HMPARGRA", "HMPOUT500", "HMPTRL250", "HMLISR250", "HMLIS250", "HMTRAP250", "HMPLAA250", "HMTRA070" };
+        foreach (var (refs, axe) in new[] { (verticaux, Axe.Z), (long_x, Axe.X) })
+        {
+            foreach (var nom in refs)
+            {
+                var b = doc.Blocks.FindName(nom);
+                if (b == null)
+                {
+                    _sortie.WriteLine($"BOITE {nom} : absent");
+                    continue;
+                }
+
+                var pose = PoseInsert.Depuis(table.Matrice(new ElementPlace(nom, Famille.Socle, new MultiDEC.Core.Geometrie.Point3(0, 0, 0), axe)));
+                var ins = new vdInsert();
+                ins.SetUnRegisterDocument(doc);
+                ins.setDocumentDefaults();
+                ins.Block = b;
+                ins.InsertionPoint = new VectorDraw.Geometry.gPoint(0, 0, 0);
+                ins.ExtrusionVector = new VectorDraw.Geometry.Vector(pose.Extrusion.X, pose.Extrusion.Y, pose.Extrusion.Z);
+                ins.Rotation = pose.Rotation;
+                ins.Update();
+                var bx = ins.BoundingBox;
+                _sortie.WriteLine(string.Format(CultureInfo.InvariantCulture, "BOITE {0,-20} axe {1}  X {2:0.000}..{3:0.000}  Y {4:0.000}..{5:0.000}  Z {6:0.000}..{7:0.000}",
+                    nom, axe, bx.Min.x, bx.Max.x, bx.Min.y, bx.Max.y, bx.Min.z, bx.Max.z));
+            }
+        }
+    }
+
+    /// <summary>Structure en L (S1 de 10 m, S2 de 6 m) : image pour contrôler le carré d'angle et la rotation des blocs.</summary>
+    private void StructureEnL(RenduVectorDraw rendu, vdDocument doc, string nom)
+    {
+        var projet = ProjetStructure.Nouveau(face: new ParametresFacade { LongueurTotaleSouhaitee = 10, HauteurDernierPlancher = 4 });
+        projet.Forme = FormeStructure.EnL;
+        projet.AjusterFaces();
+        projet.Faces[1].Parametres.LongueurTotaleSouhaitee = 6;
+        projet.ProposerFace(1);
+        projet.Faces[1].Niveaux.First(n => n.Hauteur == 4).DiagoH = true;
+        var s = GenerateurStructure.Generer(projet);
+        var rapport = rendu.Dessiner(s, TableOrientations.ParDefaut());
+        _sortie.WriteLine($"L : {rapport.Inseres} insérés, alertes : {string.Join(" | ", s.Alertes)}");
+        foreach (var g in rapport.Inserts.GroupBy(x => x.Element.NomFace + " " + x.Element.Famille))
+        {
+            var bx = g.Select(x => x.Insert.BoundingBox).ToList();
+            _sortie.WriteLine(string.Format(CultureInfo.InvariantCulture, "L {0,-24} {1,3}  X {2:0.00}..{3:0.00}  Y {4:0.00}..{5:0.00}  Z {6:0.00}..{7:0.00}",
+                g.Key, g.Count(), bx.Min(b => b.Min.x), bx.Max(b => b.Max.x), bx.Min(b => b.Min.y), bx.Max(b => b.Max.y), bx.Min(b => b.Min.z), bx.Max(b => b.Max.z)));
+        }
+
+        rendu.Rendu(ModeRendu.OmbreAretes);
+        rendu.Vue(Vues.Iso);
+        Image(doc, nom + "-L-iso");
+        rendu.Vue(Vues.Dessus);
+        Image(doc, nom + "-L-dessus");
+        rendu.MettreEnEvidence("S2");
+        rendu.Vue(Vues.Iso);
+        Image(doc, nom + "-L-S2");
     }
 
     private void Image(vdDocument doc, string nom)
