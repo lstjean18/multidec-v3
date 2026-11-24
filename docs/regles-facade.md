@@ -51,3 +51,32 @@ Les points marqués **[à valider]** sont des choix faits en v3 faute de règle 
 - Contrôle : 1 ancrage / 24 m² (non bâché) ou / 10 m² (bâché) ; note de calcul au-delà de 24 m (recommandée si bâché).
 - Tube : le plus court parmi HMTUBAMA0500 / HMTUBAMA (1,20) / 1500 / 2000 couvrant largeur + distance façade + 0,10 m.
 - Dessin : bloc provisoire « cercle barré d'une croix » tant que les blocs HMTUBAMA manquent dans la bibliothèque.
+
+## Fonctions reprises de la v2 version2024 (codées le 24/11/2026)
+- **Structure** : formes droite, en L, en U, fermée (faces S1…S4 en équerre, carré d'angle) et **volumique** (2 à 6 modules M1…
+  côte à côte en profondeur, mêmes mailles que M1, largeur par module, poteaux et lisses communs dédoublonnés, protections
+  seulement sur les côtés extérieurs, amarrages sur M1, diagonales en travers au-delà de 1,05 m ou sur socles à roues).
+  Option « planchers en damier » : pas de plancher une maille sur deux, décalé d'un module à l'autre.
+- **Pare-gravois** (case par niveau) : consoles HMPARGRA sur toute la face, tôles HMTOG200 inclinées tous les 0,80 m
+  (dernière calée à L - 0,90), crochets et lisses.
+- **Sous-mailles rapportées côté extérieur** (type de maille) : file de poteaux supplémentaire à y = -largeur - profondeur.
+  - Accès rapporté 0,70 m : trappes et échelles en sens alterné sur toute la hauteur, garde-corps extérieur sur la file rapportée.
+  - Module d'appro 2,00 m (niveaux cochés « Appro ») : plancher, poutrelles, garde-corps basculant HMGCAPPROSUP / -C / GC.
+  - Recette (profondeur choisie, niveaux cochés « Recette ») : plancher et garde-corps en lisses.
+  - Aux niveaux desservis, la maille principale n'a pas de garde-corps extérieur.
+- **Escaliers** (type de maille, mailles de 2,50 m ; 3,00 m sans garde-corps de volée, absent de la bibliothèque) :
+  - Escalier 1,50 m : une volée HMESCALU…200 par niveau, alternativement côté façade et côté extérieur, en sens opposés ;
+    la dernière arrive côté façade. Garde-corps HMGCESCALU des deux côtés de la volée, extrémités HMGCESCALUEXTR au pied
+    de la première et en haut de la dernière. Montée de 1,00 m : volée HMESCALU175100.
+  - Demi-escalier 0,70 m (volées 0,65) ou 1,00 m (volées 88D) : une volée par niveau, toujours dans le même sens, garde-corps
+    côté maille seulement.
+  - Tour : traverses renforcées aux deux bouts à chaque niveau, lisses tous les 0,50 m le long de la file extérieure et en
+    travers au bout du palier (aux deux bouts pour un demi-escalier et au dernier niveau), plinthes, diagonales extérieure et en travers.
+  - Côté maille : garde-corps extérieur remplacé par la lisse de plancher et une fermeture (montant HMMONTGC(E) + 2 lisses + plinthe)
+    sur 1,50 m (2,00 m en maille de 3 m), ouverte sur 1,00 m au bout d'arrivée ; demi-escalier aux niveaux intermédiaires :
+    garde-corps central sur piquages HMPIQLIS(-E) + poteaux de 1 m, ouvert sur 0,75 m aux deux bouts.
+- **Stabilisation** (colonne « Stab. ») : file à la distance choisie, lisses et diagonales jusqu'à 2 m sous le dernier plancher.
+- **Pignon** (maille d'accès) : tour montée de +2, +4… m au-dessus du dernier plancher, planchers tous les 2 m et abouts.
+- **Poutre de franchissement** (colonne « Poutre », sur la maille de gauche d'une paire de mailles de travail identiques) :
+  deux poutres HMPOUT à 0,50 m sous le plancher choisi, file du milieu supprimée dessous, tubes en diagonale horizontale,
+  diagonales en V au-dessus, abouts sur les mailles voisines ; refus avec alerte si les conditions ne sont pas réunies.
