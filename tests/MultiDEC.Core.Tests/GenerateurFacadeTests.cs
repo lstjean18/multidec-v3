@@ -250,6 +250,65 @@ public class GenerateurFacadeTests
         Assert.Contains(s.Elements, e => e.Reference == "HMPOT10" && e.Origine.Y > 0.69);
     }
 
+    [Theory]
+    [InlineData(ModeleEchafaudage.MultiSystem, "HMCON700E", "HMPOT10", true, 0.04)]     // chape MS : embase + HMPOT10
+    [InlineData(ModeleEchafaudage.MultiReto, "HMCON700E", "HMPOTDP10", false, 0.0)]     // chape MR : poteau de départ direct
+    [InlineData(ModeleEchafaudage.MultiSystem, "HMCON700E2", "HMPOT10", false, 0.04)]   // nipple : embase intégrée
+    [InlineData(ModeleEchafaudage.MultiReto, "HMCON750MR", "HMPOTST10", false, 0.0)]
+    public void Console_bout_selon_la_fixation(ModeleEchafaudage modele, string console, string poteau, bool embase, double dz)
+    {
+        // Liste de Laurent du 24/11/2026 : platine / chape / nipple.
+        var projet = Standard(p => { p.Modele = modele; p.SecuriteInterieure = TypeSecurite.Lisses; });
+        Consoles(projet, console, 1);
+        var s = GenerateurFacade.Generer(projet);
+        double w = CatalogueConsoles.Liste.Single(c => c.Reference == console).Largeur;
+        var bout = s.Elements.Where(e => e.NumeroMaille == 2 && Math.Abs(e.Origine.Y - w) < 1e-6 && e.Axe == Axe.Z).ToList();
+        Assert.Contains(bout, e => e.Reference == poteau && Math.Abs(e.Origine.Z - 4 - dz) < 1e-6);
+        Assert.Equal(embase, bout.Any(e => e.Reference == "HMEMB"));
+        Assert.DoesNotContain(s.Alertes, a => a.Contains(console));
+    }
+
+    [Fact]
+    public void Console_a_platine_sans_poteau_ni_lisse_en_bout()
+    {
+        var projet = Standard(p => p.SecuriteInterieure = TypeSecurite.Lisses);
+        Consoles(projet, "HMCON300", 1);
+        var s = GenerateurFacade.Generer(projet);
+        Assert.Contains(s.Elements, e => e.Reference == "HMCON300");
+        Assert.DoesNotContain(s.Elements, e => e.NumeroMaille == 2 && e.Origine.Y > 0.1 && (e.Famille == Famille.Poteau || e.Famille == Famille.Lisse));
+        Assert.Contains(s.Alertes, a => a.Contains("HMCON300") && a.Contains("platine"));
+    }
+
+    [Fact]
+    public void Console_chape_MR_sans_garde_corps_ni_lisse()
+    {
+        // Multi-RETO, chape, pas de garde-corps demandé : pas de poteau, donc rien pour accrocher une lisse.
+        var projet = Standard(p => { p.Modele = ModeleEchafaudage.MultiReto; p.SecuriteInterieure = TypeSecurite.Sans; });
+        Consoles(projet, "HMCON700E", 1);
+        var s = GenerateurFacade.Generer(projet);
+        Assert.DoesNotContain(s.Elements, e => e.NumeroMaille == 2 && e.Origine.Y > 0.1 && (e.Famille == Famille.Poteau || e.Famille == Famille.Lisse));
+    }
+
+    [Theory]
+    [InlineData(ModeleEchafaudage.MultiSystem, "HMCON750MR")]
+    [InlineData(ModeleEchafaudage.MultiReto, "HMCON700E2")]
+    [InlineData(ModeleEchafaudage.MultiReto, "HMTRA030")]
+    public void Console_hors_liste_du_modele_signalee(ModeleEchafaudage modele, string console)
+    {
+        Assert.DoesNotContain(CatalogueConsoles.Pour(modele), c => c.Reference == console);
+        var projet = Standard(p => p.Modele = modele);
+        Consoles(projet, console, 0);
+        Assert.Contains(GenerateurFacade.Generer(projet).Alertes, a => a.Contains(console));
+    }
+
+    [Fact]
+    public void Consoles_de_la_liste_dans_la_bibliotheque()
+    {
+        var biblio = BibliothequeBlocs.DepuisFichier("blocs-3D-echafaudage.txt");
+        Assert.Equal(16, CatalogueConsoles.Liste.Count);
+        Assert.Empty(biblio.Manquantes(CatalogueConsoles.Liste.Select(c => c.Reference)));
+    }
+
     [Fact]
     public void Console_inconnue_signalee()
     {

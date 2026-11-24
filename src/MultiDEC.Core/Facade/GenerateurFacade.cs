@@ -829,8 +829,19 @@ public sealed partial class GenerateurFacade
     {
         double z = n.Hauteur;
         double w = c.Largeur;
-        bool gc = c.PorteGardeCorps && _p.SecuriteInterieure != TypeSecurite.Sans;
+        bool gcDemande = _p.SecuriteInterieure != TypeSecurite.Sans;
+        bool gc = c.PorteGardeCorps && gcDemande;
+        bool lisse = gc || c.LisseSansPoteau(_p.Modele);
         bool sommet = Cotes.Egal(z, _h);
+        string? embase = c.Embase(_p.Modele);
+        double dz = c.DecalageZ(_p.Modele);
+
+        // Console à platine : pas de poteau possible en bout (Laurent, 24/11/2026).
+        if (gcDemande && !c.PorteGardeCorps)
+        {
+            _alertes.Add(FormattableString.Invariant(
+                $"Maille {num}, niveau {z:0.00} m : console {c.Reference} à platine, pas de poteau ni de garde-corps possible en bout."));
+        }
 
         // Une console sur chaque file bordant la maille, sans doublon avec la maille voisine.
         for (int f = index; f <= index + 1; f++)
@@ -842,38 +853,37 @@ public sealed partial class GenerateurFacade
 
             double x = _x[f];
             Ajouter(c.Reference, Famille.Console, new Point3(x, 0, z), Axe.Y, Face.Interieure, num);
-            if (c.AccessoireBout != null)
+            if (embase != null)
             {
-                Ajouter(c.AccessoireBout, Famille.Embase, new Point3(x, w, z), Axe.Z, Face.Interieure, num);
+                Ajouter(embase, Famille.Embase, new Point3(x, w, z), Axe.Z, Face.Interieure, num);
             }
 
             if (gc)
             {
-                Ajouter(References.PoteauGardeCorpsConsole(_p.Modele), Famille.Poteau, new Point3(x, w, z + c.DecalageZ), Axe.Z, Face.Interieure, num);
+                Ajouter(c.PoteauGardeCorps(_p.Modele), Famille.Poteau, new Point3(x, w, z + dz), Axe.Z, Face.Interieure, num);
                 Ajouter(References.Goupille, Famille.Goupille, new Point3(x, w, z), Axe.Z, Face.Interieure, num);
                 if (_p.GardeCorpsCouvreur && sommet)
                 {
-                    Ajouter(References.PoteauCouvreurConsole(_p.Modele), Famille.Poteau, new Point3(x, w, z + 1.0 + c.DecalageZ), Axe.Z, Face.Interieure, num);
+                    Ajouter(References.PoteauCouvreurConsole(_p.Modele), Famille.Poteau, new Point3(x, w, z + 1.0 + dz), Axe.Z, Face.Interieure, num);
                     Ajouter(References.Goupille, Famille.Goupille, new Point3(x, w, z + 1.0), Axe.Z, Face.Interieure, num);
                 }
             }
-
         }
 
         // About en lisses au bout de la console quand la maille voisine n'a pas de console à ce niveau,
-        // et en bout de façade (Laurent, 23/11/2026).
-        if (ConsoleDe(index - 1, n) == null && (index > 0 || _p.AboutGauche))
+        // et en bout de façade (Laurent, 23/11/2026) ; il faut un point d'accroche au bout.
+        if (lisse && ConsoleDe(index - 1, n) == null && (index > 0 || _p.AboutGauche))
         {
             PlacerAbout(_x[index], z, w, gauche: true, console: true, num, yOrigine: w);
         }
 
-        if (ConsoleDe(index + 1, n) == null && (index + 1 < DerniereFile || _p.AboutDroit))
+        if (lisse && ConsoleDe(index + 1, n) == null && (index + 1 < DerniereFile || _p.AboutDroit))
         {
             PlacerAbout(_x[index + 1], z, w, gauche: false, console: true, num, yOrigine: w);
         }
 
         PlacerPlateaux(x0, w, z, w, lm, num);
-        if (c.PorteGardeCorps)
+        if (lisse)
         {
             Ajouter("HMLIS" + Cotes.EnCm3(lm), Famille.Lisse, new Point3(x0, w, z), Axe.X, Face.Interieure, num);
         }

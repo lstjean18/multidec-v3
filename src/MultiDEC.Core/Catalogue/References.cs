@@ -137,14 +137,6 @@ public static class References
 
     public static string Poteau(ModeleEchafaudage modele, double longueur) => BasePoteau(modele) + Cotes.EnDm2(longueur);
 
-    /// <summary>Poteau de garde-corps en bout de console (1,00 m).</summary>
-    public static string PoteauGardeCorpsConsole(ModeleEchafaudage modele) => modele switch
-    {
-        ModeleEchafaudage.MultiSystem => "HMPOT10",
-        ModeleEchafaudage.MultiReto => "HMPOTDP10",
-        _ => "HMPOTST10",
-    };
-
     /// <summary>Rehausse couvreur en bout de console (0,50 m).</summary>
     public static string PoteauCouvreurConsole(ModeleEchafaudage modele) =>
         modele == ModeleEchafaudage.MultiSystem ? "HMPOT05" : "HMPOTST05";
