@@ -500,7 +500,13 @@ public class GenerateurFacadeTests
         Assert.Equal(-2.10, avant.Origine.Y, 6);
 
         Assert.Equal(10, s.Elements.Count(e => e.Reference == "HMGCESCALU200"));
-        Assert.Equal(4, s.Elements.Count(e => e.Reference == "HMGCESCALUEXTR")); // pied de la 1re volée, haut de la dernière, 2 côtés
+        Assert.Equal(3, s.Elements.Count(e => e.Reference == "HMGCESCALUEXTR")); // pied de la 1re volée (2 côtés), haut de la dernière côté vide seulement
+
+        // Diagonales en travers côté extérieur de la tour, aucune devant l'entrée (pied de la 1re volée, au sol).
+        var travers = s.Elements.Where(e => e.Reference == "HMDIA1502" && e.Axe == Axe.Y && e.NumeroMaille == 2).ToList();
+        Assert.All(travers, e => Assert.True(e.Origine.X < x0 || e.Origine.X > x1));
+        bool piedADroite = !volees[0].Inverse;
+        Assert.DoesNotContain(travers, e => e.Origine.Z < 0.01 && (piedADroite ? e.Origine.X > x1 : e.Origine.X < x0));
         Assert.Equal(5, s.Elements.Count(e => e.Reference == "HMMONTGCE"));
         Assert.Equal(2, Pieds(s, y2).Count);
         Assert.Equal(11.0, Sommet(s, x0, y2), 3);
@@ -527,6 +533,9 @@ public class GenerateurFacadeTests
         Assert.Equal(8, s.Elements.Count(e => e.Reference == "HMPIQLIS-E")); // 2 par niveau de 2 à 8 m
         Assert.Equal(8, s.Elements.Count(e => e.Reference == "HMPOT10" && e.Famille == Famille.GardeCorps));
         Assert.Single(s.Elements, e => e.Reference == "HMMONTGCE"); // ouverture au dernier niveau
+        Assert.Single(s.Elements, e => e.Reference == "HMGCESCALUEXTR"); // au pied seulement : on sort en haut
+        double x1 = face.AbscissesFiles()[6];
+        Assert.DoesNotContain(s.Elements, e => e.Reference == "HMDIA1002" && e.Axe == Axe.Y && e.Origine.Z < 0.01 && e.Origine.X > x1); // entrée dégagée
         Assert.Equal(2, Pieds(s, -0.70 - 1.0).Count);
     }
 

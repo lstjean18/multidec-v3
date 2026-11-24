@@ -35,6 +35,12 @@ public sealed class OrientationBloc
     /// </summary>
     public bool MiroirZ { get; set; }
 
+    /// <summary>
+    /// Bloc posé en travers (axe Y) dessiné tourné vers l'intérieur : retourné pour qu'il soit tourné vers
+    /// l'extérieur de la structure (cadres d'about HMGCSE…GT, Laurent 24/11/2026).
+    /// </summary>
+    public bool RetourneEnTravers { get; set; }
+
     /// <summary>Décalage en mètres dans le repère monde, appliqué en dernier.</summary>
     public double[] Decalage { get; set; } = new double[3];
 }
@@ -63,7 +69,7 @@ public sealed class TableOrientations
     {
         new OrientationBloc { Prefixe = "HMPLA", MiroirZ = true },
         new OrientationBloc { Prefixe = "HMPLAL", MiroirZ = false },
-        new OrientationBloc { Prefixe = "HMGCSE", MiroirFaceInterieure = true },
+        new OrientationBloc { Prefixe = "HMGCSE", MiroirFaceInterieure = true, RetourneEnTravers = true },
         new OrientationBloc { Prefixe = "HMPLIM", MiroirFaceInterieure = true },
         new OrientationBloc { Prefixe = "HMPLINBO", MiroirFaceInterieure = true },
         new OrientationBloc { Prefixe = "HMDIA", MiroirFaceInterieure = true },
@@ -116,7 +122,7 @@ public sealed class TableOrientations
             m = Matrices.Produit(Matrices.Echelle(-1, 1, 1), m); // origine à droite, part vers la gauche
         }
 
-        if (e.Inverse && e.Axe == Axe.Y)
+        if (e.Axe == Axe.Y && (e.Inverse ^ (r?.RetourneEnTravers == true)))
         {
             // About de l'extrémité gauche (x = 0) : miroir de l'about droit selon X monde
             // (les garde-corps d'about ont un sens, Laurent 23/11/2026).

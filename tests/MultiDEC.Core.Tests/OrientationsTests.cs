@@ -52,6 +52,18 @@ public class OrientationsTests
     }
 
     [Fact]
+    public void Cadre_d_about_retourne_vers_l_exterieur()
+    {
+        // Laurent 24/11/2026 : les cadres HMGCSE…GT étaient tournés vers l'intérieur ; l'about gauche reste le miroir du droit.
+        var droit = new ElementPlace("HMGCSE070GT", Famille.GardeCorps, new Point3(20, 0, 2), Axe.Y);
+        var gauche = new ElementPlace("HMGCSE070GT", Famille.GardeCorps, new Point3(0, 0, 2), Axe.Y, Face.Aucune, 1, inverse: true);
+        var lisse = new ElementPlace("HMTRA070", Famille.Traverse, new Point3(20, 0, 2), Axe.Y);
+        var lisseGauche = new ElementPlace("HMTRA070", Famille.Traverse, new Point3(0, 0, 2), Axe.Y, Face.Aucune, 1, inverse: true);
+        Assert.Equal(-Transforme(lisse, 0.3, 0, 0.2).X + 40, Transforme(droit, 0.3, 0, 0.2).X, 6);
+        Assert.Equal(-Transforme(lisseGauche, 0.3, 0, 0.2).X, Transforme(gauche, 0.3, 0, 0.2).X, 6);
+    }
+
+    [Fact]
     public void Volee_large_88D_deja_debout_non_relevee()
     {
         // Relevé serveur du 24/11/2026 : les volées 88D relevées étaient couchées (largeur selon Z) ;

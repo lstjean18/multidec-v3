@@ -22,6 +22,22 @@ public class FacadeViewModelTests
     }
 
     [Fact]
+    public void Maille_passee_en_recette_coche_le_dernier_niveau()
+    {
+        var vm = new FacadeViewModel();
+        Assert.DoesNotContain(vm.Niveaux, n => n.Recette);
+        vm.Mailles[0].Type = TypeMaille.Recette;
+        var coches = vm.Niveaux.Where(n => n.Recette).ToList();
+        Assert.Single(coches);
+        Assert.Equal(vm.Niveaux.Max(n => n.Hauteur), coches[0].Hauteur);
+
+        // Tout décoché : la recette n'est pas dessinée, l'utilisateur est prévenu.
+        coches[0].Recette = false;
+        var s = vm.Generer();
+        Assert.Contains(s.Alertes, a => a.Contains("ne sera pas représentée"));
+    }
+
+    [Fact]
     public void Console_vide_equivaut_a_sans_console()
     {
         var vm = new FacadeViewModel();

@@ -4,7 +4,7 @@
         xmlns:vm="clr-namespace:MultiDEC.App.ViewModels"
         xmlns:app="clr-namespace:MultiDEC.App"
         xmlns:wfi="clr-namespace:System.Windows.Forms.Integration;assembly=WindowsFormsIntegration"
-        Title="MultiDEC v3" Height="900" Width="1500"
+        Title="MultiDEC v3" Height="900" Width="1500" Icon="MultiDEC.ico"
         WindowState="Maximized" FontFamily="Segoe UI" FontSize="13">
   <Window.DataContext>
     <vm:FacadeViewModel />

@@ -32,6 +32,7 @@ public sealed partial class GenerateurFacade
         double y2 = Cotes.Arrondi(-_l - w);
         bool demi = m.Type != TypeMaille.Escalier;
         bool large = m.Type == TypeMaille.DemiEscalier100;
+        bool gaucheLibre = !MemeSousMaille(index - 1, m);
         bool droiteLibre = !MemeSousMaille(index + 1, m);
 
         // v2 : DecGC = largeur de volée (0,65 ou 0,88), volée à 5 cm de la file extérieure.
@@ -103,14 +104,21 @@ public sealed partial class GenerateurFacade
                 }
             }
 
-            // Diagonales de la tour sur 2 m : face extérieure et en travers aux deux bouts.
+            // Diagonales de la tour sur 2 m : face extérieure et en travers aux deux bouts, côté extérieur de la tour
+            // (Laurent, 24/11/2026). Au sol, pas de diagonale devant l'entrée (pied de la première volée).
             if (!haut && cotes[k + 1] - z >= 2.0 - Cotes.Tolerance)
             {
                 Ajouter(References.DiagonaleVerticale(lm), Famille.DiagonaleVerticale, new Point3(x0, Cotes.Arrondi(y2 - DemiTube), z), Axe.X, Face.Exterieure, num);
-                Travers(References.DiagonaleVerticale(w), Famille.DiagonaleVerticale, x0 + DemiTube, y1, z, num);
-                if (droiteLibre)
+                bool entreeAGauche = k == 0 && PiedPremiereVoleeAGauche(demi, cotes.Count);
+                bool entreeADroite = k == 0 && !entreeAGauche;
+                if (!entreeAGauche)
                 {
-                    Travers(References.DiagonaleVerticale(w), Famille.DiagonaleVerticale, x1 - DemiTube, y1, z, num);
+                    Travers(References.DiagonaleVerticale(w), Famille.DiagonaleVerticale, gaucheLibre ? x0 - DemiTube : x0 + DemiTube, y1, z, num);
+                }
+
+                if (droiteLibre && !entreeADroite)
+                {
+                    Travers(References.DiagonaleVerticale(w), Famille.DiagonaleVerticale, x1 + DemiTube, y1, z, num);
                 }
             }
 
@@ -144,6 +152,12 @@ public sealed partial class GenerateurFacade
     }
 
     /// <summary>
+    /// Pied de la première volée côté x0 ? Une volée non symétrisée monte vers x0 (pied côté x1) ;
+    /// pour l'escalier, la première est symétrisée quand le nombre de niveaux au-dessus du sol est pair.
+    /// </summary>
+    private static bool PiedPremiereVoleeAGauche(bool demi, int nombreCotes) => !demi && (nombreCotes - 2) % 2 == 1;
+
+    /// <summary>
     /// Volée et ses garde-corps (HMGCESCALU, posé 0,50 m après le haut de la volée), extrémités HMGCESCALUEXTR
     /// au pied de la première volée et en haut de la dernière.
     /// </summary>
@@ -175,7 +189,9 @@ public sealed partial class GenerateurFacade
                     new Point3(Cotes.Arrondi(xHaut + sens * (0.5 + longueurGc)), y, Cotes.Arrondi(z - montee + 1.0)), Axe.X, Face.Exterieure, num, !miroir);
             }
 
-            if (derniere)
+            // En haut de la dernière volée : pas d'extrémité côté maille, on doit pouvoir sortir (Laurent, 24/11/2026) ;
+            // le demi-escalier n'a de garde-corps que côté maille, donc aucune extrémité en haut.
+            if (derniere && !demi && Cotes.Egal(y, yv))
             {
                 Ajouter(References.GardeCorpsVoleeExtremite, Famille.Escalier,
                     new Point3(Cotes.Arrondi(xHaut + sens * 0.5), y, Cotes.Arrondi(z + 1.0)), Axe.X, Face.Exterieure, num, miroir);

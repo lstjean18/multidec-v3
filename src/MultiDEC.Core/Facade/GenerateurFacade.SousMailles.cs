@@ -81,7 +81,9 @@ public sealed partial class GenerateurFacade
             {
                 _alertes.Add(m.EstEscalier
                     ? FormattableString.Invariant($"Maille {i + 1} : escalier impossible sur une maille de {m.Longueur:0.00} m (volées de 2,50 ou 3,00 m), ignoré.")
-                    : $"Maille {i + 1} : {(m.Type == TypeMaille.Appro ? "module d'appro" : "recette")} sans niveau desservi, ignoré(e).");
+                    : m.Type == TypeMaille.Recette
+                        ? $"Maille {i + 1} : la recette ne sera pas représentée, car elle n'est indiquée sur aucun niveau (colonne « Recette » de la grille des niveaux)."
+                        : $"Maille {i + 1} : le module d'appro ne sera pas représenté, car il n'est indiqué sur aucun niveau (colonne « Appro » de la grille des niveaux).");
                 continue;
             }
 
@@ -151,11 +153,12 @@ public sealed partial class GenerateurFacade
             // et le long de la file rapportée aux niveaux non desservis (v2 AjouteDiagos forcées).
             if (m.Type != TypeMaille.AccesRapporte && z < hs - Cotes.Tolerance)
             {
+                // En travers : côté extérieur de la sous-maille (Laurent, 24/11/2026), sauf sur une file partagée.
                 string diaW = References.DiagonaleVerticale(w);
-                Travers(diaW, Famille.DiagonaleVerticale, x0 + DemiTube, y1, z, num);
+                Travers(diaW, Famille.DiagonaleVerticale, gaucheLibre ? x0 - DemiTube : x0 + DemiTube, y1, z, num);
                 if (droiteLibre)
                 {
-                    Travers(diaW, Famille.DiagonaleVerticale, x1 - DemiTube, y1, z, num);
+                    Travers(diaW, Famille.DiagonaleVerticale, x1 + DemiTube, y1, z, num);
                 }
                 if (!desservi && !m.Diagonale)
                 {
@@ -326,6 +329,7 @@ public sealed partial class GenerateurFacade
             double y1 = -_l;
             double y = Cotes.Arrondi(-_l - s);
             bool memeADroite = i + 1 < _projet.Mailles.Count && Cotes.Egal(_projet.Mailles[i + 1].Stabilisation, s);
+            bool memeAGauche = i > 0 && Cotes.Egal(_projet.Mailles[i - 1].Stabilisation, s);
             files.Add((i, Cotes.Arrondi(s)));
             files.Add((i + 1, Cotes.Arrondi(s)));
 
@@ -343,10 +347,10 @@ public sealed partial class GenerateurFacade
                 if (z < hs - Cotes.Tolerance)
                 {
                     Ajouter(References.DiagonaleVerticale(lm), Famille.DiagonaleVerticale, new Point3(x0, y - DemiTube, z), Axe.X, Face.Exterieure, num);
-                    Travers(References.DiagonaleVerticale(s), Famille.DiagonaleVerticale, x0 + DemiTube, y1, z, num);
+                    Travers(References.DiagonaleVerticale(s), Famille.DiagonaleVerticale, memeAGauche ? x0 + DemiTube : x0 - DemiTube, y1, z, num);
                     if (!memeADroite)
                     {
-                        Travers(References.DiagonaleVerticale(s), Famille.DiagonaleVerticale, x1 - DemiTube, y1, z, num);
+                        Travers(References.DiagonaleVerticale(s), Famille.DiagonaleVerticale, x1 + DemiTube, y1, z, num);
                     }
                 }
             }

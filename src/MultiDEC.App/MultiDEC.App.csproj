@@ -8,6 +8,8 @@
     <RootNamespace>MultiDEC.App</RootNamespace>
     <AssemblyName>MultiDEC</AssemblyName>
     <PlatformTarget>x86</PlatformTarget>
+    <!-- Icône reprise de MultiDEC v2 (mutlidec.ico, branche version2024), Laurent 24/11/2026. -->
+    <ApplicationIcon>MultiDEC.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\MultiDEC.Core\MultiDEC.Core.csproj" />
@@ -20,6 +22,9 @@
     <Reference Include="vdScrollableControl"><HintPath>$(VectorDrawDir)vdScrollableControl.dll</HintPath></Reference>
     <Reference Include="VDrawBaseControl"><HintPath>$(VectorDrawDir)VDrawBaseControl.dll</HintPath></Reference>
     <Reference Include="WindowsFormsIntegration" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="MultiDEC.ico" />
   </ItemGroup>
   <!--
     Toutes les DLL VectorDraw à côté de l'exécutable, y compris celles chargées dynamiquement

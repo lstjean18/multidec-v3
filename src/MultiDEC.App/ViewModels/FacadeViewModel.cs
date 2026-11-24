@@ -477,6 +477,33 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
         {
             NotifierLongueur();
         }
+        else if (e.PropertyName == nameof(MailleDefinition.Type))
+        {
+            CocherDernierNiveau((MailleDefinition)sender!);
+        }
+    }
+
+    /// <summary>
+    /// Maille passée en recette (ou appro) : si aucun niveau n'est coché, la case du dernier niveau l'est
+    /// (Laurent, 24/11/2026). Décocher ensuite reste possible : le dessin le signale par une alerte.
+    /// </summary>
+    private void CocherDernierNiveau(MailleDefinition m)
+    {
+        var dernier = Niveaux.Where(n => n.Type == TypePlancher.Complet && n.Hauteur > Cotes.Tolerance)
+                             .OrderByDescending(n => n.Hauteur).FirstOrDefault();
+        if (dernier == null)
+        {
+            return;
+        }
+
+        if (m.Type == TypeMaille.Recette && !Niveaux.Any(n => n.Recette))
+        {
+            dernier.Recette = true;
+        }
+        else if (m.Type == TypeMaille.Appro && !Niveaux.Any(n => n.Appro))
+        {
+            dernier.Appro = true;
+        }
     }
 
     private void NotifierLongueur()
