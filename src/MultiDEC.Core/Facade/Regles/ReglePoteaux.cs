@@ -56,7 +56,7 @@ public static class ReglePoteaux
         t.Add(new TronconPoteau(socle.Reference, Famille.Socle, socle.ZSocle));
         if (p.Grutable)
         {
-            t.Add(new TronconPoteau(References.SupportGrutable, Famille.Socle, 0.13)); // v2 : +0,20 avec HMSOCREG à +0,07
+            t.Add(new TronconPoteau(References.SupportGrutable, Famille.Socle, 0.0)); // relevé : de -0,335 à 0
         }
 
         double h = p.HauteurDernierPlancher;

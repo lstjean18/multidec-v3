@@ -31,9 +31,9 @@ public sealed class SocleInfo
 }
 
 /// <summary>
-/// Socles et vérins proposés (liste de la v2, version2024). Cotes : HMSOCREG relevée dans la bibliothèque
-/// (point de base = haut de la tige, cale bois à -0,33) ; les autres sont reprises des écarts de la v2
-/// par rapport à HMSOCREG, à confirmer sur le dessin (test de rendu « BOITE … »).
+/// Socles et vérins proposés (liste de la v2, version2024). Cotes relevées dans la bibliothèque
+/// ECHAFAUDAGE-FILAIRE-3D-MultiDEC.dwg (test de rendu « BOITE … », 24/11/2026) : tous ont leur point de base
+/// au départ des poteaux (cote 0) ; la cale bois (0,08 m) est posée sous la plaque. Socles à roue : sans cale.
 /// </summary>
 public static class CatalogueSocles
 {
@@ -41,13 +41,13 @@ public static class CatalogueSocles
 
     public static IReadOnlyList<SocleInfo> Tous { get; } = new[]
     {
-        new SocleInfo("HMSOCREG", "Socle réglable HMSOCREG", 0.0, -0.33),
-        new SocleInfo("HMSOCREG800", "Socle réglable 800 HMSOCREG800", -0.17, -0.50),
-        new SocleInfo("HMSOCROU", "Socle à roue HMSOCROU", 0.26, null),
-        new SocleInfo("HMSOCROU200-1200", "Socle à roue 200-1200", 0.26, null),
-        new SocleInfo("HMSOCROUFC", "Socle à roue frein HMSOCROUFC", 0.0, null),
-        new SocleInfo("HMVERORI38780", "Vérin orientable 38780", -0.17, -0.745),
-        new SocleInfo("HMVERORI38500B019", "Vérin orientable 38500", -0.17, -0.54),
+        new SocleInfo("HMSOCREG", "Socle réglable HMSOCREG", 0.0, -0.33),          // plaque à -0,25
+        new SocleInfo("HMSOCREG800", "Socle réglable 800 HMSOCREG800", 0.0, -0.33), // plaque à -0,25, tige plus longue
+        new SocleInfo("HMSOCROU", "Socle à roue HMSOCROU", 0.0, null),              // roue jusqu'à -0,75
+        new SocleInfo("HMSOCROU200-1200", "Socle à roue 200-1200", 0.0, null),      // roue jusqu'à -0,70
+        new SocleInfo("HMSOCROUFC", "Socle à roue frein HMSOCROUFC", 0.0, null),    // roue jusqu'à -0,50
+        new SocleInfo("HMVERORI38780", "Vérin orientable 38780", 0.0, -0.574),      // plaque à -0,494
+        new SocleInfo("HMVERORI38500B019", "Vérin orientable 38500", 0.0, -0.364),  // plaque à -0,284
     };
 
     public static SocleInfo De(string? reference) =>
