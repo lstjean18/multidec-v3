@@ -444,7 +444,11 @@ public sealed partial class GenerateurFacade
             if (z >= 0.5 - Cotes.Tolerance && !sansPlancher)
             {
                 var plintheExt = n.EstAccesSeul ? TypePlinthe.Sans : PlintheExterieure(index);
-                if (m.Type == TypeMaille.AccesRapporte || (m.EstEscalier && EscalierPossible(m)))
+                if (CarreDAngleInverse(index))
+                {
+                    // Structure inversée : le côté extérieur du carré d'angle donne sur le bout de la face précédente (passage).
+                }
+                else if (m.Type == TypeMaille.AccesRapporte || (m.EstEscalier && EscalierPossible(m)))
                 {
                     // Garde-corps extérieur reporté sur la file de l'accès rapporté ; lisse de plancher ici (v2).
                     Ajouter(lisse, Famille.Lisse, new Point3(x0, -_l, z), Axe.X, Face.Exterieure, num);
@@ -458,7 +462,7 @@ public sealed partial class GenerateurFacade
 
                 // v3 : même règle côté intérieur (l'ancienne version posait le GC intérieur même sans plancher).
                 // Carré d'angle : son côté intérieur donne sur le bout de la face précédente (passage), pas de garde-corps.
-                if (console == null && !(index == 0 && _p.CarreDAngleEnTete))
+                if (console == null && !(index == 0 && _p.CarreDAngleEnTete && !_p.CarreDAngleInverse))
                 {
                     PlacerGardeCorps(surPoutre ? GardeCorpsSurPoutre(SecuriteInterieure(index)) : SecuriteInterieure(index), PlintheInterieure(index), x0, 0, z, lm, Face.Interieure, num);
                 }
@@ -520,7 +524,7 @@ public sealed partial class GenerateurFacade
         if (_p.GardeCorpsCouvreur)
         {
             double hm = m.HauteurMax(_h);
-            if (!ExterieurCommun(index))
+            if (!ExterieurCommun(index) && !CarreDAngleInverse(index))
             {
                 Ajouter(lisse, Famille.Lisse, new Point3(x0, -_l, hm + 1.5), Axe.X, Face.Exterieure, num);
             }
@@ -541,6 +545,9 @@ public sealed partial class GenerateurFacade
         var voisines = new[] { index - 1, index + 1 }.Where(i => i >= 0 && i < _projet.Mailles.Count).ToList();
         return voisines.Count > 0 && voisines.All(i => VoisineSous(i, z)) && z >= 2.0 - Cotes.Tolerance;
     }
+
+    /// <summary>Carré d'angle d'une structure inversée : son côté extérieur est le passage vers la face précédente.</summary>
+    private bool CarreDAngleInverse(int index) => index == 0 && _p.CarreDAngleEnTete && _p.CarreDAngleInverse;
 
     /// <summary>Planchers en damier (volumique, v2 IsMailleDamier) : pas de plancher une maille sur deux, décalé par module.</summary>
     private bool SansPlancherDamier(int indexMaille) =>
@@ -1076,7 +1083,7 @@ public sealed partial class GenerateurFacade
             {
                 // Volumique : pas de diagonale sur un côté commun à deux modules (Laurent, 24/11/2026) ;
                 // côté façade d'un module au-delà de M1 hors tronçon commun : il donne dans le vide, diagonales comme à l'extérieur.
-                bool exterieure = d.Exterieure && !ExterieurCommun(i);
+                bool exterieure = d.Exterieure && !ExterieurCommun(i) && !CarreDAngleInverse(i);
                 bool interieure = _p.ModuleVolumique > 0 ? (d.Exterieure || d.Interieure) && !InterieurCommun(i) : d.Interieure;
                 if (exterieure && !(maille.EstEscalier && hs > Cotes.Tolerance)) // la tour d'escalier a ses propres diagonales
                 {

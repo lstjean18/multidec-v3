@@ -370,6 +370,9 @@
               </UniformGrid>
               <TextBlock Text="La forme crée les onglets S1 à S4. À partir de S2, la 1re maille est le carré d'angle qui raccorde la face à la précédente. Volumique : modules M1 (contre la façade), M2, M3… côte à côte en profondeur, longueur et largeur propres à chaque module (largeur jusqu'à 3,00 m), accès proposés sur M1."
                          TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource Discret}" Margin="0,6,0,0" />
+              <CheckBox Content="Inverser la structure (bâtiment dans l'angle rentrant)" IsChecked="{Binding Inversee}" Margin="0,6,0,0"
+                        Visibility="{Binding InversionPossible, Converter={StaticResource VisibleSi}}"
+                        ToolTip="Le bâtiment est de l'autre côté de l'échafaudage : les faces tournent dans l'autre sens, côté mur et côté extérieur sont permutés (garde-corps, escaliers, appro… passent de l'autre côté)" />
               <StackPanel Orientation="Horizontal" Margin="0,6,0,0"
                           Visibility="{Binding EstVolumique, Converter={StaticResource VisibleSi}}">
                 <TextBlock Text="Modules" VerticalAlignment="Center" Margin="0,0,8,0" />

@@ -127,6 +127,7 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
             _structure = null;
             Notifier();
             Notifier(nameof(EstVolumique));
+            Notifier(nameof(InversionPossible));
             Notifier(nameof(LargeursProposees));
             ChargerFace(Math.Min(_indexFace, Faces.Count - 1));
         }
@@ -159,6 +160,20 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
             ChargerFace(Math.Min(_indexFace, Faces.Count - 1));
         }
     }
+
+    /// <summary>Structure en L, en U ou fermée inversée : bâtiment de l'autre côté (angle rentrant).</summary>
+    public bool Inversee
+    {
+        get => _projet.Inversee;
+        set
+        {
+            _projet.Inversee = value;
+            _structure = null;
+            Notifier();
+        }
+    }
+
+    public bool InversionPossible => _projet.InversionPossible;
 
     /// <summary>Structure volumique : planchers en damier.</summary>
     public bool PlanchersDamier

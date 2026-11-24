@@ -53,6 +53,21 @@ public sealed class ProjetStructure
     /// <summary>Structure volumique : planchers en damier (une maille sur deux, décalée d'un module à l'autre, v2).</summary>
     public bool PlanchersDamier { get; set; }
 
+    /// <summary>
+    /// Structure inversée (L, U, fermée ; Laurent, 24/11/2026) : le bâtiment est de l'autre côté de l'échafaudage,
+    /// dans l'angle rentrant (cour intérieure). Les faces tournent vers la droite (-90°) au lieu de la gauche ;
+    /// chaque face garde son côté mur côté bâtiment, donc garde-corps et sous-mailles rapportées passent de l'autre côté.
+    /// </summary>
+    public bool Inversee { get; set; }
+
+    /// <summary>Inversion applicable : structure en L, en U ou fermée.</summary>
+    [JsonIgnore]
+    public bool InversionPossible => Forme == FormeStructure.EnL || Forme == FormeStructure.EnU || Forme == FormeStructure.Fermee;
+
+    /// <summary>Faces tournées vers la droite (inversion cochée et applicable).</summary>
+    [JsonIgnore]
+    public bool FacesInversees => Inversee && InversionPossible;
+
     /// <summary>Faces de la structure, S1 d'abord.</summary>
     public List<FaceEchafaudage> Faces { get; set; } = new List<FaceEchafaudage>();
 

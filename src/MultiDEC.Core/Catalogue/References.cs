@@ -193,6 +193,12 @@ public static class References
         }
     }
 
+    /// <summary>
+    /// Plateau acier de complément (HMPLA + longueur + 3CL6 : 0,75 / 1,00 / 1,05 / 1,50 / 1,75 m dans la bibliothèque),
+    /// au pied d'une volée de 1 m sortie de la tour d'escalier.
+    /// </summary>
+    public static string PlateauAcierComplement(double longueur) => "HMPLA" + Cotes.EnCm3(longueur) + "3CL6";
+
     /// <summary>Plateau à trappe : HMPLAL + longueur + 602TR (largeurs « rondes ») ou 650TR (0,75 / 1,05), + EC au-delà de 2 m.</summary>
     /// <summary>
     /// Trappe de 1,00 m de l'option « trappes et plateaux acier » (v2 : HMPLAL100602TR, absent de la

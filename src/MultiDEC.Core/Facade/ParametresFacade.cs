@@ -19,6 +19,13 @@ public sealed class ParametresFacade
     [JsonIgnore]
     public bool CarreDAngleEnTete { get; set; }
 
+    /// <summary>
+    /// Structure inversée (fixé par <see cref="GenerateurStructure"/>) : le carré d'angle touche le bout de la face
+    /// précédente par son côté extérieur (passage) et son bout de départ donne sur le mur.
+    /// </summary>
+    [JsonIgnore]
+    public bool CarreDAngleInverse { get; set; }
+
     [JsonIgnore] // paramètre général : vient de ParametresGeneraux
     public ModeleEchafaudage Modele { get; set; } = ModeleEchafaudage.MultiSystem;
 

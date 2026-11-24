@@ -72,7 +72,10 @@ public static class GenerateurStructure
                 // Raccords (Laurent, 24/11/2026) : le bout de la face qui touche le carré d'angle de la suivante n'a pas
                 // d'about (passage) ; le côté extérieur du carré d'angle donne dans le vide, il a toujours son about.
                 p.CarreDAngleEnTete = projet.CommenceParCarreDAngle(i);
-                p.AboutGauche = aboutGauche || p.CarreDAngleEnTete;
+                p.CarreDAngleInverse = p.CarreDAngleEnTete && projet.FacesInversees;
+
+                // Structure inversée : le bout de départ du carré d'angle donne sur le mur, pas d'about.
+                p.AboutGauche = p.CarreDAngleInverse ? false : aboutGauche || p.CarreDAngleEnTete;
                 p.AboutDroit = aboutDroit && !RaccordeeApres(projet, i);
             }
 
@@ -86,6 +89,7 @@ public static class GenerateurStructure
                 p.AboutGauche = aboutGauche;
                 p.AboutDroit = aboutDroit;
                 p.CarreDAngleEnTete = false;
+                p.CarreDAngleInverse = false;
                 p.ModuleVolumique = null;
                 p.NombreModules = 1;
                 p.PlanchersDamier = false;
@@ -176,19 +180,25 @@ public static class GenerateurStructure
 
         double angle = 0;
         var origine = new Point3(0, 0, 0);
+        bool inversee = projet.FacesInversees;
         for (int i = 0; i < projet.Faces.Count; i++)
         {
             if (i > 0)
             {
-                // Bout de la face précédente, sur sa file extérieure (Y local = -largeur) : origine de la suivante.
+                // Bout de la face précédente : sur sa file extérieure (Y local = -largeur) quand on tourne à gauche ;
+                // structure inversée (on tourne à droite) : sur sa file intérieure, prolongée de la largeur de la face
+                // (la file intérieure de la face suivante est contre le mur en retour).
                 var prec = projet.Faces[i - 1];
-                var bout = new ElementPlace(string.Empty, Famille.Poteau, new Point3(prec.LongueurObtenue, -prec.Parametres.LargeurMaille, 0), Axe.Z)
+                var pointLocal = inversee
+                    ? new Point3(prec.LongueurObtenue + projet.Faces[i].Parametres.LargeurMaille, 0, 0)
+                    : new Point3(prec.LongueurObtenue, -prec.Parametres.LargeurMaille, 0);
+                var bout = new ElementPlace(string.Empty, Famille.Poteau, pointLocal, Axe.Z)
                     .DansLaStructure(prec.Nom, angle, origine).Origine;
-                angle += 90;
+                angle += inversee ? -90 : 90;
                 origine = new Point3(bout.X, bout.Y, 0);
             }
 
-            poses.Add(new PoseFace(angle % 360, origine));
+            poses.Add(new PoseFace(((angle % 360) + 360) % 360, origine));
         }
 
         return poses;

@@ -137,10 +137,15 @@ public class BibliothequeDwgTests
         projet.Faces[1].Parametres.LongueurTotaleSouhaitee = 3;
         projet.ProposerFace(1);
         var s = GenerateurStructure.Generer(projet);
-        rendu.Dessiner(s, TableOrientations.ParDefaut());
-        foreach (var e in s.Elements.Where(e => e.Axe == Axe.Y && (e.Famille == Famille.GardeCorps || e.Famille == Famille.Plinthe)))
+        var rapport = rendu.Dessiner(s, TableOrientations.ParDefaut());
+
+        // Boîte de chaque cadre de garde-corps (z = 2) : de quel côté de la ligne des poteaux le cadre déborde.
+        foreach (var x in rapport.Inserts.Where(x => x.Element.Famille == Famille.GardeCorps && x.Element.Reference.StartsWith("HMGCSE", StringComparison.Ordinal) && Math.Abs(x.Element.Origine.Z - 2) < 0.01))
         {
-            _sortie.WriteLine(string.Format(CultureInfo.InvariantCulture, "AN {0} {1,-16} ({2:0.00}; {3:0.00}; {4:0.00}) inv {5} angle {6}", e.NomFace, e.Reference, e.Origine.X, e.Origine.Y, e.Origine.Z, e.Inverse, e.AngleFace));
+            var e = x.Element;
+            var b = x.Insert.BoundingBox;
+            _sortie.WriteLine(string.Format(CultureInfo.InvariantCulture, "AN {0} {1,-14} axe {2} face {3} inv {4} angle {5} origine ({6:0.000}; {7:0.000})  X {8:0.000}..{9:0.000}  Y {10:0.000}..{11:0.000}",
+                e.NomFace, e.Reference, e.Axe, e.Face, e.Inverse, e.AngleFace, e.Origine.X, e.Origine.Y, b.Min.x, b.Max.x, b.Min.y, b.Max.y));
         }
 
         rendu.Rendu(ModeRendu.OmbreAretes);
@@ -151,6 +156,30 @@ public class BibliothequeDwgTests
             doc.Redraw(true);
             Image(doc, nom + "-AN-" + v);
         }
+
+        // Même L inversé (bâtiment dans l'angle rentrant).
+        projet.Inversee = true;
+        rendu.Dessiner(GenerateurStructure.Generer(projet), TableOrientations.ParDefaut());
+        rendu.Vue(Vues.Iso);
+        Image(doc, nom + "-AI-iso");
+        rendu.Vue(Vues.Dessus);
+        Image(doc, nom + "-AI-dessus");
+
+        // Premier plancher à 1 m : volée de 1 m sortie de la tour (escalier 1,50 et demi-escalier 0,70), stabilisation.
+        var e1 = ProjetStructure.Nouveau(face: new ParametresFacade { LongueurTotaleSouhaitee = 15, LongueurMaillePreferee = 2.5, HauteurDernierPlancher = 5, NombreAcces = 0 });
+        var f1 = e1.S1;
+        f1.Mailles[1].Type = TypeMaille.Escalier;
+        f1.Mailles[4].Type = TypeMaille.DemiEscalier070;
+        f1.Mailles[0].Stabilisation = 1.5;
+        var r1 = GenerateurStructure.Generer(e1);
+        _sortie.WriteLine("E1 alertes : " + string.Join(" | ", r1.Alertes));
+        rendu.Dessiner(r1, TableOrientations.ParDefaut());
+        rendu.Vue(Vues.Iso);
+        Image(doc, nom + "-E1-iso");
+        rendu.Vue(Vues.Facade);
+        Image(doc, nom + "-E1-facade");
+        rendu.Vue(Vues.CoteGauche);
+        Image(doc, nom + "-E1-cote");
     }
 
     /// <summary>

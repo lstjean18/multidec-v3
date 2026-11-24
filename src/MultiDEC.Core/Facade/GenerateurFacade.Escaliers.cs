@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using MultiDEC.Core.Catalogue;
+using MultiDEC.Core.Facade.Regles;
 using MultiDEC.Core.Geometrie;
 
 namespace MultiDEC.Core.Facade;
@@ -51,6 +52,11 @@ public sealed partial class GenerateurFacade
             return;
         }
 
+        // Premier plancher à 1,00 m (Laurent, 24/11/2026) : la volée de 1 m sort de la tour, sur la maille voisine
+        // du côté où part la volée suivante (maille suivante pour un demi-escalier), dans le prolongement.
+        bool miroirSuivante = !demi && cotes.Count > 2 && (cotes.Count - 3) % 2 == 1;
+        int? voisineDehors = Cotes.Egal(cotes[1], 1.0) ? VoisinePourVoleeDehors(index, miroirSuivante ? index - 1 : index + 1) : null;
+
         bool gardeCorpsManquant = false;
         for (int k = 0; k < cotes.Count; k++)
         {
@@ -62,6 +68,14 @@ public sealed partial class GenerateurFacade
             double xPalier = miroir ? x1 : x0;
             double xAutre = miroir ? x0 : x1;
             bool deuxBouts = demi || haut;
+            if (k == 1 && voisineDehors != null)
+            {
+                // On entre par le bout où arrive la volée extérieure : on ferme l'autre bout seulement.
+                xPalier = miroirSuivante ? x1 : x0;
+                xAutre = miroirSuivante ? x0 : x1;
+                deuxBouts = haut;
+                miroir = miroirSuivante;
+            }
 
             // Plancher : traverses renforcées aux deux bouts (les volées s'y accrochent), lisse de la file rapportée.
             string traverseVolee = References.LisseOuTraverse(w, TypeTraverse.Renforce);
@@ -109,8 +123,9 @@ public sealed partial class GenerateurFacade
             if (!haut && cotes[k + 1] - z >= 2.0 - Cotes.Tolerance)
             {
                 Ajouter(References.DiagonaleVerticale(lm), Famille.DiagonaleVerticale, new Point3(x0, Cotes.Arrondi(y2 - DemiTube), z), Axe.X, Face.Exterieure, num);
-                bool entreeAGauche = k == 0 && PiedPremiereVoleeAGauche(demi, cotes.Count);
-                bool entreeADroite = k == 0 && !entreeAGauche;
+                // Volée de 1 m sortie de la tour : l'entrée est au plancher de 1 m, du côté de la maille voisine.
+                bool entreeAGauche = voisineDehors != null ? k == 1 && miroirSuivante : k == 0 && PiedPremiereVoleeAGauche(demi, cotes.Count);
+                bool entreeADroite = voisineDehors != null ? k == 1 && !miroirSuivante : k == 0 && !entreeAGauche;
                 if (!entreeAGauche)
                 {
                     Travers(References.DiagonaleVerticale(w), Famille.DiagonaleVerticale, gaucheLibre ? x0 - DemiTube : x0 + DemiTube, y1, z, num);
@@ -133,6 +148,10 @@ public sealed partial class GenerateurFacade
             {
                 _alertes.Add(FormattableString.Invariant($"Maille {num} : montée de {montee:0.00} m sous le niveau {z:0.00} m, pas de volée d'escalier (1,00 ou 2,00 m)."));
             }
+            else if (k == 1 && voisineDehors is int v)
+            {
+                PlacerVoleeDehors(num, v, miroirSuivante ? x0 : x1, w, yVolee, largeurVolee, large, demi, miroirSuivante, haut, ref gardeCorpsManquant);
+            }
             else
             {
                 PlacerVolee(num, x0, x1, lm, z, montee, yVolee, largeurVolee, large, demi, miroir, premiere: k == 1, derniere: haut, ref gardeCorpsManquant);
@@ -149,6 +168,77 @@ public sealed partial class GenerateurFacade
         {
             _alertes.Add(FormattableString.Invariant($"Maille {num} : garde-corps de volée de {lm:0.00} m absent de la bibliothèque, volées posées sans garde-corps."));
         }
+    }
+
+    /// <summary>Longueur de la volée de 1,00 m de montée (HMESCALU175100).</summary>
+    private const double LongueurVolee1m = 1.75;
+
+    /// <summary>
+    /// Maille voisine qui peut recevoir la volée de 1 m sortie de la tour : maille de travail sans sous-maille ni stabilisation,
+    /// assez longue pour la volée. Sinon alerte et la volée reste dans la tour.
+    /// </summary>
+    private int? VoisinePourVoleeDehors(int index, int voisine)
+    {
+        if (voisine >= 0 && voisine < _projet.Mailles.Count)
+        {
+            var m = _projet.Mailles[voisine];
+            if (m.EstTravail && m.LargeurRapportee <= Cotes.Tolerance && m.Stabilisation <= Cotes.Tolerance
+                && m.Longueur >= 2.0 - Cotes.Tolerance)
+            {
+                return voisine;
+            }
+        }
+
+        _alertes.Add(FormattableString.Invariant(
+            $"Maille {index + 1} : premier plancher à 1,00 m, la volée de 1 m devrait sortir de la tour sur la maille {voisine + 1}, qui ne s'y prête pas (absente, rapportée ou trop courte) : volée posée dans la tour."));
+        return null;
+    }
+
+    /// <summary>
+    /// Volée de 1 m posée hors de la tour, sur la maille voisine (côté extérieur, même déport que la tour) : elle arrive
+    /// au plancher de 1,00 m au bout <paramref name="xTour"/> de la tour, son pied repose au sol sur une traverse
+    /// intermédiaire HMTIP, et le reste de la maille est couvert de plateaux acier (Laurent, 24/11/2026). Une file de
+    /// poteaux courts ferme la sous-maille au bout de la maille voisine.
+    /// </summary>
+    private void PlacerVoleeDehors(int num, int voisine, double xTour, double w, double yVolee, double largeurVolee,
+        bool large, bool demi, bool versLaGauche, bool derniere, ref bool gardeCorpsManquant)
+    {
+        double y1 = -_l;
+        double y2 = Cotes.Arrondi(-_l - w);
+        double lv = _projet.Mailles[voisine].Longueur;
+        double xBout = versLaGauche ? _x[voisine] : _x[voisine + 1];
+        double sens = versLaGauche ? -1 : 1;
+        double xPied = Cotes.Arrondi(xTour + sens * LongueurVolee1m);
+
+        // Volée : non symétrisée elle arrive en haut côté x de son origine et descend vers les X croissants.
+        PlacerVolee(num, xTour, xTour, LongueurVolee1m, 1.0, 1.0, yVolee, largeurVolee, large, demi, versLaGauche, premiere: true, derniere: derniere, ref gardeCorpsManquant);
+
+        // Pied : traverse intermédiaire au sol, plateaux acier jusqu'au bout de la maille, lisse et traverse de pied.
+        Ajouter(References.TraverseIntermediaire(w), Famille.Traverse, new Point3(xPied, y1, 0), Axe.Y, Face.Exterieure, num);
+        Travers(References.LisseOuTraverse(w), Famille.Traverse, xBout, y1, 0, num);
+        Ajouter(References.LisseOuTraverse(lv), Famille.Lisse, new Point3(_x[voisine], y2, 0), Axe.X, Face.Exterieure, num);
+        Ajouter(References.LisseOuTraverse(lv), Famille.Lisse, new Point3(_x[voisine], y2, 1.0), Axe.X, Face.Exterieure, num);
+
+        foreach (var t in ReglePoteaux.Empiler(_p, false, false, 1.0))
+        {
+            Ajouter(t.Reference, t.Famille, new Point3(xBout, y2, t.Z), Axe.Z, Face.Exterieure, num);
+        }
+
+        double reste = Cotes.Arrondi(lv - LongueurVolee1m);
+        if (!new[] { 0.75, 1.0, 1.05, 1.5, 1.75 }.Any(l => Cotes.Egal(l, reste)))
+        {
+            _alertes.Add(FormattableString.Invariant(
+                $"Maille {num} : pas de plateau acier de {reste:0.00} m au pied de la volée de 1 m (maille voisine de {lv:0.00} m), à compléter."));
+            return;
+        }
+
+        double xReste = versLaGauche ? _x[voisine] : xPied;
+        foreach (var (_, rang) in RepartitionPlateaux(w, GammePlateaux.Standard))
+        {
+            double y = Cotes.Arrondi(y1 - RetraitPlateau - LargeurPlateau * rang);
+            Ajouter(References.PlateauAcierComplement(reste), Famille.Plateau, new Point3(xReste, y, 0), Axe.X, Face.Aucune, num);
+        }
+
     }
 
     /// <summary>

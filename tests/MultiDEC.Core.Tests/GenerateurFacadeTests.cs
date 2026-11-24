@@ -647,6 +647,43 @@ public class GenerateurFacadeTests
     }
 
     [Fact]
+    public void Premier_plancher_a_1_m_volee_de_1_m_sortie_sur_la_maille_suivante()
+    {
+        var face = Standard(p => p.HauteurDernierPlancher = 9); // planchers 1, 3, 5, 7, 9
+        face.Mailles[5].Type = TypeMaille.DemiEscalier070;
+        var s = GenerateurFacade.Generer(face);
+        var x = face.AbscissesFiles();
+        double y2 = -0.70 - 0.70;
+
+        // Volée de 1 m hors de la tour : arrive au bout droit de la tour (x[6]) et descend sur la maille suivante.
+        var v1 = Assert.Single(s.Elements, e => e.Reference == "HMESCALU175100");
+        Assert.Equal(x[6], v1.Origine.X, 6);
+        Assert.Equal(1.0, v1.Origine.Z, 6);
+        Assert.False(v1.Inverse);
+        Assert.Equal(4, s.Elements.Count(e => e.Reference == "HMESCALU250200")); // 1→3, 3→5, 5→7, 7→9 dans la tour
+
+        // Pied sur une HMTIP au sol, plateaux acier de 0,75 m sur le reste de la maille de 2,50 m, poteau au bout.
+        Assert.Contains(s.Elements, e => e.Reference == "HMTIP070" && Math.Abs(e.Origine.X - (x[6] + 1.75)) < 1e-6 && Math.Abs(e.Origine.Z) < 1e-6);
+        Assert.Equal(2, s.Elements.Count(e => e.Reference == "HMPLA0753CL6" && Math.Abs(e.Origine.X - (x[6] + 1.75)) < 1e-6));
+        Assert.Contains(Pieds(s, y2), p => Math.Abs(p.Origine.X - x[7]) < 1e-6);
+        Assert.Equal(1.0, Sommet(s, x[7], y2), 3);
+
+        // Pas de diagonale en travers devant l'entrée de la tour au plancher de 1 m.
+        Assert.DoesNotContain(s.Elements, e => e.Reference == "HMDIA0702" && e.Axe == Axe.Y && e.Origine.X > x[6] && Math.Abs(e.Origine.Z - 1) < 1e-6);
+
+        // Escalier 1,50 m : la volée suivante part du bout où la volée de 1 m arrive.
+        var face2 = Standard(p => p.HauteurDernierPlancher = 7); // planchers 1, 3, 5, 7
+        face2.Mailles[5].Type = TypeMaille.Escalier;
+        var s2 = GenerateurFacade.Generer(face2);
+        var x2 = face2.AbscissesFiles();
+        var dehors = Assert.Single(s2.Elements, e => e.Reference == "HMESCALU175100");
+        var suivante = s2.Elements.Where(e => e.Reference == "HMESCALU250200").OrderBy(e => e.Origine.Z).First();
+        Assert.Equal(dehors.Inverse, suivante.Inverse);
+        Assert.Equal(dehors.Origine.Y, suivante.Origine.Y, 6);
+        Assert.Equal(dehors.Inverse ? x2[5] : x2[6], dehors.Origine.X, 6);
+    }
+
+    [Fact]
     public void Escalier_sur_maille_de_2_m_ignore_avec_alerte()
     {
         var face = Standard();

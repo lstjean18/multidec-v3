@@ -91,6 +91,61 @@ public class StructureTests
     }
 
     [Fact]
+    public void Structure_en_L_inversee_tourne_a_droite_et_permute_cote_mur_et_cote_vide()
+    {
+        var projet = Projet(FormeStructure.EnL);
+        projet.Inversee = true;
+        var poses = GenerateurStructure.Poses(projet);
+        double l1 = projet.S1.LongueurObtenue;
+
+        // S2 tourne vers la droite (-90°), sa file intérieure contre le mur en retour (X = L1 + largeur).
+        Assert.Equal(270, poses[1].Angle);
+        Assert.Equal(new Point3(l1 + 0.70, 0, 0), poses[1].Origine);
+
+        var s = GenerateurStructure.Generer(projet);
+        Assert.All(s.Elements.Where(e => e.NomFace == "S2" && e.Famille == Famille.Poteau), e => Assert.True(e.Origine.Y <= 1e-6 && e.Origine.X >= l1 - 1e-6));
+
+        // Une seule pile de poteaux à chaque point : les files du carré d'angle tombent sur celles du bout de S1.
+        var piles = s.Elements.Where(e => e.Famille == Famille.Socle).GroupBy(e => (Math.Round(e.Origine.X, 3), Math.Round(e.Origine.Y, 3)));
+        Assert.All(piles, g => Assert.Single(g));
+        Assert.Contains(piles, g => Cotes.Egal(g.Key.Item1, l1) && Cotes.Egal(g.Key.Item2, 0));
+
+        // Carré d'angle : pas d'about au départ (mur), pas de garde-corps ni de diagonale côté extérieur (passage vers S1).
+        Assert.DoesNotContain(s.Elements, e => e.NomFace == "S2" && e.NumeroMaille == 1 && e.Famille == Famille.GardeCorps);
+        Assert.DoesNotContain(s.Elements, e => e.NomFace == "S2" && e.NumeroMaille == 1 && e.Famille == Famille.DiagonaleVerticale);
+
+        // Garde-corps extérieurs de S2 côté vide, c'est-à-dire vers l'intérieur de l'angle (X < L1 + largeur).
+        Assert.Contains(s.Elements, e => e.NomFace == "S2" && e.NumeroMaille == 2 && e.Famille == Famille.GardeCorps && e.Face == Face.Exterieure && Cotes.Egal(e.Origine.X, l1));
+    }
+
+    [Fact]
+    public void Structure_fermee_inversee_se_referme_dans_la_cour()
+    {
+        var projet = Projet(FormeStructure.Fermee);
+        projet.Inversee = true;
+        var poses = GenerateurStructure.Poses(projet);
+        Assert.Equal(new[] { 0.0, 270, 180, 90 }, poses.Select(p => p.Angle));
+
+        var s = GenerateurStructure.Generer(projet);
+        Assert.DoesNotContain(s.Alertes, a => a.Contains("ne se referme pas"));
+        var piles = s.Elements.Where(e => e.Famille == Famille.Socle).GroupBy(e => (Math.Round(e.Origine.X, 3), Math.Round(e.Origine.Y, 3)));
+        Assert.All(piles, g => Assert.Single(g));
+        Assert.DoesNotContain(s.Elements, e => e.Famille == Famille.GardeCorps && e.Axe == Axe.Y); // aucun about : tout est raccordé ou contre le mur
+
+        // Refermée : autant de piles que la structure fermée normale (les quatre angles sont communs).
+        var normale = Projet(FormeStructure.Fermee);
+        int pilesNormales = GenerateurStructure.Generer(normale).Elements.Where(e => e.Famille == Famille.Socle)
+            .Select(e => (Math.Round(e.Origine.X, 3), Math.Round(e.Origine.Y, 3))).Distinct().Count();
+        Assert.Equal(pilesNormales, piles.Count());
+
+        // Sans effet sur une structure droite.
+        var droite = Projet(FormeStructure.Droite);
+        droite.Inversee = true;
+        Assert.Equal(0, GenerateurStructure.Poses(droite)[0].Angle);
+        Assert.False(droite.FacesInversees);
+    }
+
+    [Fact]
     public void Premier_plancher_different_entre_faces_refuse()
     {
         var projet = Projet(FormeStructure.EnL);
