@@ -250,7 +250,8 @@
                 <ComboBoxItem Content="Ombré + arêtes" Tag="OmbreAretes" />
                 <ComboBoxItem Content="Réaliste" Tag="Realiste" />
               </ComboBox>
-              <CheckBox x:Name="CaseAxes" Content="Axes filaires" IsChecked="True" Click="Axes_Click" Margin="0,4,0,0" />
+              <CheckBox x:Name="CaseAxes" Content="Axes filaires" IsChecked="True" IsEnabled="False" Margin="0,4,0,0"
+                        ToolTip="Les axes filaires sont toujours affichés" />
             </StackPanel>
             <TextBlock Style="{StaticResource TitreGroupe}" Text="Affichage" />
           </StackPanel>
@@ -396,14 +397,14 @@
                 <TextBlock Grid.Column="1" Text="Garde-corps" FontSize="12" Foreground="{StaticResource Discret}" />
                 <TextBlock Grid.Column="2" Text="Plinthe" FontSize="12" Foreground="{StaticResource Discret}" Margin="4,0,0,0" />
                 <TextBlock Grid.Row="1" Style="{StaticResource Etiquette}" Text="Extérieur (rue)" />
-                <ComboBox Grid.Row="1" Grid.Column="1" Margin="0,2" Style="{StaticResource ListeLibelles}" ItemsSource="{x:Static vm:FacadeViewModel.Securites}" SelectedItem="{Binding General.SecuriteExterieure}" />
-                <ComboBox Grid.Row="1" Grid.Column="2" Margin="4,2,0,2" Style="{StaticResource ListeLibelles}" ItemsSource="{x:Static vm:FacadeViewModel.Plinthes}" SelectedItem="{Binding General.PlintheExterieure}" />
+                <ComboBox Grid.Row="1" Grid.Column="1" Margin="0,2" Style="{StaticResource ListeLibelles}" ItemsSource="{x:Static vm:FacadeViewModel.Securites}" SelectedItem="{Binding SecuriteExterieure}" />
+                <ComboBox Grid.Row="1" Grid.Column="2" Margin="4,2,0,2" Style="{StaticResource ListeLibelles}" ItemsSource="{x:Static vm:FacadeViewModel.Plinthes}" SelectedItem="{Binding PlintheExterieure}" />
                 <TextBlock Grid.Row="2" Style="{StaticResource Etiquette}" Text="Intérieur (mur)" />
-                <ComboBox Grid.Row="2" Grid.Column="1" Margin="0,2" Style="{StaticResource ListeLibelles}" ItemsSource="{x:Static vm:FacadeViewModel.Securites}" SelectedItem="{Binding General.SecuriteInterieure}" />
-                <ComboBox Grid.Row="2" Grid.Column="2" Margin="4,2,0,2" Style="{StaticResource ListeLibelles}" ItemsSource="{x:Static vm:FacadeViewModel.Plinthes}" SelectedItem="{Binding General.PlintheInterieure}" />
+                <ComboBox Grid.Row="2" Grid.Column="1" Margin="0,2" Style="{StaticResource ListeLibelles}" ItemsSource="{x:Static vm:FacadeViewModel.Securites}" SelectedItem="{Binding SecuriteInterieure}" />
+                <ComboBox Grid.Row="2" Grid.Column="2" Margin="4,2,0,2" Style="{StaticResource ListeLibelles}" ItemsSource="{x:Static vm:FacadeViewModel.Plinthes}" SelectedItem="{Binding PlintheInterieure}" />
                 <TextBlock Grid.Row="3" Style="{StaticResource Etiquette}" Text="Abouts" />
-                <ComboBox Grid.Row="3" Grid.Column="1" Margin="0,2" Style="{StaticResource ListeLibelles}" ItemsSource="{x:Static vm:FacadeViewModel.Securites}" SelectedItem="{Binding General.SecuriteAbouts}" />
-                <ComboBox Grid.Row="3" Grid.Column="2" Margin="4,2,0,2" Style="{StaticResource ListeLibelles}" ItemsSource="{x:Static vm:FacadeViewModel.Plinthes}" SelectedItem="{Binding General.PlintheAbouts}" />
+                <ComboBox Grid.Row="3" Grid.Column="1" Margin="0,2" Style="{StaticResource ListeLibelles}" ItemsSource="{x:Static vm:FacadeViewModel.Securites}" SelectedItem="{Binding SecuriteAbouts}" />
+                <ComboBox Grid.Row="3" Grid.Column="2" Margin="4,2,0,2" Style="{StaticResource ListeLibelles}" ItemsSource="{x:Static vm:FacadeViewModel.Plinthes}" SelectedItem="{Binding PlintheAbouts}" />
               </Grid>
               <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
                 <CheckBox Content="About gauche" IsChecked="{Binding General.AboutGauche}" Margin="0,3,16,3" />

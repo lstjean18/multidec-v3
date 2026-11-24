@@ -179,6 +179,23 @@ public class FacadeViewModelTests
     }
 
     [Fact]
+    public void Choisir_la_protection_bascule_la_plinthe()
+    {
+        var vm = new FacadeViewModel();
+        vm.SecuriteExterieure = TypeSecurite.GardeCorpsMds2;
+        Assert.Equal(TypePlinthe.Bois, vm.General.PlintheExterieure);
+        vm.SecuriteInterieure = TypeSecurite.Lisses;
+        Assert.Equal(TypePlinthe.Axees, vm.General.PlintheInterieure);
+        vm.SecuriteAbouts = TypeSecurite.Sans;
+        Assert.Equal(TypePlinthe.Sans, vm.PlintheAbouts);
+
+        // La plinthe reste modifiable à la main ; le garde-corps d'about ne la change pas.
+        vm.PlintheAbouts = TypePlinthe.Deportees;
+        vm.SecuriteAbouts = TypeSecurite.GardeCorpsAbout;
+        Assert.Equal(TypePlinthe.Deportees, vm.General.PlintheAbouts);
+    }
+
+    [Fact]
     public void Garde_corps_mds1_absent_des_choix()
     {
         Assert.DoesNotContain("GardeCorpsMds1", FacadeViewModel.Securites.Cast<object>().Select(o => o.ToString()));

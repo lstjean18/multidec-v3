@@ -331,7 +331,6 @@ public partial class MainWindow : Window
 
     private void ZoomTout_Click(object sender, RoutedEventArgs e) => _rendu?.ZoomTout();
 
-    private void Axes_Click(object sender, RoutedEventArgs e) => _rendu?.AxesFilaires(CaseAxes.IsChecked == true);
 
     private void Modele_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e) => Vm.ModeleChange();
 

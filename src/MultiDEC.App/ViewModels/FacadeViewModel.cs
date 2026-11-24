@@ -109,6 +109,70 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
     /// <summary>Paramètres communs à toutes les faces (onglet « Général »).</summary>
     public ParametresGeneraux General => _projet.General;
 
+    // Protections : choisir une protection bascule la plinthe du même côté (ReglePlinthes).
+
+    public TypeSecurite SecuriteExterieure
+    {
+        get => General.SecuriteExterieure;
+        set
+        {
+            General.SecuriteExterieure = value;
+            General.PlintheExterieure = ReglePlinthes.Proposer(value) ?? General.PlintheExterieure;
+            NotifierProtections();
+        }
+    }
+
+    public TypeSecurite SecuriteInterieure
+    {
+        get => General.SecuriteInterieure;
+        set
+        {
+            General.SecuriteInterieure = value;
+            General.PlintheInterieure = ReglePlinthes.Proposer(value) ?? General.PlintheInterieure;
+            NotifierProtections();
+        }
+    }
+
+    public TypeSecurite SecuriteAbouts
+    {
+        get => General.SecuriteAbouts;
+        set
+        {
+            General.SecuriteAbouts = value;
+            General.PlintheAbouts = ReglePlinthes.Proposer(value) ?? General.PlintheAbouts;
+            NotifierProtections();
+        }
+    }
+
+    public TypePlinthe PlintheExterieure
+    {
+        get => General.PlintheExterieure;
+        set { General.PlintheExterieure = value; NotifierProtections(); }
+    }
+
+    public TypePlinthe PlintheInterieure
+    {
+        get => General.PlintheInterieure;
+        set { General.PlintheInterieure = value; NotifierProtections(); }
+    }
+
+    public TypePlinthe PlintheAbouts
+    {
+        get => General.PlintheAbouts;
+        set { General.PlintheAbouts = value; NotifierProtections(); }
+    }
+
+    private void NotifierProtections()
+    {
+        foreach (var nom in new[] { nameof(SecuriteExterieure), nameof(SecuriteInterieure), nameof(SecuriteAbouts),
+                                    nameof(PlintheExterieure), nameof(PlintheInterieure), nameof(PlintheAbouts) })
+        {
+            Notifier(nom);
+        }
+
+        Notifier(nameof(General));
+    }
+
     /// <summary>Forme de la structure : la changer crée ou retire des faces (S1 à S4).</summary>
     public FormeStructure Forme
     {
