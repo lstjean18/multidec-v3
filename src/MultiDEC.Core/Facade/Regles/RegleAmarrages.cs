@@ -21,6 +21,9 @@ public sealed class Amarrage
     /// <summary>Indice de la file de poteaux (0 = file de gauche).</summary>
     public int File { get; }
 
+    /// <summary>Numéro de file affiché (1 = file de gauche).</summary>
+    public int NumeroFile => File + 1;
+
     public double X { get; }
 
     public double Hauteur { get; }

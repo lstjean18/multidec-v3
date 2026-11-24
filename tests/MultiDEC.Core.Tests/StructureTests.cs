@@ -165,4 +165,35 @@ public class StructureTests
         Assert.Equal(0, vm.IndexFaceActive);
         Assert.Equal("S1", vm.NomFaceActive);
     }
+
+    [Fact]
+    public void Ajouter_inserer_supprimer_des_mailles()
+    {
+        var vm = new FacadeViewModel();
+        int n = vm.Mailles.Count;
+        vm.Niveaux.First(x => x.Hauteur == 4).Console = "HMCON700E";
+
+        Assert.Equal(n, vm.AjouterMaille(-1));
+        Assert.Equal(n + 1, vm.Mailles.Count);
+        Assert.Equal(new[] { 4.0 }, vm.Mailles[n].Consoles); // consoles comme la voisine
+
+        Assert.Equal(0, vm.InsererMailleAvant(0));
+        Assert.False(vm.Mailles[0].Diagonale);
+        Assert.Equal(2.5, vm.Mailles[0].Longueur);
+
+        vm.SupprimerMaille(0);
+        vm.SupprimerMaille(-1);
+        Assert.Equal(n + 1, vm.Mailles.Count);
+        Assert.Contains("mailles", vm.ResumeFace);
+    }
+
+    [Fact]
+    public void Libelles_en_francais()
+    {
+        Assert.Equal("MDS 2", Libelles.De(TypeSecurite.GardeCorpsMds2));
+        Assert.Equal("Multi-SYSTEM", Libelles.De(ModeleEchafaudage.MultiSystem));
+        Assert.Equal("Accès seul", Libelles.De(TypePlancher.AccesSeul));
+        Assert.Equal("Standard NF", Libelles.De(GammePlateaux.StandardNF));
+        Assert.Equal("En L", Libelles.De(FormeStructure.EnL));
+    }
 }

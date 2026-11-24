@@ -29,13 +29,16 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
     /// <summary>Hauteur connue de chaque niveau, pour que les cases « ConXm » suivent un changement de hauteur.</summary>
     private readonly Dictionary<Niveau, double> _hauteurs = new Dictionary<Niveau, double>();
 
+    private readonly HashSet<MailleDefinition> _maillesSuivies = new HashSet<MailleDefinition>();
+
     public FacadeViewModel()
     {
         Proposer = new Commande(ProposerStructure);
         ProposerLesDiagonales = new Commande(ProposerDiagonales);
         CopierS1 = new Commande(CopierDepuisS1);
         Niveaux.CollectionChanged += Niveaux_CollectionChanged;
-        Mailles.CollectionChanged += (_, _) => MarquerJonctions();
+        Mailles.CollectionChanged += Mailles_CollectionChanged;
+        Alertes.CollectionChanged += (_, _) => Notifier(nameof(TitreAlertes));
         ChargerProjet(ProjetStructure.Nouveau());
     }
 
@@ -123,6 +126,9 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
 
     public string NomFaceActive => FaceActive.Nom;
 
+    /// <summary>« Copier depuis S1 » n'a de sens que sur S2, S3, S4.</summary>
+    public bool PeutCopierS1 => _indexFace > 0;
+
     /// <summary>Paramètres de la face active.</summary>
     public ParametresFacade Parametres => FaceActive.Parametres;
 
@@ -164,6 +170,18 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
     public ObservableCollection<LigneDecompte> Decompte { get; } = new ObservableCollection<LigneDecompte>();
 
     public ObservableCollection<string> Alertes { get; } = new ObservableCollection<string>();
+
+    /// <summary>Amarrages placés par la dernière génération (onglet « Amarrages »).</summary>
+    public ObservableCollection<Amarrage> ListeAmarrages { get; } = new ObservableCollection<Amarrage>();
+
+    /// <summary>Titre de l'onglet des grilles : « Mailles et niveaux · S2 ».</summary>
+    public string TitreGrilles => "Mailles et niveaux · " + NomFaceActive;
+
+    public string TitreAlertes => Alertes.Count == 0 ? "Alertes" : $"Alertes ({Alertes.Count})";
+
+    /// <summary>Résultat de la face active : longueur obtenue, hauteur, mailles et niveaux.</summary>
+    public string ResumeFace => FormattableString.Invariant(
+        $"Obtenue {LongueurObtenue:0.00} m · {Mailles.Count} mailles · {Niveaux.Count} niveaux · ht. {FaceActive.HauteurTotale:0.00} m").Replace('.', ',');
 
     public string? CheminFichier
     {
@@ -222,9 +240,46 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
 
         Remplir(Decompte, CalculDecompte.Calculer(_structure.Elements));
         Remplir(Alertes, _structure.Alertes);
+        Remplir(ListeAmarrages, _structure.Amarrages.Amarrages);
         Notifier(nameof(Structure));
         Notifier(nameof(Resume));
         return _structure;
+    }
+
+    /// <summary>Ajoute une maille après <paramref name="index"/> (ou à la fin si -1), copie de la maille de référence.</summary>
+    public int AjouterMaille(int index)
+    {
+        int position = index < 0 || index >= Mailles.Count ? Mailles.Count : index + 1;
+        Mailles.Insert(position, NouvelleMaille(position - 1));
+        return position;
+    }
+
+    /// <summary>Insère une maille avant <paramref name="index"/> (ou au début si -1).</summary>
+    public int InsererMailleAvant(int index)
+    {
+        int position = index < 0 || index >= Mailles.Count ? 0 : index;
+        Mailles.Insert(position, NouvelleMaille(position));
+        return position;
+    }
+
+    public void SupprimerMaille(int index)
+    {
+        if (index >= 0 && index < Mailles.Count)
+        {
+            Mailles.RemoveAt(index);
+        }
+    }
+
+    /// <summary>Nouvelle maille : longueur préférée de la face, consoles comme sa voisine, sans diagonale.</summary>
+    private MailleDefinition NouvelleMaille(int voisine)
+    {
+        var m = new MailleDefinition(Parametres.LongueurMaillePreferee);
+        if (voisine >= 0 && voisine < Mailles.Count)
+        {
+            m.Consoles = new List<double>(Mailles[voisine].Consoles);
+        }
+
+        return m;
     }
 
     /// <summary>Retire de la structure les pièces supprimées dans le dessin et recalcule le décompte.</summary>
@@ -275,6 +330,7 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
         Remplir(Faces, projet.Faces);
         Decompte.Clear();
         Alertes.Clear();
+        ListeAmarrages.Clear();
         Notifier(string.Empty); // tout rafraîchir
         ChargerFace(0);
     }
@@ -303,12 +359,48 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
         Notifier(nameof(IndexFaceActive));
         Notifier(nameof(FaceActive));
         Notifier(nameof(NomFaceActive));
+        Notifier(nameof(PeutCopierS1));
         Notifier(nameof(Parametres));
         Notifier(nameof(LongueurFacade));
         Notifier(nameof(NombreAcces));
         Notifier(nameof(LongueurObtenue));
         Notifier(nameof(Resume));
+        Notifier(nameof(TitreGrilles));
+        Notifier(nameof(ResumeFace));
         ColonnesConsolesChangees?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void Mailles_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        // Abonnements suivis à part : Clear() (changement de face) ne donne pas les anciennes mailles.
+        foreach (var m in _maillesSuivies.Except(Mailles).ToList())
+        {
+            m.PropertyChanged -= Maille_PropertyChanged;
+            _maillesSuivies.Remove(m);
+        }
+
+        foreach (var m in Mailles.Where(_maillesSuivies.Add))
+        {
+            m.PropertyChanged += Maille_PropertyChanged;
+        }
+
+        MarquerJonctions();
+        NotifierLongueur();
+    }
+
+    private void Maille_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(MailleDefinition.Longueur))
+        {
+            NotifierLongueur();
+        }
+    }
+
+    private void NotifierLongueur()
+    {
+        Notifier(nameof(LongueurObtenue));
+        Notifier(nameof(ResumeFace));
+        Notifier(nameof(Resume));
     }
 
     /// <summary>Colonne « Jonction » : carré d'angle en tête de face, raccordé à la face précédente.</summary>
@@ -346,6 +438,7 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
         }
 
         ColonnesConsolesChangees?.Invoke(this, EventArgs.Empty);
+        Notifier(nameof(ResumeFace));
     }
 
     private void Niveau_PropertyChanged(object? sender, PropertyChangedEventArgs e)

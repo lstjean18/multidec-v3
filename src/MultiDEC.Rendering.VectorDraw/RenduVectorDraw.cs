@@ -345,6 +345,30 @@ public sealed class RenduVectorDraw
     }
 
     /// <summary>Place la caméra : Z toujours vertical à l'écran, X le long de la façade, Y en profondeur.</summary>
+    /// <summary>
+    /// Met une face en évidence (couleurs des familles) et estompe les autres en gris clair.
+    /// Null : toutes les faces en couleur.
+    /// </summary>
+    public void MettreEnEvidence(string? nomFace)
+    {
+        if (_dernierRendu == null)
+        {
+            return;
+        }
+
+        bool plusieurs = _dernierRendu.Inserts.Select(x => x.Element.NomFace).Distinct().Skip(1).Any();
+        foreach (var (element, insert) in _dernierRendu.Inserts)
+        {
+            bool active = nomFace == null || !plusieurs || element.NomFace == nomFace;
+            insert.PenColor = new vdColor(active ? PaletteFamilles.Couleur(element.Famille) : CouleurEstompee);
+        }
+
+        _doc.Redraw(true);
+    }
+
+    /// <summary>Couleur des faces qui ne sont pas en cours d'édition.</summary>
+    public static readonly System.Drawing.Color CouleurEstompee = System.Drawing.Color.FromArgb(200, 204, 210);
+
     public void Vue(Vues vue)
     {
         string commande = vue switch

@@ -2,12 +2,147 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:MultiDEC.App.ViewModels"
+        xmlns:app="clr-namespace:MultiDEC.App"
         xmlns:wfi="clr-namespace:System.Windows.Forms.Integration;assembly=WindowsFormsIntegration"
-        Title="MultiDEC v3 – Échafaudage de façade" Height="900" Width="1500"
-        WindowState="Maximized">
+        Title="MultiDEC v3" Height="900" Width="1500"
+        WindowState="Maximized" FontFamily="Segoe UI" FontSize="13">
   <Window.DataContext>
     <vm:FacadeViewModel />
   </Window.DataContext>
+
+  <!--
+    Disposition validée par Laurent le 24/11/2026 (maquette « Interface MultiDEC v3 – proposition ») :
+    ruban en haut ; à gauche les onglets Général puis une face par onglet (S1…S4) ; au centre le dessin 3D ;
+    en bas, sur toute la largeur, les grilles de la face active, le décompte, les amarrages et les alertes.
+  -->
+  <Window.Resources>
+    <app:ConvertisseurLibelle x:Key="Libelle" />
+    <app:ConvertisseurEgal x:Key="Egal" />
+    <SolidColorBrush x:Key="Bordure" Color="#D5D9E0" />
+    <SolidColorBrush x:Key="Discret" Color="#57606A" />
+    <SolidColorBrush x:Key="Accent" Color="#1F5FA8" />
+
+    <DataTemplate x:Key="ModeleLibelle">
+      <TextBlock Text="{Binding Converter={StaticResource Libelle}}" />
+    </DataTemplate>
+
+    <Style x:Key="ListeLibelles" TargetType="ComboBox">
+      <Setter Property="ItemTemplate" Value="{StaticResource ModeleLibelle}" />
+    </Style>
+
+    <!-- Bouton du ruban : pictogramme au-dessus du libellé. -->
+    <Style x:Key="BoutonRuban" TargetType="Button">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderBrush" Value="Transparent" />
+      <Setter Property="Padding" Value="8,4" />
+      <Setter Property="MinWidth" Value="58" />
+      <Setter Property="Margin" Value="1,0" />
+    </Style>
+    <Style x:Key="Picto" TargetType="TextBlock">
+      <Setter Property="FontFamily" Value="Segoe MDL2 Assets" />
+      <Setter Property="FontSize" Value="18" />
+      <Setter Property="HorizontalAlignment" Value="Center" />
+      <Setter Property="Foreground" Value="{StaticResource Accent}" />
+    </Style>
+    <Style x:Key="TitreGroupe" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="11" />
+      <Setter Property="Foreground" Value="{StaticResource Discret}" />
+      <Setter Property="HorizontalAlignment" Value="Center" />
+      <Setter Property="Margin" Value="0,2,0,0" />
+    </Style>
+    <Style x:Key="GroupeRuban" TargetType="Border">
+      <Setter Property="BorderBrush" Value="{StaticResource Bordure}" />
+      <Setter Property="BorderThickness" Value="0,0,1,0" />
+      <Setter Property="Padding" Value="6,2" />
+    </Style>
+
+    <!-- Titres de section des panneaux (« DIMENSIONS », « DIAGONALES »…). -->
+    <Style x:Key="Section" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="11" />
+      <Setter Property="FontWeight" Value="Bold" />
+      <Setter Property="Foreground" Value="{StaticResource Discret}" />
+      <Setter Property="Margin" Value="0,14,0,6" />
+    </Style>
+    <Style x:Key="Etiquette" TargetType="TextBlock">
+      <Setter Property="VerticalAlignment" Value="Center" />
+      <Setter Property="Margin" Value="0,3,8,3" />
+    </Style>
+    <Style TargetType="CheckBox">
+      <Setter Property="Margin" Value="0,3" />
+    </Style>
+
+    <!-- Bouton de forme (Droite, En L, En U, Fermée). -->
+    <Style x:Key="BoutonForme" TargetType="RadioButton">
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="RadioButton">
+            <Border x:Name="Cadre" BorderBrush="#C3C9D1" BorderThickness="1" CornerRadius="6" Background="White" Padding="4" Margin="2">
+              <ContentPresenter HorizontalAlignment="Center" />
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsChecked" Value="True">
+                <Setter TargetName="Cadre" Property="BorderBrush" Value="{StaticResource Accent}" />
+                <Setter TargetName="Cadre" Property="Background" Value="#E8F0FA" />
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <!-- Panneau d'une face (S1…S4) : DataContext = l'écran, paramètres de la face active. -->
+    <DataTemplate x:Key="PanneauFace">
+      <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="10,0,10,10">
+          <TextBlock Style="{StaticResource Section}" Text="DIMENSIONS" />
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="110" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+              <RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition />
+            </Grid.RowDefinitions>
+            <TextBlock Style="{StaticResource Etiquette}" Text="Longueur souhaitée (m)" />
+            <TextBox Grid.Column="1" Margin="0,2" Text="{Binding LongueurFacade, StringFormat=0.00}" />
+            <TextBlock Grid.Row="1" Style="{StaticResource Etiquette}" Text="Largeur de maille (m)" />
+            <ComboBox Grid.Row="1" Grid.Column="1" Margin="0,2" ItemsSource="{x:Static vm:FacadeViewModel.LargeursMaille}" SelectedItem="{Binding Parametres.LargeurMaille}" ItemStringFormat="0.00" />
+            <TextBlock Grid.Row="2" Style="{StaticResource Etiquette}" Text="Maille préférée (m)" />
+            <ComboBox Grid.Row="2" Grid.Column="1" Margin="0,2" ItemsSource="{x:Static vm:FacadeViewModel.LongueursMaille}" SelectedItem="{Binding Parametres.LongueurMaillePreferee}" ItemStringFormat="0.00" />
+            <TextBlock Grid.Row="3" Style="{StaticResource Etiquette}" Text="Nombre d'accès" />
+            <TextBox Grid.Row="3" Grid.Column="1" Margin="0,2" Text="{Binding NombreAcces}" />
+            <TextBlock Grid.Row="4" Style="{StaticResource Etiquette}" Text="Dernier plancher (m)" />
+            <TextBox Grid.Row="4" Grid.Column="1" Margin="0,2" Text="{Binding Parametres.HauteurDernierPlancher, StringFormat=0.00}" />
+            <TextBlock Grid.Row="5" Style="{StaticResource Etiquette}" Text="Distance à la façade (m)" />
+            <TextBox Grid.Row="5" Grid.Column="1" Margin="0,2" Text="{Binding Parametres.DistanceFacade, StringFormat=0.00}" />
+          </Grid>
+          <TextBlock Text="Le nombre d'accès est recalculé quand la longueur change, puis modifiable." TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource Discret}" Margin="0,4" />
+          <Border Background="#F3F4F6" CornerRadius="6" Padding="8" Margin="0,4">
+            <TextBlock Text="{Binding ResumeFace}" TextWrapping="Wrap" FontSize="12" />
+          </Border>
+          <UniformGrid Columns="2" Margin="0,6,0,0">
+            <Button Content="Proposer la face" Command="{Binding Proposer}" Padding="6" Margin="0,0,4,0" Foreground="{StaticResource Accent}" BorderBrush="{StaticResource Accent}"
+                    ToolTip="Remplace les grilles de cette face par la proposition calculée depuis les dimensions" />
+            <Button Content="Copier depuis S1" Command="{Binding CopierS1}" IsEnabled="{Binding PeutCopierS1}" Padding="6" Margin="4,0,0,0"
+                    ToolTip="Reprend les paramètres et les grilles de S1 (le carré d'angle est conservé)" />
+          </UniformGrid>
+
+          <TextBlock Style="{StaticResource Section}" Text="DIAGONALES" />
+          <CheckBox Content="Diagonales 1 maille sur 2" IsChecked="{Binding Parametres.DiagonalesRenforcees}" />
+          <CheckBox Content="Diagonale dans la 1re maille" IsChecked="{Binding Parametres.DiagonalePremiereMaille}" />
+          <Button Content="Recocher les cases Diago" Command="{Binding ProposerLesDiagonales}" HorizontalAlignment="Left" Padding="10,4" Margin="0,6,0,0"
+                  ToolTip="Recoche les cases « Diago » de la grille des mailles : une maille sur 5, ou sur 2 avec l'option" />
+          <TextBlock Text="Par défaut une maille sur 5, sens alterné automatiquement." TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource Discret}" Margin="0,4" />
+
+          <TextBlock Style="{StaticResource Section}" Text="OPTIONS" />
+          <CheckBox Content="Traverses renforcées" IsChecked="{Binding Parametres.Renforce}" />
+          <CheckBox Content="Lisses en pied" IsChecked="{Binding Parametres.LissesEnPied}" />
+          <CheckBox Content="Départ poteaux 3 m côté extérieur" IsChecked="{Binding Parametres.Depart3mExterieur}" />
+          <CheckBox Content="Garde-corps 1,50 m au dernier niveau" IsChecked="{Binding Parametres.GardeCorpsCouvreur}" />
+        </StackPanel>
+      </ScrollViewer>
+    </DataTemplate>
+  </Window.Resources>
 
   <DockPanel>
     <Menu DockPanel.Dock="Top">
@@ -17,9 +152,112 @@
         <MenuItem Header="_Enregistrer" Click="Enregistrer_Click" />
         <MenuItem Header="Enregistrer _sous…" Click="EnregistrerSous_Click" />
         <Separator />
-        <MenuItem Header="Bibliothèque de blocs…" Click="Bibliotheque_Click" />
+        <MenuItem Header="_Quitter" Click="Quitter_Click" />
+      </MenuItem>
+      <MenuItem Header="_Affichage">
+        <MenuItem Header="Zoom tout" Click="ZoomTout_Click" />
+        <Separator />
+        <MenuItem Header="Iso" Tag="Iso" Click="Vue_Click" />
+        <MenuItem Header="Façade" Tag="Facade" Click="Vue_Click" />
+        <MenuItem Header="Dessus" Tag="Dessus" Click="Vue_Click" />
+        <MenuItem Header="Côté gauche" Tag="CoteGauche" Click="Vue_Click" />
+        <MenuItem Header="Côté droit" Tag="CoteDroit" Click="Vue_Click" />
+      </MenuItem>
+      <MenuItem Header="_Bibliothèque">
+        <MenuItem Header="Choisir la bibliothèque de blocs…" Click="Bibliotheque_Click" />
       </MenuItem>
     </Menu>
+
+    <!-- Ruban -->
+    <Border DockPanel.Dock="Top" Background="#F8F9FA" BorderBrush="{StaticResource Bordure}" BorderThickness="0,0,0,1">
+      <StackPanel Orientation="Horizontal" Margin="4,4,4,2">
+        <Border Style="{StaticResource GroupeRuban}">
+          <StackPanel>
+            <StackPanel Orientation="Horizontal">
+              <Button Style="{StaticResource BoutonRuban}" Click="Nouveau_Click" ToolTip="Nouveau projet">
+                <StackPanel><TextBlock Style="{StaticResource Picto}" Text="&#xE8A5;" /><TextBlock Text="Nouveau" /></StackPanel>
+              </Button>
+              <Button Style="{StaticResource BoutonRuban}" Click="Ouvrir_Click" ToolTip="Ouvrir un projet .mdc3">
+                <StackPanel><TextBlock Style="{StaticResource Picto}" Text="&#xE8E5;" /><TextBlock Text="Ouvrir" /></StackPanel>
+              </Button>
+              <Button Style="{StaticResource BoutonRuban}" Click="Enregistrer_Click" ToolTip="Enregistrer le projet">
+                <StackPanel><TextBlock Style="{StaticResource Picto}" Text="&#xE74E;" /><TextBlock Text="Enregistrer" /></StackPanel>
+              </Button>
+            </StackPanel>
+            <TextBlock Style="{StaticResource TitreGroupe}" Text="Projet" />
+          </StackPanel>
+        </Border>
+
+        <Border Style="{StaticResource GroupeRuban}">
+          <StackPanel>
+            <StackPanel Orientation="Horizontal">
+              <Button Style="{StaticResource BoutonRuban}" Command="{Binding Proposer}" ToolTip="Proposer les grilles de la face active">
+                <StackPanel><TextBlock Style="{StaticResource Picto}" Text="&#xE82F;" /><TextBlock Text="Proposer la face" /></StackPanel>
+              </Button>
+              <Button Style="{StaticResource BoutonRuban}" Click="Dessiner_Click" ToolTip="Générer et dessiner toute la structure">
+                <StackPanel><TextBlock Style="{StaticResource Picto}" Text="&#xE768;" /><TextBlock Text="Dessiner" FontWeight="SemiBold" /></StackPanel>
+              </Button>
+            </StackPanel>
+            <TextBlock Style="{StaticResource TitreGroupe}" Text="Structure" />
+          </StackPanel>
+        </Border>
+
+        <Border Style="{StaticResource GroupeRuban}">
+          <StackPanel>
+            <StackPanel Orientation="Horizontal">
+              <Button Style="{StaticResource BoutonRuban}" Click="ZoomTout_Click" ToolTip="Afficher tout le modèle, centré">
+                <StackPanel><TextBlock Style="{StaticResource Picto}" Text="&#xE71E;" /><TextBlock Text="Zoom tout" /></StackPanel>
+              </Button>
+              <StackPanel VerticalAlignment="Center">
+                <StackPanel Orientation="Horizontal">
+                  <Button Content="Iso" Tag="Iso" Click="Vue_Click" Padding="8,2" Margin="1" />
+                  <Button Content="Façade" Tag="Facade" Click="Vue_Click" Padding="8,2" Margin="1" />
+                  <Button Content="Dessus" Tag="Dessus" Click="Vue_Click" Padding="8,2" Margin="1" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal">
+                  <Button Content="Côté gauche" Tag="CoteGauche" Click="Vue_Click" Padding="8,2" Margin="1" />
+                  <Button Content="Côté droit" Tag="CoteDroit" Click="Vue_Click" Padding="8,2" Margin="1" />
+                </StackPanel>
+              </StackPanel>
+            </StackPanel>
+            <TextBlock Style="{StaticResource TitreGroupe}" Text="Vue" />
+          </StackPanel>
+        </Border>
+
+        <Border Style="{StaticResource GroupeRuban}">
+          <StackPanel>
+            <StackPanel VerticalAlignment="Center" Margin="4,2">
+              <ComboBox x:Name="ChoixRendu" Width="150" SelectedIndex="2" SelectionChanged="Rendu_SelectionChanged">
+                <ComboBoxItem Content="Filaire" Tag="Filaire" />
+                <ComboBoxItem Content="Lignes cachées" Tag="LignesCachees" />
+                <ComboBoxItem Content="Ombré" Tag="Ombre" />
+                <ComboBoxItem Content="Ombré + arêtes" Tag="OmbreAretes" />
+                <ComboBoxItem Content="Réaliste" Tag="Realiste" />
+              </ComboBox>
+              <CheckBox x:Name="CaseAxes" Content="Axes filaires" IsChecked="True" Click="Axes_Click" Margin="0,4,0,0" />
+            </StackPanel>
+            <TextBlock Style="{StaticResource TitreGroupe}" Text="Affichage" />
+          </StackPanel>
+        </Border>
+
+        <Border Style="{StaticResource GroupeRuban}" BorderThickness="0">
+          <StackPanel>
+            <StackPanel Orientation="Horizontal" IsEnabled="False" ToolTip="À venir : mise en plan, export PDF, devis">
+              <Button Style="{StaticResource BoutonRuban}">
+                <StackPanel><TextBlock Style="{StaticResource Picto}" Text="&#xE8A1;" /><TextBlock Text="Mise en plan" /></StackPanel>
+              </Button>
+              <Button Style="{StaticResource BoutonRuban}">
+                <StackPanel><TextBlock Style="{StaticResource Picto}" Text="&#xE749;" /><TextBlock Text="PDF" /></StackPanel>
+              </Button>
+              <Button Style="{StaticResource BoutonRuban}">
+                <StackPanel><TextBlock Style="{StaticResource Picto}" Text="&#xE8EF;" /><TextBlock Text="Devis" /></StackPanel>
+              </Button>
+            </StackPanel>
+            <TextBlock Style="{StaticResource TitreGroupe}" Text="Sortie (plus tard)" />
+          </StackPanel>
+        </Border>
+      </StackPanel>
+    </Border>
 
     <StatusBar DockPanel.Dock="Bottom">
       <TextBlock Text="{Binding Resume}" />
@@ -28,198 +266,265 @@
     </StatusBar>
 
     <Grid>
+      <Grid.RowDefinitions>
+        <RowDefinition Height="*" MinHeight="200" />
+        <RowDefinition Height="5" />
+        <RowDefinition Height="320" MinHeight="120" />
+      </Grid.RowDefinitions>
       <Grid.ColumnDefinitions>
-        <ColumnDefinition Width="300" />
-        <ColumnDefinition Width="380" />
+        <ColumnDefinition Width="370" MinWidth="280" />
+        <ColumnDefinition Width="5" />
         <ColumnDefinition Width="*" />
       </Grid.ColumnDefinitions>
 
-      <!-- Paramètres -->
-      <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" Margin="6">
-        <StackPanel>
-          <GroupBox Header="Projet">
-            <StackPanel>
-              <TextBlock Text="Chantier" />
-              <TextBox Text="{Binding Projet.Chantier}" />
-              <TextBlock Text="Client" />
-              <TextBox Text="{Binding Projet.Client}" />
-              <TextBlock Text="Référence étude" />
-              <TextBox Text="{Binding Projet.ReferenceEtude}" />
+      <!-- Paramétrage : Général puis une face par onglet (ajoutés par le code selon la forme). -->
+      <TabControl x:Name="Onglets" Grid.Row="0" Grid.Column="0" Margin="6,6,0,0" SelectionChanged="Onglets_SelectionChanged">
+        <TabItem Header="Général">
+          <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="10,0,10,10">
+              <TextBlock Style="{StaticResource Section}" Text="PROJET" />
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="Auto" />
+                  <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                  <RowDefinition /><RowDefinition /><RowDefinition />
+                </Grid.RowDefinitions>
+                <TextBlock Style="{StaticResource Etiquette}" Text="Chantier" />
+                <TextBox Grid.Column="1" Margin="0,2" Text="{Binding Projet.Chantier}" />
+                <TextBlock Grid.Row="1" Style="{StaticResource Etiquette}" Text="Client" />
+                <TextBox Grid.Row="1" Grid.Column="1" Margin="0,2" Text="{Binding Projet.Client}" />
+                <TextBlock Grid.Row="2" Style="{StaticResource Etiquette}" Text="Référence étude" />
+                <TextBox Grid.Row="2" Grid.Column="1" Margin="0,2" Text="{Binding Projet.ReferenceEtude}" />
+              </Grid>
+
+              <TextBlock Style="{StaticResource Section}" Text="MATÉRIEL" />
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="Auto" />
+                  <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                  <RowDefinition /><RowDefinition />
+                </Grid.RowDefinitions>
+                <TextBlock Style="{StaticResource Etiquette}" Text="Modèle" />
+                <ComboBox Grid.Column="1" Margin="0,2" Style="{StaticResource ListeLibelles}" ItemsSource="{x:Static vm:FacadeViewModel.Modeles}"
+                          SelectedItem="{Binding General.Modele}" SelectionChanged="Modele_SelectionChanged" />
+                <TextBlock Grid.Row="1" Style="{StaticResource Etiquette}" Text="Plateaux" />
+                <ComboBox Grid.Row="1" Grid.Column="1" Margin="0,2" ItemsSource="{x:Static vm:FacadeViewModel.ChoixPlateaux}" DisplayMemberPath="Value" SelectedValuePath="Key"
+                          SelectedValue="{Binding General.Plateaux}" />
+              </Grid>
+
+              <TextBlock Style="{StaticResource Section}" Text="FORME DE LA STRUCTURE" />
+              <UniformGrid Columns="4">
+                <RadioButton Style="{StaticResource BoutonForme}" GroupName="Forme" IsChecked="{Binding Forme, Converter={StaticResource Egal}, ConverterParameter=Droite}">
+                  <StackPanel>
+                    <Path Data="M2,18 H38 V25 H2 Z" Stroke="{StaticResource Accent}" StrokeThickness="2" Width="40" Height="28" HorizontalAlignment="Center" />
+                    <TextBlock Text="Droite" FontSize="12" HorizontalAlignment="Center" />
+                  </StackPanel>
+                </RadioButton>
+                <RadioButton Style="{StaticResource BoutonForme}" GroupName="Forme" IsChecked="{Binding Forme, Converter={StaticResource Egal}, ConverterParameter=EnL}">
+                  <StackPanel>
+                    <Path Data="M2,18 H31 V2 H38 V25 H2 Z" Stroke="{StaticResource Accent}" StrokeThickness="2" Width="40" Height="28" HorizontalAlignment="Center" />
+                    <TextBlock Text="En L" FontSize="12" HorizontalAlignment="Center" />
+                  </StackPanel>
+                </RadioButton>
+                <RadioButton Style="{StaticResource BoutonForme}" GroupName="Forme" IsChecked="{Binding Forme, Converter={StaticResource Egal}, ConverterParameter=EnU}">
+                  <StackPanel>
+                    <Path Data="M2,2 H9 V18 H31 V2 H38 V25 H2 Z" Stroke="{StaticResource Accent}" StrokeThickness="2" Width="40" Height="28" HorizontalAlignment="Center" />
+                    <TextBlock Text="En U" FontSize="12" HorizontalAlignment="Center" />
+                  </StackPanel>
+                </RadioButton>
+                <RadioButton Style="{StaticResource BoutonForme}" GroupName="Forme" IsChecked="{Binding Forme, Converter={StaticResource Egal}, ConverterParameter=Fermee}">
+                  <StackPanel>
+                    <Path Data="M2,2 H38 V25 H2 Z M9,9 H31 V18 H9 Z" Stroke="{StaticResource Accent}" StrokeThickness="2" Width="40" Height="28" HorizontalAlignment="Center" />
+                    <TextBlock Text="Fermée" FontSize="12" HorizontalAlignment="Center" />
+                  </StackPanel>
+                </RadioButton>
+              </UniformGrid>
+              <TextBlock Text="La forme crée les onglets S1 à S4. À partir de S2, la 1re maille est le carré d'angle qui raccorde la face à la précédente."
+                         TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource Discret}" Margin="0,6,0,0" />
+
+              <TextBlock Style="{StaticResource Section}" Text="GARDE-CORPS ET PLINTHES" />
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="100" />
+                  <ColumnDefinition Width="90" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                  <RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition />
+                </Grid.RowDefinitions>
+                <TextBlock Grid.Column="1" Text="Garde-corps" FontSize="12" Foreground="{StaticResource Discret}" />
+                <TextBlock Grid.Column="2" Text="Plinthe" FontSize="12" Foreground="{StaticResource Discret}" Margin="4,0,0,0" />
+                <TextBlock Grid.Row="1" Style="{StaticResource Etiquette}" Text="Extérieur (rue)" />
+                <ComboBox Grid.Row="1" Grid.Column="1" Margin="0,2" Style="{StaticResource ListeLibelles}" ItemsSource="{x:Static vm:FacadeViewModel.Securites}" SelectedItem="{Binding General.SecuriteExterieure}" />
+                <ComboBox Grid.Row="1" Grid.Column="2" Margin="4,2,0,2" Style="{StaticResource ListeLibelles}" ItemsSource="{x:Static vm:FacadeViewModel.Plinthes}" SelectedItem="{Binding General.PlintheExterieure}" />
+                <TextBlock Grid.Row="2" Style="{StaticResource Etiquette}" Text="Intérieur (mur)" />
+                <ComboBox Grid.Row="2" Grid.Column="1" Margin="0,2" Style="{StaticResource ListeLibelles}" ItemsSource="{x:Static vm:FacadeViewModel.Securites}" SelectedItem="{Binding General.SecuriteInterieure}" />
+                <ComboBox Grid.Row="2" Grid.Column="2" Margin="4,2,0,2" Style="{StaticResource ListeLibelles}" ItemsSource="{x:Static vm:FacadeViewModel.Plinthes}" SelectedItem="{Binding General.PlintheInterieure}" />
+                <TextBlock Grid.Row="3" Style="{StaticResource Etiquette}" Text="Abouts" />
+                <ComboBox Grid.Row="3" Grid.Column="1" Margin="0,2" Style="{StaticResource ListeLibelles}" ItemsSource="{x:Static vm:FacadeViewModel.Securites}" SelectedItem="{Binding General.SecuriteAbouts}" />
+                <ComboBox Grid.Row="3" Grid.Column="2" Margin="4,2,0,2" Style="{StaticResource ListeLibelles}" ItemsSource="{x:Static vm:FacadeViewModel.Plinthes}" SelectedItem="{Binding General.PlintheAbouts}" />
+              </Grid>
+              <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                <CheckBox Content="About gauche" IsChecked="{Binding General.AboutGauche}" Margin="0,3,16,3" />
+                <CheckBox Content="About droit" IsChecked="{Binding General.AboutDroit}" />
+              </StackPanel>
+              <TextBlock Text="En L, en U ou fermée, pas d'about aux raccords entre faces." TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource Discret}" />
+
+              <TextBlock Style="{StaticResource Section}" Text="AMARRAGES" />
+              <CheckBox Content="Échafaudage bâché" IsChecked="{Binding General.Bache}" />
+              <Grid Margin="0,4,0,0">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="60" />
+                  <ColumnDefinition Width="60" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                  <RowDefinition /><RowDefinition /><RowDefinition />
+                </Grid.RowDefinitions>
+                <TextBlock Style="{StaticResource Etiquette}" Text="1er amarrage (m)" />
+                <TextBox Grid.Column="2" Margin="0,2" Text="{Binding General.HauteurPremierAmarrage, StringFormat=0.00}" />
+                <TextBlock Grid.Row="1" Style="{StaticResource Etiquette}" Text="Extrémités (m)" />
+                <TextBox Grid.Row="1" Grid.Column="2" Margin="0,2" Text="{Binding General.EspacementAmarrageExtremite, StringFormat=0.##}" />
+                <TextBlock Grid.Row="2" Style="{StaticResource Etiquette}" Text="Courant, non bâché / bâché (m)" />
+                <TextBox Grid.Row="2" Grid.Column="1" Margin="0,2,4,2" Text="{Binding General.EspacementAmarrageCourant, StringFormat=0.##}" />
+                <TextBox Grid.Row="2" Grid.Column="2" Margin="0,2" Text="{Binding General.EspacementAmarrageCourantBache, StringFormat=0.##}" />
+              </Grid>
             </StackPanel>
-          </GroupBox>
+          </ScrollViewer>
+        </TabItem>
+      </TabControl>
 
-          <GroupBox Header="Structure">
-            <StackPanel>
-              <TextBlock Text="Modèle" />
-              <ComboBox ItemsSource="{x:Static vm:FacadeViewModel.Modeles}" SelectedItem="{Binding Parametres.Modele}" SelectionChanged="Modele_SelectionChanged" />
-              <TextBlock Text="Largeur de maille (m)" />
-              <ComboBox ItemsSource="{x:Static vm:FacadeViewModel.LargeursMaille}" SelectedItem="{Binding Parametres.LargeurMaille}" ItemStringFormat="0.00" />
-              <TextBlock Text="Longueur de façade souhaitée (m)" />
-              <TextBox Text="{Binding LongueurFacade, StringFormat=0.00}" />
-              <TextBlock Text="Longueur de maille préférée (m)" />
-              <ComboBox ItemsSource="{x:Static vm:FacadeViewModel.LongueursMaille}" SelectedItem="{Binding Parametres.LongueurMaillePreferee}" ItemStringFormat="0.00" />
-              <TextBlock Text="Nombre d'accès" />
-              <TextBox Text="{Binding NombreAcces}" />
-              <TextBlock Text="Hauteur du dernier plancher (m)" />
-              <TextBox Text="{Binding Parametres.HauteurDernierPlancher, StringFormat=0.00}" />
-              <TextBlock Text="Distance file intérieure – façade (m)" />
-              <TextBox Text="{Binding Parametres.DistanceFacade, StringFormat=0.00}" />
-              <CheckBox Content="Départ poteaux 3 m côté extérieur" IsChecked="{Binding Parametres.Depart3mExterieur}" />
-              <CheckBox Content="Traverses renforcées" IsChecked="{Binding Parametres.Renforce}" />
-              <CheckBox Content="Lisses en pied" IsChecked="{Binding Parametres.LissesEnPied}" />
-              <Button Content="Proposer la structure" Command="{Binding Proposer}" Margin="0,6,0,0" />
-            </StackPanel>
-          </GroupBox>
+      <GridSplitter Grid.Row="0" Grid.Column="1" HorizontalAlignment="Stretch" />
 
-          <GroupBox Header="Planchers">
-            <StackPanel>
-              <TextBlock Text="Plateaux" />
-              <ComboBox ItemsSource="{x:Static vm:FacadeViewModel.ChoixPlateaux}" DisplayMemberPath="Value" SelectedValuePath="Key" SelectedValue="{Binding Parametres.Plateaux}" />
-            </StackPanel>
-          </GroupBox>
+      <!-- Dessin 3D : toute la structure, la face active en couleur. -->
+      <Border Grid.Row="0" Grid.Column="2" Margin="0,6,6,0" BorderBrush="{StaticResource Bordure}" BorderThickness="1">
+        <wfi:WindowsFormsHost x:Name="HoteVectorDraw" />
+      </Border>
 
-          <GroupBox Header="Sécurité">
-            <StackPanel>
-              <TextBlock Text="Extérieure" />
-              <ComboBox ItemsSource="{x:Static vm:FacadeViewModel.Securites}" SelectedItem="{Binding Parametres.SecuriteExterieure}" />
-              <TextBlock Text="Intérieure" />
-              <ComboBox ItemsSource="{x:Static vm:FacadeViewModel.Securites}" SelectedItem="{Binding Parametres.SecuriteInterieure}" />
-              <TextBlock Text="Abouts" />
-              <ComboBox ItemsSource="{x:Static vm:FacadeViewModel.Securites}" SelectedItem="{Binding Parametres.SecuriteAbouts}" />
-              <TextBlock Text="Plinthes extérieures / intérieures / abouts" />
-              <ComboBox ItemsSource="{x:Static vm:FacadeViewModel.Plinthes}" SelectedItem="{Binding Parametres.PlintheExterieure}" />
-              <ComboBox ItemsSource="{x:Static vm:FacadeViewModel.Plinthes}" SelectedItem="{Binding Parametres.PlintheInterieure}" />
-              <ComboBox ItemsSource="{x:Static vm:FacadeViewModel.Plinthes}" SelectedItem="{Binding Parametres.PlintheAbouts}" />
-              <CheckBox Content="About gauche" IsChecked="{Binding Parametres.AboutGauche}" />
-              <CheckBox Content="About droit" IsChecked="{Binding Parametres.AboutDroit}" />
-              <CheckBox Content="Garde-corps couvreur (1,50 m)" IsChecked="{Binding Parametres.GardeCorpsCouvreur}" />
-            </StackPanel>
-          </GroupBox>
+      <GridSplitter Grid.Row="1" Grid.ColumnSpan="3" HorizontalAlignment="Stretch" />
 
-          <GroupBox Header="Diagonales">
-            <StackPanel>
-              <CheckBox Content="Diagonales 1 maille sur 2" IsChecked="{Binding Parametres.DiagonalesRenforcees}" />
-              <CheckBox Content="Diagonale dans la 1re maille" IsChecked="{Binding Parametres.DiagonalePremiereMaille}" />
-              <Button Content="Proposer les diagonales" Command="{Binding ProposerLesDiagonales}" Margin="0,6,0,0"
-                      ToolTip="Recoche les cases « Diagonale » de la grille des mailles selon la règle (une maille sur 5 ou sur 3…)" />
-            </StackPanel>
-          </GroupBox>
+      <!-- Grilles de la face active, décompte, amarrages, alertes. -->
+      <TabControl Grid.Row="2" Grid.ColumnSpan="3" Margin="6,0,6,6">
+        <TabItem Header="{Binding TitreGrilles}">
+          <Grid Margin="6">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="12" />
+              <ColumnDefinition Width="Auto" MinWidth="380" />
+            </Grid.ColumnDefinitions>
 
-          <GroupBox Header="Amarrages">
-            <StackPanel>
-              <CheckBox Content="Échafaudage bâché" IsChecked="{Binding Parametres.Bache}" />
-              <TextBlock Text="1er amarrage (m)" />
-              <TextBox Text="{Binding Parametres.HauteurPremierAmarrage, StringFormat=0.00}" />
-              <TextBlock Text="Espacement extrémités (m)" />
-              <TextBox Text="{Binding Parametres.EspacementAmarrageExtremite, StringFormat=0.00}" />
-              <TextBlock Text="Espacement files courantes, non bâché / bâché (m)" />
-              <TextBox Text="{Binding Parametres.EspacementAmarrageCourant, StringFormat=0.00}" />
-              <TextBox Text="{Binding Parametres.EspacementAmarrageCourantBache, StringFormat=0.00}" />
-            </StackPanel>
-          </GroupBox>
-        </StackPanel>
-      </ScrollViewer>
+            <DockPanel Grid.Column="0">
+              <DockPanel DockPanel.Dock="Top" Margin="0,0,0,4">
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
+                  <Button Content="Ajouter" Click="AjouterMaille_Click" Padding="10,3" Margin="2,0" ToolTip="Ajoute une maille après la maille sélectionnée (à la fin sinon)" />
+                  <Button Content="Insérer avant" Click="InsererMaille_Click" Padding="10,3" Margin="2,0" />
+                  <Button Content="Supprimer" Click="SupprimerMaille_Click" Padding="10,3" Margin="2,0" />
+                </StackPanel>
+                <TextBlock Text="Mailles (de gauche à droite)" FontWeight="SemiBold" VerticalAlignment="Center" />
+              </DockPanel>
+              <!-- Colonnes « ConXm » ajoutées par le code, une par niveau avec console. -->
+              <DataGrid x:Name="GrilleMailles" ItemsSource="{Binding Mailles}" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="True"
+                        HeadersVisibility="All" RowHeaderWidth="32" SelectionMode="Single" LoadingRow="GrilleMailles_LoadingRow">
+                <DataGrid.Columns>
+                  <DataGridComboBoxColumn Header="Longueur" SelectedItemBinding="{Binding Longueur}" ItemsSource="{x:Static vm:FacadeViewModel.LongueursMaille}" Width="80" />
+                  <DataGridTemplateColumn Header="Type" Width="110">
+                    <DataGridTemplateColumn.CellTemplate>
+                      <DataTemplate>
+                        <TextBlock Text="{Binding Type, Converter={StaticResource Libelle}}" Margin="2,0" />
+                      </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                    <DataGridTemplateColumn.CellEditingTemplate>
+                      <DataTemplate>
+                        <ComboBox Style="{StaticResource ListeLibelles}" ItemsSource="{x:Static vm:FacadeViewModel.TypesMaille}" SelectedItem="{Binding Type, UpdateSourceTrigger=PropertyChanged}" />
+                      </DataTemplate>
+                    </DataGridTemplateColumn.CellEditingTemplate>
+                  </DataGridTemplateColumn>
+                  <DataGridTemplateColumn Header="Diago" Width="Auto">
+                    <DataGridTemplateColumn.CellTemplate>
+                      <DataTemplate>
+                        <CheckBox IsChecked="{Binding Diagonale, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Center" Margin="0"
+                                  ToolTip="Diagonales verticales sur toute la hauteur de la maille" />
+                      </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                  </DataGridTemplateColumn>
+                  <DataGridTextColumn Header="Jonction" Binding="{Binding Jonction}" IsReadOnly="True" Width="Auto">
+                    <DataGridTextColumn.CellStyle>
+                      <Style TargetType="DataGridCell">
+                        <Setter Property="Background" Value="#F6F7F9" />
+                        <Setter Property="Foreground" Value="#57606A" />
+                        <Setter Property="ToolTip" Value="Carré d'angle : raccord avec cette face (rempli d'après la forme)" />
+                      </Style>
+                    </DataGridTextColumn.CellStyle>
+                  </DataGridTextColumn>
+                </DataGrid.Columns>
+              </DataGrid>
+            </DockPanel>
 
-      <!-- Grilles éditables -->
-      <Grid Grid.Column="1" Margin="0,6,6,6">
-        <Grid.RowDefinitions>
-          <RowDefinition Height="2*" />
-          <RowDefinition Height="*" />
-          <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
+            <DockPanel Grid.Column="2">
+              <TextBlock DockPanel.Dock="Top" Text="Niveaux de plancher" FontWeight="SemiBold" Margin="0,0,0,8" />
+              <DataGrid ItemsSource="{Binding Niveaux}" AutoGenerateColumns="False" CanUserAddRows="True" CanUserDeleteRows="True">
+                <DataGrid.Columns>
+                  <DataGridTextColumn Header="Niveau (m)" Binding="{Binding Hauteur, StringFormat=0.00}" Width="80" />
+                  <DataGridTemplateColumn Header="Type" Width="150">
+                    <DataGridTemplateColumn.CellTemplate>
+                      <DataTemplate>
+                        <TextBlock Text="{Binding Type, Converter={StaticResource Libelle}}" Margin="2,0" />
+                      </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                    <DataGridTemplateColumn.CellEditingTemplate>
+                      <DataTemplate>
+                        <ComboBox Style="{StaticResource ListeLibelles}" ItemsSource="{x:Static vm:FacadeViewModel.TypesPlancher}" SelectedItem="{Binding Type, UpdateSourceTrigger=PropertyChanged}" />
+                      </DataTemplate>
+                    </DataGridTemplateColumn.CellEditingTemplate>
+                  </DataGridTemplateColumn>
+                  <DataGridTemplateColumn Header="Console" Width="130">
+                    <DataGridTemplateColumn.CellTemplate>
+                      <DataTemplate>
+                        <TextBlock Text="{Binding Console}" Margin="2,0" />
+                      </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                    <DataGridTemplateColumn.CellEditingTemplate>
+                      <DataTemplate>
+                        <ComboBox ItemsSource="{Binding DataContext.Consoles, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                  SelectedItem="{Binding Console, UpdateSourceTrigger=PropertyChanged}" />
+                      </DataTemplate>
+                    </DataGridTemplateColumn.CellEditingTemplate>
+                  </DataGridTemplateColumn>
+                </DataGrid.Columns>
+              </DataGrid>
+            </DockPanel>
+          </Grid>
+        </TabItem>
 
-        <GroupBox Header="Grille des mailles" Grid.Row="0">
-          <!-- Colonnes « ConXm » ajoutées par le code, une par niveau avec console. -->
-          <DataGrid x:Name="GrilleMailles" ItemsSource="{Binding Mailles}" AutoGenerateColumns="False" CanUserAddRows="True" CanUserDeleteRows="True">
+        <TabItem Header="Décompte">
+          <DataGrid ItemsSource="{Binding Decompte}" AutoGenerateColumns="False" IsReadOnly="True">
             <DataGrid.Columns>
-              <DataGridComboBoxColumn Header="Longueur" SelectedItemBinding="{Binding Longueur}" ItemsSource="{x:Static vm:FacadeViewModel.LongueursMaille}" Width="80" />
-              <DataGridComboBoxColumn Header="Type" SelectedItemBinding="{Binding Type}" ItemsSource="{x:Static vm:FacadeViewModel.TypesMaille}" Width="80" />
-              <DataGridTemplateColumn Header="Diagonale" Width="Auto">
-                <DataGridTemplateColumn.CellTemplate>
-                  <DataTemplate>
-                    <CheckBox IsChecked="{Binding Diagonale, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Center"
-                              ToolTip="Diagonales verticales sur toute la hauteur de la maille" />
-                  </DataTemplate>
-                </DataGridTemplateColumn.CellTemplate>
-              </DataGridTemplateColumn>
+              <DataGridTextColumn Header="Famille" Binding="{Binding Famille}" Width="150" />
+              <DataGridTextColumn Header="Référence" Binding="{Binding Reference}" Width="200" />
+              <DataGridTextColumn Header="Quantité" Binding="{Binding Quantite}" Width="80" />
             </DataGrid.Columns>
           </DataGrid>
-        </GroupBox>
+        </TabItem>
 
-        <GroupBox Header="Niveaux de plancher" Grid.Row="1">
-          <DataGrid ItemsSource="{Binding Niveaux}" AutoGenerateColumns="False" CanUserAddRows="True" CanUserDeleteRows="True">
+        <TabItem Header="Amarrages">
+          <DataGrid ItemsSource="{Binding ListeAmarrages}" AutoGenerateColumns="False" IsReadOnly="True">
             <DataGrid.Columns>
-              <DataGridTextColumn Header="Hauteur (m)" Binding="{Binding Hauteur, StringFormat=0.00}" Width="90" />
-              <DataGridComboBoxColumn Header="Plancher" SelectedItemBinding="{Binding Type}" ItemsSource="{x:Static vm:FacadeViewModel.TypesPlancher}" Width="*" />
-              <DataGridTemplateColumn Header="Console" Width="*">
-                <DataGridTemplateColumn.CellTemplate>
-                  <DataTemplate>
-                    <TextBlock Text="{Binding Console}" />
-                  </DataTemplate>
-                </DataGridTemplateColumn.CellTemplate>
-                <DataGridTemplateColumn.CellEditingTemplate>
-                  <DataTemplate>
-                    <ComboBox ItemsSource="{Binding DataContext.Consoles, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                              SelectedItem="{Binding Console, UpdateSourceTrigger=PropertyChanged}" />
-                  </DataTemplate>
-                </DataGridTemplateColumn.CellEditingTemplate>
-              </DataGridTemplateColumn>
+              <DataGridTextColumn Header="Face" Binding="{Binding NomFace}" Width="60" />
+              <DataGridTextColumn Header="File" Binding="{Binding NumeroFile}" Width="60" />
+              <DataGridTextColumn Header="Abscisse dans la face (m)" Binding="{Binding X, StringFormat=0.00}" Width="170" />
+              <DataGridTextColumn Header="Hauteur (m)" Binding="{Binding Hauteur, StringFormat=0.00}" Width="100" />
             </DataGrid.Columns>
           </DataGrid>
-        </GroupBox>
+        </TabItem>
 
-        <Button Grid.Row="2" Content="Dessiner la façade" Padding="6" Click="Dessiner_Click" FontWeight="Bold" />
-      </Grid>
-
-      <!-- Dessin + décompte -->
-      <Grid Grid.Column="2" Margin="0,6,6,6">
-        <Grid.RowDefinitions>
-          <RowDefinition Height="Auto" />
-          <RowDefinition Height="3*" />
-          <RowDefinition Height="5" />
-          <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
-
-        <ToolBar Grid.Row="0">
-          <TextBlock Text="Vue :" VerticalAlignment="Center" Margin="2,0,4,0" />
-          <Button Content="Zoom tout" Click="ZoomTout_Click" ToolTip="Afficher tout le modèle, centré" />
-          <Separator />
-          <Button Content="Iso" Tag="Iso" Click="Vue_Click" />
-          <Button Content="Façade" Tag="Facade" Click="Vue_Click" />
-          <Button Content="Dessus" Tag="Dessus" Click="Vue_Click" />
-          <Button Content="Côté gauche" Tag="CoteGauche" Click="Vue_Click" />
-          <Button Content="Côté droit" Tag="CoteDroit" Click="Vue_Click" />
-          <Separator />
-          <TextBlock Text="Rendu :" VerticalAlignment="Center" Margin="2,0,4,0" />
-          <ComboBox x:Name="ChoixRendu" Width="150" SelectedIndex="2" SelectionChanged="Rendu_SelectionChanged">
-            <ComboBoxItem Content="Filaire" Tag="Filaire" />
-            <ComboBoxItem Content="Lignes cachées" Tag="LignesCachees" />
-            <ComboBoxItem Content="Ombré" Tag="Ombre" />
-            <ComboBoxItem Content="Ombré + arêtes" Tag="OmbreAretes" />
-            <ComboBoxItem Content="Réaliste" Tag="Realiste" />
-          </ComboBox>
-          <CheckBox Content="Axes filaires" Margin="8,0,0,0" VerticalAlignment="Center" Click="Axes_Click" x:Name="CaseAxes" IsChecked="True" />
-        </ToolBar>
-
-        <wfi:WindowsFormsHost x:Name="HoteVectorDraw" Grid.Row="1" />
-
-        <GridSplitter Grid.Row="2" HorizontalAlignment="Stretch" />
-
-        <TabControl Grid.Row="3">
-          <TabItem Header="Décompte">
-            <DataGrid ItemsSource="{Binding Decompte}" AutoGenerateColumns="False" IsReadOnly="True">
-              <DataGrid.Columns>
-                <DataGridTextColumn Header="Famille" Binding="{Binding Famille}" Width="150" />
-                <DataGridTextColumn Header="Référence" Binding="{Binding Reference}" Width="200" />
-                <DataGridTextColumn Header="Quantité" Binding="{Binding Quantite}" Width="80" />
-              </DataGrid.Columns>
-            </DataGrid>
-          </TabItem>
-          <TabItem Header="Alertes">
-            <ListBox ItemsSource="{Binding Alertes}" />
-          </TabItem>
-        </TabControl>
-      </Grid>
+        <TabItem Header="{Binding TitreAlertes}">
+          <ListBox ItemsSource="{Binding Alertes}" />
+        </TabItem>
+      </TabControl>
     </Grid>
   </DockPanel>
 </Window>

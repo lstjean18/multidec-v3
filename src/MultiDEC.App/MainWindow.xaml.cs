@@ -16,6 +16,7 @@ namespace MultiDEC.App;
 
 /// <summary>
 /// Fenêtre principale : héberge le contrôle VectorDraw (WinForms) et relie le ViewModel au rendu.
+/// Onglets de gauche : « Général » (dans le XAML) puis un onglet par face, créés ici selon la forme.
 /// </summary>
 public partial class MainWindow : Window
 {
@@ -28,6 +29,8 @@ public partial class MainWindow : Window
     /// <summary>Colonnes « ConXm » ajoutées à la grille des mailles (une par niveau avec console).</summary>
     private readonly List<DataGridColumn> _colonnesConsoles = new List<DataGridColumn>();
 
+    private bool _ongletsAReconstruire;
+
     public MainWindow()
     {
         InitializeComponent();
@@ -35,6 +38,10 @@ public partial class MainWindow : Window
         MenuContextuel();
         Vm.ColonnesConsolesChangees += (_, _) => ColonnesConsoles();
         ColonnesConsoles();
+        Vm.Faces.CollectionChanged += (_, _) => ReconstruireOnglets();
+        Vm.Mailles.CollectionChanged += (_, _) => Dispatcher.BeginInvoke(new Action(NumeroterMailles));
+        Vm.PropertyChanged += Vm_PropertyChanged;
+        OngletsFaces();
         _orientations = TableOrientations.Charger(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "orientations-blocs.json"));
         Loaded += (_, _) => ChargerBibliotheque(Reglages.CheminBibliotheque);
     }
@@ -81,12 +88,127 @@ public partial class MainWindow : Window
             {
                 Vm.Alertes.Add("Blocs absents de la bibliothèque : " + string.Join(", ", rapport.BlocsManquants));
             }
+
+            MettreEnEvidence();
         }
         catch (Exception ex)
         {
             MessageBox.Show(this, ex.Message, "Dessin de la façade", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
+
+    // ---- Onglets des faces ----------------------------------------------------------------------
+
+    /// <summary>Les faces changent par lots (forme modifiée, projet ouvert) : une seule reconstruction à la fin.</summary>
+    private void ReconstruireOnglets()
+    {
+        if (_ongletsAReconstruire)
+        {
+            return;
+        }
+
+        _ongletsAReconstruire = true;
+        Dispatcher.BeginInvoke(new Action(() =>
+        {
+            _ongletsAReconstruire = false;
+            OngletsFaces();
+        }));
+    }
+
+    /// <summary>Un onglet par face (S1…S4) après « Général », tous sur le même panneau lié à la face active.</summary>
+    private void OngletsFaces()
+    {
+        int selection = Onglets.SelectedIndex;
+        while (Onglets.Items.Count > 1)
+        {
+            Onglets.Items.RemoveAt(Onglets.Items.Count - 1);
+        }
+
+        foreach (var face in Vm.Faces)
+        {
+            Onglets.Items.Add(new TabItem
+            {
+                Header = face.Nom,
+                Content = Vm,
+                ContentTemplate = (DataTemplate)FindResource("PanneauFace"),
+                MinWidth = 44,
+            });
+        }
+
+        // On reste sur « Général », sinon sur la face active (S1 si l'ancienne face n'existe plus).
+        Onglets.SelectedIndex = selection <= 0 ? 0 : Math.Min(Vm.IndexFaceActive + 1, Onglets.Items.Count - 1);
+    }
+
+    private void Onglets_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (!ReferenceEquals(e.OriginalSource, Onglets))
+        {
+            return; // listes déroulantes à l'intérieur des onglets
+        }
+
+        if (Onglets.SelectedIndex > 0)
+        {
+            Vm.IndexFaceActive = Onglets.SelectedIndex - 1;
+        }
+
+        MettreEnEvidence();
+    }
+
+    private void Vm_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(FacadeViewModel.IndexFaceActive) && Onglets.SelectedIndex > 0 && Onglets.SelectedIndex != Vm.IndexFaceActive + 1)
+        {
+            Onglets.SelectedIndex = Vm.IndexFaceActive + 1;
+        }
+    }
+
+    /// <summary>Face active en couleur dans le dessin, les autres estompées (toutes en couleur sur « Général »).</summary>
+    private void MettreEnEvidence() => _rendu?.MettreEnEvidence(Onglets.SelectedIndex > 0 ? Vm.NomFaceActive : null);
+
+    // ---- Grille des mailles -------------------------------------------------------------------
+
+    private void GrilleMailles_LoadingRow(object? sender, DataGridRowEventArgs e) => e.Row.Header = (e.Row.GetIndex() + 1).ToString();
+
+    /// <summary>Renumérote les lignes (colonne « # ») après un ajout, une insertion ou une suppression.</summary>
+    private void NumeroterMailles()
+    {
+        for (int i = 0; i < GrilleMailles.Items.Count; i++)
+        {
+            if (GrilleMailles.ItemContainerGenerator.ContainerFromIndex(i) is DataGridRow ligne)
+            {
+                ligne.Header = (i + 1).ToString();
+            }
+        }
+    }
+
+    private void AjouterMaille_Click(object sender, RoutedEventArgs e) => SelectionnerMaille(Vm.AjouterMaille(GrilleMailles.SelectedIndex));
+
+    private void InsererMaille_Click(object sender, RoutedEventArgs e) => SelectionnerMaille(Vm.InsererMailleAvant(GrilleMailles.SelectedIndex));
+
+    private void SupprimerMaille_Click(object sender, RoutedEventArgs e)
+    {
+        int i = GrilleMailles.SelectedIndex;
+        if (i < 0)
+        {
+            MessageBox.Show(this, "Sélectionnez d'abord la maille à supprimer.", "Mailles", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+
+        GrilleMailles.CommitEdit(DataGridEditingUnit.Row, true);
+        Vm.SupprimerMaille(i);
+        SelectionnerMaille(Math.Min(i, Vm.Mailles.Count - 1));
+    }
+
+    private void SelectionnerMaille(int index)
+    {
+        if (index >= 0 && index < Vm.Mailles.Count)
+        {
+            GrilleMailles.SelectedIndex = index;
+            GrilleMailles.ScrollIntoView(Vm.Mailles[index]);
+        }
+    }
+
+    // ---- Vue ----------------------------------------------------------------------------------
 
     private void Vue_Click(object sender, RoutedEventArgs e)
     {
@@ -176,6 +298,8 @@ public partial class MainWindow : Window
     private void Modele_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e) => Vm.ModeleChange();
 
     private void Nouveau_Click(object sender, RoutedEventArgs e) => Vm.Nouveau();
+
+    private void Quitter_Click(object sender, RoutedEventArgs e) => Close();
 
     private void Ouvrir_Click(object sender, RoutedEventArgs e)
     {
