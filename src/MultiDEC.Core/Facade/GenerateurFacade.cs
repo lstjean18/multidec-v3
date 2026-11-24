@@ -82,6 +82,23 @@ public sealed class GenerateurFacade
     {
         _projet = projet;
         _p = projet.Parametres;
+        if (_p.TrappesAcier && (_p.SecuriteExterieure == TypeSecurite.GardeCorpsMds2 || _p.SecuriteInterieure == TypeSecurite.GardeCorpsMds2))
+        {
+            // Trappes acier incompatibles avec les garde-corps MDS : lisses sur cette face (v2).
+            _p = _p.Copie();
+            if (_p.SecuriteExterieure == TypeSecurite.GardeCorpsMds2)
+            {
+                _p.SecuriteExterieure = TypeSecurite.Lisses;
+            }
+
+            if (_p.SecuriteInterieure == TypeSecurite.GardeCorpsMds2)
+            {
+                _p.SecuriteInterieure = TypeSecurite.Lisses;
+            }
+
+            _alertes.Add("Trappes et plateaux acier : garde-corps MDS remplacés par des lisses (incompatibles, comme dans la v2).");
+        }
+
         _x = projet.AbscissesFiles();
         _l = _p.LargeurMaille;
         _h = _p.HauteurDernierPlancher;
@@ -423,13 +440,28 @@ public sealed class GenerateurFacade
         // puis plateaux de complément. Sens alterné d'un niveau à l'autre : en sens inversé, l'origine
         // est à droite de la maille et le bloc est symétrisé.
         double xTrappe = inverse ? x0 + lm : x0;
-        Ajouter(References.PlateauTrappe(lm, _l), Famille.Trappe, new Point3(xTrappe, -RetraitPlateau, z), Axe.X, Face.Aucune, num, inverse);
-        if (lm <= 2.0 + Cotes.Tolerance)
+        if (_p.TrappesAcier && lm >= 2.0 - Cotes.Tolerance)
         {
+            // Trappes et plateaux acier (v2) : trappe de 1,00 m + échelle côté départ, traverse intermédiaire
+            // à 1,00 m, plateaux sur le reste de la maille.
+            const double lt = 1.0;
+            double xTip = inverse ? x0 + lm - lt : x0 + lt;
+            Ajouter(References.TraverseIntermediaire(_l), Famille.Traverse, new Point3(xTip, 0, z), Axe.Y, Face.Aucune, num);
+            Ajouter(References.TrappeAcier(_l), Famille.Trappe, new Point3(xTrappe, -RetraitPlateau, z), Axe.X, Face.Aucune, num, inverse);
             Ajouter(References.Echelle, Famille.Echelle, new Point3(xTrappe, -RetraitPlateau, z), Axe.X, Face.Aucune, num, inverse);
+            PlacerPlateaux(inverse ? x0 + lm - lt : x0, 0, z, _l, lt, num, premierRang: 2);
+            PlacerPlateaux(inverse ? x0 : x0 + lt, 0, z, _l, Cotes.Arrondi(lm - lt), num);
         }
+        else
+        {
+            Ajouter(References.PlateauTrappe(lm, _l), Famille.Trappe, new Point3(xTrappe, -RetraitPlateau, z), Axe.X, Face.Aucune, num, inverse);
+            if (lm <= 2.0 + Cotes.Tolerance)
+            {
+                Ajouter(References.Echelle, Famille.Echelle, new Point3(xTrappe, -RetraitPlateau, z), Axe.X, Face.Aucune, num, inverse);
+            }
 
-        PlacerPlateaux(x0, 0, z, _l, lm, num, premierRang: 2);
+            PlacerPlateaux(x0, 0, z, _l, lm, num, premierRang: 2);
+        }
 
         bool premierAcces = Cotes.Egal(z, 2.0) || Cotes.Egal(z, 3.0);
         if (premierAcces)

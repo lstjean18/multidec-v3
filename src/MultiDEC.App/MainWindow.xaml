@@ -134,6 +134,11 @@
                   ToolTip="Recoche les cases « Diago » de la grille des mailles : une maille sur 5, ou sur 2 avec l'option" />
           <TextBlock Text="Par défaut une maille sur 5, sens alterné automatiquement." TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource Discret}" Margin="0,4" />
 
+          <TextBlock Style="{StaticResource Section}" Text="ACCÈS" />
+          <CheckBox Content="Trappes et plateaux acier" IsChecked="{Binding TrappesAcier}"
+                    ToolTip="Mailles d'accès de 2 m et plus : trappe de 1,00 m + traverse intermédiaire + plateaux" />
+          <TextBlock Text="Trappes acier : les garde-corps MDS de la face passent en lisses (règle v2)." TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource Discret}" Margin="0,4" />
+
           <TextBlock Style="{StaticResource Section}" Text="OPTIONS" />
           <CheckBox Content="Traverses renforcées" IsChecked="{Binding Parametres.Renforce}" />
           <CheckBox Content="Lisses en pied" IsChecked="{Binding Parametres.LissesEnPied}" />

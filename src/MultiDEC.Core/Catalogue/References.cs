@@ -122,6 +122,16 @@ public static class References
     }
 
     /// <summary>Plateau à trappe : HMPLAL + longueur + 602TR (largeurs « rondes ») ou 650TR (0,75 / 1,05), + EC au-delà de 2 m.</summary>
+    /// <summary>
+    /// Trappe de 1,00 m de l'option « trappes et plateaux acier » (v2 : HMPLAL100602TR, absent de la
+    /// bibliothèque actuelle, remplacé par HMPLAL100596TR ; HMPLAL100TR pour les mailles larges, à confirmer).
+    /// </summary>
+    public static string TrappeAcier(double largeurMaille) =>
+        Cotes.Egal(largeurMaille, 1.05) || Cotes.Egal(largeurMaille, 0.75) ? "HMPLAL100TR" : "HMPLAL100596TR";
+
+    /// <summary>Traverse intermédiaire de plancher (HMTIP + largeur de maille en cm).</summary>
+    public static string TraverseIntermediaire(double largeurMaille) => "HMTIP" + Cotes.EnCm3(largeurMaille);
+
     public static string PlateauTrappe(double longueur, double largeurMaille)
     {
         bool large = Cotes.Egal(largeurMaille, 1.05) || Cotes.Egal(largeurMaille, 0.75);

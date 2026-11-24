@@ -82,6 +82,31 @@ public class GenerateurFacadeTests
     }
 
     [Fact]
+    public void Trappes_acier_dans_les_mailles_d_acces_et_lisses_a_la_place_des_mds()
+    {
+        var face = Standard(p => p.TrappesAcier = true);
+        var s = GenerateurFacade.Generer(face);
+        int acces = face.Mailles.Count(m => m.Type == TypeMaille.Acces);
+        int niveaux = face.Niveaux.Count(n => n.Hauteur >= 2);
+
+        Assert.Equal(acces * niveaux, Nb(s, "HMPLAL100596TR"));
+        Assert.Equal(acces * niveaux, Nb(s, "HMTIP070"));
+        Assert.DoesNotContain(s.Elements, e => e.Reference.StartsWith("HMPLAL250", StringComparison.Ordinal));
+        Assert.DoesNotContain(s.Elements, e => e.Axe == Axe.X && e.Reference.StartsWith("HMGCSE", StringComparison.Ordinal)); // abouts inchangés (v2)
+        Assert.Contains(s.Alertes, a => a.Contains("MDS remplacés par des lisses"));
+        Assert.Equal(TypeSecurite.GardeCorpsMds2, face.Parametres.SecuriteExterieure); // paramètre de l'utilisateur inchangé
+    }
+
+    [Fact]
+    public void Ecran_trappes_acier_coche_les_diagonales_1_sur_2()
+    {
+        var vm = new MultiDEC.App.ViewModels.FacadeViewModel();
+        vm.TrappesAcier = true;
+        Assert.True(vm.Parametres.DiagonalesRenforcees);
+        Assert.True(vm.Mailles.Count(m => m.Diagonale) >= vm.Mailles.Count / 2);
+    }
+
+    [Fact]
     public void Ancien_type_acces_seul_diago_h_devient_la_case()
     {
         var n = new Niveau(4, TypePlancher.AccesSeulDiagoH);

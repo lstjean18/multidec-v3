@@ -56,6 +56,13 @@ public sealed class ParametresFacade
     public string Socle { get; set; } = Catalogue.CatalogueSocles.ParDefaut;
 
     /// <summary>
+    /// Accès par trappes et plateaux acier (v2) : dans les mailles d'accès de 2 m et plus, trappe de 1,00 m
+    /// + traverse intermédiaire HMTIP + plateaux sur le reste. Incompatible avec les garde-corps MDS,
+    /// remplacés par des lisses sur la face.
+    /// </summary>
+    public bool TrappesAcier { get; set; }
+
+    /// <summary>
     /// Structure grutable (accessoires de levage, v2) : support HMSUPSUNI au pied de chaque poteau et
     /// goupilles remplacées par vis VSZ10070 + écrou VEF10.
     /// </summary>

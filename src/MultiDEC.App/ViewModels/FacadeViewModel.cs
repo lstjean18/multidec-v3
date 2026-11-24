@@ -166,6 +166,32 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
         }
     }
 
+    /// <summary>
+    /// Trappes et plateaux acier : avec des garde-corps MDS à l'extérieur, l'option « diagonales 1 maille sur 2 »
+    /// est cochée et les cases Diago recochées (comme la v2, où les MDS passent en lisses).
+    /// </summary>
+    public bool TrappesAcier
+    {
+        get => Parametres.TrappesAcier;
+        set
+        {
+            if (Parametres.TrappesAcier == value)
+            {
+                return;
+            }
+
+            Parametres.TrappesAcier = value;
+            if (value && General.SecuriteExterieure == TypeSecurite.GardeCorpsMds2 && !Parametres.DiagonalesRenforcees)
+            {
+                Parametres.DiagonalesRenforcees = true;
+                ProposerDiagonales();
+                Notifier(nameof(Parametres));
+            }
+
+            Notifier();
+        }
+    }
+
     public ObservableCollection<MailleDefinition> Mailles { get; } = new ObservableCollection<MailleDefinition>();
 
     public ObservableCollection<Niveau> Niveaux { get; } = new ObservableCollection<Niveau>();
@@ -363,6 +389,7 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
         Notifier(nameof(FaceActive));
         Notifier(nameof(NomFaceActive));
         Notifier(nameof(PeutCopierS1));
+        Notifier(nameof(TrappesAcier));
         Notifier(nameof(Parametres));
         Notifier(nameof(LongueurFacade));
         Notifier(nameof(NombreAcces));
