@@ -114,7 +114,13 @@ public sealed class TableOrientations
         double angle = AngleStandard(e) + (r?.RotationZ ?? 0);
         m = Matrices.Produit(Matrices.RotationZ(angle), m);
 
-        // 4. Position.
+        // 4. Rotation de la face dans la structure (S2, S3… en équerre) : l'origine est déjà tournée.
+        if (Math.Abs(e.AngleFace) > 1e-9)
+        {
+            m = Matrices.Produit(Matrices.RotationZ(e.AngleFace), m);
+        }
+
+        // 5. Position.
         var d = r?.Decalage ?? new double[3];
         m = Matrices.Produit(Matrices.Translation(e.Origine.X + d[0], e.Origine.Y + d[1], e.Origine.Z + d[2]), m);
         return m;

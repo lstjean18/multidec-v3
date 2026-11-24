@@ -37,7 +37,7 @@ public sealed class StructureFacade
 }
 
 /// <summary>
-/// Moteur façade v3 : transforme un <see cref="ProjetFacade"/> en liste d'éléments positionnés.
+/// Moteur façade v3 : transforme un <see cref="FaceEchafaudage"/> en liste d'éléments positionnés.
 /// Port structuré de Facade.vb (MultiRETO / MultiSystem / PlacePieds / PlacePoteaux / PlaceMailles /
 /// PlaceGC / PlaceConsole / PlacePlateaux / PlaceAcces / PlaceDiago / Placeabout), sans dépendance
 /// à l'interface ni à VectorDraw, plus les nouveautés v3 (consoles par niveau et par maille, diagonales choisies par maille, diagonales intérieures,
@@ -59,7 +59,7 @@ public sealed class GenerateurFacade
     /// <summary>Largeur nominale d'un plateau acier.</summary>
     public const double LargeurPlateau = 0.30;
 
-    private readonly ProjetFacade _projet;
+    private readonly FaceEchafaudage _projet;
     private readonly ParametresFacade _p;
     private readonly List<ElementPlace> _el = new List<ElementPlace>();
     private readonly List<string> _alertes = new List<string>();
@@ -75,7 +75,7 @@ public sealed class GenerateurFacade
 
     private Niveau? _niveauSommet;
 
-    private GenerateurFacade(ProjetFacade projet)
+    private GenerateurFacade(FaceEchafaudage projet)
     {
         _projet = projet;
         _p = projet.Parametres;
@@ -88,7 +88,7 @@ public sealed class GenerateurFacade
 
     private double LongueurTotale => _x[DerniereFile];
 
-    public static StructureFacade Generer(ProjetFacade projet)
+    public static StructureFacade Generer(FaceEchafaudage projet)
     {
         if (projet.Mailles.Count == 0)
         {

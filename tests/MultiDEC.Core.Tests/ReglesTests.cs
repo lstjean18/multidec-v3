@@ -6,11 +6,11 @@ namespace MultiDEC.Core.Tests;
 
 public class ReglesTests
 {
-    private static ProjetFacade Projet(int nbMailles, double longueur = 2.5, Action<ParametresFacade>? config = null)
+    private static FaceEchafaudage Projet(int nbMailles, double longueur = 2.5, Action<ParametresFacade>? config = null)
     {
         var p = new ParametresFacade { HauteurDernierPlancher = 10 };
         config?.Invoke(p);
-        var projet = new ProjetFacade
+        var projet = new FaceEchafaudage
         {
             Parametres = p,
             Mailles = Enumerable.Range(0, nbMailles).Select(_ => new MailleDefinition(longueur)).ToList(),

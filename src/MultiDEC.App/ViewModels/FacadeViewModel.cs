@@ -15,12 +15,14 @@ using MultiDEC.Core.Persistance;
 namespace MultiDEC.App.ViewModels;
 
 /// <summary>
-/// Écran du module façade : paramètres, grille des mailles et des niveaux (éditables), génération.
+/// Écran principal : paramètres généraux, forme de la structure, une face active (S1…S4) dont les grilles
+/// des mailles et des niveaux sont éditables, génération de toute la structure.
 /// Ne dépend ni de WPF ni de VectorDraw : la vue appelle <see cref="Generer"/> puis dessine le résultat.
 /// </summary>
 public sealed class FacadeViewModel : INotifyPropertyChanged
 {
-    private ProjetFacade _projet = new ProjetFacade();
+    private ProjetStructure _projet = new ProjetStructure();
+    private int _indexFace;
     private StructureFacade? _structure;
     private string? _cheminFichier;
 
@@ -31,8 +33,10 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
     {
         Proposer = new Commande(ProposerStructure);
         ProposerLesDiagonales = new Commande(ProposerDiagonales);
+        CopierS1 = new Commande(CopierDepuisS1);
         Niveaux.CollectionChanged += Niveaux_CollectionChanged;
-        ChargerProjet(ProposeurStructure.NouveauProjet(new ParametresFacade()));
+        Mailles.CollectionChanged += (_, _) => MarquerJonctions();
+        ChargerProjet(ProjetStructure.Nouveau());
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -56,6 +60,8 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
 
     public static Array TypesPlancher { get; } = Enum.GetValues(typeof(TypePlancher));
 
+    public static Array Formes { get; } = Enum.GetValues(typeof(FormeStructure));
+
     /// <summary>Gammes de plateaux avec leur libellé (« Standard NF », « Anti Contamination NF »…).</summary>
     public static IReadOnlyList<KeyValuePair<GammePlateaux, string>> ChoixPlateaux { get; } =
         Enum.GetValues(typeof(GammePlateaux)).Cast<GammePlateaux>()
@@ -63,13 +69,62 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
 
     /// <summary>Consoles du modèle choisi, précédées d'une entrée vide (= sans console).</summary>
     public IReadOnlyList<string> Consoles =>
-        new[] { string.Empty }.Concat(CatalogueConsoles.Pour(Parametres.Modele).Select(c => c.Reference)).ToList();
+        new[] { string.Empty }.Concat(CatalogueConsoles.Pour(General.Modele).Select(c => c.Reference)).ToList();
 
     // ---- Données ----------------------------------------------------------------------------
 
-    public ProjetFacade Projet => _projet;
+    /// <summary>Le projet : informations d'étude, paramètres généraux, forme et faces.</summary>
+    public ProjetStructure Projet => _projet;
 
-    public ParametresFacade Parametres => _projet.Parametres;
+    /// <summary>Paramètres communs à toutes les faces (onglet « Général »).</summary>
+    public ParametresGeneraux General => _projet.General;
+
+    /// <summary>Forme de la structure : la changer crée ou retire des faces (S1 à S4).</summary>
+    public FormeStructure Forme
+    {
+        get => _projet.Forme;
+        set
+        {
+            if (_projet.Forme == value)
+            {
+                return;
+            }
+
+            SauverGrilles();
+            _projet.Forme = value;
+            _projet.AjusterFaces();
+            Remplir(Faces, _projet.Faces);
+            _structure = null;
+            Notifier();
+            ChargerFace(Math.Min(_indexFace, Faces.Count - 1));
+        }
+    }
+
+    /// <summary>Faces de la structure (un onglet chacune).</summary>
+    public ObservableCollection<FaceEchafaudage> Faces { get; } = new ObservableCollection<FaceEchafaudage>();
+
+    /// <summary>Indice de la face dont les paramètres et les grilles sont affichés.</summary>
+    public int IndexFaceActive
+    {
+        get => _indexFace;
+        set
+        {
+            if (value == _indexFace || value < 0 || value >= Faces.Count)
+            {
+                return;
+            }
+
+            SauverGrilles();
+            ChargerFace(value);
+        }
+    }
+
+    public FaceEchafaudage FaceActive => _projet.Faces[_indexFace];
+
+    public string NomFaceActive => FaceActive.Nom;
+
+    /// <summary>Paramètres de la face active.</summary>
+    public ParametresFacade Parametres => FaceActive.Parametres;
 
     /// <summary>Longueur de façade souhaitée : la modifier recalcule le nombre d'accès proposé.</summary>
     public double LongueurFacade
@@ -117,8 +172,8 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
     }
 
     public string Resume => _structure == null
-        ? $"{Mailles.Count} mailles — {LongueurObtenue:0.00} m"
-        : $"{Mailles.Count} mailles — {LongueurObtenue:0.00} m — {_structure.Elements.Count} éléments — {_structure.Amarrages.Amarrages.Count} amarrages";
+        ? $"{NomFaceActive} : {Mailles.Count} mailles — {LongueurObtenue:0.00} m"
+        : $"{NomFaceActive} : {Mailles.Count} mailles — {LongueurObtenue:0.00} m — structure : {_structure.Elements.Count} éléments — {_structure.Amarrages.Amarrages.Count} amarrages";
 
     public double LongueurObtenue => Mailles.Sum(m => m.Longueur);
 
@@ -131,26 +186,39 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
 
     public Commande ProposerLesDiagonales { get; }
 
+    public Commande CopierS1 { get; }
+
     // ---- Actions ----------------------------------------------------------------------------
 
-    /// <summary>Remplace les deux grilles par la proposition calculée depuis les paramètres.</summary>
+    /// <summary>Remplace les deux grilles de la face active par la proposition calculée depuis ses paramètres.</summary>
     public void ProposerStructure()
     {
-        // Niveaux d'abord : retirer un niveau à console décoche les mailles en place, pas les nouvelles.
-        Remplir(Niveaux, ProposeurStructure.ProposerNiveaux(Parametres));
-        Remplir(Mailles, ProposeurStructure.ProposerMailles(Parametres));
-        Notifier(nameof(Resume));
+        _projet.ProposerFace(_indexFace);
+        ChargerFace(_indexFace);
+    }
+
+    /// <summary>Recopie les paramètres et les grilles de S1 dans la face active.</summary>
+    public void CopierDepuisS1()
+    {
+        if (_indexFace == 0)
+        {
+            return;
+        }
+
+        SauverGrilles();
+        _projet.CopierDepuisS1(_indexFace);
+        Faces[_indexFace] = _projet.Faces[_indexFace];
+        ChargerFace(_indexFace);
     }
 
     /// <summary>Recoche les cases « Diagonale » selon la règle (une maille sur 5, ou sur 2 avec l'option).</summary>
     public void ProposerDiagonales() => RegleDiagonales.Proposer(Parametres, Mailles);
 
-    /// <summary>Recopie les grilles éditées dans le projet et génère la structure.</summary>
+    /// <summary>Recopie les grilles éditées dans la face active et génère toute la structure.</summary>
     public StructureFacade Generer()
     {
-        _projet.Mailles = Mailles.ToList();
-        _projet.Niveaux = Niveaux.ToList();
-        _structure = GenerateurFacade.Generer(_projet);
+        SauverGrilles();
+        _structure = GenerateurStructure.Generer(_projet);
 
         Remplir(Decompte, CalculDecompte.Calculer(_structure.Elements));
         Remplir(Alertes, _structure.Alertes);
@@ -175,7 +243,7 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
 
     public void Nouveau()
     {
-        ChargerProjet(ProposeurStructure.NouveauProjet(new ParametresFacade()));
+        ChargerProjet(ProjetStructure.Nouveau());
         CheminFichier = null;
     }
 
@@ -187,24 +255,75 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
 
     public void Enregistrer(string chemin)
     {
-        _projet.Mailles = Mailles.ToList();
-        _projet.Niveaux = Niveaux.ToList();
+        SauverGrilles();
         FichierProjet.Enregistrer(_projet, chemin);
         CheminFichier = chemin;
     }
 
     /// <summary>À appeler quand le modèle d'échafaudage change (la liste des consoles en dépend).</summary>
-    public void ModeleChange() => Notifier(nameof(Consoles));
+    public void ModeleChange()
+    {
+        _projet.AppliquerGeneraux();
+        Notifier(nameof(Consoles));
+    }
 
-    private void ChargerProjet(ProjetFacade projet)
+    private void ChargerProjet(ProjetStructure projet)
     {
         _projet = projet;
+        _projet.AppliquerGeneraux();
         _structure = null;
-        Remplir(Niveaux, projet.Niveaux.OrderByDescending(n => n.Hauteur));
-        Remplir(Mailles, projet.Mailles);
+        Remplir(Faces, projet.Faces);
         Decompte.Clear();
         Alertes.Clear();
         Notifier(string.Empty); // tout rafraîchir
+        ChargerFace(0);
+    }
+
+    /// <summary>Recopie les grilles affichées dans la face active.</summary>
+    private void SauverGrilles()
+    {
+        if (_indexFace < _projet.Faces.Count)
+        {
+            FaceActive.Mailles = Mailles.ToList();
+            FaceActive.Niveaux = Niveaux.ToList();
+        }
+    }
+
+    /// <summary>Affiche les paramètres et les grilles d'une face.</summary>
+    private void ChargerFace(int index)
+    {
+        _indexFace = index;
+        var face = FaceActive;
+        face.Parametres.AppliquerGeneraux(General);
+
+        // Niveaux d'abord : retirer un niveau à console décoche les mailles en place, pas les nouvelles.
+        Remplir(Niveaux, face.Niveaux.OrderByDescending(n => n.Hauteur));
+        Remplir(Mailles, face.Mailles);
+        MarquerJonctions();
+        Notifier(nameof(IndexFaceActive));
+        Notifier(nameof(FaceActive));
+        Notifier(nameof(NomFaceActive));
+        Notifier(nameof(Parametres));
+        Notifier(nameof(LongueurFacade));
+        Notifier(nameof(NombreAcces));
+        Notifier(nameof(LongueurObtenue));
+        Notifier(nameof(Resume));
+        ColonnesConsolesChangees?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>Colonne « Jonction » : carré d'angle en tête de face, raccordé à la face précédente.</summary>
+    private void MarquerJonctions()
+    {
+        foreach (var m in Mailles)
+        {
+            m.Jonction = string.Empty;
+        }
+
+        if (Mailles.Count > 0 && _projet.CommenceParCarreDAngle(_indexFace))
+        {
+            int precedente = _indexFace == 0 ? _projet.Faces.Count - 1 : _indexFace - 1;
+            Mailles[0].Jonction = _projet.Faces[precedente].Nom;
+        }
     }
 
     private void Niveaux_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)

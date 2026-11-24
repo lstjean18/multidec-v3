@@ -7,12 +7,16 @@ namespace MultiDEC.Core.Facade.Regles;
 /// <summary>Un amarrage : une file de poteaux et une hauteur.</summary>
 public sealed class Amarrage
 {
-    public Amarrage(int file, double x, double hauteur)
+    public Amarrage(int file, double x, double hauteur, string nomFace = "S1")
     {
         File = file;
         X = x;
         Hauteur = hauteur;
+        NomFace = nomFace;
     }
+
+    /// <summary>Face de la structure (S1…S4).</summary>
+    public string NomFace { get; }
 
     /// <summary>Indice de la file de poteaux (0 = file de gauche).</summary>
     public int File { get; }
@@ -61,7 +65,7 @@ public static class RegleAmarrages
     /// <summary>Effort mini à reprendre par ancrage (daN), pour information sur le plan.</summary>
     public const double EffortMiniDaN = 300.0;
 
-    public static BilanAmarrages Calculer(ProjetFacade projet)
+    public static BilanAmarrages Calculer(FaceEchafaudage projet)
     {
         var p = projet.Parametres;
         var x = projet.AbscissesFiles();
@@ -82,7 +86,7 @@ public static class RegleAmarrages
             bool premier = true;
             while (z <= hMax + Cotes.Tolerance)
             {
-                liste.Add(new Amarrage(f, x[f], Cotes.Arrondi(z)));
+                liste.Add(new Amarrage(f, x[f], Cotes.Arrondi(z), projet.Nom));
                 z += premier && quinconce ? pas / 2 : pas;
                 premier = false;
             }

@@ -62,7 +62,7 @@ public static class RegleDiagonales
     /// Diagonales à poser : les mailles cochées, sens alterné de l'une à la suivante, sur les côtés
     /// qui ont un garde-corps (aucun côté → aucune diagonale).
     /// </summary>
-    public static List<MailleDiagonale> Calculer(ProjetFacade projet)
+    public static List<MailleDiagonale> Calculer(FaceEchafaudage projet)
     {
         var p = projet.Parametres;
         bool interieur = p.SecuriteInterieure != TypeSecurite.Sans;

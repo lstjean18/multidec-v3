@@ -1,3 +1,7 @@
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 using MultiDEC.Core.Catalogue;
 using MultiDEC.Core.Decompte;
 using MultiDEC.Core.Facade;
@@ -8,7 +12,7 @@ namespace MultiDEC.Core.Tests;
 
 public class GenerateurFacadeTests
 {
-    private static ProjetFacade Standard(Action<ParametresFacade>? config = null)
+    private static FaceEchafaudage Standard(Action<ParametresFacade>? config = null)
     {
         var p = new ParametresFacade
         {
@@ -24,7 +28,7 @@ public class GenerateurFacadeTests
     }
 
     /// <summary>Console sur tous les niveaux complets, cochée sur les mailles données (index 0).</summary>
-    private static void Consoles(ProjetFacade projet, string reference, params int[] mailles)
+    private static void Consoles(FaceEchafaudage projet, string reference, params int[] mailles)
     {
         foreach (var n in projet.Niveaux.Where(n => n.Type == TypePlancher.Complet && n.Hauteur > 0))
         {
@@ -231,22 +235,42 @@ public class GenerateurFacadeTests
     [Fact]
     public void Enregistrer_puis_ouvrir_donne_le_meme_projet()
     {
-        var projet = Standard(p => p.Bache = true);
-        projet.Chantier = "Essai";
-        Consoles(projet, "HMCON700E", 0, 3);
-        projet.Mailles[1].Diagonale = true;
+        var face = Standard();
+        Consoles(face, "HMCON700E", 0, 3);
+        face.Mailles[1].Diagonale = true;
+        var projet = new ProjetStructure { Chantier = "Essai", General = { Bache = true } };
+        projet.Faces.Add(face);
 
         var relu = FichierProjet.DepuisJson(FichierProjet.VersJson(projet));
+        var f = relu.S1;
 
         Assert.Equal("Essai", relu.Chantier);
-        Assert.True(relu.Parametres.Bache);
-        Assert.Equal(projet.Mailles.Count, relu.Mailles.Count);
-        Assert.Equal(projet.Niveaux.Select(n => n.Console), relu.Niveaux.Select(n => n.Console));
-        Assert.Equal(new[] { 2.0, 4, 6, 8, 10 }, relu.Mailles[3].Consoles);
-        Assert.Empty(relu.Mailles[2].Consoles);
-        Assert.Equal(projet.Mailles.Select(m => m.Diagonale), relu.Mailles.Select(m => m.Diagonale));
-        Assert.Equal(projet.Niveaux.Select(n => n.Hauteur), relu.Niveaux.Select(n => n.Hauteur));
-        Assert.Equal(GenerateurFacade.Generer(projet).Elements.Count, GenerateurFacade.Generer(relu).Elements.Count);
+        Assert.True(relu.General.Bache);
+        Assert.True(f.Parametres.Bache);
+        Assert.Equal(face.Mailles.Count, f.Mailles.Count);
+        Assert.Equal(face.Niveaux.Select(n => n.Console), f.Niveaux.Select(n => n.Console));
+        Assert.Equal(new[] { 2.0, 4, 6, 8, 10 }, f.Mailles[3].Consoles);
+        Assert.Empty(f.Mailles[2].Consoles);
+        Assert.Equal(face.Mailles.Select(m => m.Diagonale), f.Mailles.Select(m => m.Diagonale));
+        Assert.Equal(face.Niveaux.Select(n => n.Hauteur), f.Niveaux.Select(n => n.Hauteur));
+        projet.AppliquerGeneraux();
+        Assert.Equal(GenerateurFacade.Generer(face).Elements.Count, GenerateurFacade.Generer(f).Elements.Count);
+    }
+
+    [Fact]
+    public void Parametres_generaux_enregistres_une_seule_fois()
+    {
+        var projet = ProjetStructure.Nouveau();
+        projet.Forme = FormeStructure.EnL;
+        projet.AjusterFaces();
+        projet.General.SecuriteExterieure = TypeSecurite.Lisses;
+
+        string json = FichierProjet.VersJson(projet);
+        var relu = FichierProjet.DepuisJson(json);
+
+        Assert.Single(Regex.Matches(json, "\"securiteExterieure\""));
+        Assert.Equal(2, relu.Faces.Count);
+        Assert.All(relu.Faces, f => Assert.Equal(TypeSecurite.Lisses, f.Parametres.SecuriteExterieure));
     }
 
     [Fact]
@@ -315,7 +339,7 @@ public class GenerateurFacadeTests
         projet.Niveaux.Single(n => n.Hauteur == 4).Console = "HMCON700E";
         projet.Mailles[0].DefinirConsole(4, true);
 
-        bool AboutGaucheConsole(ProjetFacade p) => GenerateurFacade.Generer(p).Elements
+        bool AboutGaucheConsole(FaceEchafaudage p) => GenerateurFacade.Generer(p).Elements
             .Any(e => e.Axe == Axe.Y && Math.Abs(e.Origine.X) < 0.001 && Math.Abs(e.Origine.Y - 0.70) < 0.001 && e.Inverse);
 
         Assert.True(AboutGaucheConsole(projet));
@@ -326,22 +350,29 @@ public class GenerateurFacadeTests
     [Fact]
     public void Ancien_fichier_mds1_et_console_par_maille_converti()
     {
-        var projet = Standard();
-        string json = FichierProjet.VersJson(projet)
-            .Replace("\"version\": 2", "\"version\": 1")
-            .Replace("\"securiteExterieure\": \"GardeCorpsMds2\"", "\"securiteExterieure\": \"GardeCorpsMds1\"");
-        int i = json.IndexOf("\"longueur\"", StringComparison.Ordinal);
-        json = json.Insert(i, "\"console\": \"HMCON700E\", ");
+        // Fichier v1 : une seule façade, paramètres généraux et informations d'étude dans le nœud « facade ».
+        var options = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase, Converters = { new JsonStringEnumConverter() } };
+        var facade = JsonSerializer.SerializeToNode(Standard(), options)!.AsObject();
+        facade["chantier"] = "Ancien";
+        facade["parametres"]!["securiteExterieure"] = "GardeCorpsMds1";
+        facade["parametres"]!["bache"] = true;
+        facade["mailles"]![0]!["console"] = "HMCON700E";
+        var racine = new JsonObject { ["application"] = "MultiDEC", ["version"] = 1, ["facade"] = facade };
 
-        var relu = FichierProjet.DepuisJson(json);
+        var projet = FichierProjet.DepuisJson(racine.ToJsonString());
+        var relu = projet.S1;
 
+        Assert.Equal("Ancien", projet.Chantier);
+        Assert.Equal(FormeStructure.Droite, projet.Forme);
+        Assert.True(projet.General.Bache);
+        Assert.Equal(TypeSecurite.GardeCorpsMds2, projet.General.SecuriteExterieure);
         Assert.Equal(TypeSecurite.GardeCorpsMds2, relu.Parametres.SecuriteExterieure);
         Assert.All(relu.Niveaux.Where(n => n.Type == TypePlancher.Complet), n => Assert.Equal("HMCON700E", n.Console));
         Assert.Equal(new[] { 2.0, 4, 6, 8, 10 }, relu.Mailles[0].Consoles);
         Assert.Empty(relu.Mailles[1].Consoles);
         Assert.Null(relu.Mailles[0].ConsoleAncienFormat);
         Assert.True(relu.Mailles[0].Diagonale);
-        Assert.All(FichierProjet.DepuisJson(FichierProjet.VersJson(relu)).Mailles, m => Assert.Null(m.ConsoleAncienFormat));
+        Assert.All(FichierProjet.DepuisJson(FichierProjet.VersJson(projet)).S1.Mailles, m => Assert.Null(m.ConsoleAncienFormat));
     }
 
     [Theory]

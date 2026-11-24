@@ -1,23 +1,20 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json.Serialization;
 using MultiDEC.Core.Geometrie;
 
 namespace MultiDEC.Core.Facade;
 
 /// <summary>
-/// Un projet d'échafaudage de façade : paramètres + grille des mailles + grille des niveaux.
-/// C'est l'objet enregistré dans le fichier projet v3 (JSON).
+/// Une face de la structure (S1, S2…) : ses paramètres, sa grille des mailles et sa grille des niveaux.
+/// Les paramètres généraux (modèle, plateaux, protections, amarrages) viennent de <see cref="ProjetStructure.General"/>.
+/// C'est l'unité que le moteur sait générer.
 /// </summary>
-public sealed class ProjetFacade
+public sealed class FaceEchafaudage
 {
-    public string Chantier { get; set; } = string.Empty;
-
-    public string Client { get; set; } = string.Empty;
-
-    public string ReferenceEtude { get; set; } = string.Empty;
-
-    public DateTime Date { get; set; } = DateTime.Today;
+    /// <summary>Nom de la face : S1, S2, S3, S4.</summary>
+    public string Nom { get; set; } = "S1";
 
     public ParametresFacade Parametres { get; set; } = new ParametresFacade();
 
@@ -27,12 +24,15 @@ public sealed class ProjetFacade
     /// <summary>Niveaux de plancher (toutes hauteurs, y compris 0). Éditable.</summary>
     public List<Niveau> Niveaux { get; set; } = new List<Niveau>();
 
+    [JsonIgnore]
     public double LongueurObtenue => Cotes.Arrondi(Mailles.Sum(m => m.Longueur));
 
     /// <summary>Hauteur totale = dernier plancher + 1,00 m de garde-corps (+0,50 m couvreur).</summary>
+    [JsonIgnore]
     public double HauteurTotale =>
         Parametres.HauteurDernierPlancher + 1.0 + (Parametres.GardeCorpsCouvreur ? 0.5 : 0.0);
 
+    [JsonIgnore]
     public bool NoteDeCalculObligatoire => HauteurTotale > Parametres.SeuilNoteDeCalcul;
 
     /// <summary>
@@ -69,6 +69,15 @@ public sealed class ProjetFacade
             m.ConsoleAncienFormat = null;
         }
     }
+
+    /// <summary>Copie indépendante (paramètres, mailles, niveaux).</summary>
+    public FaceEchafaudage Copie() => new FaceEchafaudage
+    {
+        Nom = Nom,
+        Parametres = Parametres.Copie(),
+        Mailles = Mailles.Select(m => m.Copie()).ToList(),
+        Niveaux = Niveaux.Select(n => new Niveau(n.Hauteur, n.Type, n.Console)).ToList(),
+    };
 
     /// <summary>Abscisses des files de poteaux (n mailles → n+1 files).</summary>
     public IReadOnlyList<double> AbscissesFiles()

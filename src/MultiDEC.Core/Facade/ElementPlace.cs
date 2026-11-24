@@ -1,3 +1,4 @@
+using System;
 using MultiDEC.Core.Geometrie;
 
 namespace MultiDEC.Core.Facade;
@@ -73,5 +74,34 @@ public sealed class ElementPlace
     /// <summary>Sens inversé (diagonale montant vers la gauche, trappe tournée...).</summary>
     public bool Inverse { get; }
 
-    public override string ToString() => $"{Reference} {Origine} {Axe} {Face}{(Inverse ? " inv" : string.Empty)} m{NumeroMaille}";
+    /// <summary>Face de la structure (S1…S4) qui a produit l'élément.</summary>
+    public string NomFace { get; private set; } = "S1";
+
+    /// <summary>
+    /// Rotation de la face autour de Z, en degrés (0 pour S1, +90 pour S2…). <see cref="Origine"/> est déjà
+    /// en coordonnées de la structure ; le rendu applique cette rotation au bloc après son orientation propre.
+    /// </summary>
+    public double AngleFace { get; private set; }
+
+    /// <summary>
+    /// Copie de l'élément placée dans la structure : rotation de <paramref name="angle"/> degrés autour de Z
+    /// puis translation de <paramref name="origineFace"/> (point de la structure où tombe l'origine de la face).
+    /// </summary>
+    public ElementPlace DansLaStructure(string nomFace, double angle, Point3 origineFace)
+    {
+        double a = angle * Math.PI / 180;
+        double c = Math.Round(Math.Cos(a), 12);
+        double s = Math.Round(Math.Sin(a), 12);
+        var o = new Point3(
+            origineFace.X + Origine.X * c - Origine.Y * s,
+            origineFace.Y + Origine.X * s + Origine.Y * c,
+            Origine.Z);
+        return new ElementPlace(Reference, Famille, o, Axe, Face, NumeroMaille, Inverse)
+        {
+            NomFace = nomFace,
+            AngleFace = angle,
+        };
+    }
+
+    public override string ToString() => $"{NomFace} {Reference} {Origine} {Axe} {Face}{(Inverse ? " inv" : string.Empty)} m{NumeroMaille}";
 }

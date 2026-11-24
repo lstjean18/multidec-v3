@@ -1,14 +1,18 @@
+using System.Text.Json.Serialization;
+
 namespace MultiDEC.Core.Facade;
 
 /// <summary>
-/// Paramètres saisis par l'utilisateur pour un échafaudage de façade.
-/// Voir le document « Paramètres utilisateur – module échafaudage de façade (v3) ».
+/// Paramètres d'une face, tels que le moteur les lit : ceux propres à la face (longueur, hauteur, options…)
+/// et une copie des paramètres généraux (<see cref="ParametresGeneraux"/>, marqués [JsonIgnore] ici,
+/// enregistrés une seule fois au niveau de la structure et recopiés par <see cref="AppliquerGeneraux"/>).
 /// Toutes les cotes sont en mètres.
 /// </summary>
 public sealed class ParametresFacade
 {
     // ---- Structure -------------------------------------------------------------------------
 
+    [JsonIgnore] // paramètre général : vient de ParametresGeneraux
     public ModeleEchafaudage Modele { get; set; } = ModeleEchafaudage.MultiSystem;
 
     /// <summary>Largeur de maille (distance entre file intérieure et file extérieure) : 0,70 / 0,75 / 1,00 / 1,05.</summary>
@@ -40,27 +44,37 @@ public sealed class ParametresFacade
 
     // ---- Planchers -------------------------------------------------------------------------
 
+    [JsonIgnore] // paramètre général : vient de ParametresGeneraux
     public GammePlateaux Plateaux { get; set; } = GammePlateaux.StandardNF;
 
     /// <summary>Qualité plateau (1 ou 2), utilisée par la gamme Standard pour 2,50 et 3,00 m.</summary>
+    [JsonIgnore] // paramètre général : vient de ParametresGeneraux
     public int QualitePlateaux { get; set; } = 1;
 
     // ---- Sécurité --------------------------------------------------------------------------
 
+    [JsonIgnore] // paramètre général : vient de ParametresGeneraux
     public TypeSecurite SecuriteExterieure { get; set; } = TypeSecurite.GardeCorpsMds2;
 
+    [JsonIgnore] // paramètre général : vient de ParametresGeneraux
     public TypeSecurite SecuriteInterieure { get; set; } = TypeSecurite.Sans;
 
+    [JsonIgnore] // paramètre général : vient de ParametresGeneraux
     public TypeSecurite SecuriteAbouts { get; set; } = TypeSecurite.GardeCorpsMds2;
 
+    [JsonIgnore] // paramètre général : vient de ParametresGeneraux
     public TypePlinthe PlintheExterieure { get; set; } = TypePlinthe.Axees;
 
+    [JsonIgnore] // paramètre général : vient de ParametresGeneraux
     public TypePlinthe PlintheInterieure { get; set; } = TypePlinthe.Sans;
 
+    [JsonIgnore] // paramètre général : vient de ParametresGeneraux
     public TypePlinthe PlintheAbouts { get; set; } = TypePlinthe.Axees;
 
+    [JsonIgnore] // paramètre général : vient de ParametresGeneraux
     public bool AboutGauche { get; set; } = true;
 
+    [JsonIgnore] // paramètre général : vient de ParametresGeneraux
     public bool AboutDroit { get; set; } = true;
 
     /// <summary>Garde-corps couvreur : poteaux et lisses prolongés à 1,50 m au-dessus du dernier plancher.</summary>
@@ -77,22 +91,50 @@ public sealed class ParametresFacade
     // ---- Amarrages (NT-Echafaudage p. 8-13, validé par Laurent le 23/11/2026) ---------------
 
     /// <summary>Échafaudage bâché (porosité &gt; 50 %) : amarrages tous les 4 m sur toutes les files.</summary>
+    [JsonIgnore] // paramètre général : vient de ParametresGeneraux
     public bool Bache { get; set; }
 
     /// <summary>Hauteur du premier amarrage.</summary>
+    [JsonIgnore] // paramètre général : vient de ParametresGeneraux
     public double HauteurPremierAmarrage { get; set; } = 2.0;
 
     /// <summary>Espacement vertical des amarrages sur les files d'extrémité.</summary>
+    [JsonIgnore] // paramètre général : vient de ParametresGeneraux
     public double EspacementAmarrageExtremite { get; set; } = 4.0;
 
     /// <summary>Espacement vertical des amarrages sur les files courantes, non bâché.</summary>
+    [JsonIgnore] // paramètre général : vient de ParametresGeneraux
     public double EspacementAmarrageCourant { get; set; } = 8.0;
 
     /// <summary>Espacement vertical des amarrages sur les files courantes, bâché.</summary>
+    [JsonIgnore] // paramètre général : vient de ParametresGeneraux
     public double EspacementAmarrageCourantBache { get; set; } = 4.0;
 
     /// <summary>Au-delà de cette hauteur, une note de calcul est obligatoire.</summary>
+    [JsonIgnore] // paramètre général : vient de ParametresGeneraux
     public double SeuilNoteDeCalcul { get; set; } = 24.0;
+
+    /// <summary>Recopie les paramètres généraux de la structure dans cette face.</summary>
+    public void AppliquerGeneraux(ParametresGeneraux g)
+    {
+        Modele = g.Modele;
+        Plateaux = g.Plateaux;
+        QualitePlateaux = g.QualitePlateaux;
+        SecuriteExterieure = g.SecuriteExterieure;
+        SecuriteInterieure = g.SecuriteInterieure;
+        SecuriteAbouts = g.SecuriteAbouts;
+        PlintheExterieure = g.PlintheExterieure;
+        PlintheInterieure = g.PlintheInterieure;
+        PlintheAbouts = g.PlintheAbouts;
+        AboutGauche = g.AboutGauche;
+        AboutDroit = g.AboutDroit;
+        Bache = g.Bache;
+        HauteurPremierAmarrage = g.HauteurPremierAmarrage;
+        EspacementAmarrageExtremite = g.EspacementAmarrageExtremite;
+        EspacementAmarrageCourant = g.EspacementAmarrageCourant;
+        EspacementAmarrageCourantBache = g.EspacementAmarrageCourantBache;
+        SeuilNoteDeCalcul = g.SeuilNoteDeCalcul;
+    }
 
     public ParametresFacade Copie() => (ParametresFacade)MemberwiseClone();
 }

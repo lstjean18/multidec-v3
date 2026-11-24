@@ -154,7 +154,25 @@ public static class ProposeurStructure
     }
 
     /// <summary>Crée un projet complet avec les deux grilles proposées.</summary>
-    public static ProjetFacade NouveauProjet(ParametresFacade p) => new ProjetFacade
+    /// <summary>
+    /// Grille d'une face qui commence par le carré d'angle (jonction avec la face précédente) :
+    /// une maille de longueur = largeur de maille, comprise dans la longueur souhaitée, puis la proposition habituelle.
+    /// </summary>
+    public static List<MailleDefinition> ProposerMailles(ParametresFacade p, bool carreDAngle)
+    {
+        if (!carreDAngle)
+        {
+            return ProposerMailles(p);
+        }
+
+        var q = p.Copie();
+        q.LongueurTotaleSouhaitee = Cotes.Arrondi(p.LongueurTotaleSouhaitee - p.LargeurMaille);
+        var mailles = ProposerMailles(q);
+        mailles.Insert(0, new MailleDefinition(p.LargeurMaille, TypeMaille.Travail));
+        return mailles;
+    }
+
+    public static FaceEchafaudage NouveauProjet(ParametresFacade p) => new FaceEchafaudage
     {
         Parametres = p,
         Mailles = ProposerMailles(p),

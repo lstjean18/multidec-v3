@@ -16,7 +16,7 @@ public class FacadeViewModelTests
 
         var s = vm.Generer();
 
-        Assert.Equal(avant + 1, vm.Projet.Mailles.Count);
+        Assert.Equal(avant + 1, vm.Projet.S1.Mailles.Count);
         Assert.Contains(s.Elements, e => e.Reference == "HMCON700E");
         Assert.NotEmpty(vm.Decompte);
     }

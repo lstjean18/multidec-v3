@@ -20,6 +20,7 @@ public sealed class MailleDefinition : INotifyPropertyChanged
     private TypeMaille _type = TypeMaille.Travail;
     private bool _diagonale;
     private List<double> _consoles = new List<double>();
+    private string _jonction = string.Empty;
 
     public MailleDefinition()
     {
@@ -52,6 +53,17 @@ public sealed class MailleDefinition : INotifyPropertyChanged
     {
         get => _diagonale;
         set => Changer(ref _diagonale, value);
+    }
+
+    /// <summary>
+    /// Face à laquelle cette maille se raccorde (carré d'angle d'une structure en L, en U ou fermée), vide sinon.
+    /// Calculé d'après la forme, en lecture seule dans la grille.
+    /// </summary>
+    [JsonIgnore]
+    public string Jonction
+    {
+        get => _jonction;
+        set => Changer(ref _jonction, value ?? string.Empty);
     }
 
     /// <summary>Hauteurs des niveaux dont la console est posée sur cette maille.</summary>
