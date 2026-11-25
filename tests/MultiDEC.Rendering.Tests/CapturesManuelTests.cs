@@ -100,6 +100,20 @@ public class CapturesManuelTests
                 typeof(FrameworkElement), new FrameworkPropertyMetadata(System.Windows.Markup.XmlLanguage.GetLanguage("fr-FR")));
         }
 
+        // Écran de démarrage (version et build en bas à droite).
+        try
+        {
+            var ecran = new EcranDemarrage { ShowActivated = false, Topmost = false };
+            ecran.Show();
+            Pomper();
+            Fenetre(ecran, "IHM-splash");
+            ecran.Close();
+        }
+        catch (Exception ex)
+        {
+            _sortie.WriteLine("Écran de démarrage non capturé : " + ex.Message);
+        }
+
         var w = new MainWindow { WindowState = WindowState.Normal, Width = 1600, Height = 960, Left = 0, Top = 0, ShowActivated = false };
         w.Show();
         Pomper();
@@ -151,6 +165,7 @@ public class CapturesManuelTests
         {
             vm.Mailles[4].HauteurDepart = 0.5;
             vm.Mailles[5].Stabilisation = 1.5;
+            vm.Mailles[5].Lest = true; // colonne « Lest » (point 49)
             vm.Mailles[0].Poutre = 4;
         }
 
@@ -167,6 +182,14 @@ public class CapturesManuelTests
         Onglet(w.OngletsBas, 1);
         Disposer(w);
         Element(w.OngletsBas, "IHM-decompte-consoles");
+
+        // Décompte en références client LV Tec.
+        vm.ReferencesAffichees = MultiDEC.Core.Decompte.ReferencesClient.CodeLvTec;
+        Pomper();
+        Disposer(w);
+        Element(w.OngletsBas, "IHM-decompte-lvtec");
+        vm.ReferencesAffichees = MultiDEC.Core.Decompte.ReferencesClient.Retotub;
+        Pomper();
         Onglet(w.OngletsBas, 0);
         Dessin(w, Vues.Iso, "3D-consoles-iso");
         Dessin(w, Vues.Facade, "3D-consoles-facade");

@@ -38,7 +38,7 @@
         <li><b>Multi-SYSTEM</b> (MS, par défaut).</li>
       </ul>
     </div>
-    <figure><img src="images/splash.png" alt=""><figcaption><b>Écran de démarrage.</b> Il s'affiche pendant le chargement de la bibliothèque de blocs.</figcaption></figure>
+    <figure><img src="images/splash.png" alt=""><figcaption><b>Écran de démarrage.</b> Il s'affiche pendant le chargement de la bibliothèque de blocs ; en bas à droite, le numéro de version (v3.0 bêta 1) et de build, aussi rappelés dans la barre de titre.</figcaption></figure>
   </div>
 
   <h3>Les nouveautés de la v3</h3>
@@ -55,6 +55,7 @@
       <li>Bouton <span class="ui">Valider la structure</span> qui signale en rouge une face à recalculer.</li>
       <li>Paramètres par défaut propres à chaque utilisateur, exportables.</li>
       <li>Format de projet <b>.mdc3</b>.</li>
+      <li>Décompte en <b>références client</b> (LV Tec intégré).</li>
     </ul>
   </div>
   <div class="encadre attention"><span class="titre">Anciens projets</span>
@@ -156,6 +157,18 @@
         <li><b>Plateaux</b> : gamme Optissimo, Standard, Standard NF (par défaut) ou Anti Contamination NF.</li>
         <li><b>Socles</b> : socle réglable HMSOCREG ou HMSOCREG800, socles à roue (avec ou sans frein), vérins orientables.</li>
       </ul>
+      <div class="encadre attention"><span class="titre">Socles à roue : tour roulante</span>
+        <p>Une structure sur roues est une tour à <b>4 pieds</b> : une seule maille, structure droite, largeur de 1,00 m au moins. Le dernier plancher et la longueur dépendent de la largeur :</p>
+        <table>
+          <tr><th>Largeur</th><th>Dernier plancher maxi</th><th>Longueur mini</th></tr>
+          <tr><td>1,00 et 1,05 m</td><td>2 m</td><td>1,50 m</td></tr>
+          <tr><td>1,50 m</td><td>4 m</td><td>1,50 m</td></tr>
+          <tr><td>2,00 m</td><td>6 m</td><td>2,00 m</td></tr>
+          <tr><td>2,50 m</td><td>8 m</td><td>2,50 m</td></tr>
+          <tr><td>3,00 m</td><td>10 m</td><td>3,00 m</td></tr>
+        </table>
+        <p>Hors de ces règles, MultiDEC dit ce qui ne va pas, rappelle la règle et <b>ne dessine pas</b>. Sur roues : protection intérieure posée d'office, diagonales en travers aux abouts, pas d'amarrage. L'option <span class="ui">Grutable</span> est elle aussi réservée aux structures à 4 pieds.</p>
+      </div>
 
       <h3 id="s5-3"><span class="n">5.3</span>Garde-corps et plinthes</h3>
       <p>Pour chaque côté, la protection et la plinthe :</p>
@@ -201,7 +214,8 @@
         <li>Les modules peuvent avoir des longueurs différentes : la partie qui dépasse reçoit ses garde-corps côté vide.</li>
         <li>Poteaux et lisses communs à deux modules ne sont comptés qu'une fois. Pas de protection ni de diagonale entre deux modules.</li>
         <li>Les accès sont proposés sur M1 ; les amarrages sont posés sur M1.</li>
-        <li><span class="ui">Planchers en damier</span> : une maille sur deux sans plancher, en décalé d'un module à l'autre.</li>
+        <li><span class="ui">Planchers en damier</span> : l'orientation des plateaux alterne d'une maille à l'autre (plateaux selon la longueur, puis selon la largeur), en décalé d'un module à l'autre.</li>
+        <li>Diagonales verticales sur toutes les faces qui ont des garde-corps : face extérieure, parties qui dépassent d'un module voisin et abouts.</li>
       </ul>
     </div>
     <figure><img src="images/3d/volumique.jpg" alt=""><figcaption><b>Volumique, trois modules</b> de largeurs et longueurs différentes.</figcaption></figure>
@@ -230,7 +244,7 @@
         <tr><th style="width:42%">Champ</th><th>Rôle</th></tr>
         <tr><td>Longueur souhaitée</td><td>Longueur visée ; MultiDEC la compose avec des mailles standard (0,70 à 3,00 m).</td></tr>
         <tr><td>Largeur de maille</td><td>Distance entre file intérieure et file extérieure (0,70 / 0,75 / 1,00 / 1,05 m).</td></tr>
-        <tr><td>Maille préférée</td><td>Longueur des mailles courantes et des mailles d'accès.</td></tr>
+        <tr><td>Maille préférée</td><td>Longueur des mailles courantes et des mailles d'accès (1,50 m au moins pour un accès).</td></tr>
         <tr><td>Nombre d'accès</td><td>Proposé à chaque changement de longueur (un accès tous les 20 m), puis modifiable.</td></tr>
         <tr><td>Dernier plancher</td><td>Hauteur du plancher le plus haut ; les niveaux sont proposés tous les 2 m en dessous.</td></tr>
         <tr><td>Distance à la façade</td><td>Écart entre la file intérieure et le mur (0,20 m maximum en usage courant).</td></tr>
@@ -255,9 +269,14 @@
     <li><span class="ui">Recocher les cases Diago</span> : remet les cases selon la règle après des retouches manuelles.</li>
   </ul>
   <p>Les diagonales sont posées côté extérieur ; si une protection intérieure est choisie, elles sont aussi posées côté intérieur, sur les mêmes mailles. Pas de diagonale sur un côté sans protection.</p>
+  <p>La maille juste avant et la maille juste après une <b>poutre de franchissement</b> reçoivent toujours des diagonales, même si leur case n'est pas cochée (voir 8.6).</p>
+  <div class="encadre"><span class="titre">Lisses renforcées</span>
+    <p>Toute lisse de 1,50 m ou plus qui porte des plateaux est une lisse renforcée (<span class="ref">HMLISR150</span> à <span class="ref">HMLISR300</span>) : traverses des modules volumiques larges, plateaux en damier, platelage de lest.</p>
+  </div>
 
   <h3 id="s6-4"><span class="n">6.4</span>Accès</h3>
   <ul>
+    <li>Une maille d'accès mesure <b>1,50 m au moins</b> : la grille ne propose pas de longueur plus courte pour une maille d'accès, et une maille d'accès plus courte est refusée au dessin. Avec une maille préférée de 0,70 ou 1,00 m, les accès sont proposés en 1,50 m.</li>
     <li>Les mailles d'accès reçoivent une trappe par niveau côté intérieur, en sens alterné, avec échelle (maille ≤ 2 m) et deux plateaux de départ au pied du premier accès.</li>
     <li><span class="ui">Trappes et plateaux acier</span> : trappes et plateaux en acier ; les garde-corps MDS de la face passent alors en lisses.</li>
     <li><span class="ui">Lisse GC accès 1,50 m au niveau 0</span> : lisse de sécurité au-dessus des plateaux de départ.</li>
@@ -286,12 +305,13 @@
   <p>Une ligne par maille, de gauche à droite en regardant la façade depuis la rue. <span class="ui">Ajouter</span> insère une maille après la maille sélectionnée (à la fin sinon), <span class="ui">Insérer avant</span> la place avant, <span class="ui">Supprimer</span> la retire.</p>
   <table>
     <tr><th style="width:20%">Colonne</th><th>Rôle</th></tr>
-    <tr><td>Longueur</td><td>0,70 / 1,00 / 1,50 / 2,00 / 2,50 / 3,00 m.</td></tr>
+    <tr><td>Longueur</td><td>0,70 / 1,00 / 1,50 / 2,00 / 2,50 / 3,00 m (1,50 m au moins pour une maille d'accès).</td></tr>
     <tr><td>Type</td><td>Travail, Accès, Travail + accès rapporté, + appro, + recette, + escalier 1,50, + demi-escalier 0,70 ou 1,00 (chapitre 8).</td></tr>
     <tr><td>Diago</td><td>Diagonales verticales sur toute la hauteur de la maille.</td></tr>
     <tr><td>Départ</td><td>Hauteur de pied de la maille, par pas de 0,50 m : sol en pente ou obstacle.</td></tr>
     <tr><td>Ht max</td><td>Dernier plancher de la maille, si elle s'arrête plus bas ou monte plus haut que la face (écart multiple de 2 m).</td></tr>
     <tr><td>Stab.</td><td>Distance d'une stabilisation (file supplémentaire côté extérieur).</td></tr>
+    <tr><td>Lest</td><td>Visible dès qu'une maille a une stabilisation : cochée, un platelage à 0,50 m est posé dans la stabilisation pour recevoir du lest (8.3).</td></tr>
     <tr><td>Poutre</td><td>Hauteur du plancher porté par une poutre de franchissement (sur la maille de gauche de la paire).</td></tr>
     <tr><td>Prof. recette</td><td>Profondeur de la recette pour une maille « Travail + recette ».</td></tr>
     <tr><td>Jonction</td><td>Information : carré d'angle ou jonction avec un module voisin (non modifiable).</td></tr>
@@ -348,7 +368,8 @@
         <li><b>Recette</b> : plancher et garde-corps en lisses, profondeur choisie, aux niveaux cochés dans la colonne <b>Recette</b>.</li>
       </ul>
       <p>Aux niveaux desservis, la maille principale n'a pas de garde-corps extérieur. Si aucun niveau n'est coché, une alerte le signale.</p>
-      <p>La colonne <b>Stab.</b> ajoute une <b>stabilisation</b> : une file à la distance choisie, reliée par des lisses et des diagonales jusqu'à 2 m sous le dernier plancher.</p>
+      <p>La sous-maille monte toujours <b>jusqu'à la hauteur max de sa maille</b> (colonne Ht max), y compris quand la maille dépasse le dernier plancher de la face.</p>
+      <p>La colonne <b>Stab.</b> ajoute une <b>stabilisation</b> : une file à la distance choisie, reliée par des lisses et des diagonales jusqu'à 2 m sous le dernier plancher. La case <b>Lest</b> de la maille ajoute un <b>platelage à 0,50 m</b> entre la file extérieure et la file de stabilisation, pour y poser du lest : plateaux de la longueur de la maille, sur lisses porteuses (renforcées à partir de 1,50 m de profondeur).</p>
     </div>
     <figure><img src="images/3d/sous-mailles.jpg" alt=""><figcaption>De gauche à droite : <b>stabilisation</b>, <b>accès rapporté</b>, <b>appro</b> et <b>recette</b>.</figcaption></figure>
   </div>
@@ -381,7 +402,7 @@
   <div class="cote large">
     <div>
       <p>Pour enjamber un passage, saisir dans la colonne <b>Poutre</b> la hauteur du plancher porté, sur la maille de gauche d'une paire de mailles de travail identiques.</p>
-      <p>MultiDEC pose deux poutres 0,50 m sous ce plancher, supprime la file du milieu en dessous, ajoute les tubes en diagonale horizontale, les diagonales en V au-dessus et les abouts sur les mailles voisines. Si les conditions ne sont pas réunies (par exemple sur la première ou la dernière maille), la poutre est ignorée et une alerte l'explique.</p>
+      <p>MultiDEC pose deux poutres 0,50 m sous ce plancher, supprime la file du milieu en dessous, ajoute les tubes en diagonale horizontale, les diagonales en V au-dessus et les abouts sur les mailles voisines. La maille d'avant et celle d'après reçoivent des diagonales verticales d'office, côté extérieur et, s'il y a une protection intérieure, côté intérieur. Si les conditions ne sont pas réunies (par exemple sur la première ou la dernière maille), la poutre est ignorée et une alerte l'explique.</p>
       <p>Avec <span class="ui">Dessiner façade</span>, le mur laisse un passage sous la poutre.</p>
     </div>
     <figure><img src="images/3d/poutre-pignon.jpg" alt=""><figcaption><b>Poutre</b> au niveau 4 m sur deux mailles, et maille d'accès montée plus haut.</figcaption></figure>
@@ -403,6 +424,7 @@
   <div class="cote large">
     <div>
       <p>La case <span class="ui">Dessiner façade</span> du ruban dessine le mur du bâtiment à la distance à la façade de la file intérieure, aussi haut que l'échafaudage. Les murs de deux faces voisines se raccordent dans l'angle, sortant ou rentrant. Le mur est recalculé à chaque dessin.</p>
+      <p>Une console ne traverse pas le mur : derrière une maille à consoles, le mur est <b>renfoncé</b> et reste à la distance à la façade du bout de la console. Si la maille a des consoles à tous ses niveaux, le renfoncement occupe toute la hauteur du mur ; sinon il va de 0,10 m sous le point le plus bas de la console à 2 m au-dessus de son plancher.</p>
     </div>
     <figure><img src="images/3d/dessiner-facade.jpg" alt=""><figcaption><b>Structure en L</b> avec le mur du bâtiment.</figcaption></figure>
   </div>
@@ -442,6 +464,14 @@
 
   <h3 id="s10-1"><span class="n">10.1</span>Décompte</h3>
   <p>Une ligne par référence : famille, référence, désignation, quantité, poids unitaire et poids total. Désignations, poids et ordre de classement viennent du fichier <b>multidec.bib</b> de la bibliothèque. Le total (références, pièces, poids) est rappelé sous le tableau.</p>
+  <h4>Travailler en références client</h4>
+  <p>La liste <span class="ui">Références affichées</span>, en haut de l'onglet, choisit les références du décompte :</p>
+  <ul>
+    <li><b>RETOTUB</b> (par défaut) ;</li>
+    <li><b>Client LV Tec</b> : les références LV Tec sont intégrées à MultiDEC (par exemple <span class="ref">HMSOCREG</span> → <span class="ref">A1SOR050_L</span>) ;</li>
+    <li><b>Client (fichier de correspondance)</b> : un fichier CSV choisi dans les Paramètres par défaut, onglet Fichiers, avec la référence RETOTUB en 1re colonne et la référence client en 2e (séparateur point-virgule).</li>
+  </ul>
+  <p>En références client, la colonne <b>Réf. RETOTUB</b> s'affiche à côté de la référence du client. Une pièce sans équivalent garde sa référence RETOTUB ; la liste de ces pièces est rappelée sous le tableau. Le choix par défaut se règle dans les Paramètres par défaut (liste <i>Références du décompte</i>).</p>
   <figure><img src="images/ihm/decompte.png" alt=""><figcaption><b>Onglet Décompte.</b></figcaption></figure>
 
   <h3 id="s10-2"><span class="n">10.2</span>Amarrages</h3>
@@ -465,9 +495,9 @@
     <div>
       <h3 id="s11-1"><span class="n">11.1</span>Les trois onglets</h3>
       <ul>
-        <li><b>Listes de choix</b> : pour chaque liste (modèle, plateaux, socles, protections, plinthes, consoles, forme, rendu…), la valeur par défaut et les valeurs proposées. Décocher une valeur la retire des listes de l'application ; une valeur utilisée par un projet ouvert reste toutefois proposée.</li>
+        <li><b>Listes de choix</b> : pour chaque liste (modèle, plateaux, socles, protections, plinthes, consoles, forme, rendu, références du décompte…), la valeur par défaut et les valeurs proposées. Décocher une valeur la retire des listes de l'application ; une valeur utilisée par un projet ouvert reste toutefois proposée.</li>
         <li><b>Cases et cotes</b> : l'état initial des cases à cocher et les cotes de départ (longueur, dernier plancher, distance à la façade).</li>
-        <li><b>Fichiers</b> : bibliothèque de blocs, trame Excel des devis, références clients, logo client.</li>
+        <li><b>Fichiers</b> : bibliothèque de blocs, trame Excel des devis, références clients (fichier CSV de correspondance, voir 10.1), logo client.</li>
       </ul>
       <h3 id="s11-2"><span class="n">11.2</span>Boutons</h3>
       <ul>
