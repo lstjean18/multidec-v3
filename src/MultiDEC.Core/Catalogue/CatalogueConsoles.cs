@@ -66,12 +66,19 @@ public sealed class ConsoleInfo
         : "HMPOTST10"; // nipple en Multi-RETO : poteau courant sur l'embase intégrée (confirmé par Laurent le 24/11/2026)
 
     /// <summary>
-    /// Point le plus bas de la console sous son plancher (jambe de force accrochée à la rosace du dessous) : sert au
-    /// renfoncement du mur de façade. Valeurs provisoires selon le débord (0,25 m jusqu'à 0,40 m, 0,50 m jusqu'à 0,75 m,
-    /// 1,00 m au-delà), à recaler sur les blocs de la bibliothèque DWG.
+    /// Point le plus bas de la console sous son plancher (jambe de force) : sert au renfoncement du mur de façade.
+    /// Mesuré sur les blocs de « Blocs 3D - Echafaudage.dwg » (CI du 25/11/2026) ; à défaut, selon le débord.
     /// </summary>
     public double HauteurSousPlancher =>
-        Largeur <= 0.40 + Cotes.Tolerance ? 0.25 : Largeur <= 0.75 + Cotes.Tolerance ? 0.50 : 1.00;
+        Mesures.TryGetValue(Reference, out double h) ? h
+        : Largeur <= 0.40 + Cotes.Tolerance ? 0.28 : Largeur <= 0.75 + Cotes.Tolerance ? 0.50 : 1.00;
+
+    private static readonly Dictionary<string, double> Mesures = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase)
+    {
+        ["HMCON300"] = 0.28, ["HMTRA030"] = 0.03, ["HMCON400E"] = 0.26, ["HMCON400E2"] = 0.26,
+        ["HMCON700E"] = 0.50, ["HMCON700E2"] = 0.50, ["HMCON700EE"] = 0.43, ["HMCON700EE2"] = 0.43,
+        ["HMCON750EE"] = 0.44, ["HMCON1000E"] = 1.00, ["HMCON1000E2"] = 1.00, ["HMCON1050E"] = 1.00, ["HMCON1050EE"] = 0.88,
+    };
 
     /// <summary>Hauteur du pied du poteau au-dessus du plancher : 4 cm sur une embase (HMEMB ou intégrée) en Multi-SYSTEM.</summary>
     public double DecalageZ(ModeleEchafaudage modele) => modele == ModeleEchafaudage.MultiSystem && Fixation != FixationBout.Platine ? 0.04 : 0;

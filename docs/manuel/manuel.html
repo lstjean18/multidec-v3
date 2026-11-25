@@ -299,19 +299,18 @@
   <div class="entete-chap"><span class="num">7</span><div><h2>Mailles et niveaux</h2><p>Les deux grilles éditables de l'onglet du bas</p></div></div>
 
   <p>L'onglet <span class="ui">Mailles et niveaux · S1</span> montre la face active ; sa couleur reprend celle de la face sur le dessin (<span class="pastille-couleur" style="background:#cfe3f6"></span> S1 bleu, <span class="pastille-couleur" style="background:#d4efd6"></span> S2 vert, <span class="pastille-couleur" style="background:#fbe0cc"></span> S3 pêche, <span class="pastille-couleur" style="background:#e2dcf3"></span> S4 lavande).</p>
-  <figure><img src="images/ihm/mailles-niveaux.png" alt=""><figcaption><b>Grilles de la face S1</b> avec une console et un pare-gravois au niveau 4 m (colonnes Con4m et PareGrav4m), un départ à 0,50 m sur la maille 5 et une stabilisation de 1,50 m sur la maille 6.</figcaption></figure>
 
   <h3 id="s7-1"><span class="n">7.1</span>Grille des mailles</h3>
   <p>Une ligne par maille, de gauche à droite en regardant la façade depuis la rue. <span class="ui">Ajouter</span> insère une maille après la maille sélectionnée (à la fin sinon), <span class="ui">Insérer avant</span> la place avant, <span class="ui">Supprimer</span> la retire.</p>
   <table>
     <tr><th style="width:20%">Colonne</th><th>Rôle</th></tr>
-    <tr><td>Longueur</td><td>0,70 / 1,00 / 1,50 / 2,00 / 2,50 / 3,00 m (1,50 m au moins pour une maille d'accès).</td></tr>
+    <tr><td>Longueur</td><td>0,70 à 3,00 m (1,50 m au moins pour un accès).</td></tr>
     <tr><td>Type</td><td>Travail, Accès, Travail + accès rapporté, + appro, + recette, + escalier 1,50, + demi-escalier 0,70 ou 1,00 (chapitre 8).</td></tr>
     <tr><td>Diago</td><td>Diagonales verticales sur toute la hauteur de la maille.</td></tr>
     <tr><td>Départ</td><td>Hauteur de pied de la maille, par pas de 0,50 m : sol en pente ou obstacle.</td></tr>
     <tr><td>Ht max</td><td>Dernier plancher de la maille, si elle s'arrête plus bas ou monte plus haut que la face (écart multiple de 2 m).</td></tr>
     <tr><td>Stab.</td><td>Distance d'une stabilisation (file supplémentaire côté extérieur).</td></tr>
-    <tr><td>Lest</td><td>Visible dès qu'une maille a une stabilisation : cochée, un platelage à 0,50 m est posé dans la stabilisation pour recevoir du lest (8.3).</td></tr>
+    <tr><td>Lest</td><td>Avec une stabilisation : platelage de lest à 0,50 m (8.3).</td></tr>
     <tr><td>Poutre</td><td>Hauteur du plancher porté par une poutre de franchissement (sur la maille de gauche de la paire).</td></tr>
     <tr><td>Prof. recette</td><td>Profondeur de la recette pour une maille « Travail + recette ».</td></tr>
     <tr><td>Jonction</td><td>Information : carré d'angle ou jonction avec un module voisin (non modifiable).</td></tr>
@@ -325,9 +324,9 @@
     <tr><td>Niveau (m)</td><td>Hauteur du plancher. La dernière ligne vide permet d'ajouter un niveau (par exemple un premier plancher à 1 m).</td></tr>
     <tr><td>Type</td><td><b>Complet</b> (plancher sur toutes les mailles de travail) ou <b>Accès seul</b> (plancher dans les mailles d'accès, lisses ailleurs).</td></tr>
     <tr><td>Console</td><td>Référence de la console posée à ce niveau ; la colonne Con<i>X</i>m apparaît alors dans la grille des mailles, cochée partout.</td></tr>
-    <tr><td>Pare-grav., Diago H</td><td>Pare-gravois à ce niveau (ajoute la colonne PareGrav<i>X</i>m) ; diagonales horizontales à ce niveau.</td></tr>
-    <tr><td>Appro / Recette</td><td>Niveaux desservis par les modules d'appro ou les recettes (colonnes visibles seulement si une telle maille existe).</td></tr>
+    <tr><td>Pare-grav., Diago H, Appro, Recette</td><td>Pare-gravois à ce niveau (ajoute la colonne PareGrav<i>X</i>m) ; diagonales horizontales ; niveau desservi par les appro ou les recettes (colonnes visibles seulement si une telle maille existe).</td></tr>
   </table>
+  <figure><img src="images/ihm/mailles-niveaux.png" alt=""><figcaption><b>Grilles de la face S1</b> avec une console et un pare-gravois au niveau 4 m (colonnes Con4m et PareGrav4m), un départ à 0,50 m sur la maille 5 et une stabilisation de 1,50 m lestée (case Lest) sur la maille 6.</figcaption></figure>
 </section>
 
 <!-- ===================== 8. FONCTIONS DE STRUCTURE ===================== -->
@@ -454,7 +453,7 @@
   </table>
   <div class="deux">
     <figure><img src="images/3d/ombre-aretes.jpg" style="height:82mm;margin:auto" alt=""><figcaption>Rendu <b>Ombré + arêtes</b>.</figcaption></figure>
-    <figure><img src="images/3d/mur-ouvert.jpg" style="height:82mm;margin:auto" alt=""><figcaption><b>Vue arrière</b> de l'exemple 8.1 : mur ouvert sous la poutre.</figcaption></figure>
+    <figure><img src="images/3d/mur-ouvert.jpg" style="height:82mm;margin:auto" alt=""><figcaption><b>Vue côté bâtiment</b> de l'exemple 8.1 : mur ouvert sous la poutre, et renfoncé derrière la console du niveau 4 m.</figcaption></figure>
   </div>
 </section>
 
@@ -472,6 +471,7 @@
     <li><b>Client (fichier de correspondance)</b> : un fichier CSV choisi dans les Paramètres par défaut, onglet Fichiers, avec la référence RETOTUB en 1re colonne et la référence client en 2e (séparateur point-virgule).</li>
   </ul>
   <p>En références client, la colonne <b>Réf. RETOTUB</b> s'affiche à côté de la référence du client. Une pièce sans équivalent garde sa référence RETOTUB ; la liste de ces pièces est rappelée sous le tableau. Le choix par défaut se règle dans les Paramètres par défaut (liste <i>Références du décompte</i>).</p>
+  <figure><img src="images/ihm/decompte-lvtec.png" alt=""><figcaption><b>Décompte en références LV Tec</b> : référence client, référence RETOTUB à côté ; les chevilles d'amarrage n'ont pas d'équivalent LV Tec.</figcaption></figure>
   <figure><img src="images/ihm/decompte.png" alt=""><figcaption><b>Onglet Décompte.</b></figcaption></figure>
 
   <h3 id="s10-2"><span class="n">10.2</span>Amarrages</h3>

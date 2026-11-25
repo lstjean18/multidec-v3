@@ -159,3 +159,16 @@ Les points marqués **[à valider]** sont des choix faits en v3 faute de règle 
   projet (`Abouts` de la face : bout, niveau, garde-corps ou console).
 - **41 Amarrages** : par amarrage, 1 tube HMTUBAMA…, 2 colliers HMCOLF49 (dessinés sur les poteaux), 1 piton EZPITON12
   et 1 cheville EZCHEVILLE14 (décompte seulement).
+
+## Remarques 42 à 50 (codées le 25/11/2026 au soir)
+
+- **42** Écran de démarrage : « Version 3.0 bêta 1 – build N » en bas à droite (N = numéro du run CI, `/p:NumeroBuild`), rappelé dans la barre de titre.
+- **43** La maille juste avant et juste après une paire de mailles à poutre reçoivent des diagonales d'office (case Diago ignorée), des deux côtés s'il y a une protection intérieure.
+- **44** Volumique : diagonales sur toutes les faces à garde-corps (côté exposé de chaque module, parties qui dépassent, abouts en travers).
+- **45** Façade dessinée : renfoncement du mur derrière les mailles à consoles, recul = débord de la console (le mur reste à la distance à la façade du bout de la console). Consoles à tous les niveaux de la maille → toute la hauteur ; sinon de 0,10 m sous le point bas de la console (jambe de force mesurée sur les blocs DWG) à 2 m au-dessus de son plancher. Retours en travers aux bords du renfoncement.
+- **46** Damier volumique = orientation des plateaux alternée (selon X / selon Y), décalée d'un module à l'autre. Toute lisse ≥ 1,50 m qui porte des plateaux est renforcée (HMLISR).
+- **47** Socles à roue = tour roulante : 4 pieds (une maille, une face), droite, largeur ≥ 1,00 ; dernier plancher maxi / longueur mini : 1,00 et 1,05 → 2 m / 1,50 ; 1,50 → 4 / 1,50 ; 2,00 → 6 / 2,00 ; 2,50 → 8 / 2,50 ; 3,00 → 10 / 3,00. Hors règles : message, rappel de la règle, pas de dessin. Grutable réservé aux 4 pieds. Protection intérieure forcée, pas d'amarrage.
+- **48** Sous-maille rapportée (accès, escalier, appro, recette) : monte au moins jusqu'à la Ht max de sa maille.
+- **49** Colonne « Lest » (visible dès qu'une maille est stabilisée) : platelage à 0,50 m entre file extérieure et file de stabilisation, plateaux de la longueur de la maille sur lisses porteuses en travers (renforcées dès 1,50 m).
+- **50** Maille d'accès : 1,50 m au moins (refus de dessiner, longueurs filtrées dans la grille, accès proposés en 1,50 m avec une maille préférée plus courte).
+- **Références client** : table LV Tec intégrée (`catalogue/references-client-lvtec.csv`, tirée du Modèle Devis LVTEC de la v2), ou fichier CSV RefRETOTUB;RefClient ; liste « Références affichées » sur l'onglet Décompte et dans les Paramètres par défaut.
