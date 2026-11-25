@@ -31,30 +31,16 @@ body { margin: 0; font: 400 9.6pt/1.5 'Open Sans', sans-serif; color: var(--encr
 
 /* ---------- Page de garde ---------- */
 .couverture { page: couverture; position: relative; width: 210mm; height: 297mm; overflow: hidden; break-after: page;
-  background:
-    linear-gradient(118deg, transparent 0 58%, rgba(255,255,255,.55) 58% 74%, transparent 74%),
-    linear-gradient(72deg, rgba(0,0,0,.05) 0 30%, transparent 30%),
-    linear-gradient(160deg, #f4f5f6 0 40%, #e3e5e8 40% 100%);
-}
-.couverture .ombre { position: absolute; left: 62mm; top: 0; width: 60mm; height: 297mm;
-  background: linear-gradient(100deg, rgba(255,255,255,.7), rgba(255,255,255,0)); clip-path: polygon(0 0, 100% 0, 40% 100%, 0 100%); }
-.couverture .metal { position: absolute; left: 12.5mm; top: 0; width: 50mm; height: 297mm;
-  background: url(images/couverture/metal.jpg) center / 100% 100%; box-shadow: 1mm 0 2mm rgba(0,0,0,.12); }
-.couverture .logo { position: absolute; left: 16mm; top: 18mm; width: 43mm; }
-.couverture .photo { position: absolute; right: 0; bottom: 0; width: 148mm; }
-.couverture .titre-script { position: absolute; right: 6mm; top: 15mm; font: 400 31pt 'Great Vibes', cursive; color: #a9d3ee; white-space: nowrap; }
-.couverture .titre-caps { position: absolute; left: 139mm; top: 26.5mm; font: 400 11pt 'Open Sans', sans-serif; letter-spacing: -.1pt; color: #2d2d2d; transform: scaleY(1.25); transform-origin: left top; }
-.couverture .bande { position: absolute; left: 0; right: 0; top: 62mm; height: 23.5mm; background: rgba(59,154,211,.86); }
-.couverture .filet-bleu { position: absolute; left: 0; right: 0; top: 87.5mm; height: 3.5mm; background: rgba(59,154,211,.86); }
+  background: #e9eaeb url(images/couverture/fond.jpg) 0 0 / 210mm 297mm no-repeat; }
+/* Fond = page de garde 2018 sans ses textes ni son logo (images opaques, pas de transparence CSS). */
+.couverture .logo { position: absolute; left: 16.5mm; top: 18.2mm; width: 41.5mm; }
+.couverture .titre-caps { position: absolute; right: 6mm; top: 19mm; font: 600 22pt/1 'Open Sans', sans-serif; letter-spacing: .4pt; color: #2d2d2d; }
 .couverture .nom { position: absolute; right: 6mm; top: 64.3mm; font: italic 800 40pt/1 'Open Sans', sans-serif; letter-spacing: -.5pt; }
 .couverture .nom .multi { color: #fff; }
 .couverture .nom .dec { color: #4a4b4d; }
-.couverture .version { position: absolute; right: 6.5mm; top: 92.5mm; font: 700 11pt 'Open Sans', sans-serif; color: var(--bleu-fonce);
-  background: rgba(255,255,255,.85); padding: 1mm 3mm; border-radius: 1.5mm; }
-.couverture .cartouche { position: absolute; left: 14.5mm; top: 274mm; width: 52.5mm; height: 13.5mm; border-radius: 7mm 0 0 7mm;
-  background: linear-gradient(180deg, #57abe0, #3b93cf); color: #fff; font: 400 12.5pt 'Open Sans', sans-serif;
-  display: flex; align-items: center; justify-content: center; box-shadow: 0 .6mm 1.2mm rgba(0,0,0,.18); }
-.couverture .cartouche::after { content: ""; position: absolute; right: 0; top: -2mm; border-left: 2.4mm solid #2c7fb6; border-top: 2mm solid transparent; }
+.couverture .version { position: absolute; right: 6.5mm; top: 93.5mm; font: 700 11pt 'Open Sans', sans-serif; color: #1f6fa3; }
+.couverture .cartouche { position: absolute; left: 14.5mm; top: 274mm; width: 52.5mm; height: 13.5mm; color: #fff;
+  font: 400 12.5pt 'Open Sans', sans-serif; display: flex; align-items: center; justify-content: center; }
 
 /* ---------- Sommaire ---------- */
 .sommaire { break-after: page; }
