@@ -25,6 +25,8 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="MultiDEC.ico" />
+    <!-- Écran de démarrage avec le logo MultiDEC repris de la v2 (SplashScreen1, version2024), Laurent 24/11/2026. -->
+    <SplashScreen Include="Splash.png" />
   </ItemGroup>
   <!--
     Toutes les DLL VectorDraw à côté de l'exécutable, y compris celles chargées dynamiquement

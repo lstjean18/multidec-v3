@@ -109,6 +109,11 @@ public sealed class RenduVectorDraw
         FondBlanc();
         MasquerPresentations();
         _doc.EnableAutoGripOn = true; // un clic sélectionne un bloc (poignées), pour le supprimer au clic droit
+
+        // Objet sous le curseur surligné en rouge (comme la v2, clDocDessin.vb ; Laurent 25/11/2026).
+        _doc.GlobalRenderProperties.SelectionPreview = global::VectorDraw.Render.vdRenderGlobalProperties.SelectionPreviewFlags.ON;
+        _doc.GlobalRenderProperties.SelectionPreviewColor = System.Drawing.Color.Red;
+        _doc.GlobalRenderProperties.GripSelectionHighlight = global::VectorDraw.Render.vdRenderGlobalProperties.GripSelectionHighlightFlags.ON;
         _doc.Model.Update();
 
         // Réglages par défaut demandés par Laurent (23/11/2026) : rendu ombré, axes filaires visibles.
