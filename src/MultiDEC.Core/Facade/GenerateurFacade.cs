@@ -1272,31 +1272,17 @@ public sealed partial class GenerateurFacade
             }
         }
 
+        // Volumique : chaque maille qui a un garde-corps (lisses ou MDS) sur une face reçoit une diagonale sur cette face
+        // (Laurent, 25/11/2026, point 52) ; les côtés communs à deux modules n'en ont pas.
         if (_p.ModuleVolumique != null)
         {
-            foreach (Func<int, bool> expose in new Func<int, bool>[]
-                     {
-                         i => !InterieurCommun(i) && SecuriteInterieure(i) != TypeSecurite.Sans,
-                         i => !ExterieurCommun(i) && SecuriteExterieure(i) != TypeSecurite.Sans,
-                     })
+            for (int i = 0; i < _projet.Mailles.Count; i++)
             {
-                int debut = -1;
-                for (int i = 0; i <= _projet.Mailles.Count; i++)
+                bool interieur = !InterieurCommun(i) && SecuriteInterieure(i) != TypeSecurite.Sans;
+                bool exterieur = !ExterieurCommun(i) && SecuriteExterieure(i) != TypeSecurite.Sans;
+                if (interieur || exterieur)
                 {
-                    bool e = i < _projet.Mailles.Count && expose(i);
-                    if (e && debut < 0)
-                    {
-                        debut = i;
-                    }
-                    else if (!e && debut >= 0)
-                    {
-                        if (!Enumerable.Range(debut, i - debut).Any(k => _projet.Mailles[k].Diagonale || imposees.Contains(k)))
-                        {
-                            imposees.Add(debut);
-                        }
-
-                        debut = -1;
-                    }
+                    imposees.Add(i);
                 }
             }
         }

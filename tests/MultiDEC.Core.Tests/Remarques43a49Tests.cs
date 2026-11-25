@@ -141,4 +141,29 @@ public class Remarques43a49Tests
         Assert.Equal(1.5, acces.Longueur, 6);
         Assert.Empty(RegleMaillesAcces.Ecarts(projet));
     }
+
+    [Fact]
+    public void Volumique_chaque_maille_protegee_a_sa_diagonale()
+    {
+        // Point 52 (Laurent 25/11/2026) : chaque maille à garde-corps reçoit une diagonale sur cette face.
+        var projet = Droite(10, 4, 1);
+        projet.Forme = FormeStructure.Volumique;
+        projet.AjusterFaces();
+        foreach (var f in projet.Faces)
+        {
+            foreach (var m in f.Mailles)
+            {
+                m.Diagonale = false;
+            }
+        }
+
+        var s = GenerateurStructure.Generer(projet);
+        var m2 = projet.Faces[1];
+        var avecDiago = s.Elements.Where(e => e.NomFace == "M2" && e.Famille == Famille.DiagonaleVerticale && e.Axe == Axe.X && Math.Abs(e.Origine.Y + 1.40) < 0.05)
+            .Select(e => e.NumeroMaille).Distinct().OrderBy(n => n).ToList();
+        Assert.Equal(Enumerable.Range(1, m2.Mailles.Count).ToList(), avecDiago);
+
+        // Côté commun M1 / M2 : pas de diagonale.
+        Assert.DoesNotContain(s.Elements, e => e.Famille == Famille.DiagonaleVerticale && e.Axe == Axe.X && Math.Abs(e.Origine.Y + 0.70) < 0.05);
+    }
 }
