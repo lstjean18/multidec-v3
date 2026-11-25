@@ -168,6 +168,29 @@ public class Remarques43a49Tests
     }
 
     [Fact]
+    public void Volumique_pas_de_diagonale_en_travers_a_l_interieur()
+    {
+        // Laurent 25/11/2026 23h54 : diagonales seulement sur les faces extérieures (côté extérieur, côté mur, abouts).
+        var projet = Droite(10, 4, 1);
+        projet.General.SecuriteAbouts = TypeSecurite.Lisses;
+        projet.Forme = FormeStructure.Volumique;
+        projet.AjusterFaces();
+        foreach (var f in projet.Faces)
+        {
+            f.Parametres.LargeurMaille = 2.0;
+        }
+
+        var s = GenerateurStructure.Generer(projet);
+        Assert.Contains(s.Elements, e => e.Famille == Famille.DiagonaleVerticale && e.Axe == Axe.Y);
+        foreach (var f in projet.Faces)
+        {
+            double l = f.LongueurObtenue;
+            Assert.All(s.Elements.Where(e => e.NomFace == f.Nom && e.Famille == Famille.DiagonaleVerticale && e.Axe == Axe.Y),
+                e => Assert.True(e.Origine.X < 0.1 || e.Origine.X > l - 0.1, $"{f.Nom} : diagonale en travers à x = {e.Origine.X}"));
+        }
+    }
+
+    [Fact]
     public void About_de_plus_de_1_05_m_toujours_en_lisses()
     {
         // Point 51 : module volumique de 2,00 m de large, abouts MDS 2 demandés → lisses.

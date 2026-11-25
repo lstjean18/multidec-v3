@@ -60,7 +60,7 @@ Les points marqués **[à valider]** sont des choix faits en v3 faute de règle 
 ## Fonctions reprises de la v2 version2024 (codées le 24/11/2026)
 - **Structure** : formes droite, en L, en U, fermée (faces S1…S4 en équerre, carré d'angle) et **volumique** (modules M1, M2…
   côte à côte en profondeur, bouton « + Module » jusqu'à 12, largeur par module, poteaux et lisses communs dédoublonnés,
-  amarrages sur M1, diagonales en travers au-delà de 1,05 m ou sur socles à roues).
+  amarrages sur M1, diagonales en travers aux abouts ou sur socles à roues ; jamais à l'intérieur de la structure, 25/11).
   Option « planchers en damier » : pas de plancher une maille sur deux, décalé d'un module à l'autre.
   - Toutes les faces ont leur **premier plancher à la même hauteur**, sinon message et la structure n'est pas dessinée.
   - La longueur saisie pour S2, S3… **n'inclut pas le carré d'angle** : S1 de 0,70 m de large et 20 m saisis → 20,70 m.
@@ -177,3 +177,5 @@ Les points marqués **[à valider]** sont des choix faits en v3 faute de règle 
 
 - **51** About de plus de 1,05 m : jamais de cadre de garde-corps, toujours des lisses (alerte). Toutes faces : un cadre de plus de 1,05 m est dans le plan d'une lisse ; là où une lisse porte des plateaux (damier, plateaux selon Y), la protection passe en lisses (alerte).
 - **52** Volumique : chaque maille qui a un garde-corps sur une face reçoit une diagonale sur cette face (remplace la règle 1/5 + 1re maille du tronçon exposé du point 44) ; pas de diagonale sur un côté commun à deux modules.
+  Correction (25/11, 23h54) : plus aucune diagonale en travers à l'intérieur de la structure ; diagonales seulement sur les faces
+  extérieures à garde-corps (côté extérieur, côté mur, abouts).

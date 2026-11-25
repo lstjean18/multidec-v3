@@ -1366,9 +1366,10 @@ public sealed partial class GenerateurFacade
 
             var cotes = CotesDiagonales(i);
 
-            // Diagonales en travers (v2) : structure volumique de plus de 1,05 m ou socles à roues,
-            // à la file gauche de la maille, et à la file droite pour la dernière maille.
-            bool enTravers = (_p.ModuleVolumique != null && _l > 1.05 + Cotes.Tolerance) || CatalogueSocles.De(_p.Socle).AvecRoues;
+            // Diagonales en travers (v2) : socles à roues, à la file gauche de la maille, et à la file droite pour la dernière maille.
+            // Volumique : jamais à l'intérieur de la structure (Laurent, 25/11/2026) ; seules les faces extérieures
+            // (côté extérieur, côté mur, abouts) en reçoivent : abouts traités par DiagonalesAbouts.
+            bool enTravers = _p.ModuleVolumique == null && CatalogueSocles.De(_p.Socle).AvecRoues;
 
             // Sens inversé : origine à droite de la maille, bloc symétrisé (diagonale montant vers la gauche).
             double xDia = d.Inverse ? x0 + lm : x0;
