@@ -566,6 +566,25 @@ public class GenerateurFacadeTests
     }
 
     [Fact]
+    public void Stabilisation_lestee_platelage_a_0_50_sur_lisses_renforcees()
+    {
+        var face = Standard(); // mailles de 2,50 m
+        face.Mailles[0].Stabilisation = 1.5;
+        face.Mailles[0].Lest = true;
+        face.Mailles[1].Stabilisation = 1.5; // sans lest
+        var s = GenerateurFacade.Generer(face);
+        var x = face.AbscissesFiles();
+
+        var plateaux = s.Elements.Where(e => e.Famille == Famille.Plateau && e.Origine.Y < -0.70 && Math.Abs(e.Origine.Z - 0.5) < 1e-6).ToList();
+        Assert.Equal(5, plateaux.Count); // 1,50 m de profondeur = 5 plateaux de 0,30
+        Assert.All(plateaux, e => { Assert.Equal(1, e.NumeroMaille); Assert.Equal(Axe.X, e.Axe); Assert.StartsWith("HMPLA", e.Reference); });
+        var porteuses = s.Elements.Where(e => e.Famille == Famille.Traverse && Math.Abs(e.Origine.Z - 0.5) < 1e-6).ToList();
+        Assert.Equal(2, porteuses.Count);
+        Assert.All(porteuses, e => Assert.Equal("HMLISR150", e.Reference));
+        Assert.Equal(new[] { x[0], x[1] }, porteuses.Select(e => e.Origine.X).OrderBy(v => v));
+    }
+
+    [Fact]
     public void Stabilisation_file_lisses_et_diagonales_jusqu_a_2_m_sous_le_dernier_plancher()
     {
         var face = Standard();

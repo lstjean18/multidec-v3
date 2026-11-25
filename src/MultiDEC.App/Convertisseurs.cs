@@ -42,3 +42,11 @@ public sealed class ConvertisseurHauteurMax : IMultiValueConverter
 
     public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture) => throw new NotSupportedException();
 }
+
+/// <summary>Vrai si la valeur est une cote non nulle (ex. case « Lest » active seulement sur une maille stabilisée).</summary>
+public sealed class ConvertisseurPositifEnBooleen : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture) => value is double d && d > 1e-9;
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
+}

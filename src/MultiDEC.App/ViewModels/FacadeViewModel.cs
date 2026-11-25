@@ -839,10 +839,14 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
     /// <summary>Colonne « Recette » de la grille des niveaux : seulement si la face a une maille de recette.</summary>
     public bool ColonneRecetteVisible => Mailles.Any(m => m.Type == TypeMaille.Recette);
 
+    /// <summary>Colonne « Lest » de la grille des mailles : dès qu'une maille a une stabilisation (Laurent, 25/11/2026).</summary>
+    public bool ColonneLestVisible => Mailles.Any(m => m.Stabilisation > Cotes.Tolerance);
+
     private void NotifierColonnesNiveaux()
     {
         Notifier(nameof(ColonneApproVisible));
         Notifier(nameof(ColonneRecetteVisible));
+        Notifier(nameof(ColonneLestVisible));
     }
 
     private void Maille_PropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -855,6 +859,10 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
         {
             CocherDernierNiveau((MailleDefinition)sender!);
             NotifierColonnesNiveaux();
+        }
+        else if (e.PropertyName == nameof(MailleDefinition.Stabilisation))
+        {
+            Notifier(nameof(ColonneLestVisible));
         }
     }
 

@@ -377,6 +377,11 @@ public sealed partial class GenerateurFacade
                 cotes.Insert(0, 0);
             }
 
+            if (m.Lest)
+            {
+                PlacerLest(x0, x1, lm, s, num);
+            }
+
             foreach (double z in cotes)
             {
                 Ajouter(References.LisseOuTraverse(lm), Famille.Lisse, new Point3(x0, y, z), Axe.X, Face.Exterieure, num);
@@ -404,5 +409,24 @@ public sealed partial class GenerateurFacade
                 Ajouter(t.Reference, t.Famille, new Point3(_x[f], Cotes.Arrondi(-_l - s), t.Z), Axe.Z, Face.Exterieure);
             }
         }
+    }
+
+    /// <summary>Hauteur du platelage de lest dans une stabilisation.</summary>
+    internal const double HauteurLest = 0.5;
+
+    /// <summary>
+    /// Platelage de lest (colonne « Lest », Laurent 25/11/2026) : à 0,50 m, entre la file extérieure et la file de
+    /// stabilisation, plateaux de la longueur de la maille posés sur des lisses renforcées en travers aux deux files
+    /// (règle des lisses porteuses), lisse le long de la file de stabilisation pour tenir le lest.
+    /// </summary>
+    private void PlacerLest(double x0, double x1, double lm, double s, int num)
+    {
+        double z = HauteurLest;
+        double y1 = -_l;
+        string porteuse = LissePorteuse(s);
+        Travers(porteuse, Famille.Traverse, x0, y1, z, num);
+        Travers(porteuse, Famille.Traverse, x1, y1, z, num);
+        Ajouter(References.LisseOuTraverse(lm), Famille.Lisse, new Point3(x0, Cotes.Arrondi(-_l - s), z), Axe.X, Face.Exterieure, num);
+        PlacerPlateaux(x0, y1, z, s, lm, num);
     }
 }

@@ -271,8 +271,9 @@ public partial class MainWindow : Window
 
     private void Vm_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
-        if (e.PropertyName is nameof(FacadeViewModel.ColonneApproVisible) or nameof(FacadeViewModel.ColonneRecetteVisible) or "" or null)
+        if (e.PropertyName is nameof(FacadeViewModel.ColonneApproVisible) or nameof(FacadeViewModel.ColonneRecetteVisible) or nameof(FacadeViewModel.ColonneLestVisible) or "" or null)
         {
+            ColonneLest.Visibility = Vm.ColonneLestVisible ? Visibility.Visible : Visibility.Collapsed;
             ColonneAppro.Visibility = Vm.ColonneApproVisible ? Visibility.Visible : Visibility.Collapsed;
             ColonneRecette.Visibility = Vm.ColonneRecetteVisible ? Visibility.Visible : Visibility.Collapsed;
         }

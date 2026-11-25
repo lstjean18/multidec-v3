@@ -21,6 +21,7 @@
     <BooleanToVisibilityConverter x:Key="VisibleSi" />
     <app:ConvertisseurCoteOptionnelle x:Key="CoteOptionnelle" />
     <app:ConvertisseurHauteurMax x:Key="HauteurMax" />
+    <app:ConvertisseurPositifEnBooleen x:Key="PositifEnBooleen" />
     <SolidColorBrush x:Key="Bordure" Color="#D5D9E0" />
     <SolidColorBrush x:Key="Discret" Color="#57606A" />
     <SolidColorBrush x:Key="Accent" Color="#1F5FA8" />
@@ -590,6 +591,15 @@
                           </ComboBox>
                         </DataTemplate>
                       </DataGridTemplateColumn.CellEditingTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTemplateColumn x:Name="ColonneLest" Header="Lest" Width="Auto" Visibility="Collapsed">
+                      <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                          <CheckBox IsChecked="{Binding Lest, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Center" Margin="0"
+                                    IsEnabled="{Binding Stabilisation, Converter={StaticResource PositifEnBooleen}}"
+                                    ToolTip="Platelage à 0,50 m dans la stabilisation (entre la file extérieure et la file de stabilisation) pour poser du lest" />
+                        </DataTemplate>
+                      </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
                     <DataGridTemplateColumn Header="Poutre" Width="70">
                       <DataGridTemplateColumn.CellTemplate>

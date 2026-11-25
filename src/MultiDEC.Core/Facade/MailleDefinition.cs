@@ -25,6 +25,7 @@ public sealed class MailleDefinition : INotifyPropertyChanged
     private string _jonction = string.Empty;
     private double _profondeurRecette = 2.0;
     private double _stabilisation;
+    private bool _lest;
     private double _ecart;
     private double _poutre;
     private double _depart;
@@ -103,6 +104,16 @@ public sealed class MailleDefinition : INotifyPropertyChanged
     {
         get => _stabilisation;
         set => Changer(ref _stabilisation, value);
+    }
+
+    /// <summary>
+    /// Colonne « Lest » (Laurent 25/11/2026) : dans la stabilisation, platelage à 0,50 m entre la file extérieure et la file
+    /// de stabilisation pour poser du lest (plateaux de la longueur de la maille sur lisses renforcées).
+    /// </summary>
+    public bool Lest
+    {
+        get => _lest;
+        set => Changer(ref _lest, value);
     }
 
     /// <summary>
@@ -309,13 +320,14 @@ public sealed class MailleDefinition : INotifyPropertyChanged
         PareGravois = new List<double>(_pareGravois),
         ProfondeurRecette = ProfondeurRecette,
         Stabilisation = Stabilisation,
+        Lest = Lest,
         EcartHauteur = EcartHauteur,
         Poutre = Poutre,
         HauteurDepart = HauteurDepart,
     };
 
     public override string ToString() =>
-        FormattableString.Invariant($"{Longueur:0.00} m {Type}{(Diagonale ? " + diagonale" : string.Empty)}{(LargeurRapportee > 0 ? $" ({LargeurRapportee:0.00})" : string.Empty)}{(Stabilisation > 0 ? $" + stab. {Stabilisation:0.00}" : string.Empty)}{(EcartHauteur != 0 ? $" + ht {EcartHauteur:+0;-0}" : string.Empty)}{(HauteurDepart > 0 ? $" + départ {HauteurDepart:0.00}" : string.Empty)}{(Poutre > 0 ? $" + poutre à {Poutre:0.00}" : string.Empty)}{(_consoles.Count > 0 ? " + consoles " + string.Join("/", _consoles) : string.Empty)}");
+        FormattableString.Invariant($"{Longueur:0.00} m {Type}{(Diagonale ? " + diagonale" : string.Empty)}{(LargeurRapportee > 0 ? $" ({LargeurRapportee:0.00})" : string.Empty)}{(Stabilisation > 0 ? $" + stab. {Stabilisation:0.00}{(Lest ? " lestée" : string.Empty)}" : string.Empty)}{(EcartHauteur != 0 ? $" + ht {EcartHauteur:+0;-0}" : string.Empty)}{(HauteurDepart > 0 ? $" + départ {HauteurDepart:0.00}" : string.Empty)}{(Poutre > 0 ? $" + poutre à {Poutre:0.00}" : string.Empty)}{(_consoles.Count > 0 ? " + consoles " + string.Join("/", _consoles) : string.Empty)}");
 
     private static double Lire(string hauteur) => double.Parse(hauteur, CultureInfo.InvariantCulture);
 
