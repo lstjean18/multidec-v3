@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using MultiDEC.Core.Facade;
+using MultiDEC.Core.Facade.Regles;
 using MultiDEC.Core.Geometrie;
 using Xunit;
 
@@ -61,5 +62,62 @@ public class Remarques43a49Tests
         var s = GenerateurStructure.Generer(projet);
         var traverses = s.Elements.Where(e => e.NomFace == "M2" && e.Famille == Famille.Traverse && Math.Abs(e.Origine.Z - 4) < 1e-6).Select(e => e.Reference).Distinct().ToList();
         Assert.Equal(new[] { "HMLISR200" }, traverses);
+    }
+
+    private static ProjetStructure Roulante(double largeur, double longueur, double hauteur)
+    {
+        var projet = ProjetStructure.Nouveau(
+            new ParametresGeneraux { Socle = "HMSOCROU" },
+            new ParametresFacade { LongueurTotaleSouhaitee = longueur, LongueurMaillePreferee = Math.Min(longueur, 2.5), HauteurDernierPlancher = hauteur, LargeurMaille = largeur });
+        return projet;
+    }
+
+    [Fact]
+    public void Tour_roulante_a_plusieurs_mailles_refusee_avec_rappel_de_la_regle()
+    {
+        var projet = Roulante(1.5, 5.0, 4);
+        Assert.True(projet.S1.Mailles.Count > 1);
+        var ex = Assert.Throws<InvalidOperationException>(() => GenerateurStructure.Generer(projet));
+        Assert.Contains("4 pieds", ex.Message);
+        Assert.Contains(RegleTourRoulante.Rappel, ex.Message);
+    }
+
+    [Fact]
+    public void Tour_roulante_trop_haute_pour_sa_largeur_refusee()
+    {
+        var projet = Roulante(1.05, 2.0, 3.0);
+        Assert.Single(projet.S1.Mailles);
+        var ex = Assert.Throws<InvalidOperationException>(() => GenerateurStructure.Generer(projet));
+        Assert.Contains("maximum 2,00 m", ex.Message);
+    }
+
+    [Fact]
+    public void Tour_roulante_trop_courte_pour_sa_largeur_refusee()
+    {
+        var projet = Roulante(2.0, 1.5, 4.0);
+        Assert.Single(projet.S1.Mailles);
+        var ex = Assert.Throws<InvalidOperationException>(() => GenerateurStructure.Generer(projet));
+        Assert.Contains("minimum 2,00 m", ex.Message);
+    }
+
+    [Fact]
+    public void Tour_roulante_conforme_sans_amarrage_et_protegee_cote_interieur()
+    {
+        var projet = Roulante(1.5, 2.0, 4.0);
+        Assert.Single(projet.S1.Mailles);
+        Assert.Empty(RegleTourRoulante.Ecarts(projet));
+        var s = GenerateurStructure.Generer(projet);
+        Assert.Empty(s.Amarrages.Amarrages);
+        Assert.Contains(s.Elements, e => e.Famille == Famille.Socle && e.Reference.StartsWith("HMSOCROU", StringComparison.Ordinal));
+        Assert.Contains(s.Elements, e => e.Famille == Famille.GardeCorps && Math.Abs(e.Origine.Y) < 0.1);
+    }
+
+    [Fact]
+    public void Grutable_reserve_aux_structures_a_4_pieds()
+    {
+        var projet = Droite(10, 4);
+        projet.S1.Parametres.Grutable = true;
+        var ex = Assert.Throws<InvalidOperationException>(() => GenerateurStructure.Generer(projet));
+        Assert.Contains("Grutable", ex.Message);
     }
 }

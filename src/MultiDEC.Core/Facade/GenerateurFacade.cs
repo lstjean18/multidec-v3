@@ -99,6 +99,14 @@ public sealed partial class GenerateurFacade
             _alertes.Add("Trappes et plateaux acier : garde-corps MDS remplacés par des lisses (incompatibles, comme dans la v2).");
         }
 
+        if (CatalogueSocles.De(_p.Socle).AvecRoues && _p.SecuriteInterieure == TypeSecurite.Sans)
+        {
+            // Tour roulante : garde-corps des deux côtés (v2 ForceSecuInt).
+            _p = _p.Copie();
+            _p.SecuriteInterieure = _p.SecuriteExterieure;
+            _p.PlintheInterieure = _p.PlintheExterieure;
+        }
+
         _x = projet.AbscissesFiles();
         _l = _p.LargeurMaille;
         _h = _p.HauteurDernierPlancher;
@@ -207,11 +215,6 @@ public sealed partial class GenerateurFacade
         if (!bilan.SurfaceRespectee)
         {
             _alertes.Add($"Amarrages : {bilan.Amarrages.Count} placés pour {bilan.MinimumParSurface} requis par la surface ({bilan.Surface:0.#} m²).");
-        }
-
-        if (CatalogueSocles.De(_p.Socle).AvecRoues && _projet.Mailles.Count > 1)
-        {
-            _alertes.Add("Socles à roue : seulement sur une structure à 4 pieds (une maille), comme dans la v2.");
         }
 
         if (_p.SecuriteExterieure == TypeSecurite.Sans && _p.SecuriteInterieure == TypeSecurite.Sans && _p.ModuleVolumique == null)
@@ -1424,6 +1427,12 @@ public sealed partial class GenerateurFacade
     private BilanAmarrages PlacerAmarrages()
     {
         var bilan = SansAmarragesSousPoutres(RegleAmarrages.Calculer(_projet));
+        if (CatalogueSocles.De(_p.Socle).AvecRoues)
+        {
+            // Tour roulante : pas d'amarrage (v2).
+            bilan = new BilanAmarrages(new List<Amarrage>(), bilan.Surface, 0, bilan.NoteDeCalculObligatoire);
+        }
+
         if (_projet.Mailles.Any(m => !Cotes.Egal(m.HauteurMax(_h), _h)))
         {
             // Colonne « Ht max » : pas d'amarrage au-dessus du dernier plancher atteint par la file.
