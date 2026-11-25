@@ -275,6 +275,9 @@ public sealed class RenduVectorDraw
         return null;
     }
 
+    /// <summary>Rend l'espace objet dans une image (hors écran : captures du manuel utilisateur).</summary>
+    public void RendreDans(System.Drawing.Bitmap image) => _doc.Model.RenderToBitmap(image);
+
     /// <summary>Nombre d'objets sélectionnés (poignées) dans le dessin.</summary>
     public int NombreSelectionnes
     {

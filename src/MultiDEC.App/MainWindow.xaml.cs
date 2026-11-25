@@ -120,7 +120,7 @@ public partial class MainWindow : Window
     internal System.Drawing.Bitmap ImageDessin(int largeur, int hauteur)
     {
         var bmp = new System.Drawing.Bitmap(Math.Max(1, largeur), Math.Max(1, hauteur));
-        _vd.BaseControl.ActiveDocument.Model.RenderToBitmap(bmp);
+        _rendu?.RendreDans(bmp);
         return bmp;
     }
 
