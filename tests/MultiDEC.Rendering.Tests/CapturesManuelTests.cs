@@ -119,6 +119,7 @@ public class CapturesManuelTests
         Pomper();
         w.ChargerBibliothequePourCapture(dwg);
         var vm = w.ModeleVue;
+        ChangerProtections(w);
 
         // 1. Façade droite par défaut.
         Valider(vm);
@@ -311,6 +312,37 @@ public class CapturesManuelTests
     {
         onglets.SelectedIndex = index;
         Pomper();
+    }
+
+    /// <summary>
+    /// Plantage signalé par Laurent (25/11/2026, 23h03) en changeant garde-corps ou plinthe intérieurs : on change chaque liste
+    /// de l'onglet « Général » comme un utilisateur (SelectedItem du ComboBox), puis on vérifie la valeur dans le modèle.
+    /// </summary>
+    private void ChangerProtections(MainWindow w)
+    {
+        Onglet(w.Onglets, 0);
+        Pomper();
+        var listes = Descendants<ComboBox>(w)
+            .Select(c => (c, chemin: System.Windows.Data.BindingOperations.GetBinding(c, System.Windows.Controls.Primitives.Selector.SelectedItemProperty)?.Path?.Path))
+            .Where(x => x.chemin is "SecuriteExterieure" or "SecuriteInterieure" or "SecuriteAbouts" or "PlintheExterieure" or "PlintheInterieure" or "PlintheAbouts")
+            .ToList();
+        Console.WriteLine($"Protections : {listes.Count} listes trouvées");
+        foreach (var (liste, chemin) in listes)
+        {
+            foreach (var valeur in liste.Items.Cast<object>().ToList())
+            {
+                Console.WriteLine($"Protections : {chemin} = {valeur}");
+                liste.SelectedItem = valeur;
+                Pomper();
+                var lu = typeof(FacadeViewModel).GetProperty(chemin!)!.GetValue(w.ModeleVue);
+                if (!Equals(valeur, lu))
+                {
+                    _sortie.WriteLine($"Protections : {chemin} choisi {valeur}, modèle {lu}");
+                }
+            }
+        }
+
+        _sortie.WriteLine($"Protections : {listes.Count} listes changées sans plantage");
     }
 
     private static void Pomper()
