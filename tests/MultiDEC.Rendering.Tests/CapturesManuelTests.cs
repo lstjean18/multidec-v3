@@ -131,7 +131,7 @@ public class CapturesManuelTests
         Dessin(w, Vues.Facade, "3D-droite-facade");
 
         // 2. Bouton « Valider la structure » rouge après un changement de dimension.
-        vm.Parametres.LongueurTotaleSouhaitee = 15;
+        vm.LongueurFacade = 15;
         Pomper();
         Disposer(w);
         Element(w.Ruban, "IHM-ruban-a-valider");
@@ -199,7 +199,8 @@ public class CapturesManuelTests
             Dessin(w, Vues.Iso, "3D-forme-" + nom);
             if (forme == FormeStructure.EnL)
             {
-                Element(w.Onglets, "IHM-general-L");
+                Disposer(w);
+        Defilant(w.Onglets, "IHM-general-L");
                 Fenetre(w, "IHM-forme-L");
                 vm.Inversee = true;
                 Pomper();
@@ -221,7 +222,8 @@ public class CapturesManuelTests
         w.DessinerPourCapture();
         Pomper();
         Dessin(w, Vues.Iso, "3D-volumique");
-        Element(w.Onglets, "IHM-general-volumique");
+        Disposer(w);
+        Defilant(w.Onglets, "IHM-general-volumique");
 
         w.Close();
     }
@@ -247,14 +249,14 @@ public class CapturesManuelTests
     {
         var contenu = (FrameworkElement)w.Content;
         contenu.Measure(new Size(1600, 940));
-        contenu.Arrange(new Rect(0, 0, 1600, 940));
-        contenu.UpdateLayout();
+        contenu.Arrange(new Rect(0, 0, 1600, 940)); // pas d'UpdateLayout : la fenêtre reprendrait sa taille
     }
 
     /// <summary>Contenu entier (sans la barre de défilement) du panneau défilant de l'onglet sélectionné.</summary>
     private void Defilant(TabControl onglets, string nom)
     {
-        var defileur = Descendants<ScrollViewer>(onglets).FirstOrDefault(v => v.IsVisible && v.Content is FrameworkElement);
+        var defileur = Descendants<ScrollViewer>(onglets).Where(v => v.IsVisible && v.Content is Panel)
+                                                         .OrderByDescending(v => v.ActualWidth * v.ActualHeight).FirstOrDefault();
         if (defileur?.Content is FrameworkElement contenu)
         {
             Element(contenu, nom);
