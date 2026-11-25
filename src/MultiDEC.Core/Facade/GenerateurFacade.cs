@@ -870,13 +870,17 @@ public sealed partial class GenerateurFacade
         double w = c.Largeur;
         bool gcDemande = _p.SecuriteInterieure != TypeSecurite.Sans;
         bool gc = c.PorteGardeCorps && gcDemande;
-        bool lisse = gc || c.LisseSansPoteau(_p.Modele);
         bool sommet = Cotes.Egal(z, _h);
         string? embase = c.Embase(_p.Modele);
         double dz = c.DecalageZ(_p.Modele);
 
+        // About au bout de la console quand la maille voisine n'a pas de console à ce niveau, et en bout de façade
+        // (Laurent, 23/11/2026) ; il demande un poteau en bout de console (Laurent, 25/11/2026).
+        bool aboutGauche = ConsoleDe(index - 1, n) == null && (index > 0 || _p.AboutGauche);
+        bool aboutDroit = ConsoleDe(index + 1, n) == null && (index + 1 < DerniereFile || _p.AboutDroit);
+
         // Console à platine : pas de poteau possible en bout (Laurent, 24/11/2026).
-        if (gcDemande && !c.PorteGardeCorps)
+        if ((gcDemande || aboutGauche || aboutDroit) && !c.PorteGardeCorps)
         {
             _alertes.Add(FormattableString.Invariant(
                 $"Maille {num}, niveau {z:0.00} m : console {c.Reference} à platine, pas de poteau ni de garde-corps possible en bout."));
@@ -897,45 +901,64 @@ public sealed partial class GenerateurFacade
                 Ajouter(embase, Famille.Embase, new Point3(x, w, z), Axe.Z, Face.Interieure, num);
             }
 
-            if (gc)
+            // Poteau en bout selon la fixation (chape MR HMPOTDP10, chape MS HMEMB + HMPOT10, nipple MR HMPOTST10 /
+            // MS HMPOT10) : pour le garde-corps côté mur et pour l'about.
+            bool about = f == index ? aboutGauche : aboutDroit;
+            if (c.PorteGardeCorps && (gc || about))
             {
-                Ajouter(c.PoteauGardeCorps(_p.Modele), Famille.Poteau, new Point3(x, w, z + dz), Axe.Z, Face.Interieure, num);
-                Ajouter(References.Goupille, Famille.Goupille, new Point3(x, w, z), Axe.Z, Face.Interieure, num);
-                if (_p.GardeCorpsCouvreur && sommet)
-                {
-                    Ajouter(References.PoteauCouvreurConsole(_p.Modele), Famille.Poteau, new Point3(x, w, z + 1.0 + dz), Axe.Z, Face.Interieure, num);
-                    Ajouter(References.Goupille, Famille.Goupille, new Point3(x, w, z + 1.0), Axe.Z, Face.Interieure, num);
-                }
+                PlacerPoteauBoutConsole(c, x, w, z, sommet, num);
             }
         }
 
-        // About en lisses au bout de la console quand la maille voisine n'a pas de console à ce niveau,
-        // et en bout de façade (Laurent, 23/11/2026) ; il faut un point d'accroche au bout.
-        if (lisse && ConsoleDe(index - 1, n) == null && (index > 0 || _p.AboutGauche))
+        if (c.PorteGardeCorps && aboutGauche)
         {
             PlacerAbout(_x[index], z, w, gauche: true, console: true, num, yOrigine: w);
         }
 
-        if (lisse && ConsoleDe(index + 1, n) == null && (index + 1 < DerniereFile || _p.AboutDroit))
+        if (c.PorteGardeCorps && aboutDroit)
         {
             PlacerAbout(_x[index + 1], z, w, gauche: false, console: true, num, yOrigine: w);
         }
 
         PlacerPlateaux(x0, w, z, w, lm, num);
-        if (lisse)
+        if (gc || c.LisseSansPoteau(_p.Modele))
         {
             Ajouter("HMLIS" + Cotes.EnCm3(lm), Famille.Lisse, new Point3(x0, w, z), Axe.X, Face.Interieure, num);
         }
 
         if (gc)
         {
-            PlacerGardeCorps(TypeSecurite.Lisses, _p.PlintheInterieure, x0, w, z, lm, Face.Interieure, num);
+            // Garde-corps côté mur en bout de console : toujours en lisses, avec plinthe (MDS incompatibles avec les
+            // consoles, Laurent 25/11/2026).
+            PlacerGardeCorps(TypeSecurite.Lisses, PlintheConsole, x0, w, z, lm, Face.Interieure, num);
             if (_p.GardeCorpsCouvreur && sommet)
             {
                 Ajouter(References.LisseOuTraverse(lm), Famille.Lisse, new Point3(x0, w, z + 1.5), Axe.X, Face.Interieure, num);
             }
         }
     }
+
+    /// <summary>Poteau de garde-corps en bout de console (et rehausse couvreur au dernier plancher).</summary>
+    private void PlacerPoteauBoutConsole(ConsoleInfo c, double x, double y, double z, bool sommet, int num)
+    {
+        double dz = c.DecalageZ(_p.Modele);
+        Ajouter(c.PoteauGardeCorps(_p.Modele), Famille.Poteau, new Point3(x, y, z + dz), Axe.Z, Face.Interieure, num);
+        Ajouter(References.Goupille, Famille.Goupille, new Point3(x, y, z), Axe.Z, Face.Interieure, num);
+        if (_p.GardeCorpsCouvreur && sommet)
+        {
+            Ajouter(References.PoteauCouvreurConsole(_p.Modele), Famille.Poteau, new Point3(x, y, z + 1.0 + dz), Axe.Z, Face.Interieure, num);
+            Ajouter(References.Goupille, Famille.Goupille, new Point3(x, y, z + 1.0), Axe.Z, Face.Interieure, num);
+        }
+    }
+
+    /// <summary>
+    /// Plinthe des garde-corps en lisses des consoles (about, côté mur) : celle des abouts, sinon celle du côté
+    /// intérieur, sinon axée (Laurent 25/11/2026 : « ne pas oublier les plinthes »).
+    /// </summary>
+    private TypePlinthe PlintheConsole =>
+        _p.PlintheAbouts != TypePlinthe.Sans ? _p.PlintheAbouts
+        : _p.PlintheInterieure != TypePlinthe.Sans ? _p.PlintheInterieure
+        : TypePlinthe.Axees;
 
     private static bool MemeConsole(ConsoleInfo? voisine, ConsoleInfo c) =>
         voisine != null && string.Equals(voisine.Reference, c.Reference, StringComparison.OrdinalIgnoreCase);
@@ -1034,7 +1057,7 @@ public sealed partial class GenerateurFacade
         string cm = Cotes.EnCm3(largeur);
         string traverse = References.LisseOuTraverse(largeur);
         var o = new Point3(x, yOrigine, z);
-        TypePlinthe plinthe = console ? TypePlinthe.Sans : _p.PlintheAbouts;
+        TypePlinthe plinthe = console ? PlintheConsole : _p.PlintheAbouts;
         // Sur les consoles, l'about est en lisses (lisse + sous-lisse), Laurent 23/11/2026.
         var type = console ? TypeSecurite.Lisses : _p.SecuriteAbouts;
 

@@ -313,13 +313,43 @@ public class GenerateurFacadeTests
     }
 
     [Fact]
-    public void Console_chape_MR_sans_garde_corps_ni_lisse()
+    public void Console_chape_MR_sans_garde_corps_poteaux_en_bout_pour_les_abouts()
     {
-        // Multi-RETO, chape, pas de garde-corps demandé : pas de poteau, donc rien pour accrocher une lisse.
+        // Multi-RETO, chape, pas de garde-corps côté mur : pas de lisse le long, mais la console isolée a deux abouts,
+        // chacun avec son poteau HMPOTDP10 en bout et sa plinthe (Laurent, 25/11/2026).
         var projet = Standard(p => { p.Modele = ModeleEchafaudage.MultiReto; p.SecuriteInterieure = TypeSecurite.Sans; });
         Consoles(projet, "HMCON700E", 1);
         var s = GenerateurFacade.Generer(projet);
-        Assert.DoesNotContain(s.Elements, e => e.NumeroMaille == 2 && e.Origine.Y > 0.1 && (e.Famille == Famille.Poteau || e.Famille == Famille.Lisse));
+        var x = projet.AbscissesFiles();
+        int niveaux = projet.Niveaux.Count(n => n.Type == TypePlancher.Complet && n.Hauteur > 0);
+        var bout = s.Elements.Where(e => e.NumeroMaille == 2 && e.Origine.Y > 0.1).ToList();
+
+        Assert.DoesNotContain(bout, e => e.Famille == Famille.Lisse && e.Axe == Axe.X);
+        var poteaux = bout.Where(e => e.Famille == Famille.Poteau).ToList();
+        Assert.Equal(2 * niveaux, poteaux.Count);
+        Assert.All(poteaux, e => { Assert.Equal("HMPOTDP10", e.Reference); Assert.Equal(0.70, e.Origine.Y, 6); });
+        Assert.Contains(poteaux, e => Math.Abs(e.Origine.X - x[1]) < 1e-6);
+        Assert.Contains(poteaux, e => Math.Abs(e.Origine.X - x[2]) < 1e-6);
+        Assert.Equal(4 * niveaux, bout.Count(e => e.Famille == Famille.Traverse && e.Axe == Axe.Y)); // lisse + sous-lisse
+        Assert.Equal(2 * niveaux, bout.Count(e => e.Reference == "HMPLIM070AX")); // plinthe des abouts (axée par défaut)
+    }
+
+    [Fact]
+    public void Console_avec_securite_cote_mur_garde_corps_en_lisses_avec_plinthe()
+    {
+        // Sécurité intérieure MDS : en bout de console, le garde-corps côté mur est quand même en lisses, avec plinthe.
+        var projet = Standard(p => { p.SecuriteInterieure = TypeSecurite.GardeCorpsMds2; p.PlintheInterieure = TypePlinthe.Sans; });
+        Consoles(projet, "HMCON700E", 1, 2);
+        var s = GenerateurFacade.Generer(projet);
+        var cote = s.Elements.Where(e => (e.NumeroMaille == 2 || e.NumeroMaille == 3) && e.Origine.Y > 0.1 && e.Axe == Axe.X).ToList();
+        Assert.DoesNotContain(cote, e => e.Reference.StartsWith("HMGCSE", StringComparison.Ordinal));
+        Assert.Contains(cote, e => e.Famille == Famille.Plinthe);
+        Assert.Contains(cote, e => e.Famille == Famille.Lisse && Math.Abs(e.Origine.Z % 2.0 - 1.0) < 1e-6);
+        // Pas d'about entre les deux consoles voisines : 3 files de poteaux en bout (1 par file), abouts aux 2 extrémités.
+        var x = projet.AbscissesFiles();
+        var poteaux = s.Elements.Where(e => e.Famille == Famille.Poteau && Math.Abs(e.Origine.Y - 0.70) < 1e-6 && Math.Abs(e.Origine.Z - 2.04) < 1e-6).ToList();
+        Assert.Equal(3, poteaux.Count);
+        Assert.Equal(2, s.Elements.Count(e => e.Famille == Famille.Traverse && e.Axe == Axe.Y && Math.Abs(e.Origine.Y - 0.70) < 1e-6 && Math.Abs(e.Origine.Z - 3.0) < 1e-6));
     }
 
     [Theory]
