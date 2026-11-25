@@ -111,14 +111,18 @@ public class CapturesManuelTests
         w.DessinerPourCapture();
         Pomper();
         Fenetre(w, "IHM-principale");
+        Disposer(w);
         Element(w.Ruban, "IHM-ruban");
-        Element(w.MenuPrincipal, "IHM-menu");
         Element(w.Onglets, "IHM-general");
+        Defilant(w.Onglets, "IHM-general-complet");
         Onglet(w.Onglets, 1);
+        Disposer(w);
         Element(w.Onglets, "IHM-face");
-        for (int i = 0; i < 4; i++)
+        Defilant(w.Onglets, "IHM-face-complet");
+        for (int i = 0; i < 3; i++)
         {
             Onglet(w.OngletsBas, i);
+            Disposer(w);
             Element(w.OngletsBas, "IHM-bas-" + i);
         }
 
@@ -129,8 +133,9 @@ public class CapturesManuelTests
         // 2. Bouton « Valider la structure » rouge après un changement de dimension.
         vm.Parametres.LongueurTotaleSouhaitee = 15;
         Pomper();
+        Disposer(w);
         Element(w.Ruban, "IHM-ruban-a-valider");
-        Element(w.Onglets, "IHM-face-a-valider");
+        Defilant(w.Onglets, "IHM-face-a-valider");
 
         // 3. Consoles, pare-gravois et colonnes par niveau.
         vm.ProposerStructure();
@@ -141,17 +146,46 @@ public class CapturesManuelTests
             n4.PareGravois = true;
         }
 
+        // Colonnes particulières de la grille des mailles (départ, stabilisation, poutre refusée sur la 1re maille).
+        if (vm.Mailles.Count > 5)
+        {
+            vm.Mailles[4].HauteurDepart = 0.5;
+            vm.Mailles[5].Stabilisation = 1.5;
+            vm.Mailles[0].Poutre = 4;
+        }
+
         Pomper();
         w.DessinerPourCapture();
         Pomper();
+        Onglet(w.OngletsBas, 0);
+        Disposer(w);
         Element(w.OngletsBas, "IHM-grilles-consoles");
+        Element(w.GrilleMailles, "IHM-grille-mailles");
+        Onglet(w.OngletsBas, 3);
+        Disposer(w);
+        Element(w.OngletsBas, "IHM-alertes");
+        Onglet(w.OngletsBas, 1);
+        Disposer(w);
+        Element(w.OngletsBas, "IHM-decompte-consoles");
+        Onglet(w.OngletsBas, 0);
         Dessin(w, Vues.Iso, "3D-consoles-iso");
+        Dessin(w, Vues.Facade, "3D-consoles-facade");
 
         // 4. Paramètres par défaut.
         var defauts = new ParametresParDefautWindow(vm.Defauts) { Width = 1100, Height = 820, ShowActivated = false, Left = 0, Top = 0 };
         defauts.Show();
         Pomper();
         Fenetre(defauts, "IHM-parametres-par-defaut");
+        var ongletsDefauts = Descendants<TabControl>(defauts).FirstOrDefault();
+        if (ongletsDefauts != null)
+        {
+            for (int i = 0; i < ongletsDefauts.Items.Count; i++)
+            {
+                Onglet(ongletsDefauts, i);
+                Defilant(ongletsDefauts, "IHM-parametres-onglet-" + i);
+            }
+        }
+
         defauts.Close();
 
         // 5. Formes : en L, en U, fermée, inversée, volumique.
@@ -177,6 +211,8 @@ public class CapturesManuelTests
             }
         }
 
+        Disposer(w);
+        Defilant(w.Onglets, "IHM-general-fermee");
         vm.Forme = FormeStructure.Volumique;
         Pomper();
         vm.NombreModules = 3;
@@ -201,6 +237,49 @@ public class CapturesManuelTests
 
         vm.IndexFaceActive = 0;
         Pomper();
+    }
+
+    /// <summary>
+    /// Mise en page à 1600 × 960 : le bureau du service (session 0) est plus petit et Windows y réduit la fenêtre.
+    /// À appeler juste avant une capture (la fenêtre reprend sa taille à la mise en page suivante).
+    /// </summary>
+    private static void Disposer(Window w)
+    {
+        var contenu = (FrameworkElement)w.Content;
+        contenu.Measure(new Size(1600, 940));
+        contenu.Arrange(new Rect(0, 0, 1600, 940));
+        contenu.UpdateLayout();
+    }
+
+    /// <summary>Contenu entier (sans la barre de défilement) du panneau défilant de l'onglet sélectionné.</summary>
+    private void Defilant(TabControl onglets, string nom)
+    {
+        var defileur = Descendants<ScrollViewer>(onglets).FirstOrDefault(v => v.IsVisible && v.Content is FrameworkElement);
+        if (defileur?.Content is FrameworkElement contenu)
+        {
+            Element(contenu, nom);
+        }
+        else
+        {
+            Element(onglets, nom);
+        }
+    }
+
+    private static IEnumerable<T> Descendants<T>(DependencyObject racine) where T : DependencyObject
+    {
+        for (int i = 0; i < VisualTreeHelper.GetChildrenCount(racine); i++)
+        {
+            var enfant = VisualTreeHelper.GetChild(racine, i);
+            if (enfant is T t)
+            {
+                yield return t;
+            }
+
+            foreach (var d in Descendants<T>(enfant))
+            {
+                yield return d;
+            }
+        }
     }
 
     private static void Onglet(TabControl onglets, int index)
@@ -229,6 +308,11 @@ public class CapturesManuelTests
     /// <summary>Fenêtre entière ; pour la fenêtre principale, le dessin VectorDraw est incrusté à sa place.</summary>
     private void Fenetre(Window fenetre, string nom)
     {
+        if (fenetre is MainWindow)
+        {
+            Disposer(fenetre);
+        }
+
         var contenu = (FrameworkElement)fenetre.Content;
         var visuel = new DrawingVisual();
         using (var dc = visuel.RenderOpen())
