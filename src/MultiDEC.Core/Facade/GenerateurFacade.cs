@@ -261,6 +261,15 @@ public sealed partial class GenerateurFacade
                                      .Where(n => n.Hauteur >= depart - Cotes.Tolerance))
             {
                 var type = n.Hauteur > Cotes.Tolerance && !n.EstAccesSeul ? _p.Traverses : TypeTraverse.Lisse;
+
+                // Traverse qui porte des plateaux : renforcée dès 1,50 m (volumique large, Laurent 25/11/2026).
+                bool porteuse = n.Hauteur > Cotes.Tolerance
+                    && (!n.EstAccesSeul || IndexVoisines(f).Any(i => _projet.Mailles[i].Type == TypeMaille.Acces));
+                if (porteuse && type == TypeTraverse.Lisse && _l >= 1.50 - Cotes.Tolerance)
+                {
+                    type = TypeTraverse.Renforce;
+                }
+
                 Ajouter(References.LisseOuTraverse(_l, type), Famille.Traverse, new Point3(x, 0, n.Hauteur), Axe.Y);
             }
 
@@ -443,12 +452,15 @@ public sealed partial class GenerateurFacade
 
             if (z > Cotes.Tolerance && !surPoutre) // sur une poutre, sa membrure haute fait la lisse
             {
-                Ajouter(lisse, Famille.Lisse, new Point3(x0, 0, z), Axe.X, Face.Interieure, num);
+                // Damier : plateaux selon Y posés sur les lisses des deux files, renforcées dès 1,50 m.
+                bool porteuse = m.EstTravail && n.Type == TypePlancher.Complet && PlateauxSelonY(index) && !AccesParTrappe(index, z);
+                string lissePlancher = porteuse ? LissePorteuse(lm) : lisse;
+                Ajouter(lissePlancher, Famille.Lisse, new Point3(x0, 0, z), Axe.X, Face.Interieure, num);
 
                 // Niveau « accès seul » : lisse des deux côtés, façade et extérieur (Laurent, 23/11/2026).
-                if (n.EstAccesSeul)
+                if (n.EstAccesSeul || porteuse)
                 {
-                    Ajouter(lisse, Famille.Lisse, new Point3(x0, -_l, z), Axe.X, Face.Exterieure, num);
+                    Ajouter(lissePlancher, Famille.Lisse, new Point3(x0, -_l, z), Axe.X, Face.Exterieure, num);
                 }
             }
 
@@ -482,7 +494,7 @@ public sealed partial class GenerateurFacade
 
             // Tout about qui donne dans le vide a un garde-corps (Laurent, 24/11/2026) : ici, maille voisine arrêtée
             // plus bas (colonne « Ht max »). Les niveaux « accès seul » d'une maille d'accès ont déjà leurs abouts.
-            bool plancher = m.EstTravail ? n.Type == TypePlancher.Complet && !SansPlancherDamier(index) : !n.EstAccesSeul;
+            bool plancher = m.EstTravail ? n.Type == TypePlancher.Complet : !n.EstAccesSeul;
             if (z > Cotes.Tolerance && plancher && !surPoutre)
             {
                 if (VoisineSous(index - 1, z))
@@ -498,13 +510,17 @@ public sealed partial class GenerateurFacade
 
             if (m.EstTravail)
             {
-                if (n.Type == TypePlancher.Complet && z > Cotes.Tolerance && !SansPlancherDamier(index))
+                if (n.Type == TypePlancher.Complet && z > Cotes.Tolerance)
                 {
                     if (AccesParTrappe(index, z))
                     {
                         // Maille plus haute que ses voisines (Laurent, 24/11/2026) : plateau d'accès pour y monter.
                         PlacerPlancherTrappe(x0, lm, 0, _l, z, num, inverseTrappe);
                         inverseTrappe = !inverseTrappe;
+                    }
+                    else if (PlateauxSelonY(index) && !surPoutre)
+                    {
+                        PlacerPlateauxSelonY(x0, z, lm, num);
                     }
                     else
                     {
@@ -564,9 +580,38 @@ public sealed partial class GenerateurFacade
     /// <summary>Maille de jonction (carré d'angle) en tête de face.</summary>
     private bool CarreDAngle(int index) => index == 0 && _p.CarreDAngleEnTete;
 
-    /// <summary>Planchers en damier (volumique, v2 IsMailleDamier) : pas de plancher une maille sur deux, décalé par module.</summary>
-    private bool SansPlancherDamier(int indexMaille) =>
+    /// <summary>
+    /// Planchers en damier (volumique, Laurent 25/11/2026) : une maille sur deux, décalée d'un module à l'autre, a ses
+    /// plateaux orientés selon Y (posés sur les lisses des files) au lieu de X (posés sur les traverses).
+    /// </summary>
+    private bool PlateauxSelonY(int indexMaille) =>
         _p.PlanchersDamier && _p.ModuleVolumique is int module && (indexMaille + module) % 2 == 1;
+
+    /// <summary>Lisse qui porte des plateaux : renforcée dès 1,50 m (Laurent, 25/11/2026), traverse en dessous de 1,05 m.</summary>
+    internal static string LissePorteuse(double longueur) =>
+        References.LisseOuTraverse(longueur, longueur >= 1.50 - Cotes.Tolerance ? TypeTraverse.Renforce : TypeTraverse.Lisse);
+
+    /// <summary>
+    /// Plateaux orientés selon Y (damier) : de la longueur de la largeur de maille, côte à côte le long de la maille,
+    /// posés sur les lisses des deux files (renforcées dès 1,50 m).
+    /// </summary>
+    private void PlacerPlateauxSelonY(double x0, double z, double lm, int num)
+    {
+        // Plateaux de 0,75 / 1,05 m absents des gammes NF : gamme Standard (comme pour les déports).
+        var gamme = _p.Plateaux;
+        if ((Cotes.Egal(_l, 0.75) || Cotes.Egal(_l, 1.05)) && gamme != GammePlateaux.Standard)
+        {
+            gamme = GammePlateaux.Standard;
+            _alertes.Add(FormattableString.Invariant($"Damier : plateaux de {_l:0.00} m absents de la gamme {LibellesPlateaux.Libelle(_p.Plateaux)}, plateaux Standard utilisés."));
+        }
+
+        foreach (var (variante, rang) in RepartitionPlateaux(lm, gamme))
+        {
+            string reference = References.Plateau(gamme, _l, lm, variante, _p.QualitePlateaux);
+            double x = Cotes.Arrondi(x0 + RetraitPlateau + LargeurPlateau * (rang + 1));
+            Ajouter(reference, Famille.Plateau, new Point3(x, 0, z), Axe.Y, Face.Aucune, num);
+        }
+    }
 
     private static TypeSecurite GardeCorpsSurPoutre(TypeSecurite type) => type == TypeSecurite.GardeCorpsMds2 ? TypeSecurite.Lisses : type;
 

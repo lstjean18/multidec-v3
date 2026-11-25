@@ -339,19 +339,28 @@ public class StructureTests
     }
 
     [Fact]
-    public void Volumique_planchers_en_damier_decales_d_un_module_a_l_autre()
+    public void Volumique_planchers_en_damier_plateaux_alternes_X_Y_decales_d_un_module_a_l_autre()
     {
+        // Damier (Laurent, 25/11/2026) : toutes les mailles ont un plancher ; une sur deux a ses plateaux selon Y,
+        // posés sur des lisses renforcées dès 1,50 m, en décalé d'un module à l'autre.
         var projet = ProjetStructure.Nouveau(face: new ParametresFacade { LongueurTotaleSouhaitee = 10, HauteurDernierPlancher = 4, NombreAcces = 0 });
         projet.Forme = FormeStructure.Volumique;
         projet.PlanchersDamier = true;
         projet.AjusterFaces();
         var s = GenerateurStructure.Generer(projet);
 
-        bool plancher(string face, int maille) => s.Elements.Any(e => e.NomFace == face && e.Famille == Famille.Plateau && e.NumeroMaille == maille && Math.Abs(e.Origine.Z - 4) < 1e-6);
-        Assert.True(plancher("M1", 1));
-        Assert.False(plancher("M1", 2));
-        Assert.False(plancher("M2", 1));
-        Assert.True(plancher("M2", 2));
+        Axe? sens(string face, int maille) => s.Elements.Where(e => e.NomFace == face && e.Famille == Famille.Plateau && e.NumeroMaille == maille && Math.Abs(e.Origine.Z - 4) < 1e-6)
+            .Select(e => (Axe?)e.Axe).Distinct().SingleOrDefault();
+        Assert.Equal(Axe.X, sens("M1", 1));
+        Assert.Equal(Axe.Y, sens("M1", 2));
+        Assert.Equal(Axe.Y, sens("M2", 1));
+        Assert.Equal(Axe.X, sens("M2", 2));
+
+        // Maille 2 de M1 (2,50 m) : plateaux de 0,70 m de long, lisses porteuses HMLISR250 des deux côtés.
+        Assert.All(s.Elements.Where(e => e.NomFace == "M1" && e.Famille == Famille.Plateau && e.NumeroMaille == 2 && Math.Abs(e.Origine.Z - 4) < 1e-6),
+            e => Assert.StartsWith("HMPLAF070", e.Reference));
+        Assert.Equal(2, s.Elements.Count(e => e.Reference == "HMLISR250" && e.Axe == Axe.X && Math.Abs(e.Origine.Z - 4) < 1e-6
+            && Math.Abs(e.Origine.X - projet.S1.AbscissesFiles()[1]) < 1e-6 && e.Origine.Y > -0.71));
     }
 
     [Fact]

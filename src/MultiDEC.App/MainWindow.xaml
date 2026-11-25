@@ -423,7 +423,7 @@
                 <Button Content="+ Module" Command="{Binding AjouterModule}" Padding="8,2" Margin="6,0,0,0"
                         ToolTip="Ajoute un module derrière le dernier (mêmes mailles que M1, sans accès)" />
                 <CheckBox Content="Planchers en damier" IsChecked="{Binding PlanchersDamier}" VerticalAlignment="Center" Margin="16,0,0,0"
-                          ToolTip="Une maille sur deux sans plancher, décalée d'un module à l'autre (v2)" />
+                          ToolTip="Plateaux orientés une maille sur deux selon X, la suivante selon Y (sur lisses renforcées dès 1,50 m), en décalé d'un module à l'autre" />
               </StackPanel>
 
               <TextBlock Style="{StaticResource Section}" Text="GARDE-CORPS ET PLINTHES" />

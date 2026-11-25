@@ -225,8 +225,40 @@ public static class GenerateurStructure
     private static List<ElementPlace> SansDoublons(List<ElementPlace> face, List<ElementPlace> dejaPoses)
     {
         var poses = new HashSet<(string, double, double, double, Axe)>(dejaPoses.Select(CleComplete));
-        return face.Where(e => !poses.Contains(CleComplete(e))).ToList();
+        var resultat = face.Where(e => !poses.Contains(CleComplete(e))).ToList();
+
+        // Lisse commune posée par les deux modules avec deux références (l'une renforcée car elle porte des plateaux
+        // en damier) : on garde la renforcée.
+        var lissesDeja = dejaPoses.Where(EstLisse).GroupBy(ClePosition).ToDictionary(g => g.Key, g => g.First());
+        var retirees = new List<ElementPlace>();
+        foreach (var e in resultat.Where(EstLisse).ToList())
+        {
+            if (!lissesDeja.TryGetValue(ClePosition(e), out var deja))
+            {
+                continue;
+            }
+
+            if (Renforcee(e) && !Renforcee(deja))
+            {
+                dejaPoses.Remove(deja);
+            }
+            else
+            {
+                retirees.Add(e);
+            }
+        }
+
+        return resultat.Except(retirees).ToList();
     }
+
+    private static bool EstLisse(ElementPlace e) =>
+        (e.Famille == Famille.Lisse || e.Famille == Famille.Traverse) && e.Axe != Axe.Z;
+
+    private static bool Renforcee(ElementPlace e) =>
+        e.Reference.StartsWith("HMLISR", StringComparison.Ordinal) || (e.Reference.StartsWith("HMTRA", StringComparison.Ordinal) && e.Reference.EndsWith("R", StringComparison.Ordinal));
+
+    private static (double, double, double, Axe) ClePosition(ElementPlace e) =>
+        (Math.Round(e.Origine.X, 3), Math.Round(e.Origine.Y, 3), Math.Round(e.Origine.Z, 3), e.Axe);
 
     private static (string, double, double, double, Axe) CleComplete(ElementPlace e) =>
         (e.Reference, Math.Round(e.Origine.X, 3), Math.Round(e.Origine.Y, 3), Math.Round(e.Origine.Z, 3), e.Axe);

@@ -50,4 +50,16 @@ public class Remarques43a49Tests
         // Bout droit de M1 (about face au vide) : diagonale en travers.
         Assert.Contains(s.Elements, e => e.NomFace == "M1" && e.Famille == Famille.DiagonaleVerticale && e.Axe == Axe.Y && Math.Abs(e.Origine.X - l1) < 0.1);
     }
+
+    [Fact]
+    public void Volumique_large_traverses_porteuses_renforcees_des_1_50_m()
+    {
+        var projet = Droite(10, 4, 0);
+        projet.Forme = FormeStructure.Volumique;
+        projet.AjusterFaces();
+        projet.Faces[1].Parametres.LargeurMaille = 2.0;
+        var s = GenerateurStructure.Generer(projet);
+        var traverses = s.Elements.Where(e => e.NomFace == "M2" && e.Famille == Famille.Traverse && Math.Abs(e.Origine.Z - 4) < 1e-6).Select(e => e.Reference).Distinct().ToList();
+        Assert.Equal(new[] { "HMLISR200" }, traverses);
+    }
 }
