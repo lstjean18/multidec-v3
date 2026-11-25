@@ -27,6 +27,7 @@ public sealed class MailleDefinition : INotifyPropertyChanged
     private double _stabilisation;
     private double _ecart;
     private double _poutre;
+    private double _depart;
 
     public MailleDefinition()
     {
@@ -139,6 +140,21 @@ public sealed class MailleDefinition : INotifyPropertyChanged
             }
         }
     }
+
+    /// <summary>
+    /// Colonne « Départ » (Laurent, 24/11/2026) : hauteur du sol sous la maille, pour un échafaudage sur un sol en pente.
+    /// Par pas de 0,50 m (rosaces), de 0 jusqu'au dernier plancher de la maille moins 0,50 m. 0 par défaut.
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public double HauteurDepart
+    {
+        get => _depart;
+        set => Changer(ref _depart, Cotes.Arrondi(Math.Max(0, value)));
+    }
+
+    /// <summary>Hauteur de départ utilisable : multiple de 0,50 m.</summary>
+    [JsonIgnore]
+    public bool DepartValide => Math.Abs(_depart * 2.0 - Math.Round(_depart * 2.0)) < Cotes.Tolerance;
 
     /// <summary>Dernier plancher de cette maille pour une face dont le dernier plancher est <paramref name="hauteurFace"/> (colonne « Ht max »).</summary>
     public double HauteurMax(double hauteurFace) => Cotes.Arrondi(hauteurFace + (EcartValide && hauteurFace + _ecart > Cotes.Tolerance ? _ecart : 0));
@@ -295,10 +311,11 @@ public sealed class MailleDefinition : INotifyPropertyChanged
         Stabilisation = Stabilisation,
         EcartHauteur = EcartHauteur,
         Poutre = Poutre,
+        HauteurDepart = HauteurDepart,
     };
 
     public override string ToString() =>
-        FormattableString.Invariant($"{Longueur:0.00} m {Type}{(Diagonale ? " + diagonale" : string.Empty)}{(LargeurRapportee > 0 ? $" ({LargeurRapportee:0.00})" : string.Empty)}{(Stabilisation > 0 ? $" + stab. {Stabilisation:0.00}" : string.Empty)}{(EcartHauteur != 0 ? $" + ht {EcartHauteur:+0;-0}" : string.Empty)}{(Poutre > 0 ? $" + poutre à {Poutre:0.00}" : string.Empty)}{(_consoles.Count > 0 ? " + consoles " + string.Join("/", _consoles) : string.Empty)}");
+        FormattableString.Invariant($"{Longueur:0.00} m {Type}{(Diagonale ? " + diagonale" : string.Empty)}{(LargeurRapportee > 0 ? $" ({LargeurRapportee:0.00})" : string.Empty)}{(Stabilisation > 0 ? $" + stab. {Stabilisation:0.00}" : string.Empty)}{(EcartHauteur != 0 ? $" + ht {EcartHauteur:+0;-0}" : string.Empty)}{(HauteurDepart > 0 ? $" + départ {HauteurDepart:0.00}" : string.Empty)}{(Poutre > 0 ? $" + poutre à {Poutre:0.00}" : string.Empty)}{(_consoles.Count > 0 ? " + consoles " + string.Join("/", _consoles) : string.Empty)}");
 
     private static double Lire(string hauteur) => double.Parse(hauteur, CultureInfo.InvariantCulture);
 

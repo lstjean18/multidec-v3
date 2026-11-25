@@ -404,7 +404,7 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
     public double HauteurDernierPlancher
     {
         get => Parametres.HauteurDernierPlancher;
-        set { Parametres.HauteurDernierPlancher = value; Notifier(); NotifierValidation(); }
+        set { Parametres.HauteurDernierPlancher = value; Notifier(); Notifier(nameof(ChoixHauteursDepart)); NotifierValidation(); }
     }
 
     /// <summary>Case « Dessiner façade » : murs du bâtiment affichés dans le dessin.</summary>
@@ -540,6 +540,21 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
         : $"{NomFaceActive} : {Mailles.Count} mailles — {LongueurObtenue:0.00} m — structure : {_structure.Elements.Count} éléments — {_structure.Amarrages.Amarrages.Count} amarrages";
 
     public double LongueurObtenue => Mailles.Sum(m => m.Longueur);
+
+    /// <summary>Colonne « Départ » (sol en pente) : de 0 au dernier plancher de la face moins 0,50 m, par pas de 0,50 m.</summary>
+    public IReadOnlyList<double> ChoixHauteursDepart
+    {
+        get
+        {
+            var choix = new List<double>();
+            for (double z = 0; z <= Parametres.HauteurDernierPlancher - 0.5 + Cotes.Tolerance; z = Cotes.Arrondi(z + 0.5))
+            {
+                choix.Add(z);
+            }
+
+            return choix;
+        }
+    }
 
     /// <summary>
     /// Colonne « Ht max » : hauteurs proposées pour une maille, à un multiple de 2 m du dernier plancher de la face
@@ -754,6 +769,7 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
         Notifier(nameof(LargeurMaille));
         Notifier(nameof(LongueurMaillePreferee));
         Notifier(nameof(HauteurDernierPlancher));
+        Notifier(nameof(ChoixHauteursDepart));
         NotifierListes();
         Notifier(nameof(LongueurObtenue));
         Notifier(nameof(Resume));

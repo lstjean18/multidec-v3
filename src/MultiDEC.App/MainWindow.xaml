@@ -537,6 +537,20 @@
                         </DataTemplate>
                       </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
+                    <DataGridTemplateColumn Header="Départ" Width="62">
+                      <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                          <TextBlock Text="{Binding HauteurDepart, StringFormat=0.00}" Margin="2,0"
+                                     ToolTip="Hauteur du sol sous la maille (sol en pente) : la maille part de cette hauteur, par pas de 0,50 m" />
+                        </DataTemplate>
+                      </DataGridTemplateColumn.CellTemplate>
+                      <DataGridTemplateColumn.CellEditingTemplate>
+                        <DataTemplate>
+                          <ComboBox ItemsSource="{Binding DataContext.ChoixHauteursDepart, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                    SelectedItem="{Binding HauteurDepart, UpdateSourceTrigger=PropertyChanged}" ItemStringFormat="0.00" />
+                        </DataTemplate>
+                      </DataGridTemplateColumn.CellEditingTemplate>
+                    </DataGridTemplateColumn>
                     <DataGridTemplateColumn Header="Ht max" Width="70">
                       <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>

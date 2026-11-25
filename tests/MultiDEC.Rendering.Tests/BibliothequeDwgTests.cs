@@ -229,6 +229,20 @@ public class BibliothequeDwgTests
         rendu.Vue(Vues.Dessus);
         Image(doc, nom + "-AI-dessus");
 
+        // Colonne « Départ » : sol en pente, mailles à 0 / 0,50 / 1,00 / 1,50 m.
+        var pente = ProjetStructure.Nouveau(face: new ParametresFacade { LongueurTotaleSouhaitee = 10, LongueurMaillePreferee = 2.5, HauteurDernierPlancher = 6, NombreAcces = 0, LissesEnPied = true });
+        for (int i = 0; i < pente.S1.Mailles.Count; i++)
+        {
+            pente.S1.Mailles[i].HauteurDepart = 0.5 * i;
+        }
+
+        pente.S1.Mailles[1].Diagonale = true;
+        rendu.Dessiner(GenerateurStructure.Generer(pente), TableOrientations.ParDefaut());
+        rendu.Vue(Vues.Facade);
+        Image(doc, nom + "-DP-facade");
+        rendu.Vue(Vues.Iso);
+        Image(doc, nom + "-DP-iso");
+
         // Premier plancher à 1 m : volée de 1 m sortie de la tour (escalier 1,50 et demi-escalier 0,70), stabilisation.
         var e1 = ProjetStructure.Nouveau(face: new ParametresFacade { LongueurTotaleSouhaitee = 15, LongueurMaillePreferee = 2.5, HauteurDernierPlancher = 5, NombreAcces = 0 });
         var f1 = e1.S1;

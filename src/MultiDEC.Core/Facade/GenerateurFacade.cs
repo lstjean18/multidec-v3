@@ -174,9 +174,11 @@ public sealed partial class GenerateurFacade
 
         ValiderPoutres();
         ValiderHauteurs();
+        ValiderDeparts();
         for (int i = 0; i < _projet.Mailles.Count; i++)
         {
-            PlacerMaille(i, NiveauxMaille(_projet.Mailles[i], niveaux));
+            double depart = Depart(i);
+            PlacerMaille(i, NiveauxMaille(_projet.Mailles[i], niveaux).Where(n => n.Hauteur >= depart - Cotes.Tolerance).ToList());
         }
 
         PlacerSousMailles(niveaux);
@@ -188,6 +190,7 @@ public sealed partial class GenerateurFacade
 
         // Poteaux en dernier : chacun monte jusqu'à la plus haute protection qui s'y accroche (Laurent, 24/11/2026 :
         // un garde-corps a forcément un poteau de chaque côté ; sans garde-corps, le poteau s'arrête au plancher).
+        RetirerSousDeparts();
         PlacerFiles(niveaux);
         var bilan = PlacerAmarrages();
 
@@ -241,25 +244,29 @@ public sealed partial class GenerateurFacade
             // File du milieu d'une poutre de franchissement : poteaux posés sur la poutre, rien dessous.
             double? zPoutre = PoutreSousFile(f);
 
+            // Colonne « Départ » : sol plus haut sous les mailles voisines (sol en pente).
+            double depart = zPoutre == null ? DepartFile(f) : 0;
+
             // Chaque poteau monte au moins au plancher de la file, et jusqu'à la plus haute protection
             // (garde-corps, lisse, about, diagonale) qui s'y accroche. Départ 3 m côté extérieur si option.
             double sommetExt = Math.Max(hFile, SommetProtections(x, -_l));
-            Empiler(x, -_l, Face.Exterieure, _p.Depart3mExterieur, sommetExt > hFile + Cotes.Tolerance, sommetExt, zPoutre);
+            Empiler(x, -_l, Face.Exterieure, _p.Depart3mExterieur, sommetExt > hFile + Cotes.Tolerance, sommetExt, zPoutre, depart);
 
             double sommetInt = Math.Max(hFile, SommetProtections(x, 0));
-            Empiler(x, 0, Face.Interieure, _p.Depart3mExterieur && extremite, sommetInt > hFile + Cotes.Tolerance, sommetInt, zPoutre);
+            Empiler(x, 0, Face.Interieure, _p.Depart3mExterieur && extremite, sommetInt > hFile + Cotes.Tolerance, sommetInt, zPoutre, depart);
 
             // Traverses à chaque niveau (renforcées aux planchers complets si demandé).
             foreach (var n in niveaux.Where(n => n.Hauteur <= hFile + Cotes.Tolerance).Concat(NiveauxPignon(hFile, TypePlancher.Complet))
-                                     .Where(n => zPoutre == null || n.Hauteur >= zPoutre.Value - Cotes.Tolerance))
+                                     .Where(n => zPoutre == null || n.Hauteur >= zPoutre.Value - Cotes.Tolerance)
+                                     .Where(n => n.Hauteur >= depart - Cotes.Tolerance))
             {
                 var type = n.Hauteur > Cotes.Tolerance && !n.EstAccesSeul ? _p.Traverses : TypeTraverse.Lisse;
                 Ajouter(References.LisseOuTraverse(_l, type), Famille.Traverse, new Point3(x, 0, n.Hauteur), Axe.Y);
             }
 
-            if (!niveaux.Any(n => Cotes.Egal(n.Hauteur, 0)) && zPoutre == null)
+            if (!niveaux.Any(n => Cotes.Egal(n.Hauteur, depart)) && zPoutre == null)
             {
-                Ajouter(References.LisseOuTraverse(_l), Famille.Traverse, new Point3(x, 0, 0), Axe.Y);
+                Ajouter(References.LisseOuTraverse(_l), Famille.Traverse, new Point3(x, 0, depart), Axe.Y);
             }
 
             if (_p.GardeCorpsCouvreur && (extremite || !Cotes.Egal(hFile, _h)))
@@ -388,14 +395,16 @@ public sealed partial class GenerateurFacade
 
     private ConsoleInfo? ConsoleSommet(MailleDefinition m) => _niveauSommet == null ? null : ConsoleDe(m, _niveauSommet);
 
-    private void Empiler(double x, double y, Face face, bool depart3m, bool gardeCorps, double? sommet = null, double? surPoutre = null)
+    private void Empiler(double x, double y, Face face, bool depart3m, bool gardeCorps, double? sommet = null, double? surPoutre = null, double depart = 0)
     {
+        // Hauteur de départ (sol en pente) : même pile que depuis le sol, remontée de la hauteur de départ.
         var troncons = surPoutre is double zp
             ? ReglePoteaux.EmpilerDepuis(_p, zp, sommet ?? _h + (gardeCorps ? 1.0 : 0.0) + (gardeCorps && _p.GardeCorpsCouvreur ? 0.5 : 0.0))
-            : ReglePoteaux.Empiler(_p, depart3m, gardeCorps, sommet);
+            : ReglePoteaux.Empiler(_p, depart3m, gardeCorps, sommet is double s ? Cotes.Arrondi(s - depart) : (double?)null);
+        double dz = surPoutre == null ? depart : 0;
         foreach (var t in troncons)
         {
-            Ajouter(t.Reference, t.Famille, new Point3(x, y, t.Z), Axe.Z, face);
+            Ajouter(t.Reference, t.Famille, new Point3(x, y, Cotes.Arrondi(t.Z + dz)), Axe.Z, face);
         }
     }
 
@@ -1105,15 +1114,18 @@ public sealed partial class GenerateurFacade
                 LissesDePied(d.NumeroMaille, x0, lm);
             }
 
+            // Colonne « Départ » : la colonne de diagonales part de la hauteur de départ de la maille.
+            double hm = maille.HauteurMax(_h);
+            double base0 = Depart(i);
+            double debutMaille = base0 > Cotes.Tolerance ? Cotes.Arrondi(base0 + ((hm - base0) % 2.0)) : debut;
             var cotes = new List<double>();
-            if (debut > Cotes.Tolerance)
+            if (debutMaille > base0 + Cotes.Tolerance)
             {
-                cotes.Add(0);
+                cotes.Add(base0);
             }
 
             // Toute la hauteur de la maille (colonne « Ht max »).
-            double hm = maille.HauteurMax(_h);
-            for (double z = debut; z <= hm - 1.0 + Cotes.Tolerance; z = Cotes.Arrondi(z + 2.0))
+            for (double z = debutMaille; z <= hm - 1.0 + Cotes.Tolerance; z = Cotes.Arrondi(z + 2.0))
             {
                 cotes.Add(z);
             }
@@ -1174,6 +1186,13 @@ public sealed partial class GenerateurFacade
             return new BilanAmarrages(Array.Empty<Amarrage>(), 0, 0, bilan.NoteDeCalculObligatoire);
         }
 
+        if (_departs.Any(d => d > Cotes.Tolerance))
+        {
+            // Colonne « Départ » : pas d'amarrage sous le pied de la file.
+            var restants = bilan.Amarrages.Where(a => a.Hauteur >= DepartFile(a.File) + Cotes.Tolerance).ToList();
+            bilan = new BilanAmarrages(restants, bilan.Surface, bilan.MinimumParSurface, bilan.NoteDeCalculObligatoire);
+        }
+
         string tube = References.TubeAmarrage(_l + _p.DistanceFacade + 0.10);
         foreach (var a in bilan.Amarrages)
         {
@@ -1195,14 +1214,15 @@ public sealed partial class GenerateurFacade
         // si la structure est inversée) a déjà la traverse de pied de cette file.
         string lisse = References.LisseOuTraverse(lm);
         bool carre = CarreDAngle(num - 1);
+        double z = Depart(num - 1); // colonne « Départ » : lisses au pied de la maille
         if (!carre || _p.CarreDAngleInverse)
         {
-            Ajouter(lisse, Famille.Lisse, new Point3(x0, 0, 0), Axe.X, Face.Interieure, num);
+            Ajouter(lisse, Famille.Lisse, new Point3(x0, 0, z), Axe.X, Face.Interieure, num);
         }
 
         if (!carre || !_p.CarreDAngleInverse)
         {
-            Ajouter(lisse, Famille.Lisse, new Point3(x0, -_l, 0), Axe.X, Face.Exterieure, num);
+            Ajouter(lisse, Famille.Lisse, new Point3(x0, -_l, z), Axe.X, Face.Exterieure, num);
         }
     }
 
