@@ -179,9 +179,31 @@ public class FacadeViewModelTests
     }
 
     [Fact]
+    public void Changer_une_protection_garde_les_memes_listes()
+    {
+        // Plantage du 25/11/2026 (garde-corps / plinthes intérieurs) : listes recréées à chaque notification.
+        var vm = new FacadeViewModel();
+        var securites = vm.ChoixSecurites;
+        var plinthes = vm.ChoixPlinthes;
+        int notifications = 0;
+        vm.PropertyChanged += (_, _) => notifications++;
+        vm.SecuriteInterieure = TypeSecurite.Lisses;
+        vm.PlintheInterieure = TypePlinthe.Bois;
+        Assert.Same(securites, vm.ChoixSecurites);
+        Assert.Same(plinthes, vm.ChoixPlinthes);
+
+        // Même valeur repoussée par la liste : aucune notification.
+        notifications = 0;
+        vm.SecuriteInterieure = TypeSecurite.Lisses;
+        vm.PlintheInterieure = TypePlinthe.Bois;
+        Assert.Equal(0, notifications);
+    }
+
+    [Fact]
     public void Choisir_la_protection_bascule_la_plinthe()
     {
         var vm = new FacadeViewModel();
+        vm.SecuriteExterieure = TypeSecurite.Sans;
         vm.SecuriteExterieure = TypeSecurite.GardeCorpsMds2;
         Assert.Equal(TypePlinthe.Bois, vm.General.PlintheExterieure);
         vm.SecuriteInterieure = TypeSecurite.Lisses;

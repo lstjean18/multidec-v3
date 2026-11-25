@@ -158,8 +158,21 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
         var utilisees = new HashSet<string>(enCours.Select(v => ParametresParDefaut.Cle(cle(v))));
         var tout = toutes.ToList();
         var gardees = tout.Where(v => !_defauts.EstMasque(liste, cle(v)) || utilisees.Contains(ParametresParDefaut.Cle(cle(v)))).ToList();
-        return gardees.Count == 0 ? tout : gardees;
+        var resultat = gardees.Count == 0 ? tout : gardees;
+
+        // Même contenu : même instance. Une nouvelle liste à chaque notification remplace l'ItemsSource des ComboBox
+        // pendant leur propre changement de sélection, qui repousse la valeur, renotifie… jusqu'au plantage
+        // (Laurent, 25/11/2026 : garde-corps et plinthes intérieurs).
+        if (_dernieresListes.TryGetValue(liste, out var precedente) && precedente is IReadOnlyList<T> p && p.SequenceEqual(resultat))
+        {
+            return p;
+        }
+
+        _dernieresListes[liste] = resultat;
+        return resultat;
     }
+
+    private readonly Dictionary<string, object> _dernieresListes = new();
 
     private void NotifierListes()
     {
@@ -189,6 +202,13 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
         get => General.SecuriteExterieure;
         set
         {
+            if (General.SecuriteExterieure == value)
+            {
+                // Même valeur (repoussée par la liste) : ne pas reproposer la plinthe, ce qui écraserait celle choisie
+                // et relancerait les notifications entre les deux listes (plantage du 25/11/2026).
+                return;
+            }
+
             General.SecuriteExterieure = value;
             General.PlintheExterieure = ReglePlinthes.Proposer(value) ?? General.PlintheExterieure;
             NotifierProtections();
@@ -200,6 +220,13 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
         get => General.SecuriteInterieure;
         set
         {
+            if (General.SecuriteInterieure == value)
+            {
+                // Même valeur (repoussée par la liste) : ne pas reproposer la plinthe, ce qui écraserait celle choisie
+                // et relancerait les notifications entre les deux listes (plantage du 25/11/2026).
+                return;
+            }
+
             General.SecuriteInterieure = value;
             General.PlintheInterieure = ReglePlinthes.Proposer(value) ?? General.PlintheInterieure;
             NotifierProtections();
@@ -211,6 +238,13 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
         get => General.SecuriteAbouts;
         set
         {
+            if (General.SecuriteAbouts == value)
+            {
+                // Même valeur (repoussée par la liste) : ne pas reproposer la plinthe, ce qui écraserait celle choisie
+                // et relancerait les notifications entre les deux listes (plantage du 25/11/2026).
+                return;
+            }
+
             General.SecuriteAbouts = value;
             General.PlintheAbouts = ReglePlinthes.Proposer(value) ?? General.PlintheAbouts;
             NotifierProtections();
@@ -220,19 +254,40 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
     public TypePlinthe PlintheExterieure
     {
         get => General.PlintheExterieure;
-        set { General.PlintheExterieure = value; NotifierProtections(); }
+        set
+        {
+            if (General.PlintheExterieure != value)
+            {
+                General.PlintheExterieure = value;
+                NotifierProtections();
+            }
+        }
     }
 
     public TypePlinthe PlintheInterieure
     {
         get => General.PlintheInterieure;
-        set { General.PlintheInterieure = value; NotifierProtections(); }
+        set
+        {
+            if (General.PlintheInterieure != value)
+            {
+                General.PlintheInterieure = value;
+                NotifierProtections();
+            }
+        }
     }
 
     public TypePlinthe PlintheAbouts
     {
         get => General.PlintheAbouts;
-        set { General.PlintheAbouts = value; NotifierProtections(); }
+        set
+        {
+            if (General.PlintheAbouts != value)
+            {
+                General.PlintheAbouts = value;
+                NotifierProtections();
+            }
+        }
     }
 
     private void NotifierProtections()
