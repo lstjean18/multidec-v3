@@ -135,3 +135,27 @@ Les points marqués **[à valider]** sont des choix faits en v3 faute de règle 
   `.mdcpar`. Valeurs de toutes les cases et listes au « Nouveau » et au démarrage, valeurs retirées des listes (la valeur utilisée
   par un projet ouvert reste proposée), bibliothèque de blocs chargée au démarrage, trame Excel des devis, références clients,
   logo client. « Lisses en pied » cochée en sortie d'usine.
+
+## Remarques 35 à 41 (codées le 25/11/2026)
+
+- **35 Colonne « Départ »** (avant « Ht max ») : hauteur de pied de la maille, par pas de 0,50 m jusqu'au dernier plancher
+  − 0,50 m (sol en pente). Une file part du plus bas départ de ses deux mailles ; rien sous le départ (planchers,
+  traverses, diagonales, amarrages). Ignorée (alerte) sur une maille à sous-maille rapportée, escalier, stabilisation
+  ou poutre.
+- **36 Splash screen** : logo de la v2 au démarrage.
+- **37 Façade** : le mur laisse un passage sous chaque poutre (hauteur du plancher porté − 0,50 m), avec un linteau ;
+  recalculé à chaque dessin, donc refermé quand la poutre est retirée.
+- **38 Consoles** : chaque about de console a un poteau en bout selon la fixation (chape MR HMPOTDP10, chape MS
+  HMEMB + HMPOT10, nipple MR HMPOTST10 / MS HMPOT10 ; platine : impossible, alerte) et une plinthe. Le garde-corps côté
+  mur en bout de console est toujours en lisses, avec plinthe. Plinthe des consoles : celle des abouts, sinon celle du
+  côté intérieur, sinon axée (pas de plinthe sous 0,70 m).
+- **39** : surbrillance rouge de l'objet sous le curseur (SelectionPreview).
+- **40 Clic droit sur un about** (ou sur un déport) : « Remplacer l'about par » un garde-corps de la liste des
+  protections, un déport en console, ou retour aux paramètres. Consoles proposées : celles du modèle gardées dans les
+  Paramètres par défaut, à poteau possible en bout, d'au moins 0,70 m, dont la longueur correspond à la gamme de la
+  largeur de maille (0,70 / 1,00 avec 0,70 ; 0,75 / 1,05 avec 0,75 ou 1,05). Déport : 2 consoles, poteaux en bout,
+  lisse de pied en bout, plateaux de la longueur de la console (Standard pour 0,75 / 1,05, absents des gammes NF),
+  garde-corps en lisses avec plinthes (about, extérieur, côté mur si sécurité intérieure). Choix enregistré dans le
+  projet (`Abouts` de la face : bout, niveau, garde-corps ou console).
+- **41 Amarrages** : par amarrage, 1 tube HMTUBAMA…, 2 colliers HMCOLF49 (dessinés sur les poteaux), 1 piton EZPITON12
+  et 1 cheville EZCHEVILLE14 (décompte seulement).
