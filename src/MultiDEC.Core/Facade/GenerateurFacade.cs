@@ -1197,6 +1197,13 @@ public sealed partial class GenerateurFacade
         foreach (var a in bilan.Amarrages)
         {
             Ajouter(tube, Famille.Amarrage, new Point3(a.X, 0, a.Hauteur), Axe.Y, Face.Interieure);
+
+            // Composants d'amarrage au décompte (v2 ucStructureHM.AddAmarrage, Laurent 25/11/2026) : 2 colliers
+            // (poteaux intérieur et extérieur, ouverture vers la façade), 1 piton et 1 cheville dans le mur.
+            Ajouter(References.CollierFixe, Famille.Amarrage, new Point3(a.X, 0, a.Hauteur), Axe.Z, Face.Interieure, rotation: 90);
+            Ajouter(References.CollierFixe, Famille.Amarrage, new Point3(a.X, -_l, a.Hauteur), Axe.Z, Face.Exterieure, rotation: 90);
+            Ajouter(References.PitonAmarrage, Famille.Amarrage, new Point3(a.X, _p.DistanceFacade, a.Hauteur), Axe.Y, Face.Interieure);
+            Ajouter(References.ChevilleAmarrage, Famille.Amarrage, new Point3(a.X, _p.DistanceFacade, a.Hauteur), Axe.Y, Face.Interieure);
         }
 
         return bilan;

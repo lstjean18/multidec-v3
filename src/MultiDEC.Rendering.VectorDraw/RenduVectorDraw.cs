@@ -318,6 +318,11 @@ public sealed class RenduVectorDraw
 
         foreach (var e in structure.Elements)
         {
+            if (MultiDEC.Core.Catalogue.References.NonDessinee(e.Reference))
+            {
+                continue; // pitons et chevilles : décompte seulement
+            }
+
             var bloc = _doc.Blocks.FindName(e.Reference);
             if (bloc == null && e.Famille == Famille.Amarrage)
             {

@@ -86,6 +86,16 @@ public static class References
     /// <summary>Collier fixe pour tube de 49.</summary>
     public const string CollierFixe = "HMCOLF49";
 
+    /// <summary>Piton d'amarrage (1 par amarrage, comme la v2 ; compté au décompte, non dessiné).</summary>
+    public const string PitonAmarrage = "EZPITON12";
+
+    /// <summary>Cheville d'amarrage (1 par amarrage, comme la v2 ; comptée au décompte, non dessinée).</summary>
+    public const string ChevilleAmarrage = "EZCHEVILLE14";
+
+    /// <summary>Quincaillerie comptée au décompte mais sans bloc à dessiner (pitons et chevilles d'amarrage).</summary>
+    public static bool NonDessinee(string reference) =>
+        reference == PitonAmarrage || reference == ChevilleAmarrage;
+
     /// <summary>
     /// Volée d'escalier alu (v2) : HMESCALU + longueur de maille en cm + montée en cm (+ "88D" pour la volée large
     /// des demi-escaliers de 1,00 m). Montée de 1,00 m : volée courte de 1,75 m (HMESCALU175100).

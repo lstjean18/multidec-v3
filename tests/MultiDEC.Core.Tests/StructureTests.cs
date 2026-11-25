@@ -389,7 +389,7 @@ public class StructureTests
         {
             vm.Parametres.LargeurMaille = l;
             var manquantes = biblio.Manquantes(vm.Generer().Elements.Select(e => e.Reference))
-                                   .Where(r => !r.StartsWith("HMTUBAMA", StringComparison.Ordinal)).ToList();
+                                   .Where(r => !r.StartsWith("HMTUBAMA", StringComparison.Ordinal) && !MultiDEC.Core.Catalogue.References.NonDessinee(r)).ToList();
             Assert.True(manquantes.Count == 0, $"largeur {l} : blocs manquants {string.Join(", ", manquantes)}");
         }
 

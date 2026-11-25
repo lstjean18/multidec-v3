@@ -356,9 +356,17 @@ public class GenerateurFacadeTests
     public void Amarrages_places_sur_le_dessin()
     {
         var s = GenerateurFacade.Generer(Standard());
-        var am = s.Elements.Where(e => e.Famille == Famille.Amarrage).ToList();
-        Assert.Equal(s.Amarrages.Amarrages.Count, am.Count);
+        var am = s.Elements.Where(e => e.Famille == Famille.Amarrage && e.Reference.StartsWith("HMTUBAMA", StringComparison.Ordinal)).ToList();
+        int n = s.Amarrages.Amarrages.Count;
+        Assert.True(n > 0);
+        Assert.Equal(n, am.Count);
         Assert.All(am, e => Assert.Equal("HMTUBAMA", e.Reference)); // 0,70 + 0,20 + 0,10 → tube 1,20 m
+
+        // Composants d'amarrage au décompte : 2 colliers, 1 piton, 1 cheville par amarrage (comme la v2).
+        var d = MultiDEC.Core.Decompte.CalculDecompte.Calculer(s.Elements.Where(e => e.Famille == Famille.Amarrage));
+        Assert.Equal(2 * n, d.Single(l => l.Reference == References.CollierFixe).Quantite);
+        Assert.Equal(n, d.Single(l => l.Reference == "EZPITON12").Quantite);
+        Assert.Equal(n, d.Single(l => l.Reference == "EZCHEVILLE14").Quantite);
     }
 
     [Fact]
@@ -417,7 +425,7 @@ public class GenerateurFacadeTests
                 face.ConvertirPareGravoisAncienFormat();
                 face.Niveaux.Add(new Niveau(1.0, TypePlancher.Complet)); // portillon d'about
                 var manquantes = biblio.Manquantes(GenerateurFacade.Generer(face).Elements.Select(e => e.Reference))
-                                       .Where(r => !r.StartsWith("HMTUBAMA", StringComparison.Ordinal)).ToList();
+                                       .Where(r => !r.StartsWith("HMTUBAMA", StringComparison.Ordinal) && !References.NonDessinee(r)).ToList();
                 Assert.True(manquantes.Count == 0, $"{modele} {socle.Reference} : blocs manquants {string.Join(", ", manquantes)}");
             }
         }
@@ -668,7 +676,7 @@ public class GenerateurFacadeTests
         Assert.Contains(s.Elements, e => A(e, x[6]) && e.Famille == Famille.Poteau && Math.Abs(e.Origine.Z - 4) < 1e-6);
         Assert.DoesNotContain(s.Elements, e => (e.NumeroMaille == 6 || e.NumeroMaille == 7) && e.Famille != Famille.Poutre && e.Famille != Famille.Traverse && e.Origine.Z < 4 - 1e-6);
         Assert.Equal(2, Nb(s, "HMTUB300"));
-        Assert.Equal(4, Nb(s, References.CollierFixe));
+        Assert.Equal(4, s.Elements.Count(e => e.Reference == References.CollierFixe && e.Famille == Famille.Poutre));
         Assert.All(s.Elements.Where(e => e.Reference == "HMTUB300"), e => Assert.Equal(Math.Atan2(0.7, 2.5) * 180 / Math.PI, e.Rotation, 6));
 
         // Abouts des mailles voisines (5 à droite, 8 à gauche) au niveau 2, sous la poutre.
@@ -887,7 +895,7 @@ public class GenerateurFacadeTests
             }
 
             var manquantes = biblio.Manquantes(GenerateurFacade.Generer(face).Elements.Select(e => e.Reference))
-                                   .Where(r => !r.StartsWith("HMTUBAMA", StringComparison.Ordinal)).ToList();
+                                   .Where(r => !r.StartsWith("HMTUBAMA", StringComparison.Ordinal) && !References.NonDessinee(r)).ToList();
             Assert.True(manquantes.Count == 0, $"blocs manquants {string.Join(", ", manquantes)}");
         }
     }
@@ -902,7 +910,7 @@ public class GenerateurFacadeTests
         {
             var s = GenerateurFacade.Generer(Standard(p => { p.Modele = modele; p.SecuriteInterieure = TypeSecurite.GardeCorpsMds2; }));
             var manquantes = biblio.Manquantes(s.Elements.Select(e => e.Reference))
-                                   .Where(r => !r.StartsWith("HMTUBAMA", StringComparison.Ordinal)) // bloc provisoire (décision 23/11/2026)
+                                   .Where(r => !r.StartsWith("HMTUBAMA", StringComparison.Ordinal) && !References.NonDessinee(r)) // bloc provisoire (décision 23/11/2026)
                                    .ToList();
             Assert.True(manquantes.Count == 0, $"{modele} : blocs manquants {string.Join(", ", manquantes)}");
         }
