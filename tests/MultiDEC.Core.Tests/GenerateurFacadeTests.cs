@@ -531,7 +531,7 @@ public class GenerateurFacadeTests
         var s = GenerateurFacade.Generer(face);
         double y2 = -0.70 - 2.0;
         Assert.Equal(2, Pieds(s, y2).Count);
-        Assert.Equal(9.0, Sommet(s, 0, y2), 3); // jusqu'au plus haut niveau desservi + 1 m
+        Assert.Equal(11.0, Sommet(s, 0, y2), 3); // jusqu'à la Ht max de la maille + 1 m (Laurent 25/11/2026)
 
         Assert.Equal(2, Nb(s, "HMGCAPPROGC200")); // maille de 2,50 → garde-corps de 2,00, aux niveaux 4 et 8
         Assert.Equal(4, Nb(s, References.SupportAppro));
@@ -557,7 +557,7 @@ public class GenerateurFacadeTests
         double y2 = -0.70 - 1.5;
 
         Assert.Equal(2, Pieds(s, y2).Count);
-        Assert.Equal(7.0, Sommet(s, face.AbscissesFiles()[4], y2), 3);
+        Assert.Equal(11.0, Sommet(s, face.AbscissesFiles()[4], y2), 3); // jusqu'à la Ht max de la maille + 1 m (Laurent 25/11/2026)
         var plateaux = s.Elements.Where(e => e.Famille == Famille.Plateau && e.NumeroMaille == 5 && e.Origine.Y < -0.70).ToList();
         Assert.NotEmpty(plateaux);
         Assert.All(plateaux, e => Assert.Equal(6, e.Origine.Z, 6));
@@ -740,6 +740,17 @@ public class GenerateurFacadeTests
     }
 
     [Fact]
+    public void Escalier_monte_jusqu_a_la_Ht_max_de_sa_maille()
+    {
+        var face = Standard(); // dernier plancher 10 m
+        face.Mailles[1].Type = TypeMaille.Escalier;
+        face.Mailles[1].EcartHauteur = 2; // maille à 12 m (Laurent 25/11/2026)
+        var s = GenerateurFacade.Generer(face);
+        var volees = s.Elements.Where(e => e.Reference == "HMESCALU250200").Select(e => Math.Round(e.Origine.Z, 3)).OrderBy(z => z).ToList();
+        Assert.Equal(new[] { 2.0, 4, 6, 8, 10, 12 }, volees);
+    }
+
+    [Fact]
     public void Escalier_1_50_volees_alternees_derniere_cote_facade()
     {
         var face = Standard(); // dernier plancher 10 m, niveaux tous les 2 m, mailles de 2,50 m
@@ -903,15 +914,19 @@ public class GenerateurFacadeTests
     }
 
     [Fact]
-    public void Maille_plus_haute_que_son_acces_rapporte_garde_corps_exterieur()
+    public void Acces_rapporte_monte_jusqu_a_la_Ht_max_de_sa_maille()
     {
+        // Laurent 25/11/2026 : la maille rapportée s'étend jusqu'à la hauteur max de sa maille.
         var face = Standard(); // planchers 2…10
         face.Mailles[2].Type = TypeMaille.AccesRapporte;
-        face.Mailles[2].EcartHauteur = 2; // maille montée à 12 m, colonne d'accès jusqu'à 10 m
+        face.Mailles[2].EcartHauteur = 2; // maille montée à 12 m
         var s = GenerateurFacade.Generer(face);
-        var gc = s.Elements.Where(e => e.NumeroMaille == 3 && e.Famille == Famille.GardeCorps && e.Axe == Axe.X && Math.Abs(e.Origine.Y + 0.70) < 1e-6).ToList();
-        Assert.Contains(gc, e => Math.Abs(e.Origine.Z - 12) < 1e-6);
-        Assert.DoesNotContain(gc, e => e.Origine.Z < 10 + 1e-6);
+        var x = face.AbscissesFiles();
+        double y2 = -0.70 - face.Mailles[2].LargeurRapportee;
+        Assert.True(Sommet(s, x[2], y2) >= 13.0 - 1e-6);
+        Assert.Contains(s.Elements, e => e.NumeroMaille == 3 && e.Famille == Famille.GardeCorps && Math.Abs(e.Origine.Y - y2) < 1e-6 && Math.Abs(e.Origine.Z - 12) < 1e-6);
+        Assert.Contains(s.Elements, e => e.NumeroMaille == 3 && e.Famille == Famille.Trappe && Math.Abs(e.Origine.Z - 12) < 1e-6);
+        Assert.DoesNotContain(s.Elements, e => e.NumeroMaille == 3 && e.Famille == Famille.GardeCorps && e.Axe == Axe.X && Math.Abs(e.Origine.Y + 0.70) < 1e-6);
     }
 
     [Fact]

@@ -17,7 +17,7 @@ namespace MultiDEC.Core.Facade;
 ///   le garde-corps extérieur passe sur la file rapportée ;
 /// - module d'appro (2,00 m) : plancher et garde-corps basculant (HMGCAPPRO…) aux niveaux cochés « Appro » ;
 /// - recette (profondeur choisie) : plancher et garde-corps aux niveaux cochés « Recette ».
-/// Appro et recette montent jusqu'au plus haut niveau desservi ; aux niveaux desservis, la maille principale
+/// La sous-maille monte au moins jusqu'à la hauteur max de sa maille ; aux niveaux desservis, la maille principale
 /// n'a pas de garde-corps extérieur (elle s'ouvre sur la sous-maille).
 /// </summary>
 public sealed partial class GenerateurFacade
@@ -28,28 +28,39 @@ public sealed partial class GenerateurFacade
     /// <summary>Éléments en travers déjà posés sur une file rapportée (une seule pièce si deux mailles voisines la partagent).</summary>
     private readonly HashSet<string> _travers = new HashSet<string>();
 
-    /// <summary>Plus haut plancher de la sous-maille rapportée (0 = pas de sous-maille).</summary>
+    /// <summary>
+    /// Hauteur de la sous-maille rapportée (0 = pas de sous-maille). Elle monte au moins jusqu'à la hauteur max de sa maille
+    /// (colonne « Ht max », Laurent 25/11/2026) ; accès et escalier vont aussi jusqu'au dernier plancher de la face,
+    /// appro et recette jusqu'au plus haut niveau desservi (et n'existent que s'ils desservent un niveau).
+    /// </summary>
     private double HauteurSousMaille(MailleDefinition m, IEnumerable<Niveau> niveaux)
     {
+        double hm = m.HauteurMax(_h);
         switch (m.Type)
         {
             case TypeMaille.AccesRapporte:
-                return _h;
+                return Math.Max(_h, hm);
 
             case TypeMaille.Escalier:
             case TypeMaille.DemiEscalier070:
             case TypeMaille.DemiEscalier100:
-                return EscalierPossible(m) ? _h : 0;
+                return EscalierPossible(m) ? Math.Max(_h, hm) : 0;
 
             case TypeMaille.Appro:
-                return niveaux.Where(n => n.Appro && !n.EstAccesSeul && n.Hauteur > Cotes.Tolerance).Select(n => n.Hauteur).DefaultIfEmpty(0).Max();
+                return AvecPlancher(niveaux.Where(n => n.Appro), hm);
 
             case TypeMaille.Recette:
-                return niveaux.Where(n => n.Recette && !n.EstAccesSeul && n.Hauteur > Cotes.Tolerance).Select(n => n.Hauteur).DefaultIfEmpty(0).Max();
+                return AvecPlancher(niveaux.Where(n => n.Recette), hm);
 
             default:
                 return 0;
         }
+    }
+
+    private static double AvecPlancher(IEnumerable<Niveau> desservis, double hauteurMaille)
+    {
+        double h = desservis.Where(n => !n.EstAccesSeul && n.Hauteur > Cotes.Tolerance).Select(n => n.Hauteur).DefaultIfEmpty(0).Max();
+        return h > Cotes.Tolerance ? Math.Max(h, hauteurMaille) : 0;
     }
 
     /// <summary>Le niveau est desservi par la sous-maille (appro ou recette) : la maille principale s'ouvre vers l'extérieur.</summary>
@@ -93,13 +104,15 @@ public sealed partial class GenerateurFacade
                 files[cle] = files.TryGetValue(cle, out double h) ? Math.Max(h, hs) : hs;
             }
 
+            // Niveaux de la maille, y compris ceux qui dépassent le dernier plancher de la face (Ht max).
+            var niveauxMaille = niveaux.Concat(NiveauxPignon(m.HauteurMax(_h), TypePlancher.Complet)).ToList();
             if (m.EstEscalier)
             {
-                PlacerEscalier(i, m, w, niveaux);
+                PlacerEscalier(i, m, w, niveauxMaille);
             }
             else
             {
-                PlacerSousMaille(i, m, w, hs, niveaux);
+                PlacerSousMaille(i, m, w, hs, niveauxMaille);
             }
 
             GardeCorpsSousMailleAuDessus(i, m, hs, niveaux);

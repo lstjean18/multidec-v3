@@ -45,7 +45,7 @@ public sealed partial class GenerateurFacade
 
         var cotes = new List<double> { 0 };
         cotes.AddRange(niveaux.Select(n => n.Hauteur)
-            .Where(z => z > Cotes.Tolerance && z <= _h + Cotes.Tolerance)
+            .Where(z => z > Cotes.Tolerance && z <= Math.Max(_h, m.HauteurMax(_h)) + Cotes.Tolerance)
             .Select(Cotes.Arrondi).Distinct().OrderBy(z => z));
         if (cotes.Count < 2)
         {
