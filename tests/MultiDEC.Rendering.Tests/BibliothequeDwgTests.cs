@@ -425,7 +425,9 @@ public class BibliothequeDwgTests
         var verticaux = new[] { "HMCALEBOIS", "HMSOCREG", "HMSOCREG800", "HMSOCROU", "HMSOCROU200-1200", "HMSOCROUFC", "HMVERORI38780", "HMVERORI38500B019", "HMEMB", "HMSUPSUNI", "HMCOLLEV", "VSZ10070", "VEF10", "OECGOUP8S", "HMGCAPPROSUP", "HMCOLF49", "HMPIQLIS-E", "HMMONTGCE", "HMPOTDP10", "HMPOT10", "HMPOTETAE10E" };
         var long_x = new[] { "HMPORTILLONPLIN070", "HMPORTILLONPLIN100", "HMPARGRA", "HMTOG200", "HMCROCHE", "HMECH100LIS", "HMPOUT500", "HMPTRL250", "HMLISR250", "HMLIS250", "HMTRAP250", "HMPLAA250", "HMTRA070", "HMGCAPPRO-C", "HMGCAPPROGC200", "HMPOUT500E", "HMTUB300", "HMESCALU250200", "HMESCALU300200", "HMESCALU175100", "HMESCALU25020088D", "HMESCALU17510088D", "HMGCESCALU200", "HMGCESCALU100", "HMGCESCALUEXTR", "HMESCHA2515LIM", "HMESCHADEPLIM", "HMPLALECHELLE",
             "HMPLA250298CL6", "HMPLAF2503NF", "HMPLAF2503CL6-AC", "HMPLAF2502CL6", "HMPLA1503CL6" };
-        foreach (var (refs, axe) in new[] { (verticaux, Axe.Z), (long_x, Axe.X) })
+        // Consoles (axe Y, vers la façade) : point le plus bas sous le plancher, pour le renfoncement du mur (point 45).
+        var consoles = new[] { "HMCON300", "HMTRA030", "HMCON400E", "HMCON700E", "HMCON700EE", "HMCON750EE", "HMCON1000E", "HMCON1050E", "HMCON1050EE" };
+        foreach (var (refs, axe) in new[] { (verticaux, Axe.Z), (long_x, Axe.X), (consoles, Axe.Y) })
         {
             foreach (var nom in refs)
             {
@@ -466,7 +468,7 @@ public class BibliothequeDwgTests
         projet.S1.Parametres.TrappesAcier = true;
         projet.S1.Niveaux.Add(new Niveau(1.0, TypePlancher.Complet)); // portillon d'about
         projet.Faces[1].Niveaux.Add(new Niveau(1.0, TypePlancher.Complet)); // premier plancher commun aux faces (exigé)
-        projet.General.Socle = "HMSOCROU";
+        // Socles à roue réservés aux tours à 4 pieds (point 47) : socle réglable ici.
         var s = GenerateurStructure.Generer(projet);
         var rapport = rendu.Dessiner(s, TableOrientations.ParDefaut());
         _sortie.WriteLine($"L : {rapport.Inseres} insérés, alertes : {string.Join(" | ", s.Alertes)}");

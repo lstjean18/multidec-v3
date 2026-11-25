@@ -431,6 +431,49 @@ public class StructureTests
     }
 
     [Fact]
+    public void Facade_renfoncee_derriere_une_console()
+    {
+        // Laurent 25/11/2026 : une console ne traverse pas le mur, le mur recule derrière elle.
+        var projet = Projet(FormeStructure.Droite, 15);
+        var f = projet.S1;
+        f.Parametres.DistanceFacade = 0.20;
+        var n4 = f.Niveaux.First(n => Math.Abs(n.Hauteur - 4) < 1e-6);
+        n4.Console = "HMCON700E";
+        f.Mailles[1].DefinirConsole(4, true);
+        var x = f.AbscissesFiles();
+
+        var mur = Assert.Single(MursFacade.Calculer(projet));
+        var r = Assert.Single(mur.Renfoncements);
+        Assert.Equal(x[1], r.Debut, 6);
+        Assert.Equal(x[2], r.Fin, 6);
+        Assert.Equal(4 - 0.5 - 0.1, r.Z0, 6); // 0,10 m sous la jambe de force de la console
+        Assert.Equal(Math.Min(6, mur.Hauteur), r.Z1, 6); // 2 m au-dessus de son plancher (au plus le haut du mur)
+        Assert.Equal(0.70, r.Recul, 6);
+
+        var blocs = mur.Blocs();
+        var recules = blocs.Where(b => !b.EnTravers && b.Recul > 0).ToList();
+        var fond = Assert.Single(recules);
+        Assert.Equal(3.4, fond.Z, 6);
+        Assert.Equal(r.Z1 - 3.4, fond.Hauteur, 6);
+        var retours = blocs.Where(b => b.EnTravers).ToList();
+        Assert.Equal(2, retours.Count);
+        Assert.All(retours, b => { Assert.Equal(0.70, b.Longueur, 6); Assert.Equal(0, b.Recul, 6); });
+        Assert.Equal(new[] { x[1], x[2] }, retours.Select(b => b.Position).OrderBy(v => v).ToArray());
+
+        // Consoles à tous les niveaux de la maille : renfoncement sur toute la hauteur du mur.
+        foreach (var n in f.Niveaux.Where(n => n.Hauteur > 0))
+        {
+            n.Console = "HMCON700E";
+            f.Mailles[1].DefinirConsole(n.Hauteur, true);
+        }
+
+        mur = Assert.Single(MursFacade.Calculer(projet));
+        r = Assert.Single(mur.Renfoncements);
+        Assert.Equal(0, r.Z0, 6);
+        Assert.Equal(mur.Hauteur, r.Z1, 6);
+    }
+
+    [Fact]
     public void Facade_ouverte_sous_une_poutre_et_refermee_quand_elle_est_retiree()
     {
         var projet = Projet(FormeStructure.Droite, 15);

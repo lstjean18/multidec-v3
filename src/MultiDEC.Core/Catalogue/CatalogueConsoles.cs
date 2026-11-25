@@ -65,6 +65,14 @@ public sealed class ConsoleInfo
         : Fixation == FixationBout.Chape ? "HMPOTDP10"
         : "HMPOTST10"; // nipple en Multi-RETO : poteau courant sur l'embase intégrée (confirmé par Laurent le 24/11/2026)
 
+    /// <summary>
+    /// Point le plus bas de la console sous son plancher (jambe de force accrochée à la rosace du dessous) : sert au
+    /// renfoncement du mur de façade. Valeurs provisoires selon le débord (0,25 m jusqu'à 0,40 m, 0,50 m jusqu'à 0,75 m,
+    /// 1,00 m au-delà), à recaler sur les blocs de la bibliothèque DWG.
+    /// </summary>
+    public double HauteurSousPlancher =>
+        Largeur <= 0.40 + Cotes.Tolerance ? 0.25 : Largeur <= 0.75 + Cotes.Tolerance ? 0.50 : 1.00;
+
     /// <summary>Hauteur du pied du poteau au-dessus du plancher : 4 cm sur une embase (HMEMB ou intégrée) en Multi-SYSTEM.</summary>
     public double DecalageZ(ModeleEchafaudage modele) => modele == ModeleEchafaudage.MultiSystem && Fixation != FixationBout.Platine ? 0.04 : 0;
 }

@@ -504,13 +504,32 @@ public sealed class RenduVectorDraw
             double angle = mur.Angle < 0 ? mur.Angle + 2 * Math.PI : mur.Angle;
             double ux = Math.Cos(mur.Angle), uy = Math.Sin(mur.Angle);
 
-            // Un bloc par pan plein (le mur est ouvert sous les poutres) ; épaisseur vers le bâtiment (à gauche du sens Début → Fin).
+            // Un bloc par pan plein (le mur est ouvert sous les poutres, reculé derrière les consoles) ;
+            // épaisseur vers le bâtiment (à gauche du sens Début → Fin). Normale vers le bâtiment : (-uy, ux).
             foreach (var b in mur.Blocs())
             {
                 var boite = new vdPolyface();
                 boite.SetUnRegisterDocument(_doc);
                 boite.setDocumentDefaults();
-                boite.CreateBox(new gPoint(mur.Debut.X + ux * b.Position, mur.Debut.Y + uy * b.Position, b.Z), b.Longueur, EpaisseurMur, b.Hauteur, angle);
+                double ox = mur.Debut.X + ux * b.Position - uy * b.Recul;
+                double oy = mur.Debut.Y + uy * b.Position + ux * b.Recul;
+                if (b.EnTravers)
+                {
+                    // Retour du renfoncement : longueur vers le bâtiment ; CreateBox met l'épaisseur à gauche, donc côté Début.
+                    double a = angle + Math.PI / 2;
+                    if (!b.EpaisseurVersDebut)
+                    {
+                        ox += ux * EpaisseurMur;
+                        oy += uy * EpaisseurMur;
+                    }
+
+                    boite.CreateBox(new gPoint(ox, oy, b.Z), b.Longueur, EpaisseurMur, b.Hauteur, a >= 2 * Math.PI ? a - 2 * Math.PI : a);
+                }
+                else
+                {
+                    boite.CreateBox(new gPoint(ox, oy, b.Z), b.Longueur, EpaisseurMur, b.Hauteur, angle);
+                }
+
                 boite.Layer = calque;
                 boite.PenColor = new vdColor(CouleurMur);
                 _doc.Model.Entities.AddItem(boite);
