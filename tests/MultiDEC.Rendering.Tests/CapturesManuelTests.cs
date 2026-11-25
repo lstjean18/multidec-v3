@@ -87,8 +87,15 @@ public class CapturesManuelTests
         Thread.CurrentThread.CurrentUICulture = CultureInfo.GetCultureInfo("fr-FR");
         if (Application.Current == null)
         {
-            var app = new global::MultiDEC.App.App();
-            app.InitializeComponent();
+            // Pas l'App elle-même : son démarrage ouvrirait une seconde fenêtre (StartupUri). Mêmes styles que App.xaml.
+            var app = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
+            var groupe = new Style(typeof(GroupBox));
+            groupe.Setters.Add(new Setter(FrameworkElement.MarginProperty, new Thickness(0, 0, 0, 6)));
+            groupe.Setters.Add(new Setter(Control.PaddingProperty, new Thickness(4)));
+            app.Resources.Add(typeof(GroupBox), groupe);
+            var caseACocher = new Style(typeof(CheckBox));
+            caseACocher.Setters.Add(new Setter(FrameworkElement.MarginProperty, new Thickness(0, 2, 0, 2)));
+            app.Resources.Add(typeof(CheckBox), caseACocher);
             FrameworkElement.LanguageProperty.OverrideMetadata(
                 typeof(FrameworkElement), new FrameworkPropertyMetadata(System.Windows.Markup.XmlLanguage.GetLanguage("fr-FR")));
         }
