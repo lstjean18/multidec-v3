@@ -61,7 +61,7 @@ jobs:
           $msbuild = & $vswhere -latest -version '[17.0,18.0)' -requires Microsoft.Component.MSBuild -find 'MSBuild\**\Bin\MSBuild.exe' | Select-Object -First 1
           if (-not $msbuild) { Write-Error 'MSBuild de Visual Studio 2022 introuvable'; exit 1 }
           Write-Host "MSBuild : $msbuild"
-          & $msbuild MultiDEC.sln /restore /m /nologo /v:minimal /p:Configuration=Release /clp:Summary
+          & $msbuild MultiDEC.sln /restore /m /nologo /v:minimal /p:Configuration=Release /p:NumeroBuild=${{ github.run_number }} /clp:Summary
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Tests (serveur)

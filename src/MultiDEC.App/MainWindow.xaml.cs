@@ -35,6 +35,7 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        Title = $"MultiDEC {VersionApplication.Libelle} (build {VersionApplication.Build})";
         HoteVectorDraw.Child = _vd;
         MenuContextuel();
         Vm.ColonnesConsolesChangees += (_, _) => ColonnesConsoles();

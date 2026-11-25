@@ -62,7 +62,9 @@ public static class RegleDiagonales
     /// Diagonales à poser : les mailles cochées, sens alterné de l'une à la suivante, sur les côtés
     /// qui ont un garde-corps (aucun côté → aucune diagonale).
     /// </summary>
-    public static List<MailleDiagonale> Calculer(FaceEchafaudage projet)
+    /// <param name="imposees">Mailles (index à partir de 0) qui reçoivent des diagonales même décochées :
+    /// voisines d'une poutre de franchissement, côtés exposés d'un module volumique (Laurent, 25/11/2026).</param>
+    public static List<MailleDiagonale> Calculer(FaceEchafaudage projet, ICollection<int>? imposees = null)
     {
         var p = projet.Parametres;
         bool interieur = p.SecuriteInterieure != TypeSecurite.Sans;
@@ -76,7 +78,7 @@ public static class RegleDiagonales
         bool inverse = false;
         for (int k = 1; k <= projet.Mailles.Count; k++)
         {
-            if (!projet.Mailles[k - 1].Diagonale)
+            if (!projet.Mailles[k - 1].Diagonale && !(imposees?.Contains(k - 1) ?? false))
             {
                 continue;
             }

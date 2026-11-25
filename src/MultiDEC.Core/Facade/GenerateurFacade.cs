@@ -1207,11 +1207,80 @@ public sealed partial class GenerateurFacade
     // Diagonales verticales (extérieur, + intérieur si protection intérieure)
     // ------------------------------------------------------------------------------------------
 
-    private void PlacerDiagonales()
+    /// <summary>
+    /// Mailles à diagonales imposées (Laurent, 25/11/2026) : la maille avant et la maille après une poutre de
+    /// franchissement ; en volumique, chaque tronçon de côté exposé avec garde-corps qui n'a aucune maille cochée
+    /// reçoit des diagonales sur sa première maille.
+    /// </summary>
+    private HashSet<int> DiagonalesImposees()
+    {
+        var imposees = new HashSet<int>();
+        foreach (int i in _poutres.Keys)
+        {
+            imposees.Add(i - 1);
+            if (i + 2 < _projet.Mailles.Count)
+            {
+                imposees.Add(i + 2);
+            }
+        }
+
+        if (_p.ModuleVolumique != null)
+        {
+            foreach (Func<int, bool> expose in new Func<int, bool>[]
+                     {
+                         i => !InterieurCommun(i) && SecuriteInterieure(i) != TypeSecurite.Sans,
+                         i => !ExterieurCommun(i) && SecuriteExterieure(i) != TypeSecurite.Sans,
+                     })
+            {
+                int debut = -1;
+                for (int i = 0; i <= _projet.Mailles.Count; i++)
+                {
+                    bool e = i < _projet.Mailles.Count && expose(i);
+                    if (e && debut < 0)
+                    {
+                        debut = i;
+                    }
+                    else if (!e && debut >= 0)
+                    {
+                        if (!Enumerable.Range(debut, i - debut).Any(k => _projet.Mailles[k].Diagonale || imposees.Contains(k)))
+                        {
+                            imposees.Add(debut);
+                        }
+
+                        debut = -1;
+                    }
+                }
+            }
+        }
+
+        return imposees;
+    }
+
+    /// <summary>Cotes de pied des diagonales d'une maille, sur toute sa hauteur (colonnes « Départ » et « Ht max »).</summary>
+    private List<double> CotesDiagonales(int i)
     {
         // Hauteur non multiple de 2 : une diagonale en pied, puis la colonne décalée pour finir au dernier plancher.
         double debut = Cotes.Arrondi(_h % 2.0);
-        foreach (var d in RegleDiagonales.Calculer(_projet))
+        double hm = _projet.Mailles[i].HauteurMax(_h);
+        double base0 = Depart(i);
+        double debutMaille = base0 > Cotes.Tolerance ? Cotes.Arrondi(base0 + ((hm - base0) % 2.0)) : debut;
+        var cotes = new List<double>();
+        if (debutMaille > base0 + Cotes.Tolerance)
+        {
+            cotes.Add(base0);
+        }
+
+        for (double z = debutMaille; z <= hm - 1.0 + Cotes.Tolerance; z = Cotes.Arrondi(z + 2.0))
+        {
+            cotes.Add(z);
+        }
+
+        return cotes;
+    }
+
+    private void PlacerDiagonales()
+    {
+        foreach (var d in RegleDiagonales.Calculer(_projet, DiagonalesImposees()))
         {
             int i = d.NumeroMaille - 1;
             double x0 = _x[i];
@@ -1227,21 +1296,7 @@ public sealed partial class GenerateurFacade
                 LissesDePied(d.NumeroMaille, x0, lm);
             }
 
-            // Colonne « Départ » : la colonne de diagonales part de la hauteur de départ de la maille.
-            double hm = maille.HauteurMax(_h);
-            double base0 = Depart(i);
-            double debutMaille = base0 > Cotes.Tolerance ? Cotes.Arrondi(base0 + ((hm - base0) % 2.0)) : debut;
-            var cotes = new List<double>();
-            if (debutMaille > base0 + Cotes.Tolerance)
-            {
-                cotes.Add(base0);
-            }
-
-            // Toute la hauteur de la maille (colonne « Ht max »).
-            for (double z = debutMaille; z <= hm - 1.0 + Cotes.Tolerance; z = Cotes.Arrondi(z + 2.0))
-            {
-                cotes.Add(z);
-            }
+            var cotes = CotesDiagonales(i);
 
             // Diagonales en travers (v2) : structure volumique de plus de 1,05 m ou socles à roues,
             // à la file gauche de la maille, et à la file droite pour la dernière maille.
@@ -1274,6 +1329,44 @@ public sealed partial class GenerateurFacade
                     {
                         Ajouter(diaL, Famille.DiagonaleVerticale, new Point3(Cotes.Arrondi(x0 + lm - DemiTube), 0, z), Axe.Y, Face.Aucune, d.NumeroMaille, !d.Inverse);
                     }
+                }
+            }
+        }
+
+        DiagonalesAbouts();
+    }
+
+    /// <summary>
+    /// Volumique et socles à roues : diagonales en travers aux deux bouts de chaque module qui ont un garde-corps d'about,
+    /// sur toute la hauteur de la maille d'extrémité (Laurent, 25/11/2026 : « face et abouts »).
+    /// </summary>
+    private void DiagonalesAbouts()
+    {
+        if (_p.ModuleVolumique == null && !CatalogueSocles.De(_p.Socle).AvecRoues || _p.SecuriteAbouts == TypeSecurite.Sans)
+        {
+            return;
+        }
+
+        string diaL = References.DiagonaleVerticale(_l);
+        int n = _projet.Mailles.Count;
+        foreach (var (actif, i, x, inverse) in new[]
+                 {
+                     (_p.AboutGauche && !_p.CarreDAngleEnTete, 0, Cotes.Arrondi(_x[0] + DemiTube), false),
+                     (_p.AboutDroit, n - 1, Cotes.Arrondi(_x[n] - DemiTube), true),
+                 })
+        {
+            if (!actif || !_projet.Mailles[i].EstTravail)
+            {
+                continue;
+            }
+
+            foreach (double z in CotesDiagonales(i).Where(z => !SousPoutre(i, z)))
+            {
+                bool dejaPosee = _el.Any(e => e.Famille == Famille.DiagonaleVerticale && e.Axe == Axe.Y
+                    && Cotes.Egal(e.Origine.X, x) && Cotes.Egal(e.Origine.Z, z));
+                if (!dejaPosee)
+                {
+                    Ajouter(diaL, Famille.DiagonaleVerticale, new Point3(x, 0, z), Axe.Y, Face.Aucune, i + 1, inverse);
                 }
             }
         }

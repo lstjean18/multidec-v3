@@ -10,6 +10,12 @@
     <PlatformTarget>x86</PlatformTarget>
     <!-- Icône reprise de MultiDEC v2 (mutlidec.ico, branche version2024), Laurent 24/11/2026. -->
     <ApplicationIcon>MultiDEC.ico</ApplicationIcon>
+    <!-- Version affichée sur l'écran de démarrage (Laurent, 25/11/2026) ; NumeroBuild = run du CI (/p:NumeroBuild=...). -->
+    <Version>3.0.0</Version>
+    <LibelleVersion>v3.0 bêta 1</LibelleVersion>
+    <NumeroBuild Condition="'$(NumeroBuild)' == ''">local</NumeroBuild>
+    <InformationalVersion>$(LibelleVersion) build $(NumeroBuild)</InformationalVersion>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\MultiDEC.Core\MultiDEC.Core.csproj" />
@@ -26,11 +32,13 @@
   <ItemGroup>
     <!-- Captures d'écran du manuel utilisateur, produites par les tests du serveur. -->
     <InternalsVisibleTo Include="MultiDEC.Rendering.Tests" />
+    <AssemblyMetadata Include="Libelle" Value="$(LibelleVersion)" />
+    <AssemblyMetadata Include="Build" Value="$(NumeroBuild)" />
   </ItemGroup>
   <ItemGroup>
     <Resource Include="MultiDEC.ico" />
     <!-- Écran de démarrage avec le logo MultiDEC repris de la v2 (SplashScreen1, version2024), Laurent 24/11/2026. -->
-    <SplashScreen Include="Splash.png" />
+    <Resource Include="Splash.png" />
   </ItemGroup>
   <!--
     Toutes les DLL VectorDraw à côté de l'exécutable, y compris celles chargées dynamiquement

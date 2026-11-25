@@ -322,8 +322,20 @@ public class StructureTests
         Assert.All(s.Amarrages.Amarrages, a => Assert.Equal("M1", a.NomFace));
         Assert.DoesNotContain(s.Alertes, a => a.Contains("Aucun garde-corps"));
 
-        // Diagonales en travers dans le module de 1,05 m ? non (seulement au-delà de 1,05 m).
-        Assert.DoesNotContain(s.Elements, e => e.Reference == "HMDIA1052");
+        // Diagonales en travers aux abouts de chaque module, aux deux bouts (Laurent, 25/11/2026 : « face et abouts »).
+        double l = projet.S1.LongueurObtenue;
+        foreach (var f in projet.Faces)
+        {
+            foreach (double x in new[] { 0.05, l - 0.05 })
+            {
+                Assert.Contains(s.Elements, e => e.NomFace == f.Nom && e.Famille == Famille.DiagonaleVerticale && e.Axe == Axe.Y && Math.Abs(e.Origine.X - x) < 0.01);
+            }
+        }
+
+        Assert.Contains(s.Elements, e => e.NomFace == "M2" && e.Reference == "HMDIA1052");
+
+        // Face extérieure (M3) : diagonales sur la longueur.
+        Assert.Contains(s.Elements, e => e.NomFace == "M3" && e.Famille == Famille.DiagonaleVerticale && e.Axe == Axe.X);
     }
 
     [Fact]
