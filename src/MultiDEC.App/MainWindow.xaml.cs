@@ -278,6 +278,13 @@ public partial class MainWindow : Window
             ColonneRecette.Visibility = Vm.ColonneRecetteVisible ? Visibility.Visible : Visibility.Collapsed;
         }
 
+        if (e.PropertyName is nameof(FacadeViewModel.EnReferencesClient) or nameof(FacadeViewModel.TitreReference) or "" or null)
+        {
+            // En-têtes de colonnes : hors de l'arbre visuel, mis à jour ici.
+            ColonneRefRetotub.Visibility = Vm.EnReferencesClient ? Visibility.Visible : Visibility.Collapsed;
+            ColonneReference.Header = Vm.TitreReference;
+        }
+
         if (e.PropertyName == nameof(FacadeViewModel.IndexFaceActive) && Onglets.SelectedIndex > 0 && Onglets.SelectedIndex != Vm.IndexFaceActive + 1)
         {
             Onglets.SelectedIndex = Vm.IndexFaceActive + 1;

@@ -742,11 +742,18 @@
 
         <TabItem Header="Décompte">
           <DockPanel>
+            <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="6,4">
+              <TextBlock Text="Références affichées" VerticalAlignment="Center" Margin="0,0,8,0" />
+              <ComboBox Width="240" ItemsSource="{x:Static vm:FacadeViewModel.ChoixReferences}" SelectedValuePath="Key" DisplayMemberPath="Value"
+                        SelectedValue="{Binding ReferencesAffichees}"
+                        ToolTip="Travail en références client : le décompte affiche les références du client (LV Tec intégré, ou fichier de correspondance des Paramètres par défaut)" />
+            </StackPanel>
             <TextBlock DockPanel.Dock="Bottom" Margin="6,4" TextWrapping="Wrap" FontWeight="SemiBold" Text="{Binding ResumeDecompte}" />
-            <DataGrid ItemsSource="{Binding Decompte}" AutoGenerateColumns="False" IsReadOnly="True">
+            <DataGrid x:Name="GrilleDecompte" ItemsSource="{Binding Decompte}" AutoGenerateColumns="False" IsReadOnly="True">
               <DataGrid.Columns>
                 <DataGridTextColumn Header="Famille" Binding="{Binding FamilleAffichee}" Width="130" />
-                <DataGridTextColumn Header="Référence" Binding="{Binding Reference}" Width="150" />
+                <DataGridTextColumn x:Name="ColonneReference" Header="Référence" Binding="{Binding ReferenceAffichee}" Width="150" />
+                <DataGridTextColumn x:Name="ColonneRefRetotub" Header="Réf. RETOTUB" Binding="{Binding Reference}" Width="150" Visibility="Collapsed" />
                 <DataGridTextColumn Header="Désignation" Binding="{Binding Designation}" Width="*" MinWidth="200" />
                 <DataGridTextColumn Header="Quantité" Binding="{Binding Quantite}" Width="70">
                   <DataGridTextColumn.ElementStyle>

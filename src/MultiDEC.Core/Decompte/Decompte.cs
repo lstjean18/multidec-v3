@@ -8,15 +8,23 @@ namespace MultiDEC.Core.Decompte;
 /// <summary>Une ligne du décompte matériel.</summary>
 public sealed class LigneDecompte
 {
-    public LigneDecompte(string reference, Famille famille, int quantite, Article? article = null)
+    public LigneDecompte(string reference, Famille famille, int quantite, Article? article = null, string? referenceClient = null)
     {
         Reference = reference;
         Famille = famille;
         Quantite = quantite;
         Article = article;
+        ReferenceClient = referenceClient;
     }
 
+    /// <summary>Référence RETOTUB.</summary>
     public string Reference { get; }
+
+    /// <summary>Référence du client quand on travaille en références client (null sinon, ou sans correspondance).</summary>
+    public string? ReferenceClient { get; }
+
+    /// <summary>Référence affichée : celle du client si elle est connue, sinon la référence RETOTUB.</summary>
+    public string ReferenceAffichee => ReferenceClient ?? Reference;
 
     /// <summary>Famille interne (type de pièce dans le générateur).</summary>
     public Famille Famille { get; }
@@ -46,12 +54,14 @@ public sealed class LigneDecompte
 /// </summary>
 public static class CalculDecompte
 {
-    public static IReadOnlyList<LigneDecompte> Calculer(IEnumerable<ElementPlace> elements, CatalogueArticles? catalogue = null)
+    /// <param name="client">Travail en références client : correspondance RETOTUB → client (null = références RETOTUB).</param>
+    public static IReadOnlyList<LigneDecompte> Calculer(IEnumerable<ElementPlace> elements, CatalogueArticles? catalogue = null, ReferencesClient? client = null)
     {
         catalogue ??= CatalogueArticles.Vide;
         return elements.GroupBy(e => e.Reference, StringComparer.OrdinalIgnoreCase)
                        .Select(g => new LigneDecompte(g.First().Reference, g.First().Famille, g.Count(),
-                                                      catalogue.TryGet(g.Key, out var a) ? a : null))
+                                                      catalogue.TryGet(g.Key, out var a) ? a : null,
+                                                      client != null && client.TryGet(g.Key, out var rc) ? rc : null))
                        // Ordre du fichier (Classement) ; les références absentes du fichier à la fin.
                        .OrderBy(l => l.Article?.Classement ?? double.MaxValue)
                        .ThenBy(l => l.Famille)
@@ -61,6 +71,10 @@ public static class CalculDecompte
 
     /// <summary>Poids total du décompte en kg (lignes de poids connu).</summary>
     public static double PoidsTotal(IEnumerable<LigneDecompte> lignes) => lignes.Sum(l => l.PoidsTotal ?? 0);
+
+    /// <summary>Références RETOTUB du décompte sans correspondance chez le client.</summary>
+    public static IEnumerable<string> SansReferenceClient(IEnumerable<LigneDecompte> lignes) =>
+        lignes.Where(l => l.ReferenceClient == null).Select(l => l.Reference);
 
     /// <summary>Références du décompte absentes de multidec.bib ou sans poids.</summary>
     public static IEnumerable<string> SansPoids(IEnumerable<LigneDecompte> lignes) =>

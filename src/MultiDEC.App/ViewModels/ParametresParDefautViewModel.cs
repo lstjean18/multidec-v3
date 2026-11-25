@@ -296,6 +296,9 @@ public sealed class ParametresParDefautViewModel : ElementParDefaut
             .AvecDefaut("Par défaut", () => p.Forme, v => p.Forme = (FormeStructure)v));
         Listes.Add(new ListeParDefaut(p, ListesDeChoix.ModeRendu, "Rendu du dessin", true, ModesRendu.Select(m => ((object)m.Nom, m.Libelle)))
             .AvecDefaut("Par défaut", () => p.ModeRendu, v => p.ModeRendu = (string)v));
+        Listes.Add(new ListeParDefaut(p, "ReferencesAffichees", "Références du décompte", false,
+                FacadeViewModel.ChoixReferences.Select(c => ((object)c.Key, c.Value)))
+            .AvecDefaut("Par défaut", () => p.ReferencesAffichees, v => p.ReferencesAffichees = (string)v));
         Listes.Add(Liste(ListesDeChoix.TypeMaille, "Types de maille (grille)", Enum.GetValues(typeof(TypeMaille)).Cast<object>()));
         Listes.Add(Liste(ListesDeChoix.TypePlancher, "Types de plancher (grille)", FacadeViewModel.TypesPlancher.Cast<object>()));
         Listes.Add(new ListeParDefaut(p, ListesDeChoix.Console, "Consoles", true, CatalogueConsoles.Liste.Select(c => ((object)c.Reference, c.Reference))));

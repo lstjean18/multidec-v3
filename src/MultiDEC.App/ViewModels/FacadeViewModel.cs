@@ -114,6 +114,7 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
         {
             _defauts = value ?? ParametresParDefaut.Usine();
             NotifierListes();
+            ReferencesAffichees = _defauts.ReferencesAffichees;
         }
     }
 
@@ -485,6 +486,45 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
         }
     }
 
+    // ---- Références client (Laurent, 25/11/2026) -------------------------------------------------
+
+    private string _referencesAffichees = ReferencesClient.Retotub;
+    private ReferencesClient? _client;
+    private string? _erreurReferences;
+
+    /// <summary>Choix des références affichées dans le décompte : RETOTUB, LV Tec (intégré), fichier client.</summary>
+    public static IReadOnlyList<KeyValuePair<string, string>> ChoixReferences { get; } = new[]
+    {
+        new KeyValuePair<string, string>(ReferencesClient.Retotub, "RETOTUB"),
+        new KeyValuePair<string, string>(ReferencesClient.CodeLvTec, "Client LV Tec"),
+        new KeyValuePair<string, string>(ReferencesClient.CodeFichier, "Client (fichier de correspondance)"),
+    };
+
+    /// <summary>Références affichées dans le décompte (valeur par défaut dans les Paramètres par défaut).</summary>
+    public string ReferencesAffichees
+    {
+        get => _referencesAffichees;
+        set
+        {
+            _referencesAffichees = string.IsNullOrEmpty(value) ? ReferencesClient.Retotub : value;
+            _client = ReferencesClient.Selon(_referencesAffichees, _defauts.ReferencesClients, out _erreurReferences);
+            Notifier(nameof(ReferencesAffichees));
+            Notifier(nameof(EnReferencesClient));
+            Notifier(nameof(TitreReference));
+            if (_structure != null)
+            {
+                CalculerDecompte();
+            }
+
+            Notifier(nameof(ResumeDecompte));
+        }
+    }
+
+    /// <summary>Travail en références client : colonne « Réf. RETOTUB » affichée à côté de la référence client.</summary>
+    public bool EnReferencesClient => _client != null;
+
+    public string TitreReference => _client == null ? "Référence" : "Réf. " + _client.Nom;
+
     /// <summary>Bas de l'onglet « Décompte » : nombre de pièces, poids total, références sans poids.</summary>
     public string ResumeDecompte
     {
@@ -503,7 +543,25 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
             int pieces = Decompte.Sum(l => l.Quantite);
             var sansPoids = CalculDecompte.SansPoids(Decompte).ToList();
             string texte = $"{Decompte.Count} références, {pieces} pièces, poids total {CalculDecompte.PoidsTotal(Decompte):N1} kg";
-            return sansPoids.Count == 0 ? texte : texte + $" (poids inconnu pour : {string.Join(", ", sansPoids)})";
+            if (sansPoids.Count > 0)
+            {
+                texte += $" (poids inconnu pour : {string.Join(", ", sansPoids)})";
+            }
+
+            if (_erreurReferences != null)
+            {
+                texte += Environment.NewLine + _erreurReferences;
+            }
+            else if (_client != null)
+            {
+                var sansRef = CalculDecompte.SansReferenceClient(Decompte).ToList();
+                if (sansRef.Count > 0)
+                {
+                    texte += Environment.NewLine + $"Sans référence {_client.Nom} (référence RETOTUB affichée) : {string.Join(", ", sansRef)}";
+                }
+            }
+
+            return texte;
         }
     }
 
@@ -710,7 +768,7 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
 
     private void CalculerDecompte()
     {
-        Remplir(Decompte, _structure == null ? new List<LigneDecompte>() : CalculDecompte.Calculer(_structure.Elements, _articles));
+        Remplir(Decompte, _structure == null ? new List<LigneDecompte>() : CalculDecompte.Calculer(_structure.Elements, _articles, _client));
         Notifier(nameof(ResumeDecompte));
     }
 

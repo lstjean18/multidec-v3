@@ -73,8 +73,14 @@ public sealed class ParametresParDefaut
     /// <summary>Fichier Excel servant de trame aux devis.</summary>
     public string? ModeleDevis { get; set; }
 
-    /// <summary>Fichier de correspondance des références RETOTUB en références clients.</summary>
+    /// <summary>Fichier de correspondance des références RETOTUB en références clients (CSV RefRETOTUB;RefClient).</summary>
     public string? ReferencesClients { get; set; }
+
+    /// <summary>
+    /// Références affichées dans le décompte (Laurent 25/11/2026) : RETOTUB, LVTEC (table intégrée) ou FICHIER
+    /// (<see cref="ReferencesClients"/>). Voir <see cref="Decompte.ReferencesClient"/>.
+    /// </summary>
+    public string ReferencesAffichees { get; set; } = Decompte.ReferencesClient.Retotub;
 
     /// <summary>Logo client pour le décompte, le devis et la mise en plan.</summary>
     public string? LogoClient { get; set; }
@@ -153,6 +159,7 @@ public sealed class ParametresParDefaut
         p.General ??= new ParametresGeneraux();
         p.Face ??= new ParametresFacade { LissesEnPied = true };
         p.Masques ??= new Dictionary<string, List<string>>();
+        p.ReferencesAffichees ??= Decompte.ReferencesClient.Retotub;
         return p;
     }
 

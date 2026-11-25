@@ -12,6 +12,10 @@
     <PackageReference Include="System.Text.Json" Version="8.0.5" />
   </ItemGroup>
   <ItemGroup>
+    <!-- Références client intégrées (LV Tec : onglets « Nomenclature-pieces » et « Anciennes référence » du Modèle Devis LVTEC). -->
+    <EmbeddedResource Include="..\..\catalogue\references-client-lvtec.csv" LogicalName="MultiDEC.Core.ReferencesClient.LvTec.csv" />
+  </ItemGroup>
+  <ItemGroup>
     <InternalsVisibleTo Include="MultiDEC.Core.Tests" />
   </ItemGroup>
 </Project>
