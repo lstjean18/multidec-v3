@@ -605,7 +605,7 @@ public sealed partial class GenerateurFacade
     }
 
     /// <summary>Plateaux couvrant une largeur, posés à partir du bord <paramref name="yBord"/> vers les Y négatifs.</summary>
-    private void PlacerPlateaux(double x0, double yBord, double z, double largeur, double lm, int num, int premierRang = 0, int dernierRang = int.MaxValue)
+    private void PlacerPlateaux(double x0, double yBord, double z, double largeur, double lm, int num, int premierRang = 0, int dernierRang = int.MaxValue, GammePlateaux? gamme = null)
     {
         // Plateaux au niveau 0 : lisses des deux côtés (Laurent, 23/11/2026).
         if (Math.Abs(z) <= Cotes.Tolerance)
@@ -613,14 +613,14 @@ public sealed partial class GenerateurFacade
             LissesDePied(num, x0, lm);
         }
 
-        foreach (var (variante, rang) in RepartitionPlateaux(largeur, _p.Plateaux))
+        foreach (var (variante, rang) in RepartitionPlateaux(largeur, gamme ?? _p.Plateaux))
         {
             if (rang < premierRang || rang > dernierRang)
             {
                 continue;
             }
 
-            string reference = References.Plateau(_p.Plateaux, lm, largeur, variante, _p.QualitePlateaux);
+            string reference = References.Plateau(gamme ?? _p.Plateaux, lm, largeur, variante, _p.QualitePlateaux);
             double y = Cotes.Arrondi(yBord - RetraitPlateau - LargeurPlateau * rang);
             Ajouter(reference, Famille.Plateau, new Point3(x0, y, z), Axe.X, Face.Aucune, num);
         }
@@ -983,15 +983,7 @@ public sealed partial class GenerateurFacade
         {
             foreach (var n in NiveauxMaille(premiere, niveaux).Where(n => n.Type == TypePlancher.Complet && n.Hauteur > Cotes.Tolerance))
             {
-                if (portillonGauche && PortillonNecessaire(n))
-                {
-                    PlacerPortillon(0, n.Hauteur, 1, gauche: true);
-                    portillonPose = true;
-                }
-                else
-                {
-                    PlacerAbout(0, n.Hauteur, _l, gauche: true, console: false, 1);
-                }
+                PlacerAboutDeBout(droit: false, n, 1, portillonGauche, ref portillonPose);
             }
         }
 
@@ -999,15 +991,7 @@ public sealed partial class GenerateurFacade
         {
             foreach (var n in NiveauxMaille(derniere, niveaux).Where(n => n.Type == TypePlancher.Complet && n.Hauteur > Cotes.Tolerance))
             {
-                if (portillonDroit && PortillonNecessaire(n))
-                {
-                    PlacerPortillon(LongueurTotale, n.Hauteur, _projet.Mailles.Count, gauche: false);
-                    portillonPose = true;
-                }
-                else
-                {
-                    PlacerAbout(LongueurTotale, n.Hauteur, _l, gauche: false, console: false, _projet.Mailles.Count);
-                }
+                PlacerAboutDeBout(droit: true, n, _projet.Mailles.Count, portillonDroit, ref portillonPose);
             }
         }
 
@@ -1017,6 +1001,112 @@ public sealed partial class GenerateurFacade
         {
             _alertes.Add(FormattableString.Invariant(
                 $"Premier plancher à {premier.Hauteur:0.00} m : pas d'about libre en bout de face pour le portillon et l'échelle d'accès."));
+        }
+    }
+
+    /// <summary>
+    /// About d'un bout de face à un niveau : remplacement choisi par clic droit (garde-corps d'about ou déport en
+    /// console, Laurent 25/11/2026), sinon portillon au premier plancher, sinon about selon les paramètres.
+    /// Les éléments posés sont repérés (bout, niveau) pour le menu « Remplacer l'about par ».
+    /// </summary>
+    private void PlacerAboutDeBout(bool droit, Niveau n, int num, bool portillon, ref bool portillonPose)
+    {
+        int debut = _el.Count;
+        double x = droit ? LongueurTotale : 0;
+        double z = n.Hauteur;
+        var r = _projet.AboutRemplace(droit, z);
+        ConsoleInfo? deport = null;
+        if (r?.Console != null)
+        {
+            deport = CatalogueConsoles.PourDeport(_p.Modele, _l).FirstOrDefault(c => string.Equals(c.Reference, r.Console, StringComparison.OrdinalIgnoreCase));
+            if (deport == null)
+            {
+                _alertes.Add(FormattableString.Invariant(
+                    $"About {(droit ? "droit" : "gauche")} à {z:0.00} m : déport en console {r.Console} impossible avec ce modèle et cette largeur, about selon les paramètres."));
+            }
+        }
+
+        if (deport != null)
+        {
+            PlacerDeport(deport, x, z, droit, num);
+        }
+        else if (r?.Console == null && r?.Securite is TypeSecurite type)
+        {
+            PlacerAbout(x, z, _l, gauche: !droit, console: false, num, type: type);
+        }
+        else if (portillon && PortillonNecessaire(n))
+        {
+            PlacerPortillon(x, z, num, gauche: !droit);
+            portillonPose = true;
+        }
+        else
+        {
+            PlacerAbout(x, z, _l, gauche: !droit, console: false, num);
+        }
+
+        var repere = new RepereAbout(droit, z);
+        for (int i = debut; i < _el.Count; i++)
+        {
+            _el[i].About = repere;
+        }
+    }
+
+    /// <summary>
+    /// Déport d'about en console (v2 clAbout.DessineConsole, Laurent 25/11/2026) : une console sur chaque file
+    /// (intérieure et extérieure) vers l'extérieur de la face, poteaux en bout selon la fixation, lisse de pied en
+    /// bout, plateaux de la longueur de la console, et garde-corps toujours en lisses avec plinthes : about en bout,
+    /// côté extérieur, côté mur si une sécurité intérieure est demandée.
+    /// </summary>
+    private void PlacerDeport(ConsoleInfo c, double x, double z, bool droit, int num)
+    {
+        double w = c.Largeur;
+        double s = droit ? 1 : -1;
+        double xb = Cotes.Arrondi(x + s * w);
+        double x0 = droit ? x : xb;
+        bool sommet = Cotes.Egal(z, _h);
+        string? embase = c.Embase(_p.Modele);
+
+        foreach (var (y, face) in new[] { (0.0, Face.Interieure), (-_l, Face.Exterieure) })
+        {
+            Ajouter(c.Reference, Famille.Console, new Point3(x, y, z), Axe.X, face, num, rotation: droit ? 0 : 180);
+            if (embase != null)
+            {
+                Ajouter(embase, Famille.Embase, new Point3(xb, y, z), Axe.Z, face, num);
+            }
+
+            PlacerPoteauBoutConsole(c, xb, y, z, sommet, num);
+        }
+
+        // Lisse de pied en bout (appui des plateaux) et about en lisses avec plinthe.
+        Ajouter(References.LisseOuTraverse(_l), Famille.Traverse, new Point3(xb, 0, z), Axe.Y, Face.Aucune, num, !droit);
+        PlacerAbout(xb, z, _l, gauche: !droit, console: true, num);
+
+        // Plateaux de la longueur de la console, sur toute la largeur de la maille. Les plateaux de 0,75 et 1,05 m
+        // n'existent qu'en gamme Standard (HMPLA0753CL6…) : ils remplacent ceux de la gamme choisie.
+        var gamme = _p.Plateaux;
+        if ((Cotes.Egal(w, 0.75) || Cotes.Egal(w, 1.05)) && gamme != GammePlateaux.Standard)
+        {
+            gamme = GammePlateaux.Standard;
+            _alertes.Add(FormattableString.Invariant(
+                $"About {(droit ? "droit" : "gauche")} à {z:0.00} m : plateaux de {w:0.00} m absents de la gamme {LibellesPlateaux.Libelle(_p.Plateaux)}, plateaux Standard utilisés pour le déport."));
+        }
+
+        PlacerPlateaux(x0, 0, z, _l, w, num, gamme: gamme);
+
+        // Côtés du déport : extérieur toujours, côté mur si une sécurité intérieure est demandée.
+        PlacerGardeCorps(TypeSecurite.Lisses, PlintheConsole, x0, -_l, z, w, Face.Exterieure, num);
+        if (_p.SecuriteInterieure != TypeSecurite.Sans)
+        {
+            PlacerGardeCorps(TypeSecurite.Lisses, PlintheConsole, x0, 0, z, w, Face.Interieure, num);
+        }
+
+        if (_p.GardeCorpsCouvreur && sommet)
+        {
+            Ajouter(References.LisseOuTraverse(w), Famille.Lisse, new Point3(x0, -_l, z + 1.5), Axe.X, Face.Exterieure, num);
+            if (_p.SecuriteInterieure != TypeSecurite.Sans)
+            {
+                Ajouter(References.LisseOuTraverse(w), Famille.Lisse, new Point3(x0, 0, z + 1.5), Axe.X, Face.Interieure, num);
+            }
         }
     }
 
@@ -1052,14 +1142,14 @@ public sealed partial class GenerateurFacade
     /// About en travers de la façade (port de Placeabout). Origine : (x, yOrigine, z), axe Y ;
     /// <c>Inverse</c> = about gauche (tourné vers les X négatifs).
     /// </summary>
-    private void PlacerAbout(double x, double z, double largeur, bool gauche, bool console, int num, double yOrigine = 0)
+    private void PlacerAbout(double x, double z, double largeur, bool gauche, bool console, int num, double yOrigine = 0, TypeSecurite? type = null)
     {
         string cm = Cotes.EnCm3(largeur);
         string traverse = References.LisseOuTraverse(largeur);
         var o = new Point3(x, yOrigine, z);
         TypePlinthe plinthe = console ? PlintheConsole : _p.PlintheAbouts;
         // Sur les consoles, l'about est en lisses (lisse + sous-lisse), Laurent 23/11/2026.
-        var type = console ? TypeSecurite.Lisses : _p.SecuriteAbouts;
+        type ??= console ? TypeSecurite.Lisses : _p.SecuriteAbouts;
 
         if (largeur <= 0.40 + Cotes.Tolerance)
         {

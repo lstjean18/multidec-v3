@@ -1018,6 +1018,68 @@ public class GenerateurFacadeTests
     }
 
     [Fact]
+    public void About_remplace_par_un_deport_en_console_ou_un_autre_garde_corps()
+    {
+        var face = Standard(p => p.SecuriteInterieure = TypeSecurite.Lisses); // maille de 0,70, Multi-SYSTEM
+        face.DefinirAbout(false, 4, null, "HMCON700E");                     // déport à gauche, niveau 4
+        face.DefinirAbout(true, 6, TypeSecurite.GardeCorpsAbout, null);     // garde-corps d'about à droite, niveau 6
+        var s = GenerateurFacade.Generer(face);
+        double L = face.LongueurObtenue;
+        bool Z(ElementPlace e, double z) => Math.Abs(e.Origine.Z - z) < 1e-6;
+
+        var deport = s.Elements.Where(e => e.About is { Droit: false } a && Math.Abs(a.Hauteur - 4) < 1e-6).ToList();
+        var consoles = deport.Where(e => e.Reference == "HMCON700E").ToList();
+        Assert.Equal(2, consoles.Count);
+        Assert.All(consoles, e => { Assert.Equal(Axe.X, e.Axe); Assert.Equal(180, e.Rotation); Assert.Equal(0, e.Origine.X, 6); });
+        var poteaux = deport.Where(e => e.Famille == Famille.Poteau).ToList();
+        Assert.Equal(2, poteaux.Count);
+        Assert.All(poteaux, e => Assert.Equal(-0.70, e.Origine.X, 6));
+        Assert.Equal(2, deport.Count(e => e.Famille == Famille.Embase)); // chape en Multi-SYSTEM
+        Assert.Equal(2, deport.Count(e => e.Famille == Famille.Plateau && Math.Abs(e.Origine.X + 0.70) < 1e-6));
+        Assert.Equal(3, deport.Count(e => e.Famille == Famille.Plinthe));                             // about, extérieur, côté mur
+        Assert.Equal(4, deport.Count(e => e.Famille == Famille.Lisse && e.Axe == Axe.X));             // 2 côtés × 2 lisses
+        Assert.Equal(3, deport.Count(e => e.Famille == Famille.Traverse && e.Axe == Axe.Y));          // pied + lisse + sous-lisse
+        // L'about d'origine (x = 0) n'est plus posé à ce niveau, mais il l'est aux autres.
+        Assert.DoesNotContain(deport, e => e.Famille == Famille.GardeCorps); // about MDS 2 des paramètres remplacé
+        Assert.Contains(s.Elements, e => e.Axe == Axe.Y && Math.Abs(e.Origine.X) < 1e-6 && e.About is { Droit: false } a && Math.Abs(a.Hauteur - 6) < 1e-6);
+
+        var droite = s.Elements.Where(e => e.About is { Droit: true } a && Math.Abs(a.Hauteur - 6) < 1e-6).ToList();
+        Assert.Contains(droite, e => e.Reference == "HMGCA070" && Math.Abs(e.Origine.X - L) < 1e-6 && Z(e, 7));
+
+        var biblio = BibliothequeBlocs.DepuisFichier("blocs-3D-echafaudage.txt");
+        Assert.Empty(biblio.Manquantes(deport.Select(e => e.Reference)));
+
+        // Mémorisé dans le projet, puis retour aux paramètres de la face.
+        var projet = new ProjetStructure();
+        projet.Faces.Add(face);
+        var relu = FichierProjet.DepuisJson(FichierProjet.VersJson(projet)).S1;
+        Assert.Equal("HMCON700E", relu.AboutRemplace(false, 4)?.Console);
+        Assert.Equal(TypeSecurite.GardeCorpsAbout, relu.AboutRemplace(true, 6)?.Securite);
+        relu.DefinirAbout(false, 4, null, null);
+        Assert.Null(relu.AboutRemplace(false, 4));
+        Assert.Contains(GenerateurFacade.Generer(relu).Elements, e => e.Reference == "HMGCSE070GT" && Math.Abs(e.Origine.X) < 1e-6 && Z(e, 4));
+    }
+
+    [Theory]
+    [InlineData(ModeleEchafaudage.MultiSystem, 0.70, new[] { "HMCON700E", "HMCON700E2", "HMCON700EE", "HMCON700EE2", "HMCON1000E", "HMCON1000E2" })]
+    [InlineData(ModeleEchafaudage.MultiReto, 0.75, new[] { "HMCON750E", "HMCON750MR", "HMCON750EE", "HMCON750MR2", "HMCON1050E", "HMCON1050MR" })]
+    public void Consoles_possibles_en_deport_d_about(ModeleEchafaudage modele, double largeur, string[] attendues)
+    {
+        Assert.Equal(attendues, CatalogueConsoles.PourDeport(modele, largeur).Select(c => c.Reference));
+        var biblio = BibliothequeBlocs.DepuisFichier("blocs-3D-echafaudage.txt");
+        foreach (string console in attendues)
+        {
+            var face = Standard(p => { p.Modele = modele; p.LargeurMaille = largeur; });
+            face.DefinirAbout(true, 2, null, console);
+            var s = GenerateurFacade.Generer(face);
+            Assert.DoesNotContain(s.Alertes, a => a.Contains("impossible"));
+            var refs = s.Elements.Where(e => e.About is { Droit: true } a && Math.Abs(a.Hauteur - 2) < 1e-6).Select(e => e.Reference).ToList();
+            Assert.Contains(console, refs);
+            Assert.True(biblio.Manquantes(refs).Count == 0, $"{console} : {string.Join(", ", biblio.Manquantes(refs))}");
+        }
+    }
+
+    [Fact]
     public void Enregistrer_puis_ouvrir_donne_le_meme_projet()
     {
         var face = Standard();

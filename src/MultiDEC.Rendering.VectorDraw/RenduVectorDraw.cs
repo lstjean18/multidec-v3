@@ -226,6 +226,55 @@ public sealed class RenduVectorDraw
         Diagnostic.Add($"Présentations masquées : {n}");
     }
 
+    /// <summary>
+    /// Élément du dernier dessin désigné par le clic droit : l'objet sélectionné s'il est seul, sinon celui sous
+    /// le curseur (<paramref name="pointControle"/> en pixels dans le contrôle). Null si aucun.
+    /// </summary>
+    public ElementPlace? ElementDesigne(System.Drawing.Point pointControle)
+    {
+        if (_dernierRendu == null)
+        {
+            return null;
+        }
+
+        vdFigure? figure = null;
+        var selection = _doc.GetGripSelection();
+        if (selection != null && selection.Count == 1)
+        {
+            foreach (vdFigure f in selection)
+            {
+                figure = f;
+            }
+        }
+
+        if (figure == null)
+        {
+            try
+            {
+                figure = _doc.ActiveLayOut.GetEntityFromPoint(pointControle, 6, false);
+            }
+            catch (Exception ex)
+            {
+                Diagnostic.Add("Clic droit : " + ex.Message);
+            }
+        }
+
+        if (figure == null)
+        {
+            return null;
+        }
+
+        foreach (var (element, insert) in _dernierRendu.Inserts)
+        {
+            if (ReferenceEquals(insert, figure))
+            {
+                return element;
+            }
+        }
+
+        return null;
+    }
+
     /// <summary>Nombre d'objets sélectionnés (poignées) dans le dessin.</summary>
     public int NombreSelectionnes
     {

@@ -30,6 +30,32 @@ public sealed class FaceEchafaudage
     /// </summary>
     public string? SignatureValidee { get; set; }
 
+    /// <summary>Abouts remplacés par clic droit dans le dessin (garde-corps d'about ou déport en console).</summary>
+    public List<RemplacementAbout> Abouts { get; set; } = new List<RemplacementAbout>();
+
+    /// <summary>Remplacement de l'about d'un bout de face à un niveau (null : about selon les paramètres).</summary>
+    public RemplacementAbout? AboutRemplace(bool droit, double hauteur) =>
+        Abouts.LastOrDefault(a => a.Droit == droit && Cotes.Egal(a.Hauteur, hauteur));
+
+    /// <summary>
+    /// Remplace l'about d'un bout de face à un niveau par un garde-corps d'about ou un déport en console ;
+    /// sans l'un ni l'autre, l'about revient aux paramètres de la face.
+    /// </summary>
+    public void DefinirAbout(bool droit, double hauteur, TypeSecurite? securite, string? console)
+    {
+        Abouts.RemoveAll(a => a.Droit == droit && Cotes.Egal(a.Hauteur, hauteur));
+        if (securite != null || !string.IsNullOrWhiteSpace(console))
+        {
+            Abouts.Add(new RemplacementAbout
+            {
+                Droit = droit,
+                Hauteur = Cotes.Arrondi(hauteur),
+                Securite = string.IsNullOrWhiteSpace(console) ? securite : null,
+                Console = string.IsNullOrWhiteSpace(console) ? null : console,
+            });
+        }
+    }
+
     [JsonIgnore]
     public double LongueurObtenue => Cotes.Arrondi(Mailles.Sum(m => m.Longueur));
 
@@ -103,6 +129,7 @@ public sealed class FaceEchafaudage
         Mailles = Mailles.Select(m => m.Copie()).ToList(),
         Niveaux = Niveaux.Select(n => new Niveau(n.Hauteur, n.Type, n.Console, n.DiagoH) { PareGravois = n.PareGravois, Appro = n.Appro, Recette = n.Recette }).ToList(),
         SignatureValidee = SignatureValidee,
+        Abouts = Abouts.Select(a => a.Copie()).ToList(),
     };
 
     /// <summary>Abscisses des files de poteaux (n mailles → n+1 files).</summary>

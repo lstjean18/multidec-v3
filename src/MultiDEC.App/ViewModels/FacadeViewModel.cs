@@ -624,6 +624,40 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
     public void ProposerDiagonales() => RegleDiagonales.Proposer(Parametres, Mailles);
 
     /// <summary>Recopie les grilles éditées dans la face active et génère toute la structure.</summary>
+    // ---- Clic droit sur un about : « Remplacer l'about par » (Laurent, 25/11/2026) ----------------
+
+    /// <summary>Garde-corps d'about proposés dans le menu (liste des protections, sans « Sans »).</summary>
+    public IReadOnlyList<TypeSecurite> ChoixRemplacementAbout =>
+        ChoixSecurites.Where(t => t != TypeSecurite.Sans).ToList();
+
+    /// <summary>Consoles proposées en déport d'about pour une face : compatibles et gardées dans les paramètres par défaut.</summary>
+    public IReadOnlyList<string> ConsolesDeport(string nomFace)
+    {
+        var face = _projet.Faces.FirstOrDefault(f => f.Nom == nomFace);
+        if (face == null)
+        {
+            return Array.Empty<string>();
+        }
+
+        var possibles = CatalogueConsoles.PourDeport(General.Modele, face.Parametres.LargeurMaille).Select(c => c.Reference).ToList();
+        var gardees = possibles.Where(c => !_defauts.EstMasque(ListesDeChoix.Console, c)).ToList();
+        return gardees.Count == 0 ? possibles : gardees;
+    }
+
+    /// <summary>Remplacement en cours de l'about (null : about selon les paramètres).</summary>
+    public RemplacementAbout? AboutRemplace(string nomFace, RepereAbout about) =>
+        _projet.Faces.FirstOrDefault(f => f.Nom == nomFace)?.AboutRemplace(about.Droit, about.Hauteur);
+
+    /// <summary>
+    /// Remplace un about par un garde-corps d'about ou un déport en console (null et null : retour aux paramètres).
+    /// Le choix est enregistré dans le projet ; le dessin est à refaire.
+    /// </summary>
+    public void RemplacerAbout(string nomFace, RepereAbout about, TypeSecurite? securite, string? console)
+    {
+        var face = _projet.Faces.FirstOrDefault(f => f.Nom == nomFace);
+        face?.DefinirAbout(about.Droit, about.Hauteur, securite, console);
+    }
+
     public StructureFacade Generer()
     {
         SauverGrilles();

@@ -339,14 +339,72 @@ public partial class MainWindow : Window
         var zoom = new System.Windows.Forms.ToolStripMenuItem("Zoom tout");
         zoom.Click += (_, _) => _rendu?.ZoomTout();
         menu.Items.Add(zoom);
+
+        // Clic droit sur un about (ou un déport en console) : « Remplacer l'about par » (Laurent, 25/11/2026).
+        var separateurAbout = new System.Windows.Forms.ToolStripSeparator();
+        var remplacer = new System.Windows.Forms.ToolStripMenuItem("Remplacer l'about par");
+        menu.Items.Insert(0, separateurAbout);
+        menu.Items.Insert(0, remplacer);
         menu.Opening += (_, _) =>
         {
             int n = _rendu?.NombreSelectionnes ?? 0;
             supprimer.Enabled = n > 0;
             supprimer.Text = n > 1 ? $"Supprimer les {n} blocs sélectionnés" : "Supprimer la sélection";
+
+            var point = _vd.BaseControl.PointToClient(System.Windows.Forms.Control.MousePosition);
+            var element = _rendu?.ElementDesigne(point);
+            bool about = element?.About != null;
+            remplacer.Visible = about;
+            separateurAbout.Visible = about;
+            if (about)
+            {
+                MenuRemplacerAbout(remplacer, element!.NomFace, element.About!);
+            }
         };
         _vd.BaseControl.ContextMenuStrip = menu;
     }
+
+    /// <summary>
+    /// Sous-menu « Remplacer l'about par » : garde-corps d'about de la liste des protections, déports en console
+    /// (consoles gardées dans les paramètres par défaut) et retour aux paramètres de la face. Le choix est
+    /// enregistré dans le projet puis le dessin est refait.
+    /// </summary>
+    private void MenuRemplacerAbout(System.Windows.Forms.ToolStripMenuItem menu, string nomFace, RepereAbout about)
+    {
+        menu.DropDownItems.Clear();
+        var actuel = Vm.AboutRemplace(nomFace, about);
+        menu.Text = FormattableStringFr($"Remplacer l'about {(about.Droit ? "droit" : "gauche")} de {nomFace} à {about.Hauteur:0.00} m par");
+
+        void Ajouter(string texte, bool coche, TypeSecurite? securite, string? console)
+        {
+            var item = new System.Windows.Forms.ToolStripMenuItem(texte) { Checked = coche };
+            item.Click += (_, _) =>
+            {
+                Vm.RemplacerAbout(nomFace, about, securite, console);
+                Dessiner_Click(this, new RoutedEventArgs());
+            };
+            menu.DropDownItems.Add(item);
+        }
+
+        foreach (var type in Vm.ChoixRemplacementAbout)
+        {
+            Ajouter(Libelles.De(type), actuel?.Console == null && actuel?.Securite == type, type, null);
+        }
+
+        menu.DropDownItems.Add(new System.Windows.Forms.ToolStripSeparator());
+        foreach (string console in Vm.ConsolesDeport(nomFace))
+        {
+            Ajouter("Déport en console " + console, string.Equals(actuel?.Console, console, StringComparison.OrdinalIgnoreCase), null, console);
+        }
+
+        if (actuel != null)
+        {
+            menu.DropDownItems.Add(new System.Windows.Forms.ToolStripSeparator());
+            Ajouter("Revenir aux paramètres de la face", false, null, null);
+        }
+    }
+
+    private static string FormattableStringFr(FormattableString texte) => texte.ToString(System.Globalization.CultureInfo.GetCultureInfo("fr-FR"));
 
     private void SupprimerSelection()
     {

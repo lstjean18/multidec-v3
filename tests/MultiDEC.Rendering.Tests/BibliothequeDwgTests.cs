@@ -243,6 +243,34 @@ public class BibliothequeDwgTests
         rendu.Vue(Vues.Iso);
         Image(doc, nom + "-DP-iso");
 
+        // Remarques 37, 38, 40 : mur ouvert sous une poutre, poteaux et plinthes en bout de console, déport d'about
+        // en console à gauche (niveau 4) et garde-corps d'about à droite (niveau 2).
+        var dep = ProjetStructure.Nouveau(face: new ParametresFacade { LongueurTotaleSouhaitee = 15, LongueurMaillePreferee = 2.5, HauteurDernierPlancher = 6, NombreAcces = 0 });
+        var fd = dep.S1;
+        dep.General.SecuriteInterieure = TypeSecurite.Lisses;
+        fd.Parametres.SecuriteInterieure = TypeSecurite.Lisses;
+        fd.Niveaux.Single(n => Math.Abs(n.Hauteur - 4) < 0.001).Console = "HMCON700E";
+        fd.Mailles[1].DefinirConsole(4, true);
+        fd.Mailles[3].Poutre = 4;
+        fd.DefinirAbout(false, 4, null, "HMCON700E");
+        fd.DefinirAbout(true, 2, TypeSecurite.GardeCorpsAbout, null);
+        var sd = GenerateurStructure.Generer(dep);
+        foreach (var a in sd.Alertes)
+        {
+            _sortie.WriteLine("DEP alerte : " + a);
+        }
+
+        rendu.Dessiner(sd, TableOrientations.ParDefaut());
+        rendu.DessinerFacade(MursFacade.Calculer(dep), true);
+        rendu.Rendu(ModeRendu.OmbreAretes);
+        foreach (var v in new[] { "VISE", "VISW", "VINW" })
+        {
+            doc.CommandAction.View3D(v);
+            doc.Model.ZoomExtents();
+            doc.Redraw(true);
+            Image(doc, nom + "-DEP-" + v);
+        }
+
         // Premier plancher à 1 m : volée de 1 m sortie de la tour (escalier 1,50 et demi-escalier 0,70), stabilisation.
         var e1 = ProjetStructure.Nouveau(face: new ParametresFacade { LongueurTotaleSouhaitee = 15, LongueurMaillePreferee = 2.5, HauteurDernierPlancher = 5, NombreAcces = 0 });
         var f1 = e1.S1;

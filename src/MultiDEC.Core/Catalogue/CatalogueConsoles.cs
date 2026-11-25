@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using MultiDEC.Core.Facade;
+using MultiDEC.Core.Geometrie;
 
 namespace MultiDEC.Core.Catalogue;
 
@@ -100,6 +101,17 @@ public static class CatalogueConsoles
 
     /// <summary>Consoles proposées pour un modèle (Multi-RETO à embase : mêmes consoles que Multi-RETO).</summary>
     public static IReadOnlyCollection<ConsoleInfo> Pour(ModeleEchafaudage modele) => Toutes.Where(c => c.Compatible(modele)).ToList();
+
+    /// <summary>
+    /// Consoles possibles en déport d'about (v2 ContextMenuDessin_Opening) : poteau possible en bout (pas de platine),
+    /// au moins 0,70 m, et plateaux de la longueur de la console dans la gamme de la largeur de maille
+    /// (0,70 / 1,00 avec une maille de 0,70 ; 0,75 / 1,05 avec une maille de 0,75 ou 1,05).
+    /// </summary>
+    public static IReadOnlyList<ConsoleInfo> PourDeport(ModeleEchafaudage modele, double largeurMaille) =>
+        Toutes.Where(c => c.Compatible(modele) && c.PorteGardeCorps && c.Largeur >= 0.70 - Cotes.Tolerance
+                          && GammeLarge(c.Largeur) == GammeLarge(largeurMaille)).ToList();
+
+    private static bool GammeLarge(double l) => Cotes.Egal(l, 0.75) || Cotes.Egal(l, 1.05);
 
     public static bool TryGet(ModeleEchafaudage modele, string reference, out ConsoleInfo info)
     {
