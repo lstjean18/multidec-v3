@@ -24,6 +24,10 @@
     <Reference Include="WindowsFormsIntegration" />
   </ItemGroup>
   <ItemGroup>
+    <!-- Captures d'écran du manuel utilisateur, produites par les tests du serveur. -->
+    <InternalsVisibleTo Include="MultiDEC.Rendering.Tests" />
+  </ItemGroup>
+  <ItemGroup>
     <Resource Include="MultiDEC.ico" />
     <!-- Écran de démarrage avec le logo MultiDEC repris de la v2 (SplashScreen1, version2024), Laurent 24/11/2026. -->
     <SplashScreen Include="Splash.png" />

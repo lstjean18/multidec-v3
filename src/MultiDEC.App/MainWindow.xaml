@@ -184,7 +184,7 @@
   </Window.Resources>
 
   <DockPanel>
-    <Menu DockPanel.Dock="Top">
+    <Menu x:Name="MenuPrincipal" DockPanel.Dock="Top">
       <MenuItem Header="_Fichier">
         <MenuItem Header="_Nouveau" Click="Nouveau_Click" />
         <MenuItem Header="_Ouvrir…" Click="Ouvrir_Click" />
@@ -211,7 +211,7 @@
     </Menu>
 
     <!-- Ruban -->
-    <Border DockPanel.Dock="Top" Background="#F8F9FA" BorderBrush="{StaticResource Bordure}" BorderThickness="0,0,0,1">
+    <Border x:Name="Ruban" DockPanel.Dock="Top" Background="#F8F9FA" BorderBrush="{StaticResource Bordure}" BorderThickness="0,0,0,1">
       <StackPanel Orientation="Horizontal" Margin="4,4,4,2">
         <Border Style="{StaticResource GroupeRuban}">
           <StackPanel>
@@ -488,7 +488,7 @@
       <GridSplitter Grid.Row="1" Grid.ColumnSpan="3" HorizontalAlignment="Stretch" />
 
       <!-- Grilles de la face active, décompte, amarrages, alertes. -->
-      <TabControl Grid.Row="2" Grid.ColumnSpan="3" Margin="6,0,6,6">
+      <TabControl x:Name="OngletsBas" Grid.Row="2" Grid.ColumnSpan="3" Margin="6,0,6,6">
         <TabItem>
           <TabItem.Header>
             <Border Background="{Binding CouleurFaceActive}" CornerRadius="2" Padding="6,1" Margin="-4,-1">

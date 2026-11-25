@@ -5,6 +5,8 @@
     <IsPackable>false</IsPackable>
     <PlatformTarget>x86</PlatformTarget>
     <UseWindowsForms>true</UseWindowsForms>
+    <!-- Captures de la fenêtre WPF pour le manuel utilisateur (CapturesManuelTests). -->
+    <UseWPF>true</UseWPF>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
@@ -14,6 +16,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\MultiDEC.Rendering.VectorDraw\MultiDEC.Rendering.VectorDraw.csproj" />
     <ProjectReference Include="..\..\src\MultiDEC.Core\MultiDEC.Core.csproj" />
+    <ProjectReference Include="..\..\src\MultiDEC.App\MultiDEC.App.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="VectorDraw.Professional"><HintPath>$(VectorDrawDir)VectorDraw.Professional.dll</HintPath></Reference>
@@ -22,6 +25,9 @@
     <Reference Include="VectorDraw.Render"><HintPath>$(VectorDrawDir)VectorDraw.Render.dll</HintPath></Reference>
     <Reference Include="VectorDraw.Serialize"><HintPath>$(VectorDrawDir)VectorDraw.Serialize.dll</HintPath></Reference>
     <Reference Include="VectorDraw.Actions"><HintPath>$(VectorDrawDir)VectorDraw.Actions.dll</HintPath></Reference>
+    <Reference Include="vdScrollableControl"><HintPath>$(VectorDrawDir)vdScrollableControl.dll</HintPath></Reference>
+    <Reference Include="VDrawBaseControl"><HintPath>$(VectorDrawDir)VDrawBaseControl.dll</HintPath></Reference>
+    <Reference Include="WindowsFormsIntegration" />
   </ItemGroup>
   <!-- Extrait de Blocs-EM-3D.dxf (blocs de la façade de test, en-tête et SCU d'origine conservés). -->
   <ItemGroup>

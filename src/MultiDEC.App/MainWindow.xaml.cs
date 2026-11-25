@@ -106,6 +106,24 @@ public partial class MainWindow : Window
 
     private FacadeViewModel Vm => (FacadeViewModel)DataContext;
 
+    // ---- Captures du manuel utilisateur (tests du serveur, CapturesManuelTests) ------------------
+
+    internal FacadeViewModel ModeleVue => Vm;
+
+    internal void ChargerBibliothequePourCapture(string chemin) => ChargerBibliotheque(chemin);
+
+    internal void DessinerPourCapture() => Dessiner_Click(this, new RoutedEventArgs());
+
+    internal RenduVectorDraw? RenduCourant => _rendu;
+
+    /// <summary>Image du dessin 3D (le contrôle WinForms n'apparaît pas dans un rendu WPF hors écran).</summary>
+    internal System.Drawing.Bitmap ImageDessin(int largeur, int hauteur)
+    {
+        var bmp = new System.Drawing.Bitmap(Math.Max(1, largeur), Math.Max(1, hauteur));
+        _vd.BaseControl.ActiveDocument.Model.RenderToBitmap(bmp);
+        return bmp;
+    }
+
     private void ChargerBibliotheque(string? chemin)
     {
         if (string.IsNullOrEmpty(chemin) || !File.Exists(chemin))
