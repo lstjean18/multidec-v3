@@ -35,6 +35,7 @@ public static class GenerateurStructure
         projet.AppliquerGeneraux();
         VerifierPremiersPlanchers(projet);
         RegleTourRoulante.Verifier(projet);
+        RegleMaillesAcces.Verifier(projet);
         var poses = Poses(projet);
         var elements = new List<ElementPlace>();
         var amarrages = new List<Amarrage>();

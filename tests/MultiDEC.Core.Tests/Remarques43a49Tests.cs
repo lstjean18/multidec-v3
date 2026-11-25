@@ -120,4 +120,25 @@ public class Remarques43a49Tests
         var ex = Assert.Throws<InvalidOperationException>(() => GenerateurStructure.Generer(projet));
         Assert.Contains("Grutable", ex.Message);
     }
+
+    [Fact]
+    public void Maille_d_acces_de_moins_de_1_50_m_refusee()
+    {
+        var projet = Droite(10, 4, 1);
+        var acces = projet.S1.Mailles.First(m => m.Type == TypeMaille.Acces);
+        Assert.True(acces.Longueur >= 1.5);
+        acces.Longueur = 1.0;
+        var ex = Assert.Throws<InvalidOperationException>(() => GenerateurStructure.Generer(projet));
+        Assert.Contains("maille d'accès de 1,00 m", ex.Message);
+        Assert.Contains(RegleMaillesAcces.Rappel, ex.Message);
+    }
+
+    [Fact]
+    public void Proposition_avec_mailles_courtes_garde_des_acces_de_1_50_m()
+    {
+        var projet = ProjetStructure.Nouveau(face: new ParametresFacade { LongueurTotaleSouhaitee = 8, LongueurMaillePreferee = 1.0, HauteurDernierPlancher = 4, NombreAcces = 1 });
+        var acces = Assert.Single(projet.S1.Mailles, m => m.Type == TypeMaille.Acces);
+        Assert.Equal(1.5, acces.Longueur, 6);
+        Assert.Empty(RegleMaillesAcces.Ecarts(projet));
+    }
 }

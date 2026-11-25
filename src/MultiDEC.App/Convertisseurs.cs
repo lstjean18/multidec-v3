@@ -1,5 +1,6 @@
 using System;
 using System.Globalization;
+using System.Linq;
 using System.Windows.Data;
 using MultiDEC.App.ViewModels;
 
@@ -47,6 +48,17 @@ public sealed class ConvertisseurHauteurMax : IMultiValueConverter
 public sealed class ConvertisseurPositifEnBooleen : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture) => value is double d && d > 1e-9;
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
+}
+
+/// <summary>Longueurs proposées pour une maille selon son type : 1,50 m au moins pour une maille d'accès.</summary>
+public sealed class ConvertisseurLongueursSelonType : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
+        value is MultiDEC.Core.Facade.TypeMaille type
+            ? FacadeViewModel.LongueursMaille.Where(l => MultiDEC.Core.Facade.Regles.RegleMaillesAcces.LongueurPermise(type, l)).ToList()
+            : FacadeViewModel.LongueursMaille;
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
 }

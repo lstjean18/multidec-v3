@@ -33,8 +33,9 @@ public static class ProposeurStructure
         }
 
         double lp = p.LongueurMaillePreferee;
+        double la = Math.Max(lp, Regles.RegleMaillesAcces.LongueurMini); // maille d'accès : 1,50 m au moins
         int nbAcces = Math.Max(0, p.NombreAcces);
-        double restant = Cotes.Arrondi(p.LongueurTotaleSouhaitee - nbAcces * lp);
+        double restant = Cotes.Arrondi(p.LongueurTotaleSouhaitee - nbAcces * la);
         if (restant < -Cotes.Tolerance)
         {
             throw new InvalidOperationException("La longueur totale est trop courte pour le nombre d'accès demandé.");
@@ -72,7 +73,7 @@ public static class ProposeurStructure
 
             if (bloc < nbAcces)
             {
-                mailles.Add(new MailleDefinition(lp, TypeMaille.Acces));
+                mailles.Add(new MailleDefinition(la, TypeMaille.Acces));
             }
         }
 
