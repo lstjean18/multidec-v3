@@ -353,6 +353,28 @@ public class GenerateurFacadeTests
     }
 
     [Theory]
+    [InlineData(ModeleEchafaudage.MultiSystem)]
+    [InlineData(ModeleEchafaudage.MultiReto)]
+    public void Console_sur_maille_courte_traverse_au_lieu_de_lisse(ModeleEchafaudage modele)
+    {
+        // Pas de lisse sous 1,50 m : HMTRA… (Laurent, 25/11/2026, alerte « HMLIS070 absent »).
+        var biblio = BibliothequeBlocs.DepuisFichier("blocs-3D-echafaudage.txt");
+        foreach (double l in new[] { 0.70, 1.00, 1.50, 2.00, 2.50, 3.00 }) // 0,75 et 1,05 : pas de plateau NF
+        {
+            var projet = Standard(p => { p.Modele = modele; p.SecuriteInterieure = TypeSecurite.Lisses; });
+            projet.Mailles[1].Longueur = l;
+            Consoles(projet, "HMCON700E", 1);
+            var s = GenerateurFacade.Generer(projet);
+            var refs = s.Elements.Select(e => e.Reference).Where(r => !r.StartsWith("HMTUBAMA", StringComparison.Ordinal) && !References.NonDessinee(r)).ToList();
+            Assert.True(biblio.Manquantes(refs).Count == 0, $"maille {l} : {string.Join(", ", biblio.Manquantes(refs))}");
+            if (l < 1.5)
+            {
+                Assert.DoesNotContain(s.Elements, e => e.Reference.StartsWith("HMLIS" + MultiDEC.Core.Geometrie.Cotes.EnCm3(l), StringComparison.Ordinal));
+            }
+        }
+    }
+
+    [Theory]
     [InlineData(ModeleEchafaudage.MultiSystem, "HMCON750MR")]
     [InlineData(ModeleEchafaudage.MultiReto, "HMCON700E2")]
     [InlineData(ModeleEchafaudage.MultiReto, "HMTRA030")]

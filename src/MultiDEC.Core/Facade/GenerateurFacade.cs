@@ -923,7 +923,7 @@ public sealed partial class GenerateurFacade
         PlacerPlateaux(x0, w, z, w, lm, num);
         if (gc || c.LisseSansPoteau(_p.Modele))
         {
-            Ajouter("HMLIS" + Cotes.EnCm3(lm), Famille.Lisse, new Point3(x0, w, z), Axe.X, Face.Interieure, num);
+            Ajouter(References.LisseOuTraverse(lm), Famille.Lisse, new Point3(x0, w, z), Axe.X, Face.Interieure, num);
         }
 
         if (gc)
