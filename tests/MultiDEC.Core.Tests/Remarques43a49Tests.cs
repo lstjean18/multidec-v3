@@ -166,4 +166,39 @@ public class Remarques43a49Tests
         // Côté commun M1 / M2 : pas de diagonale.
         Assert.DoesNotContain(s.Elements, e => e.Famille == Famille.DiagonaleVerticale && e.Axe == Axe.X && Math.Abs(e.Origine.Y + 0.70) < 0.05);
     }
+
+    [Fact]
+    public void About_de_plus_de_1_05_m_toujours_en_lisses()
+    {
+        // Point 51 : module volumique de 2,00 m de large, abouts MDS 2 demandés → lisses.
+        var projet = Droite(10, 4, 0);
+        projet.General.SecuriteAbouts = TypeSecurite.GardeCorpsMds2;
+        projet.Forme = FormeStructure.Volumique;
+        projet.AjusterFaces();
+        projet.Faces[1].Parametres.LargeurMaille = 2.0;
+        var s = GenerateurStructure.Generer(projet);
+        Assert.DoesNotContain(s.Elements, e => e.NomFace == "M2" && e.Famille == Famille.GardeCorps && e.Axe == Axe.Y);
+        Assert.Contains(s.Elements, e => e.NomFace == "M2" && e.Reference == "HMLIS200" && e.Axe == Axe.Y && Math.Abs(e.Origine.Z - 5.0) < 1e-6);
+        Assert.Contains(s.Alertes, a => a.Contains("About de 2,00 m") || a.Contains("About de 2.00 m"));
+
+        // M1 (0,70 m) garde ses cadres d'about.
+        Assert.Contains(s.Elements, e => e.NomFace == "M1" && e.Famille == Famille.GardeCorps && e.Axe == Axe.Y);
+    }
+
+    [Fact]
+    public void Damier_garde_corps_en_lisses_sur_les_mailles_a_lisses_porteuses()
+    {
+        var projet = Droite(10, 4, 0);
+        projet.General.SecuriteExterieure = TypeSecurite.GardeCorpsMds2;
+        projet.Forme = FormeStructure.Volumique;
+        projet.AjusterFaces();
+        projet.PlanchersDamier = true;
+
+        var s = GenerateurStructure.Generer(projet);
+        // Mailles à plateaux selon Y (lisses porteuses) : pas de cadre MDS sur leurs faces exposées.
+        var selonY = s.Elements.Where(e => e.Famille == Famille.Plateau && e.Axe == Axe.Y).Select(e => (e.NomFace, e.NumeroMaille)).Distinct().ToList();
+        Assert.NotEmpty(selonY);
+        Assert.DoesNotContain(s.Elements, e => e.Famille == Famille.GardeCorps && e.Axe == Axe.X && selonY.Contains((e.NomFace, e.NumeroMaille)));
+        Assert.Contains(s.Elements, e => e.Famille == Famille.GardeCorps && e.Axe == Axe.X && !selonY.Contains((e.NomFace, e.NumeroMaille)));
+    }
 }

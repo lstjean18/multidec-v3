@@ -453,10 +453,10 @@ public sealed partial class GenerateurFacade
             bool sansPlancher = n.EstAccesSeul && m.EstTravail;
             var console = ConsoleDe(m, n);
 
+            // Damier : plateaux selon Y posés sur les lisses des deux files, renforcées dès 1,50 m.
+            bool porteuse = z > Cotes.Tolerance && !surPoutre && m.EstTravail && n.Type == TypePlancher.Complet && PlateauxSelonY(index) && !AccesParTrappe(index, z);
             if (z > Cotes.Tolerance && !surPoutre) // sur une poutre, sa membrure haute fait la lisse
             {
-                // Damier : plateaux selon Y posés sur les lisses des deux files, renforcées dès 1,50 m.
-                bool porteuse = m.EstTravail && n.Type == TypePlancher.Complet && PlateauxSelonY(index) && !AccesParTrappe(index, z);
                 string lissePlancher = porteuse ? LissePorteuse(lm) : lisse;
                 Ajouter(lissePlancher, Famille.Lisse, new Point3(x0, 0, z), Axe.X, Face.Interieure, num);
 
@@ -484,14 +484,16 @@ public sealed partial class GenerateurFacade
                     // Maille plus haute que sa sous-maille rapportée : garde-corps extérieur des paramètres au-dessus (Laurent, 24/11/2026).
                     // Appro / recette desservis : la maille s'ouvre sur la sous-maille, pas de garde-corps extérieur.
                     // Sur une poutre : garde-corps en lisses (v2 remplace les cadres MDS).
-                    PlacerGardeCorps(surPoutre ? GardeCorpsSurPoutre(SecuriteExterieure(index)) : SecuriteExterieure(index), plintheExt, x0, -_l, z, lm, Face.Exterieure, num);
+                    var secuExt = surPoutre ? GardeCorpsSurPoutre(SecuriteExterieure(index)) : GardeCorpsSurLissePorteuse(SecuriteExterieure(index), lm, porteuse);
+                    PlacerGardeCorps(secuExt, plintheExt, x0, -_l, z, lm, Face.Exterieure, num);
                 }
 
                 // v3 : même règle côté intérieur (l'ancienne version posait le GC intérieur même sans plancher).
                 // Carré d'angle : son côté intérieur donne sur le bout de la face précédente (passage), pas de garde-corps.
                 if (console == null && !(index == 0 && _p.CarreDAngleEnTete && !_p.CarreDAngleInverse))
                 {
-                    PlacerGardeCorps(surPoutre ? GardeCorpsSurPoutre(SecuriteInterieure(index)) : SecuriteInterieure(index), PlintheInterieure(index), x0, 0, z, lm, Face.Interieure, num);
+                    var secuInt = surPoutre ? GardeCorpsSurPoutre(SecuriteInterieure(index)) : GardeCorpsSurLissePorteuse(SecuriteInterieure(index), lm, porteuse);
+                    PlacerGardeCorps(secuInt, PlintheInterieure(index), x0, 0, z, lm, Face.Interieure, num);
                 }
             }
 
@@ -617,6 +619,31 @@ public sealed partial class GenerateurFacade
     }
 
     private static TypeSecurite GardeCorpsSurPoutre(TypeSecurite type) => type == TypeSecurite.GardeCorpsMds2 ? TypeSecurite.Lisses : type;
+
+    /// <summary>Longueur au-delà de laquelle un cadre de garde-corps est dans le plan d'une lisse (Laurent, 25/11/2026).</summary>
+    internal const double LongueurMaxiCadreHorsPlanLisse = 1.05;
+
+    /// <summary>
+    /// Point 51 (Laurent, 25/11/2026) : un garde-corps (cadre) de plus de 1,05 m est dans le plan d'une lisse ; si une lisse
+    /// doit y porter des plateaux, la protection est faite en lisses.
+    /// </summary>
+    private TypeSecurite GardeCorpsSurLissePorteuse(TypeSecurite type, double longueur, bool porteuse)
+    {
+        if (!porteuse || longueur <= LongueurMaxiCadreHorsPlanLisse + Cotes.Tolerance || type == TypeSecurite.Sans || type == TypeSecurite.Lisses)
+        {
+            return type;
+        }
+
+        _alertes.Add($"Mailles à plateaux posés sur les lisses (damier) : garde-corps {Libelle(type)} remplacés par des lisses (cadre de plus de 1,05 m dans le plan de la lisse).");
+        return TypeSecurite.Lisses;
+    }
+
+    private static string Libelle(TypeSecurite type) => type switch
+    {
+        TypeSecurite.GardeCorpsMds2 => "MDS 2",
+        TypeSecurite.GardeCorpsAbout => "d'about",
+        _ => type.ToString(),
+    };
 
     private void PlacerGardeCorps(TypeSecurite type, TypePlinthe plinthe, double x0, double y, double z, double lm, Face face, int num)
     {
@@ -1198,6 +1225,13 @@ public sealed partial class GenerateurFacade
         TypePlinthe plinthe = console ? PlintheConsole : _p.PlintheAbouts;
         // Sur les consoles, l'about est en lisses (lisse + sous-lisse), Laurent 23/11/2026.
         type ??= console ? TypeSecurite.Lisses : _p.SecuriteAbouts;
+
+        // About de plus de 1,05 m : jamais de cadre de garde-corps, toujours des lisses (point 51, Laurent 25/11/2026).
+        if (largeur > LongueurMaxiCadreHorsPlanLisse + Cotes.Tolerance && type != TypeSecurite.Sans && type != TypeSecurite.Lisses)
+        {
+            _alertes.Add(FormattableString.Invariant($"About de {largeur:0.00} m : plus de 1,05 m, garde-corps {Libelle(type.Value)} remplacé par des lisses."));
+            type = TypeSecurite.Lisses;
+        }
 
         if (largeur <= 0.40 + Cotes.Tolerance)
         {

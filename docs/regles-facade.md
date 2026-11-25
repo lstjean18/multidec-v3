@@ -172,3 +172,8 @@ Les points marqués **[à valider]** sont des choix faits en v3 faute de règle 
 - **49** Colonne « Lest » (visible dès qu'une maille est stabilisée) : platelage à 0,50 m entre file extérieure et file de stabilisation, plateaux de la longueur de la maille sur lisses porteuses en travers (renforcées dès 1,50 m).
 - **50** Maille d'accès : 1,50 m au moins (refus de dessiner, longueurs filtrées dans la grille, accès proposés en 1,50 m avec une maille préférée plus courte).
 - **Références client** : table LV Tec intégrée (`catalogue/references-client-lvtec.csv`, tirée du Modèle Devis LVTEC de la v2), ou fichier CSV RefRETOTUB;RefClient ; liste « Références affichées » sur l'onglet Décompte et dans les Paramètres par défaut.
+
+## Remarques 51 et 52 (codées le 25/11/2026, 23h45)
+
+- **51** About de plus de 1,05 m : jamais de cadre de garde-corps, toujours des lisses (alerte). Toutes faces : un cadre de plus de 1,05 m est dans le plan d'une lisse ; là où une lisse porte des plateaux (damier, plateaux selon Y), la protection passe en lisses (alerte).
+- **52** Volumique : chaque maille qui a un garde-corps sur une face reçoit une diagonale sur cette face (remplace la règle 1/5 + 1re maille du tronçon exposé du point 44) ; pas de diagonale sur un côté commun à deux modules.
