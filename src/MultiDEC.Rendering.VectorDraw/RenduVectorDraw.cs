@@ -443,16 +443,21 @@ public sealed class RenduVectorDraw
 
         foreach (var mur in murs)
         {
-            // Boîte posée sur le segment du mur, épaisseur vers le bâtiment (à gauche du sens Début → Fin).
-            var boite = new vdPolyface();
-            boite.SetUnRegisterDocument(_doc);
-            boite.setDocumentDefaults();
             // Angle ramené entre 0 et 2π : un angle négatif (structure inversée, -90°) était ignoré par CreateBox (rendu serveur 24/11).
             double angle = mur.Angle < 0 ? mur.Angle + 2 * Math.PI : mur.Angle;
-            boite.CreateBox(new gPoint(mur.Debut.X, mur.Debut.Y, 0), mur.Longueur, EpaisseurMur, mur.Hauteur, angle);
-            boite.Layer = calque;
-            boite.PenColor = new vdColor(CouleurMur);
-            _doc.Model.Entities.AddItem(boite);
+            double ux = Math.Cos(mur.Angle), uy = Math.Sin(mur.Angle);
+
+            // Un bloc par pan plein (le mur est ouvert sous les poutres) ; épaisseur vers le bâtiment (à gauche du sens Début → Fin).
+            foreach (var b in mur.Blocs())
+            {
+                var boite = new vdPolyface();
+                boite.SetUnRegisterDocument(_doc);
+                boite.setDocumentDefaults();
+                boite.CreateBox(new gPoint(mur.Debut.X + ux * b.Position, mur.Debut.Y + uy * b.Position, b.Z), b.Longueur, EpaisseurMur, b.Hauteur, angle);
+                boite.Layer = calque;
+                boite.PenColor = new vdColor(CouleurMur);
+                _doc.Model.Entities.AddItem(boite);
+            }
         }
 
         AfficherFacade(visible);

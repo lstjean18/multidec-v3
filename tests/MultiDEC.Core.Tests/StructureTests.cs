@@ -410,6 +410,34 @@ public class StructureTests
     }
 
     [Fact]
+    public void Facade_ouverte_sous_une_poutre_et_refermee_quand_elle_est_retiree()
+    {
+        var projet = Projet(FormeStructure.Droite, 15);
+        var f = projet.S1;
+        Assert.True(f.Mailles.Count >= 4);
+        f.Mailles[1].Poutre = 4; // mailles 2 et 3 : passage de 3,50 m sous la poutre
+        var x = f.AbscissesFiles();
+
+        var mur = Assert.Single(MursFacade.Calculer(projet));
+        var o = Assert.Single(mur.Ouvertures);
+        Assert.Equal(x[1], o.Debut, 6);
+        Assert.Equal(x[3], o.Fin, 6);
+        Assert.Equal(3.5, o.Hauteur, 6);
+
+        var blocs = mur.Blocs();
+        Assert.Equal(3, blocs.Count); // pan gauche, linteau, pan droit
+        Assert.Contains(blocs, b => Math.Abs(b.Position - x[1]) < 1e-6 && Math.Abs(b.Z - 3.5) < 1e-6 && Math.Abs(b.Hauteur - (f.HauteurTotale - 3.5)) < 1e-6);
+        Assert.Equal(mur.Longueur, blocs.Where(b => b.Z == 0).Sum(b => b.Longueur) + (x[3] - x[1]), 6);
+
+        f.Mailles[1].Poutre = 0; // poutre retirée : mur refermé
+        mur = Assert.Single(MursFacade.Calculer(projet));
+        Assert.Empty(mur.Ouvertures);
+        var plein = Assert.Single(mur.Blocs());
+        Assert.Equal(mur.Longueur, plein.Longueur, 6);
+        Assert.Equal(mur.Hauteur, plein.Hauteur, 6);
+    }
+
+    [Fact]
     public void Facade_en_L_murs_raccordes_dans_l_angle_sortant()
     {
         var projet = Projet(FormeStructure.EnL);

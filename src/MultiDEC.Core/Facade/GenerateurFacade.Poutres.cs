@@ -70,6 +70,24 @@ public sealed partial class GenerateurFacade
         }
     }
 
+    /// <summary>
+    /// Passages sous les poutres valides de la face (abscisses locales de début et de fin, hauteur libre sous la poutre) :
+    /// ouvertures du mur de façade (case « Dessiner façade », Laurent 25/11/2026).
+    /// </summary>
+    public static IReadOnlyList<(double X0, double X1, double HauteurLibre)> Passages(FaceEchafaudage face)
+    {
+        if (face.Mailles.Count == 0)
+        {
+            return Array.Empty<(double, double, double)>();
+        }
+
+        var g = new GenerateurFacade(face);
+        g.ValiderPoutres();
+        return g._poutres.OrderBy(kv => kv.Key)
+                .Select(kv => (g._x[kv.Key], g._x[kv.Key + 2], Cotes.Arrondi(kv.Value - HauteurPoutre)))
+                .ToList();
+    }
+
     /// <summary>Plancher porté par une poutre qui couvre la maille (null sinon) : rien n'est posé dessous.</summary>
     private double? PoutreSous(int indexMaille) =>
         _poutres.TryGetValue(indexMaille, out double z) || _poutres.TryGetValue(indexMaille - 1, out z) ? z : (double?)null;

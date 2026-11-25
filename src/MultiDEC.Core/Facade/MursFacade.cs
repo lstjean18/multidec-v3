@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using MultiDEC.Core.Geometrie;
 
 namespace MultiDEC.Core.Facade;
@@ -7,12 +8,46 @@ namespace MultiDEC.Core.Facade;
 /// <summary>Mur du bâtiment devant une face : segment au sol (repère de la structure) et hauteur.</summary>
 public sealed class MurFacade
 {
-    public MurFacade(string nomFace, Point3 debut, Point3 fin, double hauteur)
+    public MurFacade(string nomFace, Point3 debut, Point3 fin, double hauteur, IReadOnlyList<OuvertureMur>? ouvertures = null)
     {
         NomFace = nomFace;
         Debut = debut;
         Fin = fin;
         Hauteur = hauteur;
+        Ouvertures = ouvertures ?? Array.Empty<OuvertureMur>();
+    }
+
+    /// <summary>Passages laissés sous les poutres de franchissement (distances comptées depuis <see cref="Debut"/>).</summary>
+    public IReadOnlyList<OuvertureMur> Ouvertures { get; }
+
+    /// <summary>
+    /// Blocs pleins du mur : pans entre les ouvertures sur toute la hauteur, et linteau au-dessus de chaque ouverture.
+    /// </summary>
+    public IReadOnlyList<BlocMur> Blocs()
+    {
+        var blocs = new List<BlocMur>();
+        double s = 0;
+        foreach (var o in Ouvertures.OrderBy(o => o.Debut))
+        {
+            if (o.Debut - s > Cotes.Tolerance)
+            {
+                blocs.Add(new BlocMur(s, Cotes.Arrondi(o.Debut - s), 0, Hauteur));
+            }
+
+            if (Hauteur - o.Hauteur > Cotes.Tolerance)
+            {
+                blocs.Add(new BlocMur(o.Debut, Cotes.Arrondi(o.Fin - o.Debut), o.Hauteur, Cotes.Arrondi(Hauteur - o.Hauteur)));
+            }
+
+            s = Math.Max(s, o.Fin);
+        }
+
+        if (Longueur - s > Cotes.Tolerance)
+        {
+            blocs.Add(new BlocMur(s, Cotes.Arrondi(Longueur - s), 0, Hauteur));
+        }
+
+        return blocs;
     }
 
     public string NomFace { get; }
@@ -30,6 +65,43 @@ public sealed class MurFacade
     public double Angle => Math.Atan2(Fin.Y - Debut.Y, Fin.X - Debut.X);
 
     public override string ToString() => FormattableString.Invariant($"{NomFace} ({Debut.X:0.###};{Debut.Y:0.###}) → ({Fin.X:0.###};{Fin.Y:0.###}) h {Hauteur:0.##}");
+}
+
+/// <summary>Ouverture dans un mur : de <see cref="Debut"/> à <see cref="Fin"/> le long du mur, du sol à <see cref="Hauteur"/>.</summary>
+public readonly struct OuvertureMur
+{
+    public OuvertureMur(double debut, double fin, double hauteur)
+    {
+        Debut = debut;
+        Fin = fin;
+        Hauteur = hauteur;
+    }
+
+    public double Debut { get; }
+
+    public double Fin { get; }
+
+    public double Hauteur { get; }
+}
+
+/// <summary>Bloc plein d'un mur : position le long du mur, longueur, cote du bas et hauteur.</summary>
+public readonly struct BlocMur
+{
+    public BlocMur(double position, double longueur, double z, double hauteur)
+    {
+        Position = position;
+        Longueur = longueur;
+        Z = z;
+        Hauteur = hauteur;
+    }
+
+    public double Position { get; }
+
+    public double Longueur { get; }
+
+    public double Z { get; }
+
+    public double Hauteur { get; }
 }
 
 /// <summary>
@@ -69,7 +141,13 @@ public static class MursFacade
             if (fin - debut > Cotes.Tolerance)
             {
                 double d = face.Parametres.DistanceFacade;
-                murs.Add(new MurFacade(face.Nom, Monde(poses[i], debut, d), Monde(poses[i], fin, d), face.HauteurTotale));
+                // Passage sous chaque poutre : ouverture dans le mur, recalculée à chaque dessin (refermée si la poutre est retirée).
+                var ouvertures = GenerateurFacade.Passages(face)
+                    .Select(p => (A: Math.Max(p.X0, debut), B: Math.Min(p.X1, fin), p.HauteurLibre))
+                    .Where(p => p.B - p.A > Cotes.Tolerance)
+                    .Select(p => new OuvertureMur(Cotes.Arrondi(p.A - debut), Cotes.Arrondi(p.B - debut), p.HauteurLibre))
+                    .ToList();
+                murs.Add(new MurFacade(face.Nom, Monde(poses[i], debut, d), Monde(poses[i], fin, d), face.HauteurTotale, ouvertures));
             }
         }
 
