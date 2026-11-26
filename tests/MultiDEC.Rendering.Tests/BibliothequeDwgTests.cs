@@ -371,9 +371,18 @@ public class BibliothequeDwgTests
         _sortie.WriteLine("ES3 références : " + string.Join(" ", s.Elements.Select(e => e.Reference)
             .Where(r => r.StartsWith("HMGCESCALU", StringComparison.Ordinal) || r.StartsWith("HMPLAF", StringComparison.Ordinal) || r.StartsWith("HMPLAL", StringComparison.Ordinal))
             .GroupBy(r => r).Select(g => g.Count() + "×" + g.Key)));
+        foreach (var x in rapport.Inserts.Where(x => x.Element.Famille == Famille.Escalier))
+        {
+            var b = x.Insert.BoundingBox;
+            _sortie.WriteLine(string.Format(CultureInfo.InvariantCulture, "ES3 {0,-18} o=({1:0.00},{2:0.00},{3:0.00}) inv={4}  X {5:0.00}..{6:0.00}  Y {7:0.00}..{8:0.00}  Z {9:0.00}..{10:0.00}",
+                x.Element.Reference, x.Element.Origine.X, x.Element.Origine.Y, x.Element.Origine.Z, x.Element.Inverse, b.Min.x, b.Max.x, b.Min.y, b.Max.y, b.Min.z, b.Max.z));
+        }
+
         rendu.Rendu(ModeRendu.OmbreAretes);
         rendu.Vue(Vues.Iso);
         Image(doc, nom + "-ES3-iso");
+        rendu.Vue(Vues.Facade);
+        Image(doc, nom + "-ES3-facade");
     }
 
     /// <summary>Façade de 15 m : poutre de franchissement à 4 m sur deux mailles, pignon de +4 m sur la maille d'accès.</summary>
