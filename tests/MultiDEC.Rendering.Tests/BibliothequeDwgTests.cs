@@ -409,7 +409,7 @@ public class BibliothequeDwgTests
                 }
 
                 rendu.Exporter(f);
-                _sortie.WriteLine($"EXPORT {ext} : {new FileInfo(f).Length} octets");
+                _sortie.WriteLine($"EXPORT {ext} : {new FileInfo(f).Length} octets {rendu.DernierExport}");
             }
             catch (Exception ex)
             {

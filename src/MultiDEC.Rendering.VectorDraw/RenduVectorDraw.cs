@@ -375,6 +375,7 @@ public sealed class RenduVectorDraw
     {
         string version = _versionExport as string ?? string.Empty;
         _versionExport = null;
+        DernierExport = string.Empty;
         string ext = System.IO.Path.GetExtension(chemin).ToLowerInvariant();
         bool ok;
         if (FormatsDessin.Contains(ext))
@@ -395,7 +396,7 @@ public sealed class RenduVectorDraw
                         throw new System.IO.IOException("Copie temporaire du modèle illisible.");
                     }
 
-                    copie.Purge();
+                    DernierExport = Alleger(copie);
                     ok = Enregistrer(copie, chemin, version);
                 }
             }
@@ -419,6 +420,60 @@ public sealed class RenduVectorDraw
         {
             throw new System.IO.IOException("VectorDraw n'a pas pu écrire " + System.IO.Path.GetFileName(chemin) + ".");
         }
+    }
+
+    /// <summary>Bilan du dernier allègement (blocs avant / après), pour le diagnostic.</summary>
+    public string DernierExport { get; private set; } = string.Empty;
+
+    /// <summary>
+    /// Ne garde dans la copie que l'espace objet et les blocs qu'il insère (récursivement) : les présentations de la
+    /// bibliothèque (TES-ALU, TES-LIMON…) référencent ses blocs et empêchent Purge de les retirer.
+    /// </summary>
+    private static string Alleger(vdDocument copie)
+    {
+        int avant = copie.Blocks.Count;
+        foreach (vdLayout presentation in copie.LayOuts)
+        {
+            if (!ReferenceEquals(presentation, copie.Model))
+            {
+                presentation.Entities.RemoveAll();
+            }
+        }
+
+        var utilises = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var aVoir = new Stack<System.Collections.IEnumerable>();
+        aVoir.Push(copie.Model.Entities);
+        while (aVoir.Count > 0)
+        {
+            foreach (vdFigure f in aVoir.Pop())
+            {
+                if (f is vdInsert insert && insert.Block != null && utilises.Add(insert.Block.Name))
+                {
+                    aVoir.Push(insert.Block.Entities);
+                }
+            }
+        }
+
+        var retirer = copie.Blocks.GetType().GetMethods().FirstOrDefault(m => m.Name == "RemoveItem" && m.GetParameters().Length == 1);
+        var inutiles = new List<vdBlock>();
+        foreach (vdBlock bloc in copie.Blocks)
+        {
+            if (!utilises.Contains(bloc.Name))
+            {
+                inutiles.Add(bloc);
+            }
+        }
+
+        if (retirer != null)
+        {
+            foreach (var bloc in inutiles)
+            {
+                retirer.Invoke(copie.Blocks, new object[] { bloc });
+            }
+        }
+
+        copie.Purge();
+        return $"blocs {avant} -> {copie.Blocks.Count} (utilisés {utilises.Count}, RemoveItem {(retirer != null ? "oui" : "absent")})";
     }
 
     /// <summary>SaveAs, avec la version choisie dans la boîte de VectorDraw (DWG 2018…) si elle est donnée.</summary>
