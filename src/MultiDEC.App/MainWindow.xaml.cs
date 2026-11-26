@@ -116,6 +116,7 @@ public partial class MainWindow : Window
 
     private void ParametresParDefaut_Click(object sender, RoutedEventArgs e)
     {
+        string? ancienneBibliotheque = Vm.Defauts.Bibliotheque;
         var fenetre = new ParametresParDefautWindow(Vm.Defauts) { Owner = this };
         if (fenetre.ShowDialog() != true)
         {
@@ -131,8 +132,17 @@ public partial class MainWindow : Window
             MessageBox.Show(this, "Enregistrement impossible : " + ex.Message, "Paramètres par défaut", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
 
-        Vm.Defauts = fenetre.Resultat;
+        Vm.Defauts = fenetre.Resultat; // recharge aussi le fichier de références client
         ListeRendu(false);
+
+        // Bibliothèque par défaut nouvelle ou modifiée : chargée tout de suite, avec multidec.bib (Laurent, 26/11/2026),
+        // sans avoir à relancer MultiDEC.
+        string? bibliotheque = Vm.Defauts.Bibliotheque;
+        bool changee = !string.Equals(bibliotheque, ancienneBibliotheque, StringComparison.OrdinalIgnoreCase);
+        if (!string.IsNullOrEmpty(bibliotheque) && File.Exists(bibliotheque) && (changee || _rendu == null))
+        {
+            ChargerBibliotheque(bibliotheque);
+        }
     }
 
     private FacadeViewModel Vm => (FacadeViewModel)DataContext;
