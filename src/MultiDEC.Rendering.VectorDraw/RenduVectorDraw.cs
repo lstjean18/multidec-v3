@@ -334,7 +334,7 @@ public sealed class RenduVectorDraw
     /// <summary>Affiche tout le modèle, centré (bouton « Zoom tout »).</summary>
     /// <summary>Formats proposés si la boîte d'enregistrement de VectorDraw n'est pas disponible.</summary>
     public const string FiltreExport =
-        "AutoCAD DWG (*.dwg)|*.dwg|AutoCAD DXF (*.dxf)|*.dxf|PDF (*.pdf)|*.pdf|VectorDraw (*.vdml)|*.vdml|VectorDraw compressé (*.vdcl)|*.vdcl|SVG (*.svg)|*.svg|Image PNG (*.png)|*.png";
+        "AutoCAD DWG (*.dwg)|*.dwg|AutoCAD DXF (*.dxf)|*.dxf|PDF (*.pdf)|*.pdf|VectorDraw (*.vdml)|*.vdml|VectorDraw compressé (*.vdcl)|*.vdcl|Image PNG (*.png)|*.png";
 
     /// <summary>
     /// Boîte d'enregistrement de VectorDraw (GetSaveFileNameDlg, comme la v2) : nom du fichier choisi, ou null si
