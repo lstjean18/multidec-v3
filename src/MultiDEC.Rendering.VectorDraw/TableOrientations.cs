@@ -26,6 +26,13 @@ public sealed class OrientationBloc
     /// </summary>
     public double RotationX { get; set; }
 
+    /// <summary>
+    /// Rotation du bloc lui-même autour de la verticale, en degrés, juste après le relevage et avant les symétries
+    /// (sens inversé, face intérieure) : pour un bloc dessiné tourné dans la bibliothèque. Volée HMESCALU300200 de
+    /// « Blocs 3D - Echafaudage.dwg » du 26/11/2026 : longueur selon -Y au lieu de +X (relevé serveur) → +90°.
+    /// </summary>
+    public double RotationZBloc { get; set; }
+
     /// <summary>Retourne le bloc (symétrie de son axe Z local) quand l'élément est côté intérieur.</summary>
     public bool MiroirFaceInterieure { get; set; }
 
@@ -87,6 +94,7 @@ public sealed class TableOrientations
         new OrientationBloc { Prefixe = "HMESCALU17510088D", RotationX = -90 },
         new OrientationBloc { Prefixe = "HMESCALU25020088D", RotationX = -90 },
         new OrientationBloc { Prefixe = "HMESCALU30020088D", RotationX = -90 },
+        new OrientationBloc { Prefixe = "HMESCALU300200", RotationZBloc = 90 },
     });
 
     /// <summary>
@@ -132,6 +140,11 @@ public sealed class TableOrientations
         if (r != null && Math.Abs(r.RotationX) > 1e-9)
         {
             m = Matrices.Produit(Matrices.RotationX(r.RotationX), m);
+        }
+
+        if (r != null && Math.Abs(r.RotationZBloc) > 1e-9)
+        {
+            m = Matrices.Produit(Matrices.RotationZ(r.RotationZBloc), m);
         }
 
         // 2. Symétries (appliquées dans le repère relevé : l'axe Z local est devenu -Y monde).

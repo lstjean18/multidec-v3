@@ -1024,6 +1024,17 @@ public class GenerateurFacadeTests
         Assert.Equal("HMPLAL100602TR", References.TrappeAcier(0.70));
         Assert.Equal("HMPLAL100650TR", References.TrappeAcier(1.05));
         Assert.Empty(biblio.Manquantes(new[] { "HMGCESCALU300", "HMPLAL100602TR", "HMPLAL100650TR", "HMPLAF3003NF", "HMPLAF3003NF-AC" }));
+
+        // Escalier en maille de 3 m : garde-corps HMGCESCALU300 (2,00 m en plan), extrémité au bout du garde-corps.
+        var projet = ProjetStructure.Nouveau(face: new ParametresFacade { LongueurTotaleSouhaitee = 12, LongueurMaillePreferee = 3.0, HauteurDernierPlancher = 6, NombreAcces = 0 });
+        projet.S1.Mailles[0].Type = TypeMaille.Escalier;
+        projet.S1.Mailles[0].Longueur = 3.0;
+        var s = GenerateurStructure.Generer(projet);
+        Assert.DoesNotContain(s.Alertes, a => a.Contains("garde-corps de volée"));
+        Assert.Contains(s.Elements, e => e.Reference == "HMGCESCALU300");
+        var extremitesPied = s.Elements.Where(e => e.Reference == "HMGCESCALUEXTR" && Math.Abs(e.Origine.Z - 1.0) < 0.01).ToList();
+        Assert.NotEmpty(extremitesPied);
+        Assert.All(extremitesPied, e => Assert.Equal(2.5, e.Origine.X, 2));
     }
 
     [Fact]

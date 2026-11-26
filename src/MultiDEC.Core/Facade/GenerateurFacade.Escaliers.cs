@@ -323,7 +323,8 @@ public sealed partial class GenerateurFacade
 
         // Demi-escalier : garde-corps côté maille seulement (le côté extérieur est tenu par les lisses de la tour).
         var cotesGc = demi ? new[] { Cotes.Arrondi(yv + largeurVolee) } : new[] { yv, Cotes.Arrondi(yv + largeurVolee) };
-        double longueurGc = montee < 1.5 ? 0.75 : 1.5;
+        // Longueur en plan du garde-corps de volée : 0,75 (volée de 1 m), 1,50 (HMGCESCALU200), 2,00 m (HMGCESCALU300, maille de 3 m).
+        double longueurGc = montee < 1.5 ? 0.75 : Cotes.Egal(lm, 3.0) ? 2.0 : 1.5;
         double sens = miroir ? -1 : 1;
         double xHaut = miroir ? x1 : x0;
         foreach (double y in cotesGc)
