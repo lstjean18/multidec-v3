@@ -172,6 +172,7 @@ public class BibliothequeDwgTests
         SousMailles(rendu, doc, Path.GetFileNameWithoutExtension(fichier));
         PoutreEtPignon(rendu, doc, Path.GetFileNameWithoutExtension(fichier));
         Escaliers(rendu, doc, Path.GetFileNameWithoutExtension(fichier));
+        Escalier3m(rendu, doc, Path.GetFileNameWithoutExtension(fichier));
         VolumiqueEtHauteurs(rendu, doc, Path.GetFileNameWithoutExtension(fichier));
         AngleEnL(rendu, doc, Path.GetFileNameWithoutExtension(fichier));
     }
@@ -351,6 +352,30 @@ public class BibliothequeDwgTests
         Image(doc, nom + "-ES-cote");
     }
 
+    /// <summary>
+    /// Bibliothèque du 26/11/2026 : escalier en maille de 3,00 m (garde-corps HMGCESCALU300), plateaux Anti Contamination NF
+    /// (HMPLAF…3NF-AC) et trappes acier de 1,00 m (HMPLAL100602TR).
+    /// </summary>
+    private void Escalier3m(RenduVectorDraw rendu, vdDocument doc, string nom)
+    {
+        var projet = ProjetStructure.Nouveau(face: new ParametresFacade { LongueurTotaleSouhaitee = 12, LongueurMaillePreferee = 3.0, HauteurDernierPlancher = 6, NombreAcces = 1 });
+        projet.General.Plateaux = GammePlateaux.AntiContaminationNF;
+        projet.AppliquerGeneraux();
+        var face = projet.S1;
+        face.Parametres.TrappesAcier = true;
+        face.Mailles[0].Type = TypeMaille.Escalier;
+        face.Mailles[0].Longueur = 3.0;
+        var s = GenerateurStructure.Generer(projet);
+        var rapport = rendu.Dessiner(s, TableOrientations.ParDefaut());
+        _sortie.WriteLine($"ES3 : mailles {string.Join(" ", face.Mailles)} ; {rapport.Inseres} insérés, manquants : {string.Join(", ", rapport.BlocsManquants)} ; alertes : {string.Join(" | ", s.Alertes)}");
+        _sortie.WriteLine("ES3 références : " + string.Join(" ", s.Elements.Select(e => e.Reference)
+            .Where(r => r.StartsWith("HMGCESCALU", StringComparison.Ordinal) || r.StartsWith("HMPLAF", StringComparison.Ordinal) || r.StartsWith("HMPLAL", StringComparison.Ordinal))
+            .GroupBy(r => r).Select(g => g.Count() + "×" + g.Key)));
+        rendu.Rendu(ModeRendu.OmbreAretes);
+        rendu.Vue(Vues.Iso);
+        Image(doc, nom + "-ES3-iso");
+    }
+
     /// <summary>Façade de 15 m : poutre de franchissement à 4 m sur deux mailles, pignon de +4 m sur la maille d'accès.</summary>
     private void PoutreEtPignon(RenduVectorDraw rendu, vdDocument doc, string nom)
     {
@@ -424,7 +449,7 @@ public class BibliothequeDwgTests
         var table = TableOrientations.ParDefaut();
         var verticaux = new[] { "HMCALEBOIS", "HMSOCREG", "HMSOCREG800", "HMSOCROU", "HMSOCROU200-1200", "HMSOCROUFC", "HMVERORI38780", "HMVERORI38500B019", "HMEMB", "HMSUPSUNI", "HMCOLLEV", "VSZ10070", "VEF10", "OECGOUP8S", "HMGCAPPROSUP", "HMCOLF49", "HMPIQLIS-E", "HMMONTGCE", "HMPOTDP10", "HMPOT10", "HMPOTETAE10E" };
         var long_x = new[] { "HMPORTILLONPLIN070", "HMPORTILLONPLIN100", "HMPARGRA", "HMTOG200", "HMCROCHE", "HMECH100LIS", "HMPOUT500", "HMPTRL250", "HMLISR250", "HMLIS250", "HMTRAP250", "HMPLAA250", "HMTRA070", "HMGCAPPRO-C", "HMGCAPPROGC200", "HMPOUT500E", "HMTUB300", "HMESCALU250200", "HMESCALU300200", "HMESCALU175100", "HMESCALU25020088D", "HMESCALU17510088D", "HMGCESCALU200", "HMGCESCALU100", "HMGCESCALUEXTR", "HMESCHA2515LIM", "HMESCHADEPLIM", "HMPLALECHELLE",
-            "HMPLA250298CL6", "HMPLAF2503NF", "HMPLAF2503CL6-AC", "HMPLAF2502CL6", "HMPLA1503CL6" };
+            "HMPLA250298CL6", "HMPLAF2503NF", "HMPLAF2503NF-AC", "HMPLAF2502CL6", "HMPLAF2502CL6-AC", "HMGCESCALU300", "HMPLAL100602TR", "HMPLAL100650TR", "HMPLA1503CL6" };
         // Consoles (axe Y, vers la façade) : point le plus bas sous le plancher, pour le renfoncement du mur (point 45).
         var consoles = new[] { "HMCON300", "HMTRA030", "HMCON400E", "HMCON700E", "HMCON700EE", "HMCON750EE", "HMCON1000E", "HMCON1050E", "HMCON1050EE" };
         foreach (var (refs, axe) in new[] { (verticaux, Axe.Z), (long_x, Axe.X), (consoles, Axe.Y) })

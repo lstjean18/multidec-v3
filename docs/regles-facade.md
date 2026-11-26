@@ -37,7 +37,7 @@ Les points marqués **[à valider]** sont des choix faits en v3 faute de règle 
 - Console dont la maille voisine n'a pas de console au même niveau (ou en bout de façade, si l'about de ce côté est demandé) :
   garde-corps d'about en lisses (lisse + sous-lisse de la largeur de la console) au bout de la console (Laurent, 23/11/2026).
 - Les garde-corps d'about ont un sens : l'about gauche (x = 0) est le miroir de l'about droit (Laurent, 23/11/2026).
-- Plateaux : 2 (0,70/0,75) ou 3 (1,00/1,05) plateaux de 0,30. Gammes : Optissimo, Standard, Standard NF (HMPLAF…CL6, par défaut) et Anti Contamination NF (HMPLAF…CL6-AC) ; la gamme alu/bois est supprimée (Laurent, 23/11/2026).
+- Plateaux : 2 (0,70/0,75) ou 3 (1,00/1,05) plateaux de 0,30. Gammes : Optissimo, Standard, Standard NF (HMPLAF…CL6, par défaut) et Anti Contamination NF (HMPLAF…3NF-AC) ; la gamme alu/bois est supprimée (Laurent, 23/11/2026).
 - Accès : trappe HMPLAL…602TR / 650TR (+EC > 2 m) côté intérieur, sens alterné par niveau, échelle si maille ≤ 2 m, 2 plateaux de départ au pied du 1er accès, lisse de sécurité 1,50 m au-dessus des plateaux : lisse ordinaire dans le plan des poteaux, montée sur les rosaces (tous les 0,50 m), sans collier.
 - Niveau « accès seul » (au-dessus du sol) : chaque maille a une lisse des deux côtés, façade et extérieur (validé par Laurent le 23/11/2026).
 - Plateaux au niveau 0 : lisses de pied des deux côtés de la maille (validé le 23/11/2026). Maille de jonction (carré
@@ -116,7 +116,7 @@ Les points marqués **[à valider]** sont des choix faits en v3 faute de règle 
 ## Remarques 23 à 34 (codées le 24/11/2026 au soir)
 
 - **Bibliothèque** : « Blocs 3D - Echafaudage.dwg » (catalogue `catalogue/blocs-3D-echafaudage.txt`). Standard NF = HMPLAF…3NF,
-  Anti Contamination NF = HMPLAF…3CL6-AC, compléments de 0,20 m = HMPLAF…2CL6 dans les deux gammes.
+  Anti Contamination NF = HMPLAF…3NF-AC, compléments de 0,20 m = HMPLAF…2CL6 (Standard NF) / HMPLAF…2CL6-AC (bibliothèque du 26/11).
 - **Consoles** : liste par modèle et fixation en bout (platine : ni poteau ni garde-corps ; chape/nipple : poteau 1 m + garde-corps),
   `CatalogueConsoles`.
 - **Maille plus haute que sa maille rapportée** : la partie qui dépasse reçoit les garde-corps des paramètres.

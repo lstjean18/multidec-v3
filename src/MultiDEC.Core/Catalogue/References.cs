@@ -103,9 +103,15 @@ public static class References
     public static string Volee(double longueurMaille, double montee, bool large) =>
         "HMESCALU" + (montee < 1.5 ? "175" : Cotes.EnCm3(longueurMaille)) + Cotes.EnCm3(montee) + (large ? "88D" : string.Empty);
 
-    /// <summary>Garde-corps de volée (HMGCESCALU200 / 100) ; seule la maille de 2,50 m en a un dans la bibliothèque.</summary>
+    /// <summary>
+    /// Garde-corps de volée : HMGCESCALU100 (volée de 1 m), HMGCESCALU200 (maille de 2,50 m), HMGCESCALU300 (maille de 3,00 m,
+    /// bibliothèque du 26/11/2026) ; pas d'autre longueur dans la bibliothèque.
+    /// </summary>
     public static string? GardeCorpsVolee(double longueurMaille, double montee) =>
-        montee < 1.5 ? "HMGCESCALU100" : Cotes.Egal(longueurMaille, 2.5) ? "HMGCESCALU200" : null;
+        montee < 1.5 ? "HMGCESCALU100"
+        : Cotes.Egal(longueurMaille, 2.5) ? "HMGCESCALU200"
+        : Cotes.Egal(longueurMaille, 3.0) ? "HMGCESCALU300"
+        : null;
 
     /// <summary>Extrémité de garde-corps de volée (pied de la première volée, haut de la dernière).</summary>
     public const string GardeCorpsVoleeExtremite = "HMGCESCALUEXTR";
@@ -189,7 +195,8 @@ public static class References
                 return variante == 1 ? "HMPLAF" + l + "3NF" : "HMPLAF" + l + "2CL6";
 
             case GammePlateaux.AntiContaminationNF:
-                return variante == 1 ? "HMPLAF" + l + "3CL6-AC" : "HMPLAF" + l + "2CL6";
+                // Bibliothèque du 26/11/2026 : HMPLAF…3NF-AC (ex-…3CL6-AC), compléments HMPLAF…2CL6-AC.
+                return variante == 1 ? "HMPLAF" + l + "3NF-AC" : "HMPLAF" + l + "2CL6-AC";
 
             default:
                 throw new ArgumentOutOfRangeException(nameof(gamme), gamme, null);
@@ -204,11 +211,11 @@ public static class References
 
     /// <summary>Plateau à trappe : HMPLAL + longueur + 602TR (largeurs « rondes ») ou 650TR (0,75 / 1,05), + EC au-delà de 2 m.</summary>
     /// <summary>
-    /// Trappe de 1,00 m de l'option « trappes et plateaux acier » (v2 : HMPLAL100602TR, absent de la
-    /// bibliothèque actuelle, remplacé par HMPLAL100596TR ; HMPLAL100TR pour les mailles larges, à confirmer).
+    /// Trappe de 1,00 m de l'option « trappes et plateaux acier » (v2) : HMPLAL100602TR, ou HMPLAL100650TR pour les mailles
+    /// de 0,75 / 1,05 m (bibliothèque du 26/11/2026).
     /// </summary>
     public static string TrappeAcier(double largeurMaille) =>
-        Cotes.Egal(largeurMaille, 1.05) || Cotes.Egal(largeurMaille, 0.75) ? "HMPLAL100TR" : "HMPLAL100596TR";
+        Cotes.Egal(largeurMaille, 1.05) || Cotes.Egal(largeurMaille, 0.75) ? "HMPLAL100650TR" : "HMPLAL100602TR";
 
     /// <summary>Portillon d'about (v2) : HMPORTILLONPLIN + largeur en cm (070, 075, 100, 105).</summary>
     public static string Portillon(double largeur) => "HMPORTILLONPLIN" + Cotes.EnCm3(largeur);

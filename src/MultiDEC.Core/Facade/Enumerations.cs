@@ -88,7 +88,7 @@ public enum GammePlateaux
     /// <summary>« Standard NF » (ancien « Portugais », HMPLAF…3NF).</summary>
     StandardNF,
 
-    /// <summary>« Anti Contamination NF » (ancien « Portugais antidérapant », HMPLAF…CL6-AC).</summary>
+    /// <summary>« Anti Contamination NF » (ancien « Portugais antidérapant », HMPLAF…NF-AC).</summary>
     AntiContaminationNF,
 }
 

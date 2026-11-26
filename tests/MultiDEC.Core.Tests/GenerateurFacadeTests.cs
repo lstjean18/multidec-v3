@@ -90,7 +90,7 @@ public class GenerateurFacadeTests
         int acces = face.Mailles.Count(m => m.Type == TypeMaille.Acces);
         int niveaux = face.Niveaux.Count(n => n.Hauteur >= 2);
 
-        Assert.Equal(acces * niveaux, Nb(s, "HMPLAL100596TR"));
+        Assert.Equal(acces * niveaux, Nb(s, "HMPLAL100602TR"));
         Assert.Equal(acces * niveaux, Nb(s, "HMTIP070"));
         Assert.DoesNotContain(s.Elements, e => e.Reference.StartsWith("HMPLAL250", StringComparison.Ordinal));
         Assert.DoesNotContain(s.Elements, e => e.Axe == Axe.X && e.Reference.StartsWith("HMGCSE", StringComparison.Ordinal)); // abouts inchangés (v2)
@@ -1003,16 +1003,27 @@ public class GenerateurFacadeTests
     }
 
     [Theory]
-    [InlineData(GammePlateaux.StandardNF, "HMPLAF2503NF")]
-    [InlineData(GammePlateaux.AntiContaminationNF, "HMPLAF2503CL6-AC")]
-    public void Plateaux_NF_de_la_bibliotheque_du_24_11(GammePlateaux gamme, string courant)
+    [InlineData(GammePlateaux.StandardNF, "HMPLAF2503NF", "HMPLAF2502CL6")]
+    [InlineData(GammePlateaux.AntiContaminationNF, "HMPLAF2503NF-AC", "HMPLAF2502CL6-AC")]
+    public void Plateaux_NF_de_la_bibliotheque_du_24_11(GammePlateaux gamme, string courant, string complement)
     {
-        // Laurent 24/11/2026 : Standard NF = HMPLAF…3NF ; compléments de 0,20 m = HMPLAF…2CL6 dans les deux gammes NF.
+        // Laurent 24/11/2026 : Standard NF = HMPLAF…3NF, compléments HMPLAF…2CL6 ;
+        // bibliothèque du 26/11 : Anti Contamination NF = HMPLAF…3NF-AC, compléments HMPLAF…2CL6-AC.
         var biblio = BibliothequeBlocs.DepuisFichier("blocs-3D-echafaudage.txt");
         var s = GenerateurFacade.Generer(Standard(p => { p.Plateaux = gamme; p.LargeurMaille = 1.0; }));
         Assert.Contains(s.Elements, e => e.Reference == courant);
-        Assert.Equal("HMPLAF2502CL6", References.Plateau(gamme, 2.5, 0.70, 2));
+        Assert.Equal(complement, References.Plateau(gamme, 2.5, 0.70, 2));
         Assert.Empty(biblio.Manquantes(s.Elements.Where(e => e.Famille == Famille.Plateau).Select(e => e.Reference)));
+    }
+
+    [Fact]
+    public void Bibliotheque_du_26_11_trappes_1m_et_garde_corps_de_volee_3m()
+    {
+        var biblio = BibliothequeBlocs.DepuisFichier("blocs-3D-echafaudage.txt");
+        Assert.Equal("HMGCESCALU300", References.GardeCorpsVolee(3.0, 2.0));
+        Assert.Equal("HMPLAL100602TR", References.TrappeAcier(0.70));
+        Assert.Equal("HMPLAL100650TR", References.TrappeAcier(1.05));
+        Assert.Empty(biblio.Manquantes(new[] { "HMGCESCALU300", "HMPLAL100602TR", "HMPLAL100650TR", "HMPLAF3003NF", "HMPLAF3003NF-AC" }));
     }
 
     [Fact]
