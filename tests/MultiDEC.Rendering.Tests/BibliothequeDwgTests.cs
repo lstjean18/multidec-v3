@@ -371,6 +371,14 @@ public class BibliothequeDwgTests
         _sortie.WriteLine("ES3 références : " + string.Join(" ", s.Elements.Select(e => e.Reference)
             .Where(r => r.StartsWith("HMGCESCALU", StringComparison.Ordinal) || r.StartsWith("HMPLAF", StringComparison.Ordinal) || r.StartsWith("HMPLAL", StringComparison.Ordinal))
             .GroupBy(r => r).Select(g => g.Count() + "×" + g.Key)));
+        foreach (var g in rapport.Inserts.Where(x => x.Element.Famille is Famille.Trappe or Famille.Plateau).GroupBy(x => x.Element.Reference + " inv=" + x.Element.Inverse + " face=" + x.Element.Face + " axe=" + x.Element.Axe))
+        {
+            var x = g.First();
+            var b = x.Insert.BoundingBox;
+            _sortie.WriteLine(string.Format(CultureInfo.InvariantCulture, "ES3P {0,-40} {1,3}  o=({2:0.00},{3:0.00},{4:0.00})  X {5:0.00}..{6:0.00}  Y {7:0.00}..{8:0.00}  Z {9:0.00}..{10:0.00}",
+                g.Key, g.Count(), x.Element.Origine.X, x.Element.Origine.Y, x.Element.Origine.Z, b.Min.x, b.Max.x, b.Min.y, b.Max.y, b.Min.z, b.Max.z));
+        }
+
         foreach (var x in rapport.Inserts.Where(x => x.Element.Famille == Famille.Escalier))
         {
             var b = x.Insert.BoundingBox;
