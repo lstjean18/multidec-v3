@@ -467,9 +467,15 @@ public sealed partial class GenerateurFacade
                 }
             }
 
+            // Plancher avec trappe ou plateau d'accès (maille d'accès dès 2 m, maille de travail plus haute que ses voisines) :
+            // plinthe obligatoire de chaque côté protégé (point 53, Laurent 26/11/2026), aussi au-dessus du dernier plancher.
+            bool avecTrappe = z >= 2.0 - Cotes.Tolerance && !surPoutre
+                && (m.Type == TypeMaille.Acces || (m.EstTravail && n.Type == TypePlancher.Complet && AccesParTrappe(index, z)));
+
             if (z >= 0.5 - Cotes.Tolerance && !sansPlancher)
             {
-                var plintheExt = n.EstAccesSeul ? TypePlinthe.Sans : PlintheExterieure(index);
+                var plintheExt = avecTrappe ? PlintheObligatoire(PlintheExterieure(index), SecuriteExterieure(index))
+                    : n.EstAccesSeul ? TypePlinthe.Sans : PlintheExterieure(index);
                 if (CarreDAngleInverse(index))
                 {
                     // Structure inversée : le côté extérieur du carré d'angle donne sur le bout de la face précédente (passage).
@@ -493,7 +499,8 @@ public sealed partial class GenerateurFacade
                 if (console == null && !(index == 0 && _p.CarreDAngleEnTete && !_p.CarreDAngleInverse))
                 {
                     var secuInt = surPoutre ? GardeCorpsSurPoutre(SecuriteInterieure(index)) : GardeCorpsSurLissePorteuse(SecuriteInterieure(index), lm, porteuse);
-                    PlacerGardeCorps(secuInt, PlintheInterieure(index), x0, 0, z, lm, Face.Interieure, num);
+                    var plintheInt = avecTrappe ? PlintheObligatoire(PlintheInterieure(index), SecuriteInterieure(index)) : PlintheInterieure(index);
+                    PlacerGardeCorps(secuInt, plintheInt, x0, 0, z, lm, Face.Interieure, num);
                 }
             }
 
@@ -522,6 +529,17 @@ public sealed partial class GenerateurFacade
                         // Maille plus haute que ses voisines (Laurent, 24/11/2026) : plateau d'accès pour y monter.
                         PlacerPlancherTrappe(x0, lm, 0, _l, z, num, inverseTrappe);
                         inverseTrappe = !inverseTrappe;
+
+                        // Lisse à 1,50 m du plancher de départ de l'échelle, de chaque côté protégé (point 53).
+                        if (SecuriteExterieure(index) != TypeSecurite.Sans && !CarreDAngleInverse(index))
+                        {
+                            Ajouter(lisse, Famille.Lisse, new Point3(x0, -_l, z - 0.5), Axe.X, Face.Exterieure, num);
+                        }
+
+                        if (SecuriteInterieure(index) != TypeSecurite.Sans && console == null)
+                        {
+                            Ajouter(lisse, Famille.Lisse, new Point3(x0, 0, z - 0.5), Axe.X, Face.Interieure, num);
+                        }
                     }
                     else if (PlateauxSelonY(index) && !surPoutre)
                     {
@@ -644,6 +662,13 @@ public sealed partial class GenerateurFacade
         TypeSecurite.GardeCorpsAbout => "d'about",
         _ => type.ToString(),
     };
+
+    /// <summary>
+    /// Plinthe d'un plancher à trappe (point 53) : celle des paramètres, ou à défaut celle qui va avec la protection
+    /// (MDS 2 → bois, lisses → axées) ; aucune s'il n'y a pas de protection de ce côté.
+    /// </summary>
+    private static TypePlinthe PlintheObligatoire(TypePlinthe plinthe, TypeSecurite securite) =>
+        securite == TypeSecurite.Sans || plinthe != TypePlinthe.Sans ? plinthe : ReglePlinthes.Proposer(securite) ?? TypePlinthe.Axees;
 
     private void PlacerGardeCorps(TypeSecurite type, TypePlinthe plinthe, double x0, double y, double z, double lm, Face face, int num)
     {
