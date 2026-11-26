@@ -37,8 +37,8 @@ public sealed class OrientationBloc
     public bool MiroirFaceInterieure { get; set; }
 
     /// <summary>
-    /// Retourne toujours le bloc (symétrie de son axe Z local). Sert aux plateaux HMPLA / HMPLAF et aux trappes HMPLAL,
-    /// dessinés avec la largeur vers -Z.
+    /// Retourne toujours le bloc (symétrie de son axe Z local). Sert aux plateaux HMPLA / HMPLAF et aux trappes
+    /// HMPLAL100602TR / 650TR, dessinés avec la largeur vers -Z, alors que les autres HMPLAL l'ont vers +Z.
     /// </summary>
     public bool MiroirZ { get; set; }
 
@@ -82,9 +82,11 @@ public sealed class TableOrientations
     public static TableOrientations ParDefaut() => new TableOrientations(new[]
     {
         new OrientationBloc { Prefixe = "HMPLA", MiroirZ = true },
-        // Trappes HMPLAL : largeur vers +Z dans l'ancienne bibliothèque, vers -Z comme les plateaux dans « Blocs 3D -
-        // Echafaudage.dwg » (relevé serveur du 26/11/2026 : trappes côté façade, Y 0..+0,59, au lieu de -0,59..0).
-        new OrientationBloc { Prefixe = "HMPLAL", MiroirZ = true },
+        new OrientationBloc { Prefixe = "HMPLAL", MiroirZ = false },
+        // Trappes de 1,00 m ajoutées à la bibliothèque le 26/11/2026 : largeur vers -Z comme les plateaux, alors que les
+        // autres HMPLAL l'ont vers +Z (relevé serveur : trappes côté façade, Y 0..+0,59, au lieu de -0,59..0).
+        new OrientationBloc { Prefixe = "HMPLAL100602TR", MiroirZ = true },
+        new OrientationBloc { Prefixe = "HMPLAL100650TR", MiroirZ = true },
         new OrientationBloc { Prefixe = "HMGCSE", MiroirFaceInterieure = true },
         new OrientationBloc { Prefixe = "HMGCSE070", MiroirFaceInterieure = true, RetourneEnLong = true },
         new OrientationBloc { Prefixe = "HMGCSE075", MiroirFaceInterieure = true, RetourneEnLong = true },

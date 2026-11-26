@@ -391,6 +391,16 @@ public class BibliothequeDwgTests
         Image(doc, nom + "-ES3-iso");
         rendu.Vue(Vues.Facade);
         Image(doc, nom + "-ES3-facade");
+
+        // Même façade en 1,05 m de large : trappe HMPLAL100650TR.
+        face.Parametres.LargeurMaille = 1.05;
+        var s105 = GenerateurStructure.Generer(projet);
+        var r105 = rendu.Dessiner(s105, TableOrientations.ParDefaut());
+        foreach (var g in r105.Inserts.Where(x => x.Element.Famille is Famille.Trappe or Famille.Plateau).GroupBy(x => x.Element.Reference + " inv=" + x.Element.Inverse))
+        {
+            var b = g.First().Insert.BoundingBox;
+            _sortie.WriteLine(string.Format(CultureInfo.InvariantCulture, "ES3L {0,-40} {1,3}  Y {2:0.00}..{3:0.00}", g.Key, g.Count(), b.Min.y, b.Max.y));
+        }
     }
 
     /// <summary>Façade de 15 m : poutre de franchissement à 4 m sur deux mailles, pignon de +4 m sur la maille d'accès.</summary>

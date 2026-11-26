@@ -241,8 +241,11 @@ public class PlateauxOrientationTests
     public void Trappe_alu_largeur_vers_l_exterieur()
     {
         var e = new ElementPlace("HMPLAL250602TREC", Famille.Trappe, new Point3(0, -0.025, 2), Axe.X);
-        // Bibliothèque « Blocs 3D - Echafaudage.dwg » : largeur des trappes vers -Z local, comme les plateaux (relevé du 26/11/2026).
-        var p = Matrices.Appliquer(TableOrientations.ParDefaut().Matrice(e), 0, 0, -0.596);
+        var p = Matrices.Appliquer(TableOrientations.ParDefaut().Matrice(e), 0, 0, 0.596);
         Assert.Equal(-0.621, p.Y, 3);
+
+        // Trappes de 1,00 m de la bibliothèque du 26/11/2026 : largeur vers -Z local, comme les plateaux.
+        var t = new ElementPlace("HMPLAL100602TR", Famille.Trappe, new Point3(0, -0.025, 2), Axe.X);
+        Assert.Equal(-0.621, Matrices.Appliquer(TableOrientations.ParDefaut().Matrice(t), 0, 0, -0.596).Y, 3);
     }
 }
