@@ -54,3 +54,33 @@ public class Remarques53a54Tests
         }
     }
 }
+
+public class PiecesSupprimeesTests
+{
+    [Fact]
+    public void Pieces_supprimees_retirees_a_chaque_generation_et_enregistrees_dans_le_mdc3()
+    {
+        // Point 54 : une suppression au clic droit est gardée dans le projet ; le .mdc3 rouvert donne la même structure.
+        var projet = ProjetStructure.Nouveau(face: new ParametresFacade { LongueurTotaleSouhaitee = 10, HauteurDernierPlancher = 4 });
+        var s = GenerateurStructure.Generer(projet);
+        var cible = s.Elements.First(e => e.Famille == Famille.Plinthe);
+        projet.PiecesSupprimees.Add(PieceSupprimee.De(cible));
+
+        var json = MultiDEC.Core.Persistance.FichierProjet.VersJson(projet);
+        var rouvert = MultiDEC.Core.Persistance.FichierProjet.DepuisJson(json);
+        Assert.Single(rouvert.PiecesSupprimees);
+        var s2 = GenerateurStructure.Generer(rouvert);
+        Assert.Equal(s.Elements.Count - 1, s2.Elements.Count);
+        Assert.DoesNotContain(s2.Elements, e => PieceSupprimee.De(cible).Designe(e));
+        Assert.Contains(s2.Alertes, a => a.Contains("supprimée(s) à la main"));
+    }
+
+    [Fact]
+    public void Piece_supprimee_qui_ne_correspond_plus_est_signalee()
+    {
+        var projet = ProjetStructure.Nouveau(face: new ParametresFacade { LongueurTotaleSouhaitee = 10, HauteurDernierPlancher = 4 });
+        projet.PiecesSupprimees.Add(new PieceSupprimee { NomFace = "S1", Reference = "HMPOT20", X = 99, Y = 0, Z = 0, Axe = Axe.Z });
+        var s = GenerateurStructure.Generer(projet);
+        Assert.Contains(s.Alertes, a => a.Contains("ne correspondent plus"));
+    }
+}

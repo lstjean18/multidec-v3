@@ -193,6 +193,8 @@
         <MenuItem Header="_Enregistrer" Click="Enregistrer_Click" />
         <MenuItem Header="Enregistrer _sous…" Click="EnregistrerSous_Click" />
         <Separator />
+        <MenuItem Header="E_xporter le modèle…" Click="ExporterModele_Click" ToolTip="Modèle 3D en DWG, DXF, PDF… (formats de VectorDraw)" />
+        <Separator />
         <MenuItem Header="_Quitter" Click="Quitter_Click" />
       </MenuItem>
       <MenuItem Header="_Affichage">

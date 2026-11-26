@@ -836,10 +836,17 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
         }
 
         _structure = _structure.SansElements(retires);
+        _projet.PiecesSupprimees.AddRange(retires.Select(PieceSupprimee.De)); // enregistrées dans le .mdc3 (point 54)
         CalculerDecompte();
         Notifier(nameof(Structure));
         Notifier(nameof(Resume));
     }
+
+    /// <summary>Nombre de pièces supprimées à la main dans le dessin (enregistrées dans le projet).</summary>
+    public int NombrePiecesSupprimees => _projet.PiecesSupprimees.Count;
+
+    /// <summary>Remet toutes les pièces supprimées à la main (le dessin est à refaire).</summary>
+    public void RetablirPiecesSupprimees() => _projet.PiecesSupprimees.Clear();
 
     /// <summary>Nouveau projet avec les paramètres par défaut de l'utilisateur.</summary>
     public void Nouveau()

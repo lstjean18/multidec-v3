@@ -423,6 +423,14 @@ public partial class MainWindow : Window
         supprimer.Click += (_, _) => SupprimerSelection();
         menu.Items.Add(supprimer);
         menu.Items.Add(new System.Windows.Forms.ToolStripSeparator());
+        var retablir = new System.Windows.Forms.ToolStripMenuItem("Rétablir les pièces supprimées");
+        retablir.Click += (_, _) =>
+        {
+            Vm.RetablirPiecesSupprimees();
+            Dessiner_Click(this, new RoutedEventArgs());
+        };
+        menu.Items.Add(retablir);
+        menu.Items.Add(new System.Windows.Forms.ToolStripSeparator());
         var zoom = new System.Windows.Forms.ToolStripMenuItem("Zoom tout");
         zoom.Click += (_, _) => _rendu?.ZoomTout();
         menu.Items.Add(zoom);
@@ -437,6 +445,9 @@ public partial class MainWindow : Window
             int n = _rendu?.NombreSelectionnes ?? 0;
             supprimer.Enabled = n > 0;
             supprimer.Text = n > 1 ? $"Supprimer les {n} blocs sélectionnés" : "Supprimer la sélection";
+            int supprimees = Vm.NombrePiecesSupprimees;
+            retablir.Enabled = supprimees > 0;
+            retablir.Text = supprimees > 0 ? $"Rétablir les pièces supprimées ({supprimees})" : "Rétablir les pièces supprimées";
 
             var point = _vd!.BaseControl.PointToClient(System.Windows.Forms.Control.MousePosition);
             var element = _rendu?.ElementDesigne(point);
@@ -585,7 +596,50 @@ public partial class MainWindow : Window
             catch (Exception ex)
             {
                 MessageBox.Show(this, ex.Message, "Ouvrir", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
             }
+
+            // Le modèle 3D enregistré (structure + pièces supprimées + abouts remplacés) est redessiné tel quel (point 54).
+            if (_rendu != null && Vm.PremiereFaceAValider() < 0)
+            {
+                Dessiner_Click(this, new RoutedEventArgs());
+            }
+        }
+    }
+
+    /// <summary>
+    /// Fichier > Exporter le modèle (point 54) : boîte d'enregistrement de VectorDraw (formats et versions qu'il sait écrire :
+    /// DWG, DXF, PDF, VDML…), sinon une boîte standard.
+    /// </summary>
+    private void ExporterModele_Click(object sender, RoutedEventArgs e)
+    {
+        if (_rendu == null || Vm.Structure == null)
+        {
+            MessageBox.Show(this, "Dessinez d'abord la structure (bouton Dessiner).", "Exporter le modèle", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+
+        string nom = Path.GetFileNameWithoutExtension(Vm.CheminFichier ?? "MultiDEC");
+        string? chemin = _rendu.DemanderFichierExport(nom);
+        if (chemin == null)
+        {
+            var dlg = new SaveFileDialog { FileName = nom, Filter = RenduVectorDraw.FiltreExport };
+            chemin = dlg.ShowDialog(this) == true ? dlg.FileName : null;
+        }
+
+        if (string.IsNullOrEmpty(chemin))
+        {
+            return;
+        }
+
+        try
+        {
+            _rendu.Exporter(chemin!);
+            MessageBox.Show(this, "Modèle exporté : " + chemin, "Exporter le modèle", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(this, "Export impossible : " + ex.Message, "Exporter le modèle", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
 

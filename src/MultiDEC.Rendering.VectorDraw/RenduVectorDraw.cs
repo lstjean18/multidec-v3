@@ -332,6 +332,53 @@ public sealed class RenduVectorDraw
     }
 
     /// <summary>Affiche tout le modèle, centré (bouton « Zoom tout »).</summary>
+    /// <summary>Formats proposés si la boîte d'enregistrement de VectorDraw n'est pas disponible.</summary>
+    public const string FiltreExport =
+        "AutoCAD DWG (*.dwg)|*.dwg|AutoCAD DXF (*.dxf)|*.dxf|PDF (*.pdf)|*.pdf|VectorDraw (*.vdml)|*.vdml|VectorDraw compressé (*.vdcl)|*.vdcl|SVG (*.svg)|*.svg|Image PNG (*.png)|*.png";
+
+    /// <summary>
+    /// Boîte d'enregistrement de VectorDraw (GetSaveFileNameDlg, comme la v2) : nom du fichier choisi, ou null si
+    /// abandon ou boîte indisponible. Appelée par réflexion, sa signature variant selon les versions.
+    /// </summary>
+    public string? DemanderFichierExport(string nomParDefaut)
+    {
+        var methode = _doc.GetType().GetMethods().FirstOrDefault(m => m.Name == "GetSaveFileNameDlg" && m.GetParameters().Length == 2);
+        if (methode == null)
+        {
+            return null;
+        }
+
+        try
+        {
+            var args = new object?[] { nomParDefaut, null };
+            var nom = methode.Invoke(_doc, args) as string;
+            _versionExport = args[1];
+            return string.IsNullOrEmpty(nom) ? string.Empty : nom;
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+    }
+
+    private object? _versionExport;
+
+    /// <summary>Enregistre le modèle dessiné dans le format donné par l'extension (DWG, DXF, PDF, VDML…).</summary>
+    public void Exporter(string chemin)
+    {
+        // Version choisie dans la boîte de VectorDraw (DWG 2018…) : SaveAs(nom, version) quand la surcharge existe.
+        var avecVersion = _versionExport == null ? null : _doc.GetType().GetMethods()
+            .FirstOrDefault(m => m.Name == "SaveAs" && m.GetParameters().Length == 2 && m.GetParameters()[1].ParameterType.IsInstanceOfType(_versionExport));
+        bool ok = avecVersion != null
+            ? avecVersion.Invoke(_doc, new[] { chemin, _versionExport }) is true
+            : _doc.SaveAs(chemin);
+        _versionExport = null;
+        if (!ok || !System.IO.File.Exists(chemin))
+        {
+            throw new System.IO.IOException("VectorDraw n'a pas pu écrire " + System.IO.Path.GetFileName(chemin) + ".");
+        }
+    }
+
     public void ZoomTout()
     {
         _doc.Model.ZoomExtents();

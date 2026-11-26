@@ -73,6 +73,9 @@ public sealed class ProjetStructure
     /// <summary>Faces de la structure, S1 d'abord.</summary>
     public List<FaceEchafaudage> Faces { get; set; } = new List<FaceEchafaudage>();
 
+    /// <summary>Pièces supprimées à la main dans le dessin (point 54) : retirées à chaque génération, enregistrées dans le .mdc3.</summary>
+    public List<PieceSupprimee> PiecesSupprimees { get; set; } = new List<PieceSupprimee>();
+
     /// <summary>Nombre de faces imposé par la forme.</summary>
     public static int NombreDeFaces(FormeStructure forme) => forme switch
     {

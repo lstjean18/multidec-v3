@@ -392,6 +392,31 @@ public class BibliothequeDwgTests
         rendu.Vue(Vues.Facade);
         Image(doc, nom + "-ES3-facade");
 
+        // Point 54 : export du modèle dans les formats de VectorDraw.
+        _sortie.WriteLine("EXPORT méthodes : " + string.Join(" | ", doc.GetType().GetMethods()
+            .Where(m => m.Name is "SaveAs" or "GetSaveFileNameDlg" or "Purge" || m.Name.StartsWith("Export", StringComparison.Ordinal))
+            .Select(m => m.Name + "(" + string.Join(", ", m.GetParameters().Select(p => p.ParameterType.Name)) + ")")));
+        var dossierExport = Path.Combine(Path.GetTempPath(), "multidec-export");
+        Directory.CreateDirectory(dossierExport);
+        foreach (var ext in new[] { ".dwg", ".dxf", ".pdf", ".vdml", ".vdcl", ".svg", ".png", ".emf", ".dgn", ".stl" })
+        {
+            var f = Path.Combine(dossierExport, nom + "-ES3" + ext);
+            try
+            {
+                if (File.Exists(f))
+                {
+                    File.Delete(f);
+                }
+
+                rendu.Exporter(f);
+                _sortie.WriteLine($"EXPORT {ext} : {new FileInfo(f).Length} octets");
+            }
+            catch (Exception ex)
+            {
+                _sortie.WriteLine($"EXPORT {ext} : échec ({ex.GetBaseException().Message})");
+            }
+        }
+
         // Même façade en 1,05 m de large : trappe HMPLAL100650TR.
         face.Parametres.LargeurMaille = 1.05;
         var s105 = GenerateurStructure.Generer(projet);

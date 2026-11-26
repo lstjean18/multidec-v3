@@ -133,6 +133,14 @@ public static class GenerateurStructure
             }
         }
 
+        if (projet.PiecesSupprimees.Count > 0)
+        {
+            int orphelines = PieceSupprimee.Retirer(elements, projet.PiecesSupprimees);
+            alertes.Add(orphelines == 0
+                ? $"{projet.PiecesSupprimees.Count} pièce(s) supprimée(s) à la main dans le dessin (clic droit > Rétablir les pièces supprimées pour les remettre)."
+                : $"{projet.PiecesSupprimees.Count} pièce(s) supprimée(s) à la main, dont {orphelines} qui ne correspondent plus à la structure (paramètres modifiés depuis) : ignorée(s).");
+        }
+
         return new StructureFacade(elements, new BilanAmarrages(amarrages, Cotes.Arrondi(surface), mini, note), alertes.Distinct().ToList());
     }
 
