@@ -114,7 +114,7 @@
   <figure><img src="images/ihm/ruban.png" alt=""></figure>
   <table>
     <tr><th style="width:22%">Groupe</th><th>Commandes</th></tr>
-    <tr><td>Projet</td><td><span class="ui">Nouveau</span>, <span class="ui">Ouvrir</span>, <span class="ui">Enregistrer</span> un projet .mdc3.</td></tr>
+    <tr><td>Projet</td><td><span class="ui">Nouveau</span>, <span class="ui">Ouvrir</span>, <span class="ui">Enregistrer</span> un projet .mdc3. Le menu <span class="ui">Fichier &gt; Exporter le modèle…</span> enregistre le dessin 3D dans un format de VectorDraw.</td></tr>
     <tr><td>Structure</td><td><span class="ui">Valider la structure</span> : recalcule la proposition de la face active (le voyant passe au vert). <span class="ui">Dessiner</span> : génère toute la structure en 3D, le décompte et les amarrages.</td></tr>
     <tr><td>Vue</td><td><span class="ui">Zoom tout</span> et les vues normalisées : <span class="ui">Iso</span>, <span class="ui">Façade</span>, <span class="ui">Dessus</span>, <span class="ui">Côté gauche</span>, <span class="ui">Côté droit</span>.</td></tr>
     <tr><td>Affichage</td><td>Mode de rendu (Filaire, Lignes cachées, Ombré, Ombré + arêtes, Réaliste), axes filaires (toujours affichés), case <span class="ui">Dessiner façade</span> pour représenter le mur du bâtiment.</td></tr>
@@ -278,6 +278,7 @@
   <ul>
     <li>Une maille d'accès mesure <b>1,50 m au moins</b> : la grille ne propose pas de longueur plus courte pour une maille d'accès, et une maille d'accès plus courte est refusée au dessin. Avec une maille préférée de 0,70 ou 1,00 m, les accès sont proposés en 1,50 m.</li>
     <li>Les mailles d'accès reçoivent une trappe par niveau côté intérieur, en sens alterné, avec échelle (maille ≤ 2 m) et deux plateaux de départ au pied du premier accès.</li>
+    <li>Chaque plancher à trappe (maille d'accès, ou maille plus haute que ses voisines, y compris au-dessus du dernier plancher) a toujours une <b>plinthe</b> et une <b>lisse à 1,50 m</b> du plancher, qui protège en montant à l'échelle : côté extérieur, et aussi côté mur s'il y a un garde-corps côté mur.</li>
     <li><span class="ui">Trappes et plateaux acier</span> : trappes et plateaux en acier ; les garde-corps MDS de la face passent alors en lisses.</li>
     <li><span class="ui">Lisse GC accès 1,50 m au niveau 0</span> : lisse de sécurité au-dessus des plateaux de départ.</li>
     <li>Premier plancher entre 0,50 et 1,50 m : un portillon et une échelle sont posés à l'about de départ.</li>
@@ -448,7 +449,8 @@
   <table>
     <tr><th style="width:34%">Commande</th><th>Effet</th></tr>
     <tr><td>Remplacer l'about par</td><td>Visible sur un about ou un déport : autre protection, déport en console (liste des consoles compatibles) ou retour aux paramètres. Le dessin est refait aussitôt.</td></tr>
-    <tr><td>Supprimer la sélection</td><td>Retire les blocs sélectionnés ; le décompte suit. Cette retouche est perdue au prochain <span class="ui">Dessiner</span>.</td></tr>
+    <tr><td>Supprimer la sélection</td><td>Retire les blocs sélectionnés ; le décompte suit. Les pièces supprimées sont enregistrées avec le projet et restent retirées à chaque <span class="ui">Dessiner</span> (une alerte en donne le nombre).</td></tr>
+    <tr><td>Rétablir les pièces supprimées (N)</td><td>Visible quand des pièces ont été supprimées : les remet toutes et refait le dessin.</td></tr>
     <tr><td>Zoom tout</td><td>Recadre toute la structure.</td></tr>
   </table>
   <div class="deux">
@@ -515,16 +517,19 @@
   <div class="entete-chap"><span class="num">12</span><div><h2>Projets et suite</h2><p>Enregistrer, ouvrir, et ce qui arrive ensuite</p></div></div>
 
   <h3 id="s12-1"><span class="n">12.1</span>Enregistrer et ouvrir</h3>
-  <p>Un projet MultiDEC v3 est un fichier <b>.mdc3</b>. Il contient les réglages du projet, des faces, les grilles éditées à la main et les abouts remplacés. <span class="ui">Enregistrer sous…</span> propose la référence étude comme nom de fichier. Le dessin n'est pas enregistré : après l'ouverture, cliquer sur <span class="ui">Dessiner</span> pour le refaire, avec le décompte et les amarrages.</p>
+  <p>Un projet MultiDEC v3 est un fichier <b>.mdc3</b>. Il contient les réglages du projet, des faces, les grilles éditées à la main, les abouts remplacés et les pièces supprimées au clic droit : tout ce qu'il faut pour retrouver le même modèle 3D. <span class="ui">Enregistrer sous…</span> propose la référence étude comme nom de fichier. À l'ouverture, le modèle est redessiné automatiquement avec le décompte et les amarrages (si toutes les faces sont validées).</p>
 
-  <h3 id="s12-2"><span class="n">12.2</span>Prochaines versions</h3>
+  <h3 id="s12-2"><span class="n">12.2</span>Exporter le modèle</h3>
+  <p><span class="ui">Fichier &gt; Exporter le modèle…</span> enregistre le dessin affiché dans un fichier autonome, lisible sans MultiDEC : <b>DWG</b> et <b>DXF</b> (version AutoCAD au choix), <b>PDF</b>, <b>DGN</b>, <b>SVG</b>, <b>STL</b>, images <b>PNG</b>/<b>EMF</b>, ou formats VectorDraw (VDML, VDCL). Seuls les blocs utilisés par le modèle sont exportés, pas toute la bibliothèque.</p>
+
+  <h3 id="s12-3"><span class="n">12.3</span>Prochaines versions</h3>
   <ul>
     <li><b>Mise en plan</b> : plans cotés de la structure avec cartouche et logo client.</li>
     <li><b>PDF</b> : export du dossier.</li>
     <li><b>Devis</b> : à partir du décompte, dans la trame Excel choisie dans les Paramètres par défaut.</li>
   </ul>
 
-  <h3 id="s12-3"><span class="n">12.3</span>Lexique</h3>
+  <h3 id="s12-4"><span class="n">12.4</span>Lexique</h3>
   <dl class="lexique">
     <dt>File de poteaux</dt><dd>Alignement de poteaux verticaux. Une façade standard a une file intérieure (côté mur) et une file extérieure (côté vide).</dd>
     <dt>Maille</dt><dd>Intervalle entre deux poteaux d'une file, de 0,70 à 3,00 m.</dd>

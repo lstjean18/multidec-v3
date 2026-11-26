@@ -387,14 +387,17 @@ public sealed class RenduVectorDraw
                     throw new System.IO.IOException("Copie temporaire du modèle impossible.");
                 }
 
-                var copie = new VectorDraw.Professional.Components.vdDocumentComponent().Document;
-                if (!copie.Open(temp))
+                using (var composant = new global::VectorDraw.Professional.Components.vdDocumentComponent())
                 {
-                    throw new System.IO.IOException("Copie temporaire du modèle illisible.");
-                }
+                    var copie = composant.Document;
+                    if (!copie.Open(temp))
+                    {
+                        throw new System.IO.IOException("Copie temporaire du modèle illisible.");
+                    }
 
-                copie.Purge();
-                ok = Enregistrer(copie, chemin, version);
+                    copie.Purge();
+                    ok = Enregistrer(copie, chemin, version);
+                }
             }
             finally
             {

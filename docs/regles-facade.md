@@ -179,3 +179,13 @@ Les points marqués **[à valider]** sont des choix faits en v3 faute de règle 
 - **52** Volumique : chaque maille qui a un garde-corps sur une face reçoit une diagonale sur cette face (remplace la règle 1/5 + 1re maille du tronçon exposé du point 44) ; pas de diagonale sur un côté commun à deux modules.
   Correction (25/11, 23h54) : plus aucune diagonale en travers à l'intérieur de la structure ; diagonales seulement sur les faces
   extérieures à garde-corps (côté extérieur, côté mur, abouts).
+
+## Remarques 53 et 54 (codées le 26/11/2026)
+
+- **53** Tout plancher à trappe (maille d'accès, maille plus haute que ses voisines, niveaux au-dessus du dernier plancher
+  compris) : plinthe imposée et lisse à 1,50 m du plancher (protection en montant à l'échelle), côté extérieur, et côté mur
+  s'il y a un garde-corps côté mur. Le premier accès depuis le sol garde l'option « Lisse GC accès 1,50 m au niveau 0 ».
+- **54** Les pièces supprimées au clic droit sont enregistrées dans le .mdc3 (face, référence, position, axe) et retirées à
+  chaque génération (alerte ; alerte aussi si elles ne correspondent plus) ; « Rétablir les pièces supprimées » les remet.
+  Le .mdc3 contient donc tout ce qui refait le même modèle, redessiné à l'ouverture. Fichier > Exporter le modèle : formats
+  de VectorDraw, avec une copie purgée des blocs inutilisés pour les formats de dessin.
