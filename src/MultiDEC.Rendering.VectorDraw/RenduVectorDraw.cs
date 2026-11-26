@@ -363,20 +363,75 @@ public sealed class RenduVectorDraw
 
     private object? _versionExport;
 
-    /// <summary>Enregistre le modèle dessiné dans le format donné par l'extension (DWG, DXF, PDF, VDML…).</summary>
+    /// <summary>Formats de dessin : le document contient toute la bibliothèque, on exporte une copie purgée des blocs inutilisés.</summary>
+    private static readonly string[] FormatsDessin = { ".dwg", ".dxf", ".dgn", ".vdml", ".vdcl", ".vdf" };
+
+    /// <summary>
+    /// Enregistre le modèle dessiné dans le format donné par l'extension (DWG, DXF, PDF, VDML…). Pour les formats de dessin,
+    /// le modèle passe par une copie temporaire purgée : sans cela les 3 000 blocs de la bibliothèque partent avec
+    /// (DWG de 15 Mo, DXF de 145 Mo relevés sur le serveur le 26/11/2026).
+    /// </summary>
     public void Exporter(string chemin)
     {
-        // Version choisie dans la boîte de VectorDraw (DWG 2018…) : SaveAs(nom, version) quand la surcharge existe.
-        var avecVersion = _versionExport == null ? null : _doc.GetType().GetMethods()
-            .FirstOrDefault(m => m.Name == "SaveAs" && m.GetParameters().Length == 2 && m.GetParameters()[1].ParameterType.IsInstanceOfType(_versionExport));
-        bool ok = avecVersion != null
-            ? avecVersion.Invoke(_doc, new[] { chemin, _versionExport }) is true
-            : _doc.SaveAs(chemin);
+        string version = _versionExport as string ?? string.Empty;
         _versionExport = null;
+        string ext = System.IO.Path.GetExtension(chemin).ToLowerInvariant();
+        bool ok;
+        if (FormatsDessin.Contains(ext))
+        {
+            string temp = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "multidec-export-" + Guid.NewGuid().ToString("N") + ".vdcl");
+            try
+            {
+                if (!_doc.SaveAs(temp))
+                {
+                    throw new System.IO.IOException("Copie temporaire du modèle impossible.");
+                }
+
+                var copie = new VectorDraw.Professional.Components.vdDocumentComponent().Document;
+                if (!copie.Open(temp))
+                {
+                    throw new System.IO.IOException("Copie temporaire du modèle illisible.");
+                }
+
+                copie.Purge();
+                ok = Enregistrer(copie, chemin, version);
+            }
+            finally
+            {
+                try
+                {
+                    System.IO.File.Delete(temp);
+                }
+                catch (System.IO.IOException)
+                {
+                }
+            }
+        }
+        else
+        {
+            ok = Enregistrer(_doc, chemin, version);
+        }
+
         if (!ok || !System.IO.File.Exists(chemin))
         {
             throw new System.IO.IOException("VectorDraw n'a pas pu écrire " + System.IO.Path.GetFileName(chemin) + ".");
         }
+    }
+
+    /// <summary>SaveAs, avec la version choisie dans la boîte de VectorDraw (DWG 2018…) si elle est donnée.</summary>
+    private static bool Enregistrer(vdDocument doc, string chemin, string version)
+    {
+        if (!string.IsNullOrEmpty(version))
+        {
+            var avecVersion = doc.GetType().GetMethods().FirstOrDefault(m => m.Name == "SaveAs" && m.GetParameters().Length == 3
+                && m.GetParameters()[2].ParameterType == typeof(string));
+            if (avecVersion != null)
+            {
+                return avecVersion.Invoke(doc, new object?[] { chemin, null, version }) is true;
+            }
+        }
+
+        return doc.SaveAs(chemin);
     }
 
     public void ZoomTout()
