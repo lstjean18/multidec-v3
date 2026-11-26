@@ -114,6 +114,7 @@ public class CapturesManuelTests
             _sortie.WriteLine("Écran de démarrage non capturé : " + ex.Message);
         }
 
+        _sortie.WriteLine("Ressources de MultiDEC.exe : " + string.Join(", ", typeof(MainWindow).Assembly.GetManifestResourceNames()));
         var w = new MainWindow { WindowState = WindowState.Normal, Width = 1600, Height = 960, Left = 0, Top = 0, ShowActivated = false };
         w.Show();
         Pomper();

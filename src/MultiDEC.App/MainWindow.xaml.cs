@@ -23,7 +23,11 @@ public partial class MainWindow : Window
 {
     private const string FiltreProjet = "Projet MultiDEC v3 (*" + FichierProjet.Extension + ")|*" + FichierProjet.Extension;
 
-    private readonly vdScrollableControl.vdScrollableControl _vd = new vdScrollableControl.vdScrollableControl();
+    /// <summary>Vue 3D VectorDraw ; null si le composant n'a pas pu être créé (licence, DLL absente) : l'application s'ouvre quand même.</summary>
+    private readonly vdScrollableControl.vdScrollableControl? _vd;
+
+    /// <summary>Raison pour laquelle la vue 3D est indisponible (affichée à l'ouverture), ou null.</summary>
+    private readonly string? _erreurVectorDraw;
     private readonly TableOrientations _orientations;
     private RenduVectorDraw? _rendu;
 
@@ -36,8 +40,27 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         Title = $"MultiDEC {VersionApplication.Libelle} (build {VersionApplication.Build})";
-        HoteVectorDraw.Child = _vd;
-        MenuContextuel();
+
+        // Poste sans VectorDraw utilisable (licence, DLL) : la fenêtre s'ouvre sans vue 3D au lieu de planter (Laurent, 26/11/2026).
+        try
+        {
+            _vd = CreerVueVectorDraw();
+            HoteVectorDraw.Child = _vd;
+            MenuContextuel();
+        }
+        catch (Exception ex)
+        {
+            _vd = null;
+            _erreurVectorDraw = ex.GetBaseException().Message;
+            App.Journaliser(ex);
+            HoteVectorDraw.Child = new System.Windows.Forms.Label
+            {
+                Text = "Vue 3D indisponible : " + _erreurVectorDraw,
+                Dock = System.Windows.Forms.DockStyle.Fill,
+                TextAlign = System.Drawing.ContentAlignment.MiddleCenter,
+            };
+        }
+
         Vm.ColonnesConsolesChangees += (_, _) => ColonnesConsoles();
         ColonnesConsoles();
         Vm.Faces.CollectionChanged += (_, _) => ReconstruireOnglets();
@@ -61,6 +84,13 @@ public partial class MainWindow : Window
         ListeRendu(true);
         Loaded += (_, _) =>
         {
+            if (_erreurVectorDraw != null)
+            {
+                MessageBox.Show(this, "La vue 3D VectorDraw n'a pas pu être créée sur ce poste :\n" + _erreurVectorDraw
+                                + "\n\nMultiDEC reste utilisable pour la saisie et le décompte. Détail dans " + App.CheminJournal,
+                                "MultiDEC", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+
             string? defaut = Vm.Defauts.Bibliotheque;
             ChargerBibliotheque(!string.IsNullOrEmpty(defaut) && File.Exists(defaut) ? defaut : Reglages.CheminBibliotheque);
         };
@@ -125,11 +155,26 @@ public partial class MainWindow : Window
         return bmp;
     }
 
+    /// <summary>Création du contrôle VectorDraw dans sa propre méthode : une DLL absente lève l'erreur ici, pas dans le constructeur.</summary>
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+    private static vdScrollableControl.vdScrollableControl CreerVueVectorDraw() => new vdScrollableControl.vdScrollableControl();
+
     private void ChargerBibliotheque(string? chemin)
     {
         if (string.IsNullOrEmpty(chemin) || !File.Exists(chemin))
         {
-            TexteBibliotheque.Text = "Bibliothèque de blocs non choisie (Fichier > Bibliothèque de blocs…)";
+            TexteBibliotheque.Text = string.IsNullOrEmpty(chemin)
+                ? "Bibliothèque de blocs non choisie (Fichier > Bibliothèque de blocs…)"
+                : "Bibliothèque introuvable : " + chemin + " (Fichier > Bibliothèque de blocs…)";
+            return;
+        }
+
+        if (_vd == null)
+        {
+            // Pas de vue 3D : on garde le chemin et on charge quand même désignations et poids du décompte.
+            Reglages.CheminBibliotheque = chemin;
+            TexteBibliotheque.Text = "Bibliothèque : " + Path.GetFileName(chemin) + " (vue 3D indisponible)";
+            ChargerArticles(Path.Combine(Path.GetDirectoryName(chemin)!, CatalogueArticles.NomFichier));
             return;
         }
 
@@ -358,6 +403,11 @@ public partial class MainWindow : Window
     /// <summary>Clic droit dans le dessin : supprimer les blocs sélectionnés (le décompte suit).</summary>
     private void MenuContextuel()
     {
+        if (_vd == null)
+        {
+            return;
+        }
+
         var menu = new System.Windows.Forms.ContextMenuStrip();
         var supprimer = new System.Windows.Forms.ToolStripMenuItem("Supprimer la sélection");
         supprimer.Click += (_, _) => SupprimerSelection();
@@ -378,7 +428,7 @@ public partial class MainWindow : Window
             supprimer.Enabled = n > 0;
             supprimer.Text = n > 1 ? $"Supprimer les {n} blocs sélectionnés" : "Supprimer la sélection";
 
-            var point = _vd.BaseControl.PointToClient(System.Windows.Forms.Control.MousePosition);
+            var point = _vd!.BaseControl.PointToClient(System.Windows.Forms.Control.MousePosition);
             var element = _rendu?.ElementDesigne(point);
             bool about = element?.About != null;
             remplacer.Visible = about;

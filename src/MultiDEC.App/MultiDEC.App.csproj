@@ -36,6 +36,14 @@
     <AssemblyMetadata Include="Build" Value="$(NumeroBuild)" />
   </ItemGroup>
   <ItemGroup>
+    <!--
+      Licence d'exécution VectorDraw compilée dans l'exe (LC.exe, comme la v2 : My Project\licenses.licx). Sans elle,
+      le contrôle VectorDraw refuse de se créer sur un poste sans licence de développement (Laurent, 26/11/2026).
+    -->
+    <None Remove="Properties\licenses.licx" />
+    <EmbeddedResource Include="Properties\licenses.licx" />
+  </ItemGroup>
+  <ItemGroup>
     <Resource Include="MultiDEC.ico" />
     <!-- Écran de démarrage avec le logo MultiDEC repris de la v2 (SplashScreen1, version2024), Laurent 24/11/2026. -->
     <Resource Include="Splash.png" />

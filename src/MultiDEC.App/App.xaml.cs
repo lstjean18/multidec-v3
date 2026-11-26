@@ -32,17 +32,31 @@ public partial class App : Application
         demarrage.Show();
         demarrage.Dispatcher.Invoke(DispatcherPriority.Render, new Action(() => { }));
 
-        var fenetre = new MainWindow();
+        MainWindow fenetre;
+        try
+        {
+            fenetre = new MainWindow();
+        }
+        catch (Exception ex)
+        {
+            Journaliser(ex);
+            demarrage.Close();
+            MessageBox.Show("MultiDEC n'a pas pu démarrer : " + ex.GetBaseException().Message + "\n\nDétail enregistré dans " + CheminJournal,
+                            "MultiDEC", MessageBoxButton.OK, MessageBoxImage.Error);
+            Shutdown(1);
+            return;
+        }
+
         MainWindow = fenetre;
         ShutdownMode = ShutdownMode.OnMainWindowClose;
         fenetre.Show();
         Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, new Action(demarrage.Close));
     }
 
-    private static string CheminJournal =>
+    internal static string CheminJournal =>
         System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "MultiDEC", "erreurs.log");
 
-    private static void Journaliser(Exception? ex)
+    internal static void Journaliser(Exception? ex)
     {
         try
         {
