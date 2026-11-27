@@ -12,6 +12,7 @@ using System.Windows.Threading;
 using MultiDEC.App;
 using MultiDEC.App.ViewModels;
 using MultiDEC.Core.Facade;
+using MultiDEC.Core.Persistance;
 using MultiDEC.Rendering.VectorDraw;
 using Xunit;
 using Xunit.Abstractions;
@@ -196,10 +197,12 @@ public class CapturesManuelTests
         // Décompte modifié à la main (remarque 61) : une quantité changée, une référence ajoutée.
         if (vm.Decompte.Count > 2)
         {
-            var ligne = vm.Decompte[2];
+            var ligne = vm.Decompte[1];
             vm.ModifierQuantite(ligne.Reference, ligne.Quantite + 4);
-            var ajout = vm.Articles.Articles.FirstOrDefault(a => a.PoidsUnitaire != null && a.Reference.StartsWith("HM", StringComparison.Ordinal)
-                                                                && !vm.Decompte.Any(l => l.Reference == a.Reference));
+            // Référence de petit classement : la ligne ajoutée apparaît en haut du tableau.
+            var ajout = vm.Articles.Articles.Where(a => a.PoidsUnitaire != null && a.Classement != null && a.Reference.StartsWith("HM", StringComparison.Ordinal)
+                                                        && !vm.Decompte.Any(l => l.Reference == a.Reference))
+                                            .OrderBy(a => a.Classement).FirstOrDefault();
             if (ajout != null)
             {
                 vm.AjouterAuDecompte(ajout.Reference, 6);
@@ -217,7 +220,12 @@ public class CapturesManuelTests
         Dessin(w, Vues.Facade, "3D-consoles-facade");
 
         // 4. Paramètres par défaut.
-        var defauts = new ParametresParDefautWindow(vm.Defauts) { Width = 1100, Height = 820, ShowActivated = false, Left = 0, Top = 0 };
+        // Chemins tels qu'après une installation (bibliothèque et multidec.bib livrés, remarque 62).
+        var exemple = vm.Defauts.Copie();
+        string installe = @"C:\Users\utilisateur\AppData\Local\Programs\RETOTUB\MultiDEC v3\Bibliotheque\";
+        exemple.Bibliotheque ??= installe + ParametresParDefaut.NomBibliothequeInstallee;
+        exemple.Articles ??= installe + "multidec.bib";
+        var defauts = new ParametresParDefautWindow(exemple) { Width = 1100, Height = 820, ShowActivated = false, Left = 0, Top = 0 };
         defauts.Show();
         Pomper();
         Fenetre(defauts, "IHM-parametres-par-defaut");

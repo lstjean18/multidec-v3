@@ -238,7 +238,7 @@ public partial class MainWindow : Window
     {
         try
         {
-            Vm.Articles = !string.IsNullOrEmpty(chemin) && File.Exists(chemin) ? CatalogueArticles.Charger(chemin) : CatalogueArticles.Vide;
+            Vm.Articles = !string.IsNullOrEmpty(chemin) && File.Exists(chemin) ? CatalogueArticles.Charger(chemin!) : CatalogueArticles.Vide;
         }
         catch (Exception ex)
         {
