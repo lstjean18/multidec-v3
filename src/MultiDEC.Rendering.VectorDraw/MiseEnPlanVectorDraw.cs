@@ -42,48 +42,77 @@ public sealed class MiseEnPlanVectorDraw
 
     public List<string> Diagnostic { get; } = new List<string>();
 
+    /// <summary>Temps cumulés par étape (ms), pour la remarque 59 (lenteur de la mise en plan).</summary>
+    public Dictionary<string, long> Temps { get; } = new Dictionary<string, long>();
+
+    private readonly System.Diagnostics.Stopwatch _chrono = new System.Diagnostics.Stopwatch();
+
+    private void Mesurer(string etape, Action action)
+    {
+        _chrono.Restart();
+        action();
+        Temps[etape] = (Temps.TryGetValue(etape, out var t) ? t : 0) + _chrono.ElapsedMilliseconds;
+    }
+
     /// <summary>Crée les présentations des feuilles (les anciennes « Plan n » sont supprimées).</summary>
     public List<vdLayout> Composer(IReadOnlyList<FeuilleDessinee> feuilles)
     {
-        Supprimer();
+        Mesurer("suppression", Supprimer);
         var style = Style();
         var pages = new List<vdLayout>();
         foreach (var f in feuilles)
         {
-            var lay = new vdLayout(_doc, PrefixePresentation + f.Page.Numero);
-            lay.setDocumentDefaults();
-            _doc.LayOuts.AddItem(lay);
-            lay.World2UserMatrix = new Matrix();
-            lay.World2ViewMatrix = new Matrix();
-            lay.BkColorEx = System.Drawing.Color.White;
-            lay.VisibleOnForms = false;
-            Papier(lay, f.Format);
+            vdLayout lay = null!;
+            Mesurer("création présentation", () =>
+            {
+                lay = new vdLayout(_doc, PrefixePresentation + f.Page.Numero);
+                lay.setDocumentDefaults();
+                _doc.LayOuts.AddItem(lay);
+                lay.World2UserMatrix = new Matrix();
+                lay.World2ViewMatrix = new Matrix();
+                lay.BkColorEx = System.Drawing.Color.White;
+                lay.VisibleOnForms = false;
+            });
+            Mesurer("papier", () => Papier(lay, f.Format));
 
             foreach (var vue in f.Page.Vues)
             {
                 Fenetre(lay, vue);
             }
 
-            foreach (var p in f.Primitives)
+            Mesurer("primitives", () =>
             {
-                try
+                foreach (var p in f.Primitives)
                 {
-                    Tracer(lay, p, style);
+                    try
+                    {
+                        Tracer(lay, p, style);
+                    }
+                    catch (Exception ex)
+                    {
+                        Diagnostic.Add($"{lay.Name} : {p.GetType().Name} non tracé ({ex.GetBaseException().Message})");
+                    }
                 }
-                catch (Exception ex)
-                {
-                    Diagnostic.Add($"{lay.Name} : {p.GetType().Name} non tracé ({ex.GetBaseException().Message})");
-                }
+            });
+
+            if (ZoomPresentations)
+            {
+                Mesurer("zoom présentation", lay.ZoomExtents);
             }
 
-            lay.ZoomExtents();
-            lay.Update();
+            Mesurer("mise à jour présentation", lay.Update);
             pages.Add(lay);
         }
 
         _doc.ActiveLayOut = _doc.Model;
         return pages;
     }
+
+    /// <summary>Zoom étendu de chaque présentation (affichage à l'écran ; sans effet sur le PDF).</summary>
+    public bool ZoomPresentations { get; set; } = true;
+
+    /// <summary>Mise à jour de chaque fenêtre de vue à sa création.</summary>
+    public bool MettreAJourFenetres { get; set; } = true;
 
     /// <summary>Supprime les présentations d'une mise en plan précédente.</summary>
     public void Supprimer()
@@ -154,7 +183,8 @@ public sealed class MiseEnPlanVectorDraw
             ajouter.Invoke(tableau, new object[] { lay.Printer });
         }
 
-        var resultat = methode.Invoke(_doc, new[] { tableau, chemin });
+        object? resultat = null;
+        Mesurer("export PDF", () => resultat = methode.Invoke(_doc, new[] { tableau, chemin }));
         Diagnostic.Add($"ExportMultiPagePDF : {resultat ?? "(void)"}, {pages.Count} pages, {(File.Exists(chemin) ? new FileInfo(chemin).Length + " octets" : "pas de fichier")}");
         if (!File.Exists(chemin))
         {
@@ -235,7 +265,10 @@ public sealed class MiseEnPlanVectorDraw
         }
 
         lay.Entities.Add(vp);
-        vp.Update();
+        if (MettreAJourFenetres)
+        {
+            Mesurer("mise à jour fenêtres", vp.Update);
+        }
     }
 
     // ------------------------------------------------------------------ primitives

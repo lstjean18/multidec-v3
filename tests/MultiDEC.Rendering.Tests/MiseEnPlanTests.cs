@@ -93,8 +93,9 @@ public class MiseEnPlanTests
     }
 
     /// <summary>
-    /// Remarque 59 (Laurent, 27/11/2026, « génération des plans relativement lente ») : temps de chaque étape avec les
-    /// réglages de l'application, et variantes de l'export PDF (résolution, mode de rendu).
+    /// Remarque 59 (Laurent, 27/11/2026, « génération des plans relativement lente ») : temps de chaque étape de la
+    /// composition, variantes (sans mise à jour des fenêtres, sans zoom) et export PDF ; feuille 2 en image pour
+    /// contrôler que la variante dessine toujours les vues.
     /// </summary>
     [Theory]
     [InlineData("droite", false)]
@@ -120,34 +121,30 @@ public class MiseEnPlanTests
         }
 
         var structure = GenerateurStructure.Generer(projet);
-        Etape("génération du modèle");
         rendu.Dessiner(structure, TableOrientations.ParDefaut());
         Etape("dessin 3D");
         var cartouche = Cartouche.De(projet, structure, "MultiDEC v3 – chrono", 1234, null, o => o.ToString());
-        var plan = GenerateurPlan.Generer(projet, structure, cartouche);
-        var feuilles = MiseEnPage.Feuilles(plan);
-        Etape($"plan et habillage ({feuilles.Count} feuilles, {feuilles.Sum(f => f.Page.Vues.Count)} vues, {feuilles.Sum(f => f.Primitives.Count)} primitives)");
-        var mep = new MiseEnPlanVectorDraw(doc);
-        var pages = mep.Composer(feuilles);
-        Etape("présentations VectorDraw");
-        foreach (var (libelle, resolution, mode) in new[]
-        {
-            ("PDF ombré 300 dpi (actuel)", 300, global::VectorDraw.Render.vdRender.Mode.ShadeOn),
-            ("PDF ombré 200 dpi", 200, global::VectorDraw.Render.vdRender.Mode.ShadeOn),
-            ("PDF ombré 150 dpi", 150, global::VectorDraw.Render.vdRender.Mode.ShadeOn),
-            ("PDF lignes cachées 300 dpi", 300, global::VectorDraw.Render.vdRender.Mode.Hide),
-        })
-        {
-            if (mep.ModeVues != mode)
-            {
-                mep.ModeVues = mode;
-                pages = mep.Composer(feuilles);
-            }
+        var feuilles = MiseEnPage.Feuilles(GenerateurPlan.Generer(projet, structure, cartouche));
+        Etape($"plan ({feuilles.Count} feuilles, {feuilles.Sum(f => f.Page.Vues.Count)} vues)");
 
-            mep.Resolution = resolution;
-            string pdf = Path.Combine(Path.GetTempPath(), $"chrono-{nom}-{resolution}-{mode}.pdf");
+        foreach (var (variante, majFenetres, zoom) in new[] { ("actuel", true, true), ("sans maj fenêtres", false, true), ("sans maj ni zoom", false, false), ("actuel bis", true, true) })
+        {
+            var mep = new MiseEnPlanVectorDraw(doc) { MettreAJourFenetres = majFenetres, ZoomPresentations = zoom, Resolution = 200 };
+            var pages = mep.Composer(feuilles);
+            Etape($"composition {variante} [{string.Join(", ", mep.Temps.Select(kv => kv.Key + " " + kv.Value))}]");
+            string pdf = Path.Combine(Path.GetTempPath(), $"chrono-{nom}.pdf");
             mep.ExporterPdf(pages, pdf);
-            Etape($"{libelle} : {new FileInfo(pdf).Length / 1024} Ko");
+            Etape($"export PDF 200 dpi {variante} : {new FileInfo(pdf).Length / 1024} Ko");
+            if (variante != "actuel bis")
+            {
+                doc.ActiveLayOut = pages[1];
+                pages[1].ZoomExtents();
+                using var bmp = new Bitmap(840, 594);
+                pages[1].RenderToBitmap(bmp);
+                Fichier(Png(bmp), $"chrono-{nom}-{variante.Replace(' ', '-')}.png");
+                doc.ActiveLayOut = doc.Model;
+                Etape($"image {variante}");
+            }
         }
     }
 
