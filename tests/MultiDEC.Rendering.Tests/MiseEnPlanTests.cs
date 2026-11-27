@@ -127,15 +127,15 @@ public class MiseEnPlanTests
         var feuilles = MiseEnPage.Feuilles(GenerateurPlan.Generer(projet, structure, cartouche));
         Etape($"plan ({feuilles.Count} feuilles, {feuilles.Sum(f => f.Page.Vues.Count)} vues)");
 
-        foreach (var (variante, majFenetres, zoom) in new[] { ("actuel", true, true), ("sans maj fenêtres", false, true), ("sans maj ni zoom", false, false), ("actuel bis", true, true) })
+        foreach (var variante in new[] { "imprimante PDF", "imprimante PDF bis" })
         {
-            var mep = new MiseEnPlanVectorDraw(doc) { MettreAJourFenetres = majFenetres, ZoomPresentations = zoom, Resolution = 200 };
+            var mep = new MiseEnPlanVectorDraw(doc);
             var pages = mep.Composer(feuilles);
             Etape($"composition {variante} [{string.Join(", ", mep.Temps.Select(kv => kv.Key + " " + kv.Value))}]");
             string pdf = Path.Combine(Path.GetTempPath(), $"chrono-{nom}.pdf");
             mep.ExporterPdf(pages, pdf);
-            Etape($"export PDF 200 dpi {variante} : {new FileInfo(pdf).Length / 1024} Ko");
-            if (variante != "actuel bis")
+            Etape($"export PDF {mep.Resolution} dpi {variante} : {new FileInfo(pdf).Length / 1024} Ko [{string.Join(", ", mep.Temps.Where(kv => kv.Key.StartsWith("export", StringComparison.Ordinal)).Select(kv => kv.Key + " " + kv.Value))}]");
+            if (variante == "imprimante PDF")
             {
                 doc.ActiveLayOut = pages[1];
                 pages[1].ZoomExtents();

@@ -31,8 +31,14 @@ public sealed class MiseEnPlanVectorDraw
         _doc = document;
     }
 
-    /// <summary>Résolution des vues ombrées dans le PDF (points par pouce).</summary>
-    public int Resolution { get; set; } = 300;
+    /// <summary>
+    /// Résolution des vues ombrées dans le PDF (points par pouce). 200 dpi : export deux fois plus rapide qu'à 300 dpi
+    /// pour un rendu imprimé équivalent en A3 (remarque 59, 27/11/2026).
+    /// </summary>
+    public int Resolution { get; set; } = 200;
+
+    /// <summary>Feuilles réglées sur l'imprimante « fichier PDF » de VectorDraw plutôt que sur l'imprimante Windows.</summary>
+    public bool ImprimantePdf { get; set; } = true;
 
     /// <summary>Mode de rendu des vues (ombré + arêtes, comme l'écran).</summary>
     public global::VectorDraw.Render.vdRender.Mode ModeVues { get; set; } = global::VectorDraw.Render.vdRender.Mode.ShadeOn;
@@ -197,10 +203,18 @@ public sealed class MiseEnPlanVectorDraw
     private void Papier(vdLayout lay, FormatFeuille format)
     {
         var imprimante = lay.Printer;
-        var papier = imprimante.GetPapers().Cast<object>().Select(o => o.ToString()).FirstOrDefault(p => p == format.Nom);
+        if (ImprimantePdf)
+        {
+            // Imprimante « fichier PDF » de VectorDraw (comme la v2) : sans elle, chaque feuille interrogeait le pilote de
+            // l'imprimante Windows par défaut, 8 à 9 s par feuille sur le serveur (remarque 59, 27/11/2026).
+            Mesurer("papier : imprimante PDF", () => imprimante.PrinterName = Path.Combine(Path.GetTempPath(), "MultiDEC-plan.pdf"));
+        }
+
+        string? papier = null;
+        Mesurer("papier : liste", () => papier = imprimante.GetPapers().Cast<object>().Select(o => o.ToString()).FirstOrDefault(p => p == format.Nom));
         if (papier != null)
         {
-            imprimante.SelectPaper(papier);
+            Mesurer("papier : choix", () => imprimante.SelectPaper(papier));
         }
         else
         {
