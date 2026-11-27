@@ -107,7 +107,9 @@ if ($Signer) {
 
 # 4. Inno Setup (paquet NuGet Tools.InnoSetup, téléchargé une fois).
 $versionInno = '6.4.3'
-$outils = Join-Path $env:LOCALAPPDATA "MultiDEC-outils\innosetup-$versionInno"
+# Sous le compte Système (runner de la CI), le profil est dans C:\Windows\system32, redirigé pour ISCC (32 bits) : ProgramData.
+$baseOutils = if ($env:LOCALAPPDATA -and $env:LOCALAPPDATA -notmatch '\\system32\\') { $env:LOCALAPPDATA } else { $env:ProgramData }
+$outils = Join-Path $baseOutils "MultiDEC-outils\innosetup-$versionInno"
 $iscc = Join-Path $outils 'tools\ISCC.exe'
 if (-not (Test-Path $iscc)) {
     Write-Host "Téléchargement d'Inno Setup $versionInno…"
