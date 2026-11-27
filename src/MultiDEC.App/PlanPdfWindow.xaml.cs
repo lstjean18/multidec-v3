@@ -14,9 +14,10 @@ public partial class PlanPdfWindow : Window
     private readonly string _nomPropose;
     private readonly PdfDocument _document;
 
-    public PlanPdfWindow(string cheminPdf, string nomPropose, string info)
+    public PlanPdfWindow(string cheminPdf, string nomPropose, string info, string titre = "Mise en plan")
     {
         InitializeComponent();
+        Title = titre;
         _chemin = cheminPdf;
         _nomPropose = nomPropose;
 

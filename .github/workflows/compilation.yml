@@ -63,6 +63,10 @@ jobs:
           Write-Host "MSBuild : $msbuild"
           & $msbuild MultiDEC.sln /restore /m /nologo /v:minimal /p:Configuration=Release /p:NumeroBuild=${{ github.run_number }} /clp:Summary
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          # Contenu de la sortie de l'application (contrôle des dépendances copiées : PDFium, logos…).
+          Get-ChildItem src\MultiDEC.App\bin\Release\net48 -Recurse -File | Where-Object { $_.Extension -ne '.xml' } |
+            ForEach-Object { $_.FullName.Substring((Resolve-Path src\MultiDEC.App\bin\Release\net48).Path.Length + 1) } |
+            Where-Object { $_ -notlike 'VectorDraw*' -and $_ -notlike 'vd*' } | Sort-Object | ForEach-Object { Write-Host "SORTIE $_" }
 
       - name: Tests (serveur)
         shell: powershell
@@ -131,7 +135,7 @@ jobs:
             throw "Installateur impossible à lancer"
           }
           if ($p.ExitCode -ne 0) { Get-Content "$sortie\installation.log" -Tail 30; throw "Installation en échec ($($p.ExitCode))" }
-          foreach ($f in 'MultiDEC.exe', 'VectorDraw.Professional.dll', 'orientations-blocs.json', 'mise-a-jour.txt', 'PdfiumViewer.dll', 'x86\pdfium.dll', 'Logos\RETOTUB.png') {
+          foreach ($f in 'MultiDEC.exe', 'VectorDraw.Professional.dll', 'orientations-blocs.json', 'mise-a-jour.txt', 'PdfiumViewer.dll', 'x86\pdfium.dll', 'Logos\RETOTUB.png', 'MultiDEC-v3-Guide-utilisateur.pdf') {
             if (-not (Test-Path (Join-Path $dossier $f))) { throw "Fichier absent après installation : $f" }
           }
           Write-Host ("INSTALLATION OK : " + (Get-ChildItem $dossier -Recurse -File).Count + " fichiers dans $dossier ; installateur " + [math]::Round($setup.Length / 1MB, 1) + " Mo")

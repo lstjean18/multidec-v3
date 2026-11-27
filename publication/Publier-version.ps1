@@ -211,6 +211,12 @@ $installateur = Join-Path $Destination 'MultiDEC-v3-Setup.exe'
 $numerote = Join-Path $Destination "MultiDEC-v3-Setup-$Version.exe"
 Copy-Item $installateur $numerote -Force
 
+# Guide utilisateur (Laurent 27/11/2026 : publié avec chaque version, nom fixe). Livré aussi avec l'application.
+$manuel = Join-Path $Destination 'MultiDEC-v3-Guide-utilisateur.pdf'
+$manuelSource = Join-Path $Source 'MultiDEC-v3-Guide-utilisateur.pdf'
+if (-not (Test-Path $manuelSource)) { $manuelSource = Join-Path $racine 'docs\manuel\MultiDEC-v3-Guide-utilisateur.pdf' }
+if (Test-Path $manuelSource) { Copy-Item $manuelSource $manuel -Force } else { Write-Warning 'Guide utilisateur introuvable : il ne sera pas publié.'; $manuel = $null }
+
 # 5. Fiche de version lue par MultiDEC (version.json, à côté de l'installateur).
 $fiche = [ordered]@{
     version      = $Version
@@ -223,7 +229,7 @@ $fiche = [ordered]@{
 [IO.File]::WriteAllText((Join-Path $Destination 'version.json'), ($fiche | ConvertTo-Json), (New-Object Text.UTF8Encoding $false))
 Remove-Item $etape -Recurse -Force -ErrorAction SilentlyContinue
 
-# 6. Envoi sur le site : copie numérotée, installateur à nom fixe, puis la fiche (en dernier : un poste ne voit la
+# 6. Envoi sur le site : copie numérotée, installateur à nom fixe, guide utilisateur, puis la fiche (en dernier : un poste ne voit la
 #    nouvelle version qu'une fois son installateur en place).
 if ($Envoyer) {
     $session = New-Object WinSCP.Session
@@ -231,7 +237,7 @@ if ($Envoyer) {
     try {
         $session.Open((Options-Session $configSftp))
         $distant = $configSftp.Dossier.TrimEnd('/') + '/'
-        foreach ($f in @($numerote, $installateur, (Join-Path $Destination 'version.json'))) {
+        foreach ($f in @($numerote, $installateur, $manuel, (Join-Path $Destination 'version.json')) | Where-Object { $_ }) {
             Write-Host "Envoi de $(Split-Path $f -Leaf)…"
             $session.PutFiles($f, $distant).Check()
         }
@@ -248,4 +254,5 @@ if ($Envoyer) {
 Write-Host ''
 Write-Host "Installateur : $installateur ($([math]::Round((Get-Item $installateur).Length / 1MB, 1)) Mo)"
 Write-Host "Fiche        : $(Join-Path $Destination 'version.json')"
+if ($manuel) { Write-Host "Guide        : $manuel" }
 if (-not $Signer) { Write-Host 'Non signé : Windows SmartScreen et certains antivirus peuvent avertir à l''installation.' }
