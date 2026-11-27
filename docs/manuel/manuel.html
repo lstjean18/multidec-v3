@@ -522,24 +522,62 @@
   </div>
 </section>
 
-<!-- ===================== 12. FICHIERS ===================== -->
+<!-- ===================== 12. MISE EN PLAN ===================== -->
 <section class="chapitre" id="c12">
-  <div class="entete-chap"><span class="num">12</span><div><h2>Projets et suite</h2><p>Enregistrer, ouvrir, et ce qui arrive ensuite</p></div></div>
+  <div class="entete-chap"><span class="num">12</span><div><h2>Mise en plan</h2><p>Plans A3 cotés en PDF, affichés dans MultiDEC</p></div></div>
 
-  <h3 id="s12-1"><span class="n">12.1</span>Enregistrer et ouvrir</h3>
+  <h3 id="s12-1"><span class="n">12.1</span>Produire les plans</h3>
+  <p>Bouton <span class="ui">Mise en plan</span> du ruban (groupe <i>Sortie</i>). MultiDEC redessine la structure, compose les feuilles, écrit un PDF et l'ouvre dans sa visionneuse intégrée. Toutes les faces doivent être validées (aucun bouton rouge). Aucune installation n'est nécessaire : la visionneuse utilise le moteur PDF de Chrome (PDFium), livré avec MultiDEC.</p>
+  <p>Dans la visionneuse :</p>
+  <ul>
+    <li>zoom et défilement des pages ;</li>
+    <li><span class="ui">Enregistrer sous…</span> propose « Plan - <i>chantier</i>.pdf » ;</li>
+    <li><span class="ui">Imprimer…</span> imprime en A3 paysage ;</li>
+    <li><span class="ui">Ouvrir dans le lecteur PDF</span> ouvre le même fichier dans le lecteur du poste.</li>
+  </ul>
+
+  <h3 id="s12-2"><span class="n">12.2</span>Les feuilles</h3>
+  <p>Toutes les feuilles sont au format <b>A3 paysage</b>. Les vues sont dessinées en couleur comme à l'écran et cotées en mètres, à une échelle normalisée (1/50, 1/75, 1/100…) indiquée sous chaque vue.</p>
+  <ol>
+    <li><b>Vue de dessus</b> : mailles en chaîne et longueur de chaque face (côté extérieur), largeur de la structure et distance à la façade.</li>
+    <li><b>Élévation de chaque face</b>, vue de l'extérieur. Elle cote les mailles en chaîne et la longueur totale (en bas), ainsi que les niveaux et la hauteur totale (à gauche). Les altitudes des planchers (« +2,00 ») sont à droite. Les amarrages sont repérés par un triangle bleu et les détails par un cadre rouge avec leur lettre.</li>
+    <li><b>Profils gauche et droit</b> (bouts de la structure) : distance au mur, largeur entre files, encombrement total (consoles comprises) et niveaux.</li>
+    <li><b>Vues isométriques</b> côté extérieur et côté bâtiment, sans échelle.</li>
+    <li><b>Détails</b>, créés seulement s'ils existent : accès, escalier, poutre de franchissement, console, pare-gravois, recette, about modifié. Un détail par sorte, repéré par la même lettre sur toutes les élévations où il apparaît.</li>
+  </ol>
+  <figure><img src="images/plans/elevation.png" alt=""><figcaption><b>Élévation d'une façade de 15 m</b> : mailles et niveaux cotés, amarrages, détail A (maille d'accès), cartouche.</figcaption></figure>
+  <figure><img src="images/plans/dessus-L.png" alt=""><figcaption><b>Vue de dessus d'une structure en L</b> : chaîne des mailles et longueur de chaque face, largeur et distance à la façade.</figcaption></figure>
+  <figure><img src="images/plans/profils.png" alt=""><figcaption><b>Profils</b> : distance au mur, largeur, encombrement et niveaux, à la même échelle.</figcaption></figure>
+
+  <h3 id="s12-3"><span class="n">12.3</span>Le cartouche</h3>
+  <ul>
+    <li>Logo RETOTUB, logo du modèle (Multi-RETO ou Multi-SYSTEM) et mention « Plan établi avec MultiDEC » suivie de la version et du build.</li>
+    <li><b>Logo client</b> : l'image choisie dans les Paramètres par défaut, onglet Fichiers.</li>
+    <li><b>Projet</b> : client, chantier, référence de l'étude, date et « Établi par ». Ce nom se règle dans les Paramètres par défaut, onglet Fichiers ; à défaut, c'est le nom de session Windows.</li>
+    <li><b>Structure</b> : forme, modèle, plateaux, protections, abouts, bâche.</li>
+    <li><b>Faces</b> : longueur, hauteur et nombre d'amarrages de chaque face ; poids total du matériel. Au-delà de la hauteur réglementaire, la mention « note de calcul obligatoire » est ajoutée en rouge.</li>
+    <li>Titre de la feuille, échelle, indice et numéro de page.</li>
+  </ul>
+  <div class="encadre"><span class="titre">Bon à savoir</span><p>Le PDF de travail est écrit dans le dossier temporaire de Windows (<b>%TEMP%\MultiDEC\Plans</b>). Pour le garder, utilisez <span class="ui">Enregistrer sous…</span>.</p></div>
+</section>
+
+<!-- ===================== 12. FICHIERS ===================== -->
+<section class="chapitre" id="c13">
+  <div class="entete-chap"><span class="num">13</span><div><h2>Projets et suite</h2><p>Enregistrer, ouvrir, et ce qui arrive ensuite</p></div></div>
+
+  <h3 id="s13-1"><span class="n">13.1</span>Enregistrer et ouvrir</h3>
   <p>Un projet MultiDEC v3 est un fichier <b>.mdc3</b>. Il contient les réglages du projet, des faces, les grilles éditées à la main, les abouts remplacés et les pièces supprimées au clic droit : tout ce qu'il faut pour retrouver le même modèle 3D. <span class="ui">Enregistrer sous…</span> propose la référence étude comme nom de fichier. À l'ouverture, le modèle est redessiné automatiquement avec le décompte et les amarrages (si toutes les faces sont validées).</p>
 
-  <h3 id="s12-2"><span class="n">12.2</span>Exporter le modèle</h3>
+  <h3 id="s13-2"><span class="n">13.2</span>Exporter le modèle</h3>
   <p><span class="ui">Fichier &gt; Exporter le modèle…</span> enregistre le dessin affiché dans un fichier autonome, lisible sans MultiDEC : <b>DWG</b> et <b>DXF</b> (version AutoCAD au choix), <b>PDF</b>, <b>DGN</b>, <b>STL</b>, images <b>PNG</b>/<b>EMF</b>, ou formats VectorDraw (VDML, VDCL). Seuls les blocs utilisés par le modèle sont exportés, pas toute la bibliothèque (un DWG de façade pèse moins de 1 Mo). Le SVG, proposé par VectorDraw, ne contient pas les volumes 3D.</p>
 
-  <h3 id="s12-3"><span class="n">12.3</span>Prochaines versions</h3>
+  <h3 id="s13-3"><span class="n">13.3</span>Prochaines versions</h3>
   <ul>
-    <li><b>Mise en plan</b> : plans cotés de la structure avec cartouche et logo client.</li>
-    <li><b>PDF</b> : export du dossier.</li>
+    <li><b>PDF du décompte</b> : export du décompte avec les plans.</li>
     <li><b>Devis</b> : à partir du décompte, dans la trame Excel choisie dans les Paramètres par défaut.</li>
   </ul>
 
-  <h3 id="s12-4"><span class="n">12.4</span>Lexique</h3>
+  <h3 id="s13-4"><span class="n">13.4</span>Lexique</h3>
   <dl class="lexique">
     <dt>File de poteaux</dt><dd>Alignement de poteaux verticaux. Une façade standard a une file intérieure (côté mur) et une file extérieure (côté vide).</dd>
     <dt>Maille</dt><dd>Intervalle entre deux poteaux d'une file, de 0,70 à 3,00 m.</dd>

@@ -131,7 +131,7 @@ jobs:
             throw "Installateur impossible à lancer"
           }
           if ($p.ExitCode -ne 0) { Get-Content "$sortie\installation.log" -Tail 30; throw "Installation en échec ($($p.ExitCode))" }
-          foreach ($f in 'MultiDEC.exe', 'VectorDraw.Professional.dll', 'orientations-blocs.json', 'mise-a-jour.txt') {
+          foreach ($f in 'MultiDEC.exe', 'VectorDraw.Professional.dll', 'orientations-blocs.json', 'mise-a-jour.txt', 'PdfiumViewer.dll', 'x86\pdfium.dll', 'Logos\RETOTUB.png') {
             if (-not (Test-Path (Join-Path $dossier $f))) { throw "Fichier absent après installation : $f" }
           }
           Write-Host ("INSTALLATION OK : " + (Get-ChildItem $dossier -Recurse -File).Count + " fichiers dans $dossier ; installateur " + [math]::Round($setup.Length / 1MB, 1) + " Mo")
