@@ -225,46 +225,15 @@ public sealed class MiseEnPlanVectorDraw
         imprimante.PrintWindow = new Box(new gPoint(0, 0), new gPoint(format.Largeur, format.Hauteur));
     }
 
-    private bool _proprietesImprimanteNotees;
-
     /// <summary>
-    /// Imprimante PDF de VectorDraw (sans liste de papiers) : format imposé par sa taille, en centièmes de pouce
-    /// (A3 = 1169 x 1654), dans le sens portrait ; l'orientation est donnée par LandScape.
+    /// Imprimante PDF de VectorDraw (sans liste de papiers) : format imposé par vdPrint.paperSize, en centièmes de pouce
+    /// dans le sens portrait (A4 = 827 x 1169, A3 = 1169 x 1654) ; l'orientation est donnée par LandScape.
     /// </summary>
-    private bool TaillePapier(vdPrint imprimante, FormatFeuille format)
+    private static bool TaillePapier(vdPrint imprimante, FormatFeuille format)
     {
-        if (!_proprietesImprimanteNotees)
-        {
-            _proprietesImprimanteNotees = true;
-            Diagnostic.Add("vdPrint : " + string.Join(" ; ", imprimante.GetType().GetProperties()
-                .Where(pr => pr.GetIndexParameters().Length == 0)
-                .Select(pr =>
-                {
-                    object? v;
-                    try { v = pr.GetValue(imprimante); } catch { v = "?"; }
-                    return $"{pr.Name}:{pr.PropertyType.Name}{(pr.CanWrite ? "(rw)" : "")}={v}";
-                })));
-        }
-
-        var propriete = imprimante.GetType().GetProperty("PaperSize");
-        if (propriete == null || !propriete.CanWrite)
-        {
-            return false;
-        }
-
         int petit = (int)Math.Round(Math.Min(format.Largeur, format.Hauteur) / 25.4 * 100);
         int grand = (int)Math.Round(Math.Max(format.Largeur, format.Hauteur) / 25.4 * 100);
-        object? valeur = propriete.PropertyType == typeof(System.Drawing.Rectangle) ? new System.Drawing.Rectangle(0, 0, petit, grand)
-                       : propriete.PropertyType == typeof(System.Drawing.Size) ? new System.Drawing.Size(petit, grand)
-                       : null;
-        if (valeur == null)
-        {
-            Diagnostic.Add("vdPrint.PaperSize de type " + propriete.PropertyType.FullName + " non géré");
-            return false;
-        }
-
-        propriete.SetValue(imprimante, valeur);
-        Diagnostic.Add($"Papier {format.Nom} imposé : PaperSize = {propriete.GetValue(imprimante)}");
+        imprimante.paperSize = new System.Drawing.Rectangle(0, 0, petit, grand);
         return true;
     }
 
