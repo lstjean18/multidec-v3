@@ -4,6 +4,10 @@ Notice pour RETOTUB (27/11/2026). La CI compile et teste à chaque push, et cons
 (artefact « MultiDEC-v3-installateur-… »). Une version destinée aux utilisateurs se publie depuis le serveur de
 développement, dans la session de Laurent, avec `publication\Publier-version.ps1`.
 
+L'envoi sur le site peut aussi se faire avec **MultiDEC Admin** (onglet « Versions de MultiDEC », voir
+[administration.md](administration.md)) : construire l'installateur avec le script sans `-Envoyer`, puis le publier
+depuis l'application, qui gère aussi les licences.
+
 ## Une fois pour toutes
 
 1. Configurer l'envoi sur le site retotub.com (SFTP) :

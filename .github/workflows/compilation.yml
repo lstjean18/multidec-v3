@@ -173,3 +173,21 @@ jobs:
           name: MultiDEC-v3-${{ github.sha }}
           path: ci/src/MultiDEC.App/bin/Release/net48/
           retention-days: 14
+
+      # MultiDEC Admin (licences, publication) : copie à côté de l'application et artefact à transmettre.
+      - name: Installer MultiDEC Admin (actions-runner\MultiDEC-Admin)
+        shell: powershell
+        continue-on-error: true
+        run: |
+          $dest = Join-Path $env:GITHUB_WORKSPACE '..\..\..\MultiDEC-Admin'
+          robocopy src\MultiDEC.Admin\bin\Release\net48 $dest /MIR /NFL /NDL /NJH /R:1 /W:1
+          if ($LASTEXITCODE -ge 8) { Write-Warning "Copie incomplète : MultiDEC Admin est peut-être ouvert depuis $dest" ; exit 1 }
+          Write-Host ("MultiDEC Admin installé dans " + (Resolve-Path $dest))
+          exit 0
+
+      - name: Publier MultiDEC Admin
+        uses: actions/upload-artifact@v4
+        with:
+          name: MultiDEC-Admin-${{ github.sha }}
+          path: ci/src/MultiDEC.Admin/bin/Release/net48/
+          retention-days: 30
