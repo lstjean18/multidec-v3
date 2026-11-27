@@ -237,14 +237,24 @@ public static class GenerateurPlan
 
     private static void Chaine(VueDePlan vue, IReadOnlyList<Point2> points, Point2 direction, double decalage)
     {
+        var chaine = new List<Cote>();
         for (int k = 0; k + 1 < points.Count; k++)
         {
             var c = new Cote(points[k], points[k + 1], direction, decalage);
             if (c.Valeur > Cotes.Tolerance)
             {
-                vue.Cotes.Add(c);
+                chaine.Add(c);
             }
         }
+
+        // Textes trop longs pour leur cote : à l'extérieur de la chaîne, pas sur la cote voisine.
+        if (chaine.Count > 1)
+        {
+            chaine[0].PositionTexte = PositionTexte.Avant;
+            chaine[chaine.Count - 1].PositionTexte = PositionTexte.Apres;
+        }
+
+        vue.Cotes.AddRange(chaine);
     }
 
     // ------------------------------------------------------------------ détails

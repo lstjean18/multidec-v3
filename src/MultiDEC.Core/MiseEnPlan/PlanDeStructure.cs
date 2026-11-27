@@ -37,10 +37,26 @@ public sealed class Cote
 
     public string Texte { get; }
 
+    /// <summary>Où mettre le texte si la cote est trop courte.</summary>
+    public PositionTexte PositionTexte { get; internal set; }
+
     /// <summary>Longueur mesurée, en mètres.</summary>
     public double Valeur => Math.Abs((B - A).U * Direction.U + (B - A).V * Direction.V);
 
     public static string Format(double metres) => metres.ToString("0.00", CultureInfo.GetCultureInfo("fr-FR"));
+}
+
+/// <summary>Place du texte d'une cote trop courte pour le contenir.</summary>
+public enum PositionTexte
+{
+    /// <summary>Du côté de l'extrémité la plus éloignée du centre de la vue.</summary>
+    Auto,
+
+    /// <summary>Avant le point A (première cote d'une chaîne).</summary>
+    Avant,
+
+    /// <summary>Après le point B (dernière cote d'une chaîne).</summary>
+    Apres,
 }
 
 public enum TypeRepere

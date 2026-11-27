@@ -123,7 +123,14 @@ public sealed class MiseEnPlanVectorDraw
         var methode = typeof(vdDocument).GetMethod("ExportMultiPagePDF");
         var typeTableau = methode.GetParameters()[0].ParameterType;
         object tableau = Activator.CreateInstance(typeTableau);
-        var ajouter = typeTableau.GetMethods().First(m => m.Name == "AddItem" && m.GetParameters().Length == 1);
+        var ajouter = typeTableau.GetMethods().FirstOrDefault(m => (m.Name == "AddItem" || m.Name == "Add") && m.GetParameters().Length == 1
+                                                                   && m.GetParameters()[0].ParameterType.IsAssignableFrom(typeof(vdPrint)));
+        if (ajouter == null)
+        {
+            throw new MissingMethodException(typeTableau.FullName + " : pas de méthode d'ajout. Méthodes : "
+                + string.Join(", ", typeTableau.GetMethods().Select(m => m.Name + "(" + string.Join(",", m.GetParameters().Select(p => p.ParameterType.Name)) + ")").Distinct()));
+        }
+
         foreach (var lay in pages)
         {
             ajouter.Invoke(tableau, new object[] { lay.Printer });
@@ -159,6 +166,13 @@ public sealed class MiseEnPlanVectorDraw
     private void Fenetre(vdLayout lay, VueDePlan vue)
     {
         var p = vue.Projection;
+        if (Math.Abs(Math.Abs(p.Vers.Z) - 1) < 1e-9)
+        {
+            // Vue de dessus : avec une matrice identité la fenêtre restait vide (serveur, 27/11). Inclinaison de 1e-4 rad,
+            // invisible sur la feuille (moins d'un centième de mm).
+            p = new Projection(new Vecteur3(0, -1e-4, 1));
+        }
+
         var m = new Matrix();
         m.A00 = p.U.X; m.A01 = p.U.Y; m.A02 = p.U.Z;
         m.A10 = p.V.X; m.A11 = p.V.Y; m.A12 = p.V.Z;
@@ -247,14 +261,29 @@ public sealed class MiseEnPlanVectorDraw
         {
             case Trait t:
             {
-                var l = new vdLine(_doc, G(t.A), G(t.B)); // constructeur employé par la v2 (clMiseEnPlan)
-                l.PenWidth = t.Epaisseur;
+                // Tirets dessinés trait par trait (3 mm, jour de 1,5 mm) : indépendant des types de ligne du document.
+                var morceaux = new List<(Point2, Point2)>();
                 if (t.Tirets)
                 {
-                    Tirets(l);
+                    double longueur = (t.B - t.A).Longueur;
+                    var d = (t.B - t.A).Norme();
+                    for (double s = 0; s < longueur; s += 4.5)
+                    {
+                        morceaux.Add((t.A + d * s, t.A + d * Math.Min(s + 3, longueur)));
+                    }
+                }
+                else
+                {
+                    morceaux.Add((t.A, t.B));
                 }
 
-                Ajouter(lay, l, t.Encre);
+                foreach (var (a, b) in morceaux)
+                {
+                    var l = new vdLine(_doc, G(a), G(b)); // constructeur employé par la v2 (clMiseEnPlan)
+                    l.PenWidth = t.Epaisseur;
+                    Ajouter(lay, l, t.Encre);
+                }
+
                 break;
             }
 

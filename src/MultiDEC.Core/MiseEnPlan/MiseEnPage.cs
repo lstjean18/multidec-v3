@@ -354,10 +354,18 @@ public static class MiseEnPage
         if (largeurTexte > longueur - 1)
         {
             // Trop court : texte à l'extérieur, dans le prolongement de la ligne de cote.
-            var dirTexte = (lb - la).Norme();
             var lecture = new Point2(Math.Cos(angle * Math.PI / 180), Math.Sin(angle * Math.PI / 180));
-            bool versB = dirTexte.U * lecture.U + dirTexte.V * lecture.V > 0;
-            position = (versB ? lb : la) + lecture * ((versB ? 1 : -1) * (Depassement + 1 + largeurTexte / 2)) + haut * 0.8;
+            bool coteB = c.PositionTexte switch
+            {
+                PositionTexte.Avant => false,
+                PositionTexte.Apres => true,
+                _ => (lb - vue.Cadre.Centre).Longueur >= (la - vue.Cadre.Centre).Longueur,
+            };
+            var bout = coteB ? lb : la;
+            var autre = coteB ? la : lb;
+            var sens = (bout - autre).Norme();
+            bool memeSens = sens.U * lecture.U + sens.V * lecture.V > 0;
+            position = bout + lecture * ((memeSens ? 1 : -1) * (Depassement + 1 + largeurTexte / 2)) + haut * 0.8;
         }
 
         f.Primitives.Add(new Texte(position, c.Texte, HauteurTexteCote, Alignement.BasCentre, angle) { Encre = Encre.Cote });
