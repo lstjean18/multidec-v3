@@ -56,12 +56,14 @@ public partial class App : Application
     internal static string CheminJournal =>
         System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "MultiDEC", "erreurs.log");
 
-    internal static void Journaliser(Exception? ex)
+    internal static void Journaliser(Exception? ex) => Journaliser(ex?.ToString() ?? string.Empty);
+
+    internal static void Journaliser(string message)
     {
         try
         {
             System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(CheminJournal)!);
-            System.IO.File.AppendAllText(CheminJournal, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss}  {ex}\r\n\r\n");
+            System.IO.File.AppendAllText(CheminJournal, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss}  {message}\r\n\r\n");
         }
         catch
         {

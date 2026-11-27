@@ -88,6 +88,9 @@ public sealed class ParametresParDefaut
     /// <summary>Logo client pour le décompte, le devis et la mise en plan.</summary>
     public string? LogoClient { get; set; }
 
+    /// <summary>Nom porté dans la case « Établi par » du cartouche des plans (vide : nom de session Windows).</summary>
+    public string? EtabliPar { get; set; }
+
     public static ParametresParDefaut Usine() => new ParametresParDefaut();
 
     /// <summary>Forme écrite d'une valeur de liste : nom de l'énumération, cote « 0.70 », référence.</summary>

@@ -22,5 +22,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="orientations-blocs.json" CopyToOutputDirectory="PreserveNewest" />
+    <!-- Logos du cartouche de la mise en plan (repris de la v2, branche version2024). -->
+    <None Include="Logos\*.png" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

@@ -254,6 +254,17 @@ public sealed class ParametresParDefautViewModel : ElementParDefaut
 
     public ObservableCollection<FichierParDefaut> Fichiers { get; } = new ObservableCollection<FichierParDefaut>();
 
+    /// <summary>« Établi par » du cartouche des plans.</summary>
+    public string EtabliPar
+    {
+        get => _p.EtabliPar ?? string.Empty;
+        set
+        {
+            _p.EtabliPar = string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+            Notifier();
+        }
+    }
+
     /// <summary>Remplace les paramètres affichés (import d'un fichier, retour aux paramètres d'usine).</summary>
     public void Remplacer(ParametresParDefaut p)
     {

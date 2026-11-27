@@ -29,6 +29,12 @@
     <Reference Include="VDrawBaseControl"><HintPath>$(VectorDrawDir)VDrawBaseControl.dll</HintPath></Reference>
     <Reference Include="WindowsFormsIntegration" />
     <Reference Include="System.Net.Http" />
+    <Reference Include="System.Drawing" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Viewer PDF intégré de la mise en plan (PDFium, moteur de Chrome ; licence Apache 2.0), x86 comme l'application. -->
+    <PackageReference Include="PdfiumViewer" Version="2.13.0" />
+    <PackageReference Include="PdfiumViewer.Native.x86.v8-xfa" Version="2018.4.8.256" />
   </ItemGroup>
   <ItemGroup>
     <!-- Captures d'écran du manuel utilisateur, produites par les tests du serveur. -->

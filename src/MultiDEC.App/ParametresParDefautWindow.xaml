@@ -108,6 +108,11 @@
           </ItemsControl>
           <TextBlock TextWrapping="Wrap" Foreground="{StaticResource Discret}" Margin="0,10,0,0"
                      Text="La bibliothèque de blocs est chargée à l'ouverture du programme. La trame des devis, les références clients et le logo serviront au décompte, au devis et à la mise en plan." />
+          <DockPanel Margin="0,14,0,0">
+            <TextBlock Text="Plans : « Établi par »" Width="170" VerticalAlignment="Center" />
+            <TextBox Text="{Binding EtabliPar, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center"
+                     ToolTip="Nom porté dans le cartouche des plans (vide : nom de la session Windows)" />
+          </DockPanel>
         </StackPanel>
       </TabItem>
     </TabControl>

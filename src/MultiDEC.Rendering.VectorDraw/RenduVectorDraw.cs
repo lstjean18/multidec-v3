@@ -67,6 +67,29 @@ public sealed class RenduVectorDraw
     /// <summary>Calque créé au chargement : axes filaires des blocs qui ont aussi des volumes (masqué par défaut).</summary>
     public const string CalqueAxesMdc = "MDC-Axes";
 
+    /// <summary>Document VectorDraw affiché (mise en plan).</summary>
+    public vdDocument Document => _doc;
+
+    /// <summary>Préfixe des calques par face (« MDC-Face-S1 ») : la mise en plan gèle les autres faces dans les élévations.</summary>
+    public const string PrefixeCalqueFace = "MDC-Face-";
+
+    /// <summary>Calque des éléments d'une face, créé au besoin.</summary>
+    public vdLayer CalqueDeFace(string nomFace)
+    {
+        string nom = PrefixeCalqueFace + nomFace;
+        var calque = _doc.Layers.FindName(nom);
+        if (calque == null)
+        {
+            calque = new vdLayer();
+            calque.SetUnRegisterDocument(_doc);
+            calque.setDocumentDefaults();
+            calque.Name = nom;
+            _doc.Layers.AddItem(calque);
+        }
+
+        return calque;
+    }
+
     /// <summary>Calque des murs du bâtiment (case « Dessiner façade »).</summary>
     public const string CalqueFacade = "MDC-Facade";
 
@@ -566,6 +589,7 @@ public sealed class RenduVectorDraw
 
             ins.PenColor = new vdColor(PaletteFamilles.Couleur(e));
             ins.Label = e.NumeroMaille.ToString();
+            ins.Layer = CalqueDeFace(e.NomFace); // la mise en plan ne montre que la face de chaque élévation
             _doc.Model.Entities.AddItem(ins);
             rapport.Inserts.Add((e, ins));
         }
