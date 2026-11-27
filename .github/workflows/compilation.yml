@@ -136,7 +136,12 @@ jobs:
           }
           if ($p.ExitCode -ne 0) { Get-Content "$sortie\installation.log" -Tail 30; throw "Installation en échec ($($p.ExitCode))" }
           foreach ($f in 'MultiDEC.exe', 'VectorDraw.Professional.dll', 'orientations-blocs.json', 'mise-a-jour.txt', 'PdfiumViewer.dll', 'x86\pdfium.dll', 'Logos\RETOTUB.png', 'MultiDEC-v3-Guide-utilisateur.pdf') {
-            if (-not (Test-Path (Join-Path $dossier $f))) { throw "Fichier absent après installation : $f" }
+            if (-not (Test-Path (Join-Path $dossier $f))) {
+              Write-Host "INSTALLES : $((Get-ChildItem $dossier -Recurse -File | ForEach-Object { $_.FullName.Substring($dossier.Length + 1) }) -join ' | ')"
+              Select-String -Path "$sortie\installation.log" -Pattern ([IO.Path]::GetFileNameWithoutExtension($f)) | ForEach-Object { Write-Host "LOG $($_.Line)" }
+              Write-Host "SOURCE ETAPE : $(Test-Path (Join-Path 'src\MultiDEC.App\bin\Release\net48' $f))"
+              throw "Fichier absent après installation : $f"
+            }
           }
           Write-Host ("INSTALLATION OK : " + (Get-ChildItem $dossier -Recurse -File).Count + " fichiers dans $dossier ; installateur " + [math]::Round($setup.Length / 1MB, 1) + " Mo")
           # Mise à jour sur place (même commande que MultiDEC) : réinstallation par-dessus l'installation existante.
