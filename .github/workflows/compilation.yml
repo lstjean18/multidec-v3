@@ -94,8 +94,10 @@ jobs:
         shell: powershell
         run: |
           $sortie = Join-Path $env:GITHUB_WORKSPACE 'installateur-ci'
+          # Dossier hors du checkout, conservé d'une compilation à l'autre : on le vide pour ne pas tester un ancien installateur.
+          if (Test-Path $sortie) { Remove-Item $sortie -Recurse -Force }
           .\publication\Publier-version.ps1 -Version 3.0.0.${{ github.run_number }} -Source src\MultiDEC.App\bin\Release\net48 -Destination $sortie -AdresseMisesAJour "$sortie" -Notes 'Compilation de test'
-          $setup = Get-ChildItem $sortie -Filter 'MultiDEC-v3-Setup-*.exe' | Select-Object -First 1
+          $setup = Get-Item (Join-Path $sortie 'MultiDEC-v3-Setup-3.0.0.${{ github.run_number }}.exe')
           Get-Content (Join-Path $sortie 'version.json')
           $dossier = Join-Path $env:RUNNER_TEMP 'MultiDEC-installe'
           # Lancement refusé (« Accès refusé ») juste après la construction : antivirus qui analyse l'exe non signé ? On réessaie et on trace.

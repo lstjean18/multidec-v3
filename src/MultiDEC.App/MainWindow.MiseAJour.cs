@@ -15,12 +15,7 @@ public partial class MainWindow
 
     private void APropos_Click(object sender, RoutedEventArgs e)
     {
-        MessageBox.Show(this,
-            $"MultiDEC {VersionApplication.Libelle}\n{VersionApplication.Texte} ({MiseAJourApplication.VersionInstallee})\n\n"
-            + $"Installé dans : {AppDomain.CurrentDomain.BaseDirectory}\n"
-            + $"Mises à jour : {MiseAJourApplication.Adresse ?? "adresse non définie"}\n"
-            + $"Journal des erreurs : {App.CheminJournal}\n\n© RETOTUB",
-            "À propos de MultiDEC", MessageBoxButton.OK, MessageBoxImage.Information);
+        new AProposWindow { Owner = this }.ShowDialog();
     }
 
     /// <summary>
