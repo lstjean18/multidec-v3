@@ -93,6 +93,13 @@ jobs:
       - name: Installateur (Inno Setup) et test d'installation
         shell: powershell
         run: |
+          # Fichiers temporaires d'Inno Setup (is-*.tmp, _unins.tmp) dans le dossier du runner et non dans C:\Windows\Temp
+          # (compte SYSTEM) : l'antivirus WatchGuard y bloquait le désinstalleur non signé (Laurent, 27/11/2026).
+          $tempInno = Join-Path $env:RUNNER_TEMP 'inno-temp'
+          New-Item -ItemType Directory -Force -Path $tempInno | Out-Null
+          $env:TEMP = $tempInno
+          $env:TMP = $tempInno
+          Write-Host "TEMP : $env:TEMP"
           $sortie = Join-Path $env:GITHUB_WORKSPACE 'installateur-ci'
           # Dossier hors du checkout, conservé d'une compilation à l'autre : on le vide pour ne pas tester un ancien installateur.
           if (Test-Path $sortie) { Remove-Item $sortie -Recurse -Force }
