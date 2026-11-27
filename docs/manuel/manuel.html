@@ -558,6 +558,16 @@
     <li><b>Faces</b> : longueur, hauteur et nombre d'amarrages de chaque face ; poids total du matériel. Au-delà de la hauteur réglementaire, la mention « note de calcul obligatoire » est ajoutée en rouge.</li>
     <li>Titre de la feuille, échelle, indice et numéro de page.</li>
   </ul>
+  <h3 id="s12-4"><span class="n">12.4</span>Liste du matériel</h3>
+  <p>Bouton <span class="ui">Liste matériel</span> du ruban (groupe <i>Sortie</i>) : le décompte en PDF <b>A4 portrait</b>, ouvert dans la même visionneuse (enregistrement proposé sous « Liste matériel - <i>chantier</i>.pdf »).</p>
+  <ul>
+    <li><b>En-tête</b> : logo client (Paramètres par défaut), chantier, client, référence de l'étude et date du projet.</li>
+    <li><b>Tableau</b> : mêmes informations que l'onglet Décompte (référence, désignation, quantité, poids unitaire et total), regroupées par famille. En références client, les colonnes « Réf. client » et « Réf. RETOTUB » sont toutes deux imprimées.</li>
+    <li><b>Total</b> : nombre de références, de pièces et poids total.</li>
+    <li><b>Alertes</b> sous le tableau : celles de l'onglet Alertes, plus les références sans poids ou sans correspondance client.</li>
+    <li><b>Pied de page</b> : « Décompte réalisé avec MultiDEC v3 » et numéro de page. Une longue liste continue sur plusieurs pages, l'en-tête du tableau étant répété.</li>
+  </ul>
+  <figure><img src="images/plans/liste-materiel.png" alt="" style="width:58%"><figcaption><b>Liste du matériel</b> d'une façade de 15 m (logo RETOTUB à la place du logo client).</figcaption></figure>
   <div class="encadre"><span class="titre">Bon à savoir</span><p>Le PDF de travail est écrit dans le dossier temporaire de Windows (<b>%TEMP%\MultiDEC\Plans</b>). Pour le garder, utilisez <span class="ui">Enregistrer sous…</span>.</p></div>
 </section>
 
@@ -573,7 +583,6 @@
 
   <h3 id="s13-3"><span class="n">13.3</span>Prochaines versions</h3>
   <ul>
-    <li><b>PDF du décompte</b> : export du décompte avec les plans.</li>
     <li><b>Devis</b> : à partir du décompte, dans la trame Excel choisie dans les Paramètres par défaut.</li>
   </ul>
 
