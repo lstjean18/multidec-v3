@@ -32,8 +32,10 @@ cd C:\...\multidec-v3            # dépôt à jour (git pull)
 - L'installateur garde toujours le même nom, **`MultiDEC-v3-Setup.exe`**, car des liens du site y pointent. Le script
   en fait aussi une copie numérotée, `MultiDEC-v3-Setup-<version>.exe` : c'est elle que la fiche désigne et que la
   mise à jour télécharge, si bien qu'un poste ne récupère jamais l'installateur d'une autre version que celle annoncée.
-- Avec `-Envoyer`, les trois fichiers partent sur le site dans cet ordre : copie numérotée, installateur à nom fixe,
-  puis `version.json` en dernier (les postes ne voient la nouvelle version qu'une fois son installateur en place).
+- Le guide utilisateur (`docs\manuel\MultiDEC-v3-Guide-utilisateur.pdf`, régénéré par `docs\manuel\generer.py`) est
+  livré avec l'application (menu Aide > Guide utilisateur) et publié sous ce nom fixe à côté de l'installateur.
+- Avec `-Envoyer`, les fichiers partent sur le site dans cet ordre : copie numérotée, installateur à nom fixe, guide
+  utilisateur, puis `version.json` en dernier (les postes ne voient la nouvelle version qu'une fois son installateur en place).
   Le script relit ensuite la fiche sur le web pour vérifier qu'elle annonce bien la nouvelle version.
 - L'adresse des mises à jour écrite dans l'installateur (`mise-a-jour.txt` à côté de `MultiDEC.exe`) est l'adresse
   web du dossier suivie de `/version.json`.

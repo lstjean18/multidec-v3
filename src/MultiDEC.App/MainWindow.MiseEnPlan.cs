@@ -77,6 +77,27 @@ public partial class MainWindow
         }
     }
 
+    /// <summary>Guide utilisateur livré avec l'application, ouvert dans le viewer intégré.</summary>
+    private void Guide_Click(object sender, RoutedEventArgs e)
+    {
+        string chemin = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "MultiDEC-v3-Guide-utilisateur.pdf");
+        if (!File.Exists(chemin))
+        {
+            MessageBox.Show(this, "Le guide utilisateur est absent du dossier de MultiDEC : " + chemin, "Guide utilisateur", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+
+        try
+        {
+            new PlanPdfWindow(chemin, "MultiDEC-v3-Guide-utilisateur.pdf", "Guide utilisateur MultiDEC v3", "Guide utilisateur") { Owner = this }.Show();
+        }
+        catch (Exception ex)
+        {
+            App.Journaliser(ex);
+            MessageBox.Show(this, "Le guide n'a pas pu s'ouvrir : " + ex.GetBaseException().Message, "Guide utilisateur", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+    }
+
     /// <summary>Nom de fichier du plan : « Plan - chantier » (caractères interdits remplacés).</summary>
     internal static string NomDuPlan(string? chantier, string? client)
     {

@@ -67,6 +67,10 @@
     <!-- Écran de démarrage avec le logo MultiDEC repris de la v2 (SplashScreen1, version2024), Laurent 24/11/2026. -->
     <Resource Include="Splash.png" />
   </ItemGroup>
+  <ItemGroup>
+    <!-- Guide utilisateur livré avec l'application (menu Aide) et publié sur le site avec chaque version. -->
+    <None Include="..\..\docs\manuel\MultiDEC-v3-Guide-utilisateur.pdf" Link="MultiDEC-v3-Guide-utilisateur.pdf" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
   <!--
     Toutes les DLL VectorDraw à côté de l'exécutable, y compris celles chargées dynamiquement
     (rendu OpenGL vdrawgl, solides 3D SolidModel/slapi, conversion vdxFcnv) : sans elles,
