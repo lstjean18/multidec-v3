@@ -54,7 +54,7 @@ public class MiseAJourTests
     public void Signature_des_fichiers_de_l_application()
     {
         string exe = typeof(MiseAJourApplication).Assembly.Location;
-        string vd = typeof(VectorDraw.Professional.vdObjects.vdDocument).Assembly.Location;
+        string vd = typeof(global::VectorDraw.Professional.vdObjects.vdDocument).Assembly.Location;
         foreach (var f in new[] { exe, vd })
         {
             _sortie.WriteLine($"SIGNATURE {Path.GetFileName(f)} : signataire « {SignatureAuthenticode.Signataire(f) ?? "aucun"} », valide {SignatureAuthenticode.Valide(f)}");
