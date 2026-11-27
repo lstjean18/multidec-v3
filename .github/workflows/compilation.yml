@@ -94,7 +94,22 @@ jobs:
           $setup = Get-ChildItem $sortie -Filter 'MultiDEC-v3-Setup-*.exe' | Select-Object -First 1
           Get-Content (Join-Path $sortie 'version.json')
           $dossier = Join-Path $env:RUNNER_TEMP 'MultiDEC-installe'
-          $p = Start-Process $setup.FullName -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/CURRENTUSER', '/NOLANCEMENT=1', "/DIR=`"$dossier`"", "/LOG=`"$sortie\installation.log`"" -Wait -PassThru
+          # Lancement refusé (« Accès refusé ») juste après la construction : antivirus qui analyse l'exe non signé ? On réessaie et on trace.
+          Write-Host ("Signature : " + (Get-AuthenticodeSignature $setup.FullName).Status)
+          $p = $null
+          for ($essai = 1; $essai -le 6 -and -not $p; $essai++) {
+            try {
+              $p = Start-Process $setup.FullName -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/CURRENTUSER', '/NOLANCEMENT=1', "/DIR=`"$dossier`"", "/LOG=`"$sortie\installation.log`"" -Wait -PassThru
+            } catch {
+              Write-Warning "Essai $essai : $($_.Exception.Message)"
+              Start-Sleep -Seconds 10
+            }
+          }
+          if (-not $p) {
+            try { Get-MpThreatDetection | Select-Object -Last 3 | Format-List | Out-String | Write-Host } catch { Write-Host "Defender : $($_.Exception.Message)" }
+            Get-Acl $setup.FullName | Format-List | Out-String | Write-Host
+            throw "Installateur impossible à lancer"
+          }
           if ($p.ExitCode -ne 0) { Get-Content "$sortie\installation.log" -Tail 30; throw "Installation en échec ($($p.ExitCode))" }
           foreach ($f in 'MultiDEC.exe', 'VectorDraw.Professional.dll', 'orientations-blocs.json', 'mise-a-jour.txt') {
             if (-not (Test-Path (Join-Path $dossier $f))) { throw "Fichier absent après installation : $f" }

@@ -123,7 +123,7 @@ internal static class MiseAJourApplication
             }
         }
 
-        string? editeur = SignatureAuthenticode.Signataire(Process.GetCurrentProcess().MainModule!.FileName);
+        string? editeur = SignatureAuthenticode.Signataire(typeof(MiseAJourApplication).Assembly.Location);
         if (editeur != null)
         {
             if (!SignatureAuthenticode.Valide(cible))
