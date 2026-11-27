@@ -91,7 +91,7 @@ public class MiseEnPlanSondeTests
     [Fact]
     public void Sonde_presentation_A3_et_pdf()
     {
-        Membres(new vdLayout().Entities.GetType(), "^Add");
+        Membres(typeof(vdLayout).GetProperty("Entities").PropertyType, "^Add");
         Membres(typeof(vdPrint), "Paper|Margin|Name");
 
         var doc = new vdDocumentComponent().Document;
