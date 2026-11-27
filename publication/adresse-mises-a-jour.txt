@@ -1,3 +1,3 @@
-# Adresse de la fiche version.json des versions publiées (https://… ou dossier partagé),
-# écrite dans mise-a-jour.txt à côté de MultiDEC.exe par Publier-version.ps1.
-# À compléter quand le lieu de publication est choisi.
+# Adresse de la fiche version.json des versions publiées (https://… ou dossier partagé), écrite dans
+# mise-a-jour.txt à côté de MultiDEC.exe. Facultatif : avec -Envoyer, l'adresse web saisie dans la configuration
+# SFTP (-ReconfigurerSftp) est utilisée.

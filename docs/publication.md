@@ -6,9 +6,12 @@ développement, dans la session de Laurent, avec `publication\Publier-version.ps
 
 ## Une fois pour toutes
 
-1. Indiquer dans `publication\adresse-mises-a-jour.txt` l'adresse de la fiche `version.json` des versions publiées
-   (adresse https, ou dossier partagé). Elle est copiée dans `mise-a-jour.txt`, à côté de `MultiDEC.exe` installé :
-   c'est là que MultiDEC regarde au démarrage. Sans adresse, la version installée ne cherche pas de mise à jour.
+1. Configurer l'envoi sur le site retotub.com (SFTP) :
+   `.\publication\Publier-version.ps1 -ReconfigurerSftp`. Le script demande le serveur, le port, l'utilisateur, le mot
+   de passe, le dossier distant et l'adresse web de ce dossier, affiche l'empreinte de la clé du serveur à confirmer,
+   puis teste la connexion. Ces paramètres sont enregistrés dans `%APPDATA%\MultiDEC-publication\sftp.xml`, mot de
+   passe chiffré par Windows (lisible seulement par cet utilisateur sur ce poste) ; rien n'est mis dans le dépôt.
+   WinSCP (paquet NuGet) est téléchargé au premier envoi.
 2. Quand le certificat de signature sera disponible (Certum Cloud Code Signing via SSLmentor) : installer SimplySign
    Desktop (fichier .msi) et le SDK Windows 10 (signtool, livré avec Visual Studio 2022).
 
@@ -16,15 +19,21 @@ développement, dans la session de Laurent, avec `publication\Publier-version.ps
 
 ```powershell
 cd C:\...\multidec-v3            # dépôt à jour (git pull)
-.\publication\Publier-version.ps1 -Version 3.0.1 -Libelle "v3.0 bêta 2" -Notes "Installateur et mises à jour"
+.\publication\Publier-version.ps1 -Version 3.0.1 -Libelle "v3.0 bêta 2" -Notes "Installateur et mises à jour" -Envoyer
 ```
 
 - `-Version` : toujours plus grand que la version précédente (3.0.1, 3.0.2, 3.1.0…), c'est lui que compare la mise à jour.
-- Le script compile en Release, construit `MultiDEC-v3-Setup-<version>.exe` (Inno Setup, téléchargé au premier
-  lancement) et écrit `version.json` (version, empreinte SHA-256, notes) dans `publication\versions\`
-  (ou `-Destination`).
-- Déposer ensuite **l'installateur puis `version.json`** à l'adresse des mises à jour (dans cet ordre : un poste
-  qui lirait la fiche avant l'arrivée de l'installateur échouerait).
+- Le script compile en Release, construit l'installateur (Inno Setup, téléchargé au premier lancement) et écrit
+  `version.json` (version, empreinte SHA-256, notes) dans `publication\versions\` (ou `-Destination`).
+- L'installateur garde toujours le même nom, **`MultiDEC-v3-Setup.exe`**, car des liens du site y pointent. Le script
+  en fait aussi une copie numérotée, `MultiDEC-v3-Setup-<version>.exe` : c'est elle que la fiche désigne et que la
+  mise à jour télécharge, si bien qu'un poste ne récupère jamais l'installateur d'une autre version que celle annoncée.
+- Avec `-Envoyer`, les trois fichiers partent sur le site dans cet ordre : copie numérotée, installateur à nom fixe,
+  puis `version.json` en dernier (les postes ne voient la nouvelle version qu'une fois son installateur en place).
+  Le script relit ensuite la fiche sur le web pour vérifier qu'elle annonce bien la nouvelle version.
+- L'adresse des mises à jour écrite dans l'installateur (`mise-a-jour.txt` à côté de `MultiDEC.exe`) est l'adresse
+  web du dossier suivie de `/version.json`.
+- Sans `-Envoyer`, les fichiers restent dans `publication\versions\` pour un envoi à la main (même ordre).
 
 ### Avec signature (quand le certificat sera là)
 

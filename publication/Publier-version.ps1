@@ -17,7 +17,7 @@
 #>
 param(
     # Numéro comparable par la mise à jour : 3.0.1, 3.1.0… (toujours plus grand que la version précédente).
-    [Parameter(Mandatory = $true)][string]$Version,
+    [string]$Version = '',
     # Libellé affiché (écran de démarrage, À propos) ; par défaut « v<Version> ».
     [string]$Libelle = '',
     # Nouveautés affichées dans la proposition de mise à jour.
@@ -34,7 +34,11 @@ param(
     [string]$Horodatage = 'http://time.certum.pl',
     # Dossier de l'application déjà compilée (utilisé par la CI) ; vide = compilation ici.
     [string]$Source = '',
-    [string]$NumeroBuild = 'publication'
+    [string]$NumeroBuild = 'publication',
+    # Envoyer la version sur le site retotub.com (SFTP) : installateur à nom fixe, copie numérotée, puis version.json.
+    [switch]$Envoyer,
+    # Ressaisir les paramètres de connexion SFTP (enregistrés chiffrés dans le profil Windows).
+    [switch]$ReconfigurerSftp
 )
 
 $ErrorActionPreference = 'Stop'
@@ -49,6 +53,82 @@ if (-not $AdresseMisesAJour) {
     if (Test-Path $fichierAdresse) {
         $AdresseMisesAJour = (Get-Content $fichierAdresse | Where-Object { $_.Trim() -and -not $_.Trim().StartsWith('#') } | Select-Object -First 1)
     }
+}
+
+# Connexion SFTP (Laurent 27/11/2026 : publication sur retotub.com). Les paramètres et le mot de passe sont saisis une
+# fois et enregistrés dans le profil Windows de l'utilisateur (Export-Clixml : mot de passe chiffré DPAPI, lisible
+# uniquement par cet utilisateur sur ce poste). Rien n'est enregistré dans le dépôt.
+# Outils téléchargés (Inno Setup, WinSCP). Sous le compte Système (runner de la CI), le profil est dans
+# C:\Windows\system32, redirigé pour les programmes 32 bits (ISCC) : ProgramData.
+$baseOutils = if ($env:LOCALAPPDATA -and $env:LOCALAPPDATA -notmatch '\\system32\\') { $env:LOCALAPPDATA } else { $env:ProgramData }
+$fichierSftp = Join-Path $env:APPDATA 'MultiDEC-publication\sftp.xml'
+
+function Charger-WinSCP {
+    $versionWinScp = '6.7.1'
+    $dossier = Join-Path $baseOutils "MultiDEC-outils\winscp-$versionWinScp"
+    if (-not (Test-Path (Join-Path $dossier 'tools\WinSCP.exe'))) {
+        Write-Host "Téléchargement de WinSCP $versionWinScp…"
+        New-Item -ItemType Directory -Force -Path $dossier | Out-Null
+        $zip = Join-Path $dossier 'winscp.zip'
+        Invoke-WebRequest "https://api.nuget.org/v3-flatcontainer/winscp/$versionWinScp/winscp.$versionWinScp.nupkg" -OutFile $zip -UseBasicParsing
+        Expand-Archive $zip -DestinationPath $dossier -Force
+        Remove-Item $zip
+    }
+    Add-Type -Path (Join-Path $dossier 'lib\net40\WinSCPnet.dll')
+    return (Join-Path $dossier 'tools\WinSCP.exe')
+}
+
+function Options-Session($config) {
+    $o = New-Object WinSCP.SessionOptions -Property @{
+        Protocol              = [WinSCP.Protocol]::Sftp
+        HostName              = $config.Hote
+        PortNumber            = [int]$config.Port
+        UserName              = $config.Utilisateur
+        SecurePassword        = $config.MotDePasse
+        SshHostKeyFingerprint = $config.Empreinte
+    }
+    return $o
+}
+
+function Configurer-Sftp($winscp) {
+    Write-Host 'Paramètres de publication SFTP (enregistrés chiffrés dans votre profil Windows) :'
+    $c = [ordered]@{
+        Hote            = Read-Host 'Serveur SFTP (ex. ftp.retotub.com)'
+        Port            = Read-Host 'Port (Entrée = 22)'
+        Utilisateur     = Read-Host 'Utilisateur'
+        MotDePasse      = Read-Host 'Mot de passe' -AsSecureString
+        Dossier         = Read-Host 'Dossier distant des mises à jour (ex. /www/multidec)'
+        AdressePublique = Read-Host 'Adresse web de ce dossier (ex. https://www.retotub.com/multidec)'
+        Empreinte       = ''
+    }
+    if (-not $c.Port) { $c.Port = 22 }
+    $session = New-Object WinSCP.Session
+    $session.ExecutablePath = $winscp
+    try {
+        $o = New-Object WinSCP.SessionOptions -Property @{ Protocol = [WinSCP.Protocol]::Sftp; HostName = $c.Hote; PortNumber = [int]$c.Port }
+        $empreinte = $session.ScanFingerprint($o, 'SHA-256')
+    } finally { $session.Dispose() }
+    Write-Host "Empreinte de la clé du serveur : $empreinte"
+    if ((Read-Host 'Cette empreinte est-elle bien celle du serveur de retotub.com ? (o/n)') -ne 'o') { throw 'Configuration abandonnée' }
+    $c.Empreinte = $empreinte
+    $config = [pscustomobject]$c
+    New-Item -ItemType Directory -Force -Path (Split-Path $fichierSftp) | Out-Null
+    $config | Export-Clixml $fichierSftp
+    return $config
+}
+
+$configSftp = $null
+$winscp = $null
+if ($Envoyer -or $ReconfigurerSftp) {
+    $winscp = Charger-WinSCP
+    $configSftp = if ($ReconfigurerSftp -or -not (Test-Path $fichierSftp)) { Configurer-Sftp $winscp } else { Import-Clixml $fichierSftp }
+    # L'adresse publique du dossier donne l'adresse des mises à jour écrite dans l'installateur.
+    if (-not $AdresseMisesAJour) { $AdresseMisesAJour = $configSftp.AdressePublique.TrimEnd('/') + '/version.json' }
+    # Test de connexion avant de compiler.
+    $session = New-Object WinSCP.Session
+    $session.ExecutablePath = $winscp
+    try { $session.Open((Options-Session $configSftp)); Write-Host "Connexion SFTP OK ($($configSftp.Hote))" } finally { $session.Dispose() }
+    if (-not $Envoyer) { Write-Host 'Configuration SFTP enregistrée.'; return }
 }
 
 if ($Version -notmatch '^\d+\.\d+(\.\d+){0,2}$') { throw "Version « $Version » : attendu un numéro comme 3.0.1" }
@@ -107,8 +187,6 @@ if ($Signer) {
 
 # 4. Inno Setup (paquet NuGet Tools.InnoSetup, téléchargé une fois).
 $versionInno = '6.4.3'
-# Sous le compte Système (runner de la CI), le profil est dans C:\Windows\system32, redirigé pour ISCC (32 bits) : ProgramData.
-$baseOutils = if ($env:LOCALAPPDATA -and $env:LOCALAPPDATA -notmatch '\\system32\\') { $env:LOCALAPPDATA } else { $env:ProgramData }
 $outils = Join-Path $baseOutils "MultiDEC-outils\innosetup-$versionInno"
 $iscc = Join-Path $outils 'tools\ISCC.exe'
 if (-not (Test-Path $iscc)) {
@@ -127,19 +205,45 @@ if ($Signer) {
 }
 & $iscc @arguments (Join-Path $racine 'installateur\MultiDEC-v3.iss')
 if ($LASTEXITCODE -ne 0) { throw "Construction de l'installateur en échec ($LASTEXITCODE)" }
-$installateur = Join-Path $Destination "MultiDEC-v3-Setup-$Version.exe"
+# Nom fixe (des liens du site y pointent, Laurent 27/11/2026) + copie numérotée, téléchargée par la mise à jour :
+# un poste qui lit la fiche d'une version ne récupère jamais l'installateur d'une autre.
+$installateur = Join-Path $Destination 'MultiDEC-v3-Setup.exe'
+$numerote = Join-Path $Destination "MultiDEC-v3-Setup-$Version.exe"
+Copy-Item $installateur $numerote -Force
 
 # 5. Fiche de version lue par MultiDEC (version.json, à côté de l'installateur).
 $fiche = [ordered]@{
     version      = $Version
     libelle      = $Libelle
-    installateur = (Split-Path $installateur -Leaf)
-    sha256       = (Get-FileHash $installateur -Algorithm SHA256).Hash.ToLowerInvariant()
+    installateur = (Split-Path $numerote -Leaf)
+    sha256       = (Get-FileHash $numerote -Algorithm SHA256).Hash.ToLowerInvariant()
     date         = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
     notes        = $Notes
 }
 [IO.File]::WriteAllText((Join-Path $Destination 'version.json'), ($fiche | ConvertTo-Json), (New-Object Text.UTF8Encoding $false))
 Remove-Item $etape -Recurse -Force -ErrorAction SilentlyContinue
+
+# 6. Envoi sur le site : copie numérotée, installateur à nom fixe, puis la fiche (en dernier : un poste ne voit la
+#    nouvelle version qu'une fois son installateur en place).
+if ($Envoyer) {
+    $session = New-Object WinSCP.Session
+    $session.ExecutablePath = $winscp
+    try {
+        $session.Open((Options-Session $configSftp))
+        $distant = $configSftp.Dossier.TrimEnd('/') + '/'
+        foreach ($f in @($numerote, $installateur, (Join-Path $Destination 'version.json'))) {
+            Write-Host "Envoi de $(Split-Path $f -Leaf)…"
+            $session.PutFiles($f, $distant).Check()
+        }
+    } finally { $session.Dispose() }
+    # Contrôle : la fiche publiée sur le web est bien celle de cette version.
+    $publiee = Invoke-RestMethod ($AdresseMisesAJour + '?t=' + [DateTime]::UtcNow.Ticks) -UseBasicParsing
+    if ($publiee.version -ne $Version -or $publiee.sha256 -ne $fiche.sha256) {
+        Write-Warning "La fiche lue sur $AdresseMisesAJour ne correspond pas à la version envoyée (cache du site ou adresse publique erronée ?)."
+    } else {
+        Write-Host "Publiée : $AdresseMisesAJour annonce la version $Version."
+    }
+}
 
 Write-Host ''
 Write-Host "Installateur : $installateur ($([math]::Round((Get-Item $installateur).Length / 1MB, 1)) Mo)"

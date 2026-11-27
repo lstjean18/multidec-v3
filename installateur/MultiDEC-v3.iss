@@ -32,7 +32,8 @@ DisableProgramGroupPage=yes
 PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=commandline dialog
 OutputDir={#Sortie}
-OutputBaseFilename=MultiDEC-v3-Setup-{#Version}
+; Nom fixe : des liens du site retotub.com y pointent (le script en fait aussi une copie numérotée).
+OutputBaseFilename=MultiDEC-v3-Setup
 SetupIconFile=..\src\MultiDEC.App\MultiDEC.ico
 UninstallDisplayIcon={app}\MultiDEC.exe
 UninstallDisplayName=MultiDEC v3
