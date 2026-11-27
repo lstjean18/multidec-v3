@@ -582,13 +582,29 @@ public class GenerateurFacadeTests
         Assert.Equal(2, porteuses.Count);
         Assert.All(porteuses, e => Assert.Equal("HMLISR150", e.Reference));
         Assert.Equal(new[] { x[0], x[1] }, porteuses.Select(e => e.Origine.X).OrderBy(v => v));
+    }
 
-        // Remarque 55 : pas de diagonale en travers au travers du platelage (levée de 0 à 2 m de la maille lestée),
-        // la maille voisine sans lest garde la sienne ; au-dessus, les diagonales restent.
-        var travers = s.Elements.Where(e => e.Famille == Famille.DiagonaleVerticale && e.Axe == Axe.Y).ToList();
-        Assert.DoesNotContain(travers, e => e.NumeroMaille == 1 && e.Origine.Z < 0.5);
-        Assert.Contains(travers, e => e.NumeroMaille == 2 && e.Origine.Z < 0.5);
-        Assert.Contains(travers, e => e.NumeroMaille == 1 && Math.Abs(e.Origine.Z - 2) < 1e-6);
+    [Fact]
+    public void Lest_diagonales_en_travers_intermediaires_supprimees_abouts_conserves()
+    {
+        // Remarque 55 (Laurent, 27/11/2026) : stabilisation lestée sur 3 mailles ; dans la levée 0–2 m, les diagonales
+        // en travers intermédiaires (qui traversent les plateaux) sont supprimées, celles des deux abouts restent.
+        var face = Standard();
+        for (int i = 0; i < 3; i++)
+        {
+            face.Mailles[i].Stabilisation = 1.5;
+            face.Mailles[i].Lest = true;
+        }
+
+        var s = GenerateurFacade.Generer(face);
+        var x = face.AbscissesFiles();
+        var bas = s.Elements.Where(e => e.Famille == Famille.DiagonaleVerticale && e.Axe == Axe.Y && e.Origine.Z < 0.5)
+                            .Select(e => e.Origine.X).OrderBy(v => v).ToList();
+        Assert.Equal(2, bas.Count);
+        Assert.Equal(x[0] - GenerateurFacade.DemiTube, bas[0], 2);
+        Assert.Equal(x[3] + GenerateurFacade.DemiTube, bas[1], 2);
+        // Au-dessus du platelage, toutes les diagonales en travers restent (4 files).
+        Assert.Equal(4, s.Elements.Count(e => e.Famille == Famille.DiagonaleVerticale && e.Axe == Axe.Y && Math.Abs(e.Origine.Z - 2) < 1e-6));
     }
 
     [Fact]
