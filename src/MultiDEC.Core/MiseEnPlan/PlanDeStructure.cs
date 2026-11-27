@@ -112,6 +112,9 @@ public sealed class VueDePlan
     /// <summary>Faces dont la vue montre les éléments (null : toutes).</summary>
     public IReadOnlyCollection<string>? Faces { get; internal set; }
 
+    /// <summary>Vue isométrique (ni plan ni élévation) : ajustée à sa place, sans échelle.</summary>
+    public bool EstAxonometrique => Math.Abs(Projection.Vers.Z) > 1e-9 && Math.Abs(Math.Abs(Projection.Vers.Z) - 1) > 1e-9;
+
     public string LibelleEchelle => Echelle > 0 ? "1/" + Echelle.ToString(CultureInfo.InvariantCulture) : "sans échelle";
 
     /// <summary>Point de la vue (mètres) → point de la feuille (mm).</summary>

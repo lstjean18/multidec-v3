@@ -140,7 +140,7 @@ public class MiseEnPlanTests
         {
             Assert.True(vue.Cadre.UMin >= zone.UMin - 1e-6 && vue.Cadre.UMax <= zone.UMax + 1e-6, vue.Titre + " déborde en largeur");
             Assert.True(vue.Cadre.VMin >= zone.VMin - 1e-6 && vue.Cadre.VMax <= zone.VMax + 1e-6, vue.Titre + " déborde en hauteur");
-            if (vue.Type != TypeVue.Iso)
+            if (!vue.EstAxonometrique)
             {
                 Assert.Contains(vue.Echelle, GenerateurPlan.Echelles);
                 Proche(1000.0 / vue.Echelle, vue.MmParMetre);
@@ -182,6 +182,30 @@ public class MiseEnPlanTests
         var acces = Assert.Single(details, v => v.Titre.StartsWith("Accès", StringComparison.Ordinal));
         Assert.Equal("A", acces.Lettre);
         Assert.Contains(plan.Pages[1].Vues[0].Reperes, r => r.Type == TypeRepere.Detail && r.Texte == "A");
+    }
+
+    [Fact]
+    public void Un_detail_par_sorte_renvoye_depuis_chaque_face()
+    {
+        var projet = Droite();
+        projet.Forme = FormeStructure.EnL;
+        projet.AjusterFaces();
+        var plan = Plan(projet);
+        var details = plan.Pages.Where(p => p.Titre == "Détails").SelectMany(p => p.Vues).ToList();
+        Assert.Single(details, v => v.Titre.StartsWith("Accès", StringComparison.Ordinal));
+        foreach (var page in plan.Pages.Where(p => p.Titre.StartsWith("Élévation", StringComparison.Ordinal)))
+        {
+            Assert.Contains(page.Vues[0].Reperes, r => r.Type == TypeRepere.Detail && r.Texte == "A");
+        }
+    }
+
+    [Fact]
+    public void Vues_iso_sans_echelle_plans_et_elevations_a_l_echelle()
+    {
+        var plan = Plan(Droite());
+        Assert.All(plan.Vues.Where(v => v.EstAxonometrique), v => Assert.Equal(0, v.Echelle));
+        Assert.All(plan.Vues.Where(v => !v.EstAxonometrique), v => Assert.True(v.Echelle > 0));
+        Assert.Contains(plan.Vues, v => v.Type == TypeVue.Detail && v.EstAxonometrique);
     }
 
     [Fact]

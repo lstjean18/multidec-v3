@@ -33,6 +33,12 @@ public sealed class Cartouche
     /// <summary>Poids total du matériel, ex. « 4 512 kg » (vide si inconnu).</summary>
     public string Poids { get; set; } = string.Empty;
 
+    /// <summary>Auteur du plan (« Établi par »).</summary>
+    public string EtabliPar { get; set; } = string.Empty;
+
+    /// <summary>Indice de révision du plan.</summary>
+    public string Indice { get; set; } = "A";
+
     /// <summary>Mentions importantes (note de calcul obligatoire…).</summary>
     public List<string> Mentions { get; } = new List<string>();
 

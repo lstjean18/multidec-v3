@@ -84,11 +84,12 @@ public static class GenerateurPlan
         iso.Vues.Add(VueIso(ctx, coteBatiment: true));
         plan.Pages.Add(iso);
 
-        // Détails : quatre par feuille.
-        for (int i = 0; i < details.Count; i += 4)
+        // Détails : un par sorte de particularité (la première rencontrée), quatre par feuille.
+        var vuesDetail = details.GroupBy(d => d.Sorte).Select(g => g.First().Vue).ToList();
+        for (int i = 0; i < vuesDetail.Count; i += 4)
         {
             var page = new PageDePlan("Détails");
-            page.Vues.AddRange(details.Skip(i).Take(4).Select(d => d.Vue));
+            page.Vues.AddRange(vuesDetail.Skip(i).Take(4));
             plan.Pages.Add(page);
         }
 
@@ -251,6 +252,7 @@ public static class GenerateurPlan
     private sealed class Particularite
     {
         public int Face { get; set; }
+        public string Sorte { get; set; } = string.Empty;
         public double XMin { get; set; }
         public double XMax { get; set; }
         public double ZMin { get; set; }
@@ -277,19 +279,20 @@ public static class GenerateurPlan
 
             void Ajouter(string titre, int maille, double zMin, double zMax, TypeVue sorte, double yMin, double yMax, double marge = 0)
             {
+                string nature = titre.Split(' ')[0];
                 double x0 = xs[maille] - marge, x1 = xs[maille + 1] + marge;
                 var proj = sorte == TypeVue.Elevation ? Projection.Elevation(ctx.Poses[i].Angle)
                     : sorte == TypeVue.Profil ? Projection.About(ctx.Poses[i].Angle, false)
                     : Projection.Iso(ctx.Poses[i].Angle, false);
                 var zone = ctx.CoinsFace(i, yMin, yMax, zMin, zMax, x0, x1);
-                var vue = new VueDePlan(titre + " – " + f.Nom + ", maille " + (maille + 1), TypeVue.Detail, proj, Emprise(proj, zone, 0.2));
-                liste.Add(new Particularite { Face = i, XMin = x0, XMax = x1, ZMin = zMin, ZMax = zMax, Vue = vue });
+                var vue = new VueDePlan(titre + " (" + f.Nom + ", maille " + (maille + 1) + ")", TypeVue.Detail, proj, Emprise(proj, zone, 0.2));
+                liste.Add(new Particularite { Face = i, Sorte = nature, XMin = x0, XMax = x1, ZMin = zMin, ZMax = zMax, Vue = vue });
             }
 
             int acces = Index(m => m.Type == TypeMaille.Acces);
             if (acces >= 0)
             {
-                Ajouter("Accès : trappes, échelles, lisses à 1,50 m", acces, -0.3, Math.Min(hdp + 1, 4.6), TypeVue.Iso, -larg, 0);
+                Ajouter("Accès", acces, -0.3, Math.Min(hdp + 1, 4.6), TypeVue.Iso, -larg, 0);
             }
 
             int escalier = Index(m => m.EstEscalier);
@@ -339,9 +342,11 @@ public static class GenerateurPlan
             }
         }
 
-        for (int k = 0; k < liste.Count; k++)
+        // Une lettre par sorte : toutes les occurrences renvoient au même détail.
+        var sortes = liste.Select(d => d.Sorte).Distinct().ToList();
+        foreach (var d in liste)
         {
-            liste[k].Vue.Lettre = ((char)('A' + k)).ToString();
+            d.Vue.Lettre = ((char)('A' + sortes.IndexOf(d.Sorte))).ToString();
         }
 
         return liste;
@@ -387,7 +392,7 @@ public static class GenerateurPlan
             bool cotee = v.Cotes.Count > 0;
             double mg = cotee ? MargeGauche : 4, md = cotee ? MargeDroite : 4, mb = (cotee ? MargeBas : 4) + Titre, mh = MargeHaut;
             double l = cellule.Largeur - mg - md, h = cellule.Hauteur - mb - mh;
-            if (v.Type == TypeVue.Iso)
+            if (v.EstAxonometrique)
             {
                 v.Echelle = 0;
                 v.MmParMetre = Math.Min(l / Math.Max(v.Emprise.Largeur, 0.01), h / Math.Max(v.Emprise.Hauteur, 0.01));
