@@ -379,7 +379,7 @@
       </ul>
       <p>Aux niveaux desservis, la maille principale n'a pas de garde-corps extérieur. Si aucun niveau n'est coché, une alerte le signale.</p>
       <p>La sous-maille monte toujours <b>jusqu'à la hauteur max de sa maille</b> (colonne Ht max), y compris quand la maille dépasse le dernier plancher de la face.</p>
-      <p>La colonne <b>Stab.</b> ajoute une <b>stabilisation</b> : une file à la distance choisie, reliée par des lisses et des diagonales jusqu'à 2 m sous le dernier plancher. La case <b>Lest</b> de la maille ajoute un <b>platelage à 0,50 m</b> entre la file extérieure et la file de stabilisation, pour y poser du lest : plateaux de la longueur de la maille, sur lisses porteuses (renforcées à partir de 1,50 m de profondeur).</p>
+      <p>La colonne <b>Stab.</b> ajoute une <b>stabilisation</b> : une file à la distance choisie, reliée par des lisses et des diagonales jusqu'à 2 m sous le dernier plancher. La case <b>Lest</b> de la maille ajoute un <b>platelage à 0,50 m</b> entre la file extérieure et la file de stabilisation, pour y poser du lest : plateaux de la longueur de la maille, sur lisses porteuses (renforcées à partir de 1,50 m de profondeur). Les diagonales en travers de la première levée sont alors supprimées, car elles traverseraient les plateaux.</p>
     </div>
     <figure><img src="images/3d/sous-mailles.jpg" alt=""><figcaption>De gauche à droite : <b>stabilisation</b>, <b>accès rapporté</b>, <b>appro</b> et <b>recette</b>.</figcaption></figure>
   </div>
@@ -551,7 +551,7 @@
 
   <h3 id="s12-3"><span class="n">12.3</span>Le cartouche</h3>
   <ul>
-    <li>Logo RETOTUB, logo du modèle (Multi-RETO ou Multi-SYSTEM) et mention « Plan établi avec MultiDEC » suivie de la version et du build.</li>
+    <li>Logo RETOTUB (logo 2017), logo du modèle (Multi-RETO ou Multi-SYSTEM) et mention « Plan établi avec MultiDEC » suivie de la version et du build.</li>
     <li><b>Logo client</b> : l'image choisie dans les Paramètres par défaut, onglet Fichiers.</li>
     <li><b>Projet</b> : client, chantier, référence de l'étude, date et « Établi par ». Ce nom se règle dans les Paramètres par défaut, onglet Fichiers ; à défaut, c'est le nom de session Windows.</li>
     <li><b>Structure</b> : forme, modèle, plateaux, protections, abouts, bâche.</li>
@@ -561,13 +561,13 @@
   <h3 id="s12-4"><span class="n">12.4</span>Liste du matériel</h3>
   <p>Bouton <span class="ui">Liste matériel</span> du ruban (groupe <i>Sortie</i>) : le décompte en PDF <b>A4 portrait</b>, ouvert dans la même visionneuse (enregistrement proposé sous « Liste matériel - <i>chantier</i>.pdf »).</p>
   <ul>
-    <li><b>En-tête</b> : logo client (Paramètres par défaut), chantier, client, référence de l'étude et date du projet.</li>
+    <li><b>En-tête</b> : logo client (Paramètres par défaut ; à défaut, logo RETOTUB), chantier, client, référence de l'étude et date du projet.</li>
     <li><b>Tableau</b> : mêmes informations que l'onglet Décompte (référence, désignation, quantité, poids unitaire et total), regroupées par famille. En références client, les colonnes « Réf. client » et « Réf. RETOTUB » sont toutes deux imprimées.</li>
     <li><b>Total</b> : nombre de références, de pièces et poids total.</li>
     <li><b>Alertes</b> sous le tableau : celles de l'onglet Alertes, plus les références sans poids ou sans correspondance client.</li>
     <li><b>Pied de page</b> : « Décompte réalisé avec MultiDEC v3 » et numéro de page. Une longue liste continue sur plusieurs pages, l'en-tête du tableau étant répété.</li>
   </ul>
-  <figure><img src="images/plans/liste-materiel.png" alt="" style="width:58%"><figcaption><b>Liste du matériel</b> d'une façade de 15 m (logo RETOTUB à la place du logo client).</figcaption></figure>
+  <figure><img src="images/plans/liste-materiel.png" alt="" style="width:58%"><figcaption><b>Liste du matériel</b> d'une façade de 15 m, sans logo client (logo RETOTUB).</figcaption></figure>
   <div class="encadre"><span class="titre">Bon à savoir</span><p>Le PDF de travail est écrit dans le dossier temporaire de Windows (<b>%TEMP%\MultiDEC\Plans</b>). Pour le garder, utilisez <span class="ui">Enregistrer sous…</span>.</p></div>
 </section>
 

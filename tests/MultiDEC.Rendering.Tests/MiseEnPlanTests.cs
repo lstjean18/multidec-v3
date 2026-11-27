@@ -106,7 +106,6 @@ public class MiseEnPlanTests
             Chantier = "Chantier essai – façade nord",
             Client = "Client essai",
             ReferenceEtude = "ET-2026-001",
-            LogoClient = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logos", "RETOTUB.png"),
         };
         var alertes = structure.Alertes.Concat(ListeMateriel.AlertesDecompte(lignes, null)).ToList();
         var feuilles = ListeMateriel.Feuilles(entete, lignes, alertes);

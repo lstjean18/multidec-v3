@@ -394,6 +394,13 @@ public sealed partial class GenerateurFacade
 
                 // Diagonales en travers : du pied côté stabilisation vers le haut côté structure (Laurent, 24/11/2026),
                 // la dernière relie le haut de la stabilisation au dernier plancher de la structure.
+                // Pas de diagonale en travers dans la hauteur du platelage de lest : elle traverserait les plateaux
+                // (Laurent, 27/11/2026, remarque 55).
+                if (m.Lest && z < HauteurLest - Cotes.Tolerance && z + 2.0 > HauteurLest + Cotes.Tolerance)
+                {
+                    continue;
+                }
+
                 Travers(References.DiagonaleVerticale(s), Famille.DiagonaleVerticale, memeAGauche ? x0 + DemiTube : x0 - DemiTube, y, z, num, versLaFacade: true);
                 if (!memeADroite)
                 {

@@ -71,6 +71,15 @@ public class ListeMaterielTests
     }
 
     [Fact]
+    public void Logo_RETOTUB_sans_logo_client()
+    {
+        var e = EnTete();
+        e.LogoClient = null;
+        var f = ListeMateriel.Feuilles(e, Lignes(3), Array.Empty<string>()).Single();
+        Assert.Contains(f.Primitives.OfType<ImageFeuille>(), i => i.Source == "RETOTUB");
+    }
+
+    [Fact]
     public void Plusieurs_pages_quand_la_liste_est_longue()
     {
         var feuilles = ListeMateriel.Feuilles(EnTete(), Lignes(90), Array.Empty<string>());

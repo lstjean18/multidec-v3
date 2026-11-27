@@ -287,10 +287,9 @@ public static class ListeMateriel
 
     private static void EnTete(FeuilleDessinee f, EnTeteListe e)
     {
-        if (!string.IsNullOrWhiteSpace(e.LogoClient))
-        {
-            f.Primitives.Add(new ImageFeuille(e.LogoClient!, new Rect2(Gauche, 253, 72, 285)));
-        }
+        // Sans logo client dans les Paramètres par défaut : logo RETOTUB 2017 (Laurent, 27/11/2026, remarque 57).
+        string logo = string.IsNullOrWhiteSpace(e.LogoClient) ? "RETOTUB" : e.LogoClient!;
+        f.Primitives.Add(new ImageFeuille(logo, new Rect2(Gauche, 253, 72, 285)));
 
         f.Primitives.Add(new Texte(new Point2(Droite, 279), e.Titre, 4.5, Alignement.BasDroite) { Gras = true });
         var infos = new[]
