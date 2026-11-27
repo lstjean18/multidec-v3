@@ -73,7 +73,9 @@ public partial class MainWindow : Window
         // Paramètres par défaut de l'utilisateur : appliqués au projet de départ, à la bibliothèque et au rendu.
         try
         {
-            Vm.Defauts = ParametresParDefaut.Charger(Reglages.CheminParametresParDefaut);
+            var defauts = ParametresParDefaut.Charger(Reglages.CheminParametresParDefaut);
+            defauts.CompleterFichiersInstalles(DossierProgramme); // bibliothèque et multidec.bib installés (remarque 62)
+            Vm.Defauts = defauts;
         }
         catch (Exception ex)
         {
@@ -91,8 +93,11 @@ public partial class MainWindow : Window
                                 "MultiDEC", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
 
+            // Bibliothèque des Paramètres par défaut, sinon celle installée avec MultiDEC, sinon la dernière chargée.
             string? defaut = Vm.Defauts.Bibliotheque;
-            ChargerBibliotheque(!string.IsNullOrEmpty(defaut) && File.Exists(defaut) ? defaut : Reglages.CheminBibliotheque);
+            ChargerBibliotheque(!string.IsNullOrEmpty(defaut) && File.Exists(defaut)
+                ? defaut
+                : ParametresParDefaut.BibliothequeInstallee(DossierProgramme) ?? Reglages.CheminBibliotheque);
 
             // Double-clic sur un .mdc3 (association créée par l'installateur) : le projet est ouvert au démarrage.
             string? projet = Environment.GetCommandLineArgs().Skip(1)
@@ -130,6 +135,7 @@ public partial class MainWindow : Window
     private void ParametresParDefaut_Click(object sender, RoutedEventArgs e)
     {
         string? ancienneBibliotheque = Vm.Defauts.Bibliotheque;
+        string? anciensArticles = Vm.Defauts.Articles;
         var fenetre = new ParametresParDefautWindow(Vm.Defauts) { Owner = this };
         if (fenetre.ShowDialog() != true)
         {
@@ -156,7 +162,14 @@ public partial class MainWindow : Window
         {
             ChargerBibliotheque(bibliotheque);
         }
+        else if (!string.Equals(Vm.Defauts.Articles, anciensArticles, StringComparison.OrdinalIgnoreCase))
+        {
+            ChargerArticles(Vm.Defauts.CheminArticles(Reglages.CheminBibliotheque, DossierProgramme));
+        }
     }
+
+    /// <summary>Dossier du programme (MultiDEC.exe), où l'installateur dépose aussi Bibliotheque\.</summary>
+    internal static string DossierProgramme => AppDomain.CurrentDomain.BaseDirectory;
 
     private FacadeViewModel Vm => (FacadeViewModel)DataContext;
 
@@ -187,8 +200,9 @@ public partial class MainWindow : Window
         if (string.IsNullOrEmpty(chemin) || !File.Exists(chemin))
         {
             TexteBibliotheque.Text = string.IsNullOrEmpty(chemin)
-                ? "Bibliothèque de blocs non choisie (Fichier > Bibliothèque de blocs…)"
-                : "Bibliothèque introuvable : " + chemin + " (Fichier > Bibliothèque de blocs…)";
+                ? "Bibliothèque de blocs non choisie (Outils > Paramètres par défaut, onglet Fichiers)"
+                : "Bibliothèque introuvable : " + chemin + " (Outils > Paramètres par défaut, onglet Fichiers)";
+            ChargerArticles(Vm.Defauts.CheminArticles(null, DossierProgramme));
             return;
         }
 
@@ -197,7 +211,7 @@ public partial class MainWindow : Window
             // Pas de vue 3D : on garde le chemin et on charge quand même désignations et poids du décompte.
             Reglages.CheminBibliotheque = chemin;
             TexteBibliotheque.Text = "Bibliothèque : " + Path.GetFileName(chemin) + " (vue 3D indisponible)";
-            ChargerArticles(Path.Combine(Path.GetDirectoryName(chemin)!, CatalogueArticles.NomFichier));
+            ChargerArticles(Vm.Defauts.CheminArticles(chemin, DossierProgramme));
             return;
         }
 
@@ -210,7 +224,7 @@ public partial class MainWindow : Window
             Reglages.CheminBibliotheque = chemin;
             TexteBibliotheque.Text = "Bibliothèque : " + Path.GetFileName(chemin);
             Rendu_SelectionChanged(ChoixRendu, null!);
-            ChargerArticles(Path.Combine(Path.GetDirectoryName(chemin)!, CatalogueArticles.NomFichier));
+            ChargerArticles(Vm.Defauts.CheminArticles(chemin, DossierProgramme));
         }
         catch (Exception ex)
         {
@@ -220,11 +234,11 @@ public partial class MainWindow : Window
     }
 
     /// <summary>Charge multidec.bib (désignations et poids du décompte) ; décompte sans désignations s'il manque.</summary>
-    private void ChargerArticles(string chemin)
+    private void ChargerArticles(string? chemin)
     {
         try
         {
-            Vm.Articles = File.Exists(chemin) ? CatalogueArticles.Charger(chemin) : CatalogueArticles.Vide;
+            Vm.Articles = !string.IsNullOrEmpty(chemin) && File.Exists(chemin) ? CatalogueArticles.Charger(chemin) : CatalogueArticles.Vide;
         }
         catch (Exception ex)
         {
@@ -681,14 +695,6 @@ public partial class MainWindow : Window
         }
     }
 
-    private void Bibliotheque_Click(object sender, RoutedEventArgs e)
-    {
-        var dlg = new OpenFileDialog { Filter = "Bibliothèque de blocs (*.dxf;*.dwg)|*.dxf;*.dwg" };
-        if (dlg.ShowDialog(this) == true)
-        {
-            ChargerBibliotheque(dlg.FileName);
-        }
-    }
 }
 
 /// <summary>Réglages du poste, dans %APPDATA%\MultiDEC\v3\ (un fichier texte par réglage).</summary>

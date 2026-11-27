@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using MultiDEC.Core.Catalogue;
+using MultiDEC.Core.Decompte;
 using MultiDEC.Core.Facade;
 using MultiDEC.Core.Persistance;
 
@@ -265,6 +266,20 @@ public sealed class ParametresParDefautViewModel : ElementParDefaut
         }
     }
 
+    /// <summary>Choix des références affichées dans le décompte (onglet « Fichiers », remarque 60).</summary>
+    public static IReadOnlyList<KeyValuePair<string, string>> ChoixReferences => FacadeViewModel.ChoixReferences;
+
+    /// <summary>Références affichées par défaut dans le décompte (RETOTUB, LV Tec, fichier de correspondance).</summary>
+    public string ReferencesAffichees
+    {
+        get => string.IsNullOrEmpty(_p.ReferencesAffichees) ? ReferencesClient.Retotub : _p.ReferencesAffichees!;
+        set
+        {
+            _p.ReferencesAffichees = string.IsNullOrEmpty(value) ? ReferencesClient.Retotub : value;
+            Notifier();
+        }
+    }
+
     /// <summary>Liste du matériel PDF : colonne de la référence RETOTUB.</summary>
     public bool ListeReferenceRetotub
     {
@@ -329,9 +344,6 @@ public sealed class ParametresParDefautViewModel : ElementParDefaut
             .AvecDefaut("Par défaut", () => p.Forme, v => p.Forme = (FormeStructure)v));
         Listes.Add(new ListeParDefaut(p, ListesDeChoix.ModeRendu, "Rendu du dessin", true, ModesRendu.Select(m => ((object)m.Nom, m.Libelle)))
             .AvecDefaut("Par défaut", () => p.ModeRendu, v => p.ModeRendu = (string)v));
-        Listes.Add(new ListeParDefaut(p, "ReferencesAffichees", "Références du décompte", false,
-                FacadeViewModel.ChoixReferences.Select(c => ((object)c.Key, c.Value)))
-            .AvecDefaut("Par défaut", () => p.ReferencesAffichees, v => p.ReferencesAffichees = (string)v));
         Listes.Add(Liste(ListesDeChoix.TypeMaille, "Types de maille (grille)", Enum.GetValues(typeof(TypeMaille)).Cast<object>()));
         Listes.Add(Liste(ListesDeChoix.TypePlancher, "Types de plancher (grille)", FacadeViewModel.TypesPlancher.Cast<object>()));
         Listes.Add(new ListeParDefaut(p, ListesDeChoix.Console, "Consoles", true, CatalogueConsoles.Liste.Select(c => ((object)c.Reference, c.Reference))));
@@ -357,6 +369,7 @@ public sealed class ParametresParDefautViewModel : ElementParDefaut
         Cotes.Add(new CoteParDefaut("Distance à la façade (m)", () => f.DistanceFacade, v => f.DistanceFacade = v));
 
         Fichiers.Add(new FichierParDefaut("Bibliothèque de blocs", "Bibliothèque de blocs (*.dwg;*.dxf)|*.dwg;*.dxf", () => p.Bibliotheque, v => p.Bibliotheque = v));
+        Fichiers.Add(new FichierParDefaut("Catalogue multidec.bib", "Catalogue des articles (multidec.bib)|*.bib|Tous les fichiers|*.*", () => p.Articles, v => p.Articles = v));
         Fichiers.Add(new FichierParDefaut("Trame Excel des devis", "Classeurs Excel (*.xlsx;*.xlsm;*.xltx;*.xls)|*.xlsx;*.xlsm;*.xltx;*.xls", () => p.ModeleDevis, v => p.ModeleDevis = v));
         Fichiers.Add(new FichierParDefaut("Références clients", "Références clients (*.xlsx;*.xls;*.csv;*.txt;*.bib)|*.xlsx;*.xls;*.csv;*.txt;*.bib|Tous les fichiers|*.*", () => p.ReferencesClients, v => p.ReferencesClients = v));
         Fichiers.Add(new FichierParDefaut("Logo client", "Images (*.png;*.jpg;*.jpeg;*.bmp)|*.png;*.jpg;*.jpeg;*.bmp", () => p.LogoClient, v => p.LogoClient = v));

@@ -80,16 +80,14 @@
   <p>MultiDEC dessine la structure en insérant des <b>blocs 3D</b>, un par référence produit (<span class="ref">HMPOT20</span>, <span class="ref">HMLIS250</span>, <span class="ref">HMSOCREG</span>…). Il lui faut donc une bibliothèque de blocs :</p>
   <ul>
     <li><b>Blocs 3D - Echafaudage.dwg</b> : la bibliothèque de référence ;</li>
-    <li><b>multidec.bib</b>, placé dans le même dossier : les désignations et les poids des références, utilisés par le décompte.</li>
+    <li><b>multidec.bib</b> : les désignations, les poids et les familles des références, utilisés par le décompte.</li>
   </ul>
+  <p>Les deux fichiers sont <b>livrés avec l'installateur</b>, dans le sous-dossier <i>Bibliotheque</i> du dossier d'installation : MultiDEC les charge au démarrage sans rien régler.</p>
 
-  <h3>Choisir la bibliothèque</h3>
-  <ol>
-    <li>Menu <span class="ui">Bibliothèque</span> › <span class="ui">Choisir la bibliothèque de blocs…</span>, puis sélectionner le fichier <b>.dwg</b> (ou <b>.dxf</b>).</li>
-    <li>Pour qu'elle soit chargée à chaque démarrage, l'indiquer dans <span class="ui">Outils</span> › <span class="ui">Paramètres par défaut…</span>, onglet <span class="ui">Fichiers</span> (voir chapitre 11).</li>
-  </ol>
+  <h3>Changer de bibliothèque</h3>
+  <p>Les chemins utilisés sont dans <span class="ui">Outils</span> › <span class="ui">Paramètres par défaut…</span>, onglet <span class="ui">Fichiers</span> (voir chapitre 11) : lignes <span class="ui">Bibliothèque de blocs</span> et <span class="ui">Catalogue multidec.bib</span>, remplies avec les fichiers installés. <span class="ui">Parcourir…</span> choisit un autre fichier (.dwg ou .dxf pour la bibliothèque) ; il est chargé dès l'enregistrement des paramètres, sans relancer MultiDEC. Une ligne laissée vide reprend le fichier installé au démarrage suivant.</p>
   <p>La barre d'état, en bas de la fenêtre, rappelle la bibliothèque chargée.</p>
-  <figure><img src="images/ihm/parametres-fichiers.png" alt=""><figcaption><b>Paramètres par défaut, onglet Fichiers.</b> Bibliothèque de blocs chargée au démarrage ; trame Excel des devis, références clients et logo client serviront au devis et à la mise en plan.</figcaption></figure>
+  <figure><img src="images/ihm/parametres-fichiers.png" alt=""><figcaption><b>Paramètres par défaut, onglet Fichiers.</b> Bibliothèque de blocs et multidec.bib chargés au démarrage, trame Excel des devis, références clients, logo client et références affichées par défaut dans le décompte.</figcaption></figure>
 
   <div class="encadre"><span class="titre">Bon à savoir</span>
     <p>Si une référence calculée n'existe pas dans la bibliothèque, le bloc n'est pas dessiné et l'onglet <span class="ui">Alertes</span> donne la liste des blocs absents. Les tubes d'amarrage, qui manquent encore dans la bibliothèque, sont représentés provisoirement par un <b>cercle barré d'une croix</b>.</p>
@@ -112,7 +110,7 @@
   </figure>
 
   <ol class="legende-num">
-    <li><b>Menu</b> : Fichier (nouveau, ouvrir, enregistrer, enregistrer sous, quitter), Affichage (zoom et vues), Bibliothèque, Outils (paramètres par défaut).</li>
+    <li><b>Menu</b> : Fichier (nouveau, ouvrir, enregistrer, enregistrer sous, quitter), Affichage (zoom et vues), Outils (paramètres par défaut, où se choisit aussi la bibliothèque de blocs), Aide.</li>
     <li><b>Ruban</b> : les commandes courantes, regroupées par usage (détail ci-dessous).</li>
     <li><b>Onglets de saisie</b> : <span class="ui">Général</span> pour tout le projet, puis un onglet par face (S1 à S4) ou par module (M1, M2…).</li>
     <li><b>Dessin 3D</b> : la structure dessinée, orientable et zoomable à la souris.</li>
@@ -474,7 +472,14 @@
   <div class="entete-chap"><span class="num">10</span><div><h2>Décompte, amarrages et alertes</h2><p>Les résultats du dessin</p></div></div>
 
   <h3 id="s10-1"><span class="n">10.1</span>Décompte</h3>
-  <p>Une ligne par référence : famille, référence, désignation, quantité, poids unitaire et poids total. Désignations, poids et ordre de classement viennent du fichier <b>multidec.bib</b> de la bibliothèque. Le total (références, pièces, poids) est rappelé sous le tableau.</p>
+  <p>Une ligne par référence : famille, référence, désignation, quantité, poids unitaire et poids total. Désignations, poids et ordre de classement viennent du fichier <b>multidec.bib</b>. Le total (références, pièces, poids) est rappelé sous le tableau.</p>
+  <h4>Modifier le décompte</h4>
+  <ul>
+    <li><b>Changer une quantité</b> : double-cliquer la quantité, taper la nouvelle valeur, puis <span class="ui">Entrée</span>. Les poids et le total suivent. La ligne passe en jaune, repérée <b>M</b> ; la colonne <i>Calculée</i> rappelle la quantité issue du dessin. Une quantité à 0 retire la ligne de la liste du matériel.</li>
+    <li><b>Ajouter une référence</b> : taper une référence RETOTUB ou une référence client dans <span class="ui">Ajouter la référence</span>, la quantité, puis <span class="ui">Ajouter</span> (ou <span class="ui">Entrée</span>). Désignation, poids et famille sont repris de multidec.bib. La ligne passe en bleu, repérée <b>*</b>, et porte un astérisque dans la liste du matériel. Une référence déjà présente voit sa quantité augmentée ; une référence inconnue peut être ajoutée après confirmation, sans désignation ni poids (famille <i>Divers</i>).</li>
+    <li><b>Revenir en arrière</b> : <span class="ui">Rétablir la ligne</span> remet la quantité calculée de la ligne sélectionnée (ou retire la référence ajoutée) ; <span class="ui">Tout rétablir</span> retire toutes les modifications.</li>
+  </ul>
+  <p>Les modifications sont enregistrées avec le projet (.mdc3) et conservées quand on redessine : une quantité modifiée reste imposée même si le dessin change. Le total sous le tableau indique combien de quantités ont été modifiées et de références ajoutées.</p>
   <h4>Travailler en références client</h4>
   <p>La liste <span class="ui">Références affichées</span>, en haut de l'onglet, choisit les références du décompte :</p>
   <ul>
@@ -482,7 +487,7 @@
     <li><b>Client LV Tec</b> : les références LV Tec sont intégrées à MultiDEC (par exemple <span class="ref">HMSOCREG</span> → <span class="ref">A1SOR050_L</span>) ;</li>
     <li><b>Client (fichier de correspondance)</b> : un fichier CSV choisi dans les Paramètres par défaut, onglet Fichiers, avec la référence RETOTUB en 1re colonne et la référence client en 2e (séparateur point-virgule).</li>
   </ul>
-  <p>En références client, la colonne <b>Réf. RETOTUB</b> s'affiche à côté de la référence du client. Une pièce sans équivalent garde sa référence RETOTUB ; la liste de ces pièces est rappelée sous le tableau. Le choix par défaut se règle dans les Paramètres par défaut (liste <i>Références du décompte</i>).</p>
+  <p>En références client, la colonne <b>Réf. RETOTUB</b> s'affiche à côté de la référence du client. Une pièce sans équivalent garde sa référence RETOTUB ; la liste de ces pièces est rappelée sous le tableau. Le choix par défaut se règle dans les Paramètres par défaut, onglet <span class="ui">Fichiers</span> (<i>Références affichées</i>).</p>
   <figure><img src="images/ihm/decompte-lvtec.png" alt=""><figcaption><b>Décompte en références LV Tec</b> : référence client, référence RETOTUB à côté ; les chevilles d'amarrage n'ont pas d'équivalent LV Tec.</figcaption></figure>
   <figure><img src="images/ihm/decompte.png" alt=""><figcaption><b>Onglet Décompte.</b></figcaption></figure>
 
@@ -507,9 +512,9 @@
     <div>
       <h3 id="s11-1"><span class="n">11.1</span>Les trois onglets</h3>
       <ul>
-        <li><b>Listes de choix</b> : pour chaque liste (modèle, plateaux, socles, protections, plinthes, consoles, forme, rendu, références du décompte…), la valeur par défaut et les valeurs proposées. Décocher une valeur la retire des listes de l'application ; une valeur utilisée par un projet ouvert reste toutefois proposée.</li>
+        <li><b>Listes de choix</b> : pour chaque liste (modèle, plateaux, socles, protections, plinthes, consoles, forme, rendu…), la valeur par défaut et les valeurs proposées. Décocher une valeur la retire des listes de l'application ; une valeur utilisée par un projet ouvert reste toutefois proposée.</li>
         <li><b>Cases et cotes</b> : l'état initial des cases à cocher et les cotes de départ (longueur, dernier plancher, distance à la façade).</li>
-        <li><b>Fichiers</b> : bibliothèque de blocs, trame Excel des devis, références clients (fichier CSV de correspondance, voir 10.1), logo client.</li>
+        <li><b>Fichiers</b> : bibliothèque de blocs et catalogue multidec.bib (fichiers installés par défaut, voir chapitre 2), trame Excel des devis, références clients (fichier CSV de correspondance, voir 10.1), logo client, <i>Références affichées</i> par défaut dans le décompte (RETOTUB, LV Tec ou fichier client), « Établi par » des plans et réglages de la liste du matériel.</li>
       </ul>
       <h3 id="s11-2"><span class="n">11.2</span>Boutons</h3>
       <ul>
@@ -563,7 +568,7 @@
   <ul>
     <li><b>En-tête</b> : logo client (Paramètres par défaut ; à défaut, logo RETOTUB), chantier, client, référence de l'étude et date du projet.</li>
     <li><b>Tableau</b> : mêmes informations que l'onglet Décompte (référence, désignation, quantité, poids unitaire et total), regroupées par famille. En références client, les colonnes « Réf. client » et « Réf. RETOTUB » sont toutes deux imprimées.</li>
-    <li><b>Total</b> : nombre de références, de pièces et poids total.</li>
+    <li><b>Total</b> : nombre de références, de pièces et poids total. Les références ajoutées à la main dans le décompte portent un astérisque, expliqué sous le total.</li>
     <li><b>Alertes</b> sous le tableau : celles de l'onglet Alertes, plus les références sans poids ou sans correspondance client.</li>
     <li><b>Réglages</b> (Paramètres par défaut, onglet Fichiers, « Liste du matériel (PDF) ») : <span class="ui">Afficher la référence RETOTUB</span> ; décochée, la liste n'a plus de colonne de référence, ou seulement celle du client quand on travaille en références client. <span class="ui">Afficher les familles</span> ; décochée, le matériel reste classé par famille mais sans bandeau.</li>
     <li><b>Pied de page</b> : « Décompte réalisé avec MultiDEC v3 » et numéro de page. Une longue liste continue sur plusieurs pages, l'en-tête du tableau étant répété.</li>

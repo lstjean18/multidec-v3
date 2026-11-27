@@ -206,9 +206,6 @@
         <MenuItem Header="Côté gauche" Tag="CoteGauche" Click="Vue_Click" />
         <MenuItem Header="Côté droit" Tag="CoteDroit" Click="Vue_Click" />
       </MenuItem>
-      <MenuItem Header="_Bibliothèque">
-        <MenuItem Header="Choisir la bibliothèque de blocs…" Click="Bibliotheque_Click" />
-      </MenuItem>
       <MenuItem Header="_Outils">
         <MenuItem Header="Paramètres par _défaut…" Click="ParametresParDefaut_Click" />
       </MenuItem>
@@ -757,24 +754,60 @@
                         SelectedValue="{Binding ReferencesAffichees}"
                         ToolTip="Travail en références client : le décompte affiche les références du client (LV Tec intégré, ou fichier de correspondance des Paramètres par défaut)" />
             </StackPanel>
+            <WrapPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="6,0,6,4">
+              <TextBlock Text="Ajouter la référence" VerticalAlignment="Center" Margin="0,0,8,0" />
+              <TextBox x:Name="SaisieReference" Width="150" VerticalContentAlignment="Center" KeyDown="SaisieDecompte_KeyDown"
+                       ToolTip="Référence RETOTUB ou référence client : désignation, poids et famille sont repris de multidec.bib" />
+              <TextBlock Text="Quantité" VerticalAlignment="Center" Margin="10,0,6,0" />
+              <TextBox x:Name="SaisieQuantite" Width="50" Text="1" HorizontalContentAlignment="Right" VerticalContentAlignment="Center"
+                       KeyDown="SaisieDecompte_KeyDown" />
+              <Button Content="Ajouter" Padding="10,2" Margin="8,0,0,0" Click="AjouterReference_Click"
+                      ToolTip="Ajoute la référence au décompte (repérée par un astérisque dans la liste du matériel)" />
+              <Button Content="Rétablir la ligne" Padding="10,2" Margin="16,0,0,0" Click="RetablirLigne_Click"
+                      ToolTip="Ligne sélectionnée : remet la quantité calculée, ou retire la référence ajoutée" />
+              <Button Content="Tout rétablir" Padding="10,2" Margin="6,0,0,0" Click="RetablirDecompte_Click" IsEnabled="{Binding DecompteCorrige}"
+                      ToolTip="Retire toutes les modifications faites à la main dans le décompte" />
+              <TextBlock Text="Double-cliquez une quantité pour la modifier." Foreground="Gray" VerticalAlignment="Center" Margin="16,0,0,0" />
+            </WrapPanel>
             <TextBlock DockPanel.Dock="Bottom" Margin="6,4" TextWrapping="Wrap" FontWeight="SemiBold" Text="{Binding ResumeDecompte}" />
-            <DataGrid x:Name="GrilleDecompte" ItemsSource="{Binding Decompte}" AutoGenerateColumns="False" IsReadOnly="True">
+            <DataGrid x:Name="GrilleDecompte" ItemsSource="{Binding Decompte}" AutoGenerateColumns="False" IsReadOnly="False"
+                      CanUserAddRows="False" CanUserDeleteRows="False" SelectionMode="Single" CellEditEnding="GrilleDecompte_CellEditEnding">
+              <DataGrid.RowStyle>
+                <Style TargetType="DataGridRow">
+                  <Style.Triggers>
+                    <DataTrigger Binding="{Binding Modifiee}" Value="True"><Setter Property="Background" Value="#FFF6E0" /></DataTrigger>
+                    <DataTrigger Binding="{Binding Ajoutee}" Value="True"><Setter Property="Background" Value="#E6F0FA" /></DataTrigger>
+                  </Style.Triggers>
+                </Style>
+              </DataGrid.RowStyle>
               <DataGrid.Columns>
-                <DataGridTextColumn Header="Famille" Binding="{Binding FamilleAffichee}" Width="130" />
-                <DataGridTextColumn x:Name="ColonneReference" Header="Référence" Binding="{Binding ReferenceAffichee}" Width="150" />
-                <DataGridTextColumn x:Name="ColonneRefRetotub" Header="Réf. RETOTUB" Binding="{Binding Reference}" Width="150" Visibility="Collapsed" />
-                <DataGridTextColumn Header="Désignation" Binding="{Binding Designation}" Width="*" MinWidth="200" />
-                <DataGridTextColumn Header="Quantité" Binding="{Binding Quantite}" Width="70">
+                <DataGridTextColumn Header="" Binding="{Binding Repere}" Width="26" IsReadOnly="True" FontWeight="Bold">
+                  <DataGridTextColumn.HeaderStyle>
+                    <Style TargetType="DataGridColumnHeader">
+                      <Setter Property="ToolTip" Value="* : référence ajoutée à la main ; M : quantité modifiée à la main" />
+                    </Style>
+                  </DataGridTextColumn.HeaderStyle>
+                </DataGridTextColumn>
+                <DataGridTextColumn Header="Famille" Binding="{Binding FamilleAffichee}" Width="130" IsReadOnly="True" />
+                <DataGridTextColumn x:Name="ColonneReference" Header="Référence" Binding="{Binding ReferenceAffichee}" Width="150" IsReadOnly="True" />
+                <DataGridTextColumn x:Name="ColonneRefRetotub" Header="Réf. RETOTUB" Binding="{Binding Reference}" Width="150" Visibility="Collapsed" IsReadOnly="True" />
+                <DataGridTextColumn Header="Désignation" Binding="{Binding Designation}" Width="*" MinWidth="200" IsReadOnly="True" />
+                <DataGridTextColumn x:Name="ColonneQuantite" Header="Quantité" Binding="{Binding Quantite}" Width="70">
                   <DataGridTextColumn.ElementStyle>
                     <Style TargetType="TextBlock"><Setter Property="HorizontalAlignment" Value="Right" /></Style>
                   </DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>
-                <DataGridTextColumn Header="Poids U (kg)" Binding="{Binding PoidsUnitaire, StringFormat=N2}" Width="90">
+                <DataGridTextColumn Header="Calculée" Binding="{Binding QuantiteCalculee}" Width="70" IsReadOnly="True" Foreground="Gray">
                   <DataGridTextColumn.ElementStyle>
                     <Style TargetType="TextBlock"><Setter Property="HorizontalAlignment" Value="Right" /></Style>
                   </DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>
-                <DataGridTextColumn Header="Poids total (kg)" Binding="{Binding PoidsTotal, StringFormat=N1}" Width="110">
+                <DataGridTextColumn Header="Poids U (kg)" Binding="{Binding PoidsUnitaire, StringFormat=N2}" Width="90" IsReadOnly="True">
+                  <DataGridTextColumn.ElementStyle>
+                    <Style TargetType="TextBlock"><Setter Property="HorizontalAlignment" Value="Right" /></Style>
+                  </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+                <DataGridTextColumn Header="Poids total (kg)" Binding="{Binding PoidsTotal, StringFormat=N1}" Width="110" IsReadOnly="True">
                   <DataGridTextColumn.ElementStyle>
                     <Style TargetType="TextBlock"><Setter Property="HorizontalAlignment" Value="Right" /></Style>
                   </DataGridTextColumn.ElementStyle>

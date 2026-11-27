@@ -76,6 +76,12 @@ public sealed class ProjetStructure
     /// <summary>Pièces supprimées à la main dans le dessin (point 54) : retirées à chaque génération, enregistrées dans le .mdc3.</summary>
     public List<PieceSupprimee> PiecesSupprimees { get; set; } = new List<PieceSupprimee>();
 
+    /// <summary>
+    /// Quantités modifiées et références ajoutées à la main dans le décompte (remarque 61) : appliquées à chaque calcul
+    /// du décompte, enregistrées dans le .mdc3.
+    /// </summary>
+    public List<Decompte.CorrectionDecompte> CorrectionsDecompte { get; set; } = new List<Decompte.CorrectionDecompte>();
+
     /// <summary>Nombre de faces imposé par la forme.</summary>
     public static int NombreDeFaces(FormeStructure forme) => forme switch
     {

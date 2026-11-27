@@ -103,7 +103,11 @@ jobs:
           $sortie = Join-Path $env:GITHUB_WORKSPACE 'installateur-ci'
           # Dossier hors du checkout, conservé d'une compilation à l'autre : on le vide pour ne pas tester un ancien installateur.
           if (Test-Path $sortie) { Remove-Item $sortie -Recurse -Force }
-          .\publication\Publier-version.ps1 -Version 3.0.0.${{ github.run_number }} -Source src\MultiDEC.App\bin\Release\net48 -Destination $sortie -AdresseMisesAJour "$sortie" -Notes 'Compilation de test'
+          # Bibliothèque de blocs et multidec.bib livrés avec l'installateur : dossier actions-runner\bibliotheque.
+          $runner = (Resolve-Path (Join-Path $env:GITHUB_WORKSPACE '..\..\..')).Path
+          $bib = Get-ChildItem $runner -Directory | Where-Object { $_.Name -like 'biblioth*' } | Select-Object -First 1 -ExpandProperty FullName
+          Write-Host "Bibliothèque livrée : $bib"
+          .\publication\Publier-version.ps1 -Version 3.0.0.${{ github.run_number }} -Source src\MultiDEC.App\bin\Release\net48 -Destination $sortie -AdresseMisesAJour "$sortie" -Notes 'Compilation de test' -Bibliotheque $bib
           $setup = Get-Item (Join-Path $sortie 'MultiDEC-v3-Setup-3.0.0.${{ github.run_number }}.exe')
           Get-Content (Join-Path $sortie 'version.json')
           $dossier = Join-Path $env:RUNNER_TEMP 'MultiDEC-installe'
@@ -144,7 +148,7 @@ jobs:
             throw "Installateur impossible à lancer"
           }
           if ($p.ExitCode -ne 0) { Get-Content "$sortie\installation.log" -Tail 30; throw "Installation en échec ($($p.ExitCode))" }
-          foreach ($f in 'MultiDEC.exe', 'VectorDraw.Professional.dll', 'orientations-blocs.json', 'mise-a-jour.txt', 'PdfiumViewer.dll', 'x86\pdfium.dll', 'Logos\RETOTUB.png', 'MultiDEC-v3-Guide-utilisateur.pdf') {
+          foreach ($f in 'MultiDEC.exe', 'VectorDraw.Professional.dll', 'orientations-blocs.json', 'mise-a-jour.txt', 'PdfiumViewer.dll', 'x86\pdfium.dll', 'Logos\RETOTUB.png', 'MultiDEC-v3-Guide-utilisateur.pdf', 'Bibliotheque\Blocs 3D - Echafaudage.dwg', 'Bibliotheque\multidec.bib') {
             if (-not (Test-Path (Join-Path $dossier $f))) {
               Write-Host "INSTALLES : $((Get-ChildItem $dossier -Recurse -File | ForEach-Object { $_.FullName.Substring($dossier.Length + 1) }) -join ' | ')"
               Select-String -Path "$sortie\installation.log" -Pattern ([IO.Path]::GetFileNameWithoutExtension($f)) | ForEach-Object { Write-Host "LOG $($_.Line)" }

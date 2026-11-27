@@ -54,10 +54,12 @@ public partial class ParametresParDefautWindow : Window
 
     private void Usine_Click(object sender, RoutedEventArgs e)
     {
-        if (MessageBox.Show(this, "Revenir aux paramètres d'usine ? Les fichiers de référence sont aussi effacés.", Title,
+        if (MessageBox.Show(this, "Revenir aux paramètres d'usine ? Les fichiers sont aussi effacés (bibliothèque et multidec.bib : ceux installés avec MultiDEC).", Title,
                             MessageBoxButton.OKCancel, MessageBoxImage.Question) == MessageBoxResult.OK)
         {
-            _vm.Remplacer(ParametresParDefaut.Usine());
+            var usine = ParametresParDefaut.Usine();
+            usine.CompleterFichiersInstalles(MainWindow.DossierProgramme); // bibliothèque et multidec.bib installés
+            _vm.Remplacer(usine);
         }
     }
 

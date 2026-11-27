@@ -31,6 +31,9 @@ public enum Famille
 
     /// <summary>Volées d'escalier (HMESCALU…) et leurs garde-corps (HMGCESCALU…).</summary>
     Escalier,
+
+    /// <summary>Référence ajoutée à la main dans le décompte, absente de multidec.bib (remarque 61).</summary>
+    Divers,
 }
 
 /// <summary>Direction principale d'un élément.</summary>

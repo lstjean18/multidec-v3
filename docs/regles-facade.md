@@ -172,7 +172,15 @@ Les points marqués **[à valider]** sont des choix faits en v3 faute de règle 
 - **49** Colonne « Lest » (visible dès qu'une maille est stabilisée) : platelage à 0,50 m entre file extérieure et file de stabilisation, plateaux de la longueur de la maille sur lisses porteuses en travers (renforcées dès 1,50 m).
   - **55** (27/11) : dans la levée du platelage de lest (0 à 2 m), pas de diagonale en travers intermédiaire (elle traverserait les plateaux) ; celles des abouts de la stabilisation restent (précision de Laurent, 19h19).
 - **50** Maille d'accès : 1,50 m au moins (refus de dessiner, longueurs filtrées dans la grille, accès proposés en 1,50 m avec une maille préférée plus courte).
-- **Références client** : table LV Tec intégrée (`catalogue/references-client-lvtec.csv`, tirée du Modèle Devis LVTEC de la v2), ou fichier CSV RefRETOTUB;RefClient ; liste « Références affichées » sur l'onglet Décompte et dans les Paramètres par défaut.
+- **Références client** : table LV Tec intégrée (`catalogue/references-client-lvtec.csv`, tirée du Modèle Devis LVTEC de la v2), ou fichier CSV RefRETOTUB;RefClient ; liste « Références affichées » sur l'onglet Décompte et dans les Paramètres par défaut (onglet Fichiers, remarque 60).
+- **61** (27/11) Décompte modifiable : quantité imposée par référence (remplace la quantité calculée, même après une
+  nouvelle génération ; 0 = hors liste du matériel), références ajoutées (saisie RETOTUB, ou référence client du client
+  affiché ou de multidec.bib ; inconnue = famille Divers sans poids, après confirmation). Corrections enregistrées dans le
+  .mdc3 (`CorrectionsDecompte`). Liste du matériel : astérisque sur les références ajoutées et légende sous le total.
+- **62** (27/11) L'installateur livre `Bibliotheque\Blocs 3D - Echafaudage.dwg` et `Bibliotheque\multidec.bib` (copiés du
+  dossier actions-runner\bibliotheque par Publier-version.ps1) ; chemins vides des Paramètres par défaut remplis avec
+  ces fichiers (lignes « Bibliothèque de blocs » et « Catalogue multidec.bib », modifiables).
+- **63** (27/11) Menu « Bibliothèque » supprimé : la bibliothèque se choisit dans Outils > Paramètres par défaut.
 
 ## Remarques 51 et 52 (codées le 25/11/2026, 23h45)
 

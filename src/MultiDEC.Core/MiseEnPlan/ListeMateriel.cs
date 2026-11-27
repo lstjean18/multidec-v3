@@ -54,6 +54,9 @@ public static class ListeMateriel
     private const double HautZone = 245;
     private const double BasZone = 20;
 
+    /// <summary>Légende sous les totaux quand des références ont été ajoutées à la main.</summary>
+    public const string LegendeAjout = "* Référence ajoutée à la main.";
+
     private sealed class Colonne
     {
         public Colonne(string titre, double largeur, bool aDroite, Func<LigneDecompte, string> valeur)
@@ -75,6 +78,7 @@ public static class ListeMateriel
     /// <summary>Feuilles A4 de la liste (au moins une, même sans matériel).</summary>
     public static List<FeuilleDessinee> Feuilles(EnTeteListe entete, IReadOnlyList<LigneDecompte> lignes, IEnumerable<string> alertes)
     {
+        lignes = lignes.Where(l => l.Quantite > 0).ToList(); // quantité mise à 0 à la main : ligne retirée de la liste
         var colonnes = Colonnes(entete);
         var feuilles = new List<FeuilleDessinee>();
         FeuilleDessinee f = null!;
@@ -151,6 +155,11 @@ public static class ListeMateriel
         f.Primitives.Add(new Texte(new Point2(poids.X1 - MargeCellule, ligneBase), CalculDecompte.PoidsTotal(lignes).ToString("N1", Nombres) + " kg", HauteurTexte, Alignement.BasDroite) { Gras = true });
         y -= hTotal;
         f.Primitives.Add(new Trait(new Point2(Gauche, y), new Point2(Droite, y), 0.35));
+        if (lignes.Any(l => l.Ajoutee))
+        {
+            f.Primitives.Add(new Texte(new Point2(Gauche + MargeCellule, y - 1.2 - HauteurTexte), LegendeAjout, HauteurTexte) { Encre = Encre.Gris });
+            y -= 4;
+        }
 
         // Alertes en bas du tableau.
         var liste = alertes.Where(a => !string.IsNullOrWhiteSpace(a)).ToList();
@@ -244,6 +253,10 @@ public static class ListeMateriel
         }
 
         colonnes.Add(new Colonne("Désignation", 0, false, l => l.Designation));
+
+        // Références ajoutées à la main repérées par un astérisque dans la première colonne (remarque 61).
+        var premiere = colonnes[0];
+        colonnes[0] = new Colonne(premiere.Titre, premiere.Largeur, premiere.ADroite, l => premiere.Valeur(l) + (l.Ajoutee ? " *" : string.Empty));
         colonnes.Add(new Colonne("Qté", 14, true, l => l.Quantite.ToString("N0", Nombres)));
         colonnes.Add(new Colonne("Poids U (kg)", 19, true, l => l.PoidsUnitaire?.ToString("N2", Nombres) ?? "–"));
         colonnes.Add(new Colonne("Poids total (kg)", 22, true, l => l.PoidsTotal?.ToString("N1", Nombres) ?? "–"));

@@ -73,6 +73,12 @@ public sealed class ParametresParDefaut
     /// <summary>Bibliothèque de blocs chargée au démarrage.</summary>
     public string? Bibliotheque { get; set; }
 
+    /// <summary>
+    /// Catalogue des articles multidec.bib (désignations, poids, familles du décompte). Vide : multidec.bib à côté de la
+    /// bibliothèque de blocs (remarque 62).
+    /// </summary>
+    public string? Articles { get; set; }
+
     /// <summary>Fichier Excel servant de trame aux devis.</summary>
     public string? ModeleDevis { get; set; }
 
@@ -98,6 +104,60 @@ public sealed class ParametresParDefaut
     public bool ListeFamilles { get; set; } = true;
 
     public static ParametresParDefaut Usine() => new ParametresParDefaut();
+
+    /// <summary>Sous-dossier du programme où l'installateur dépose la bibliothèque de blocs et multidec.bib (remarque 62).</summary>
+    public const string DossierBibliothequeInstallee = "Bibliotheque";
+
+    /// <summary>Nom de la bibliothèque de blocs livrée avec l'installateur.</summary>
+    public const string NomBibliothequeInstallee = "Blocs 3D - Echafaudage.dwg";
+
+    /// <summary>Bibliothèque de blocs livrée avec le programme (null si elle n'est pas installée).</summary>
+    public static string? BibliothequeInstallee(string dossierProgramme) =>
+        Existant(Path.Combine(dossierProgramme, DossierBibliothequeInstallee, NomBibliothequeInstallee));
+
+    /// <summary>multidec.bib livré avec le programme (null s'il n'est pas installé).</summary>
+    public static string? ArticlesInstalles(string dossierProgramme) =>
+        Existant(Path.Combine(dossierProgramme, DossierBibliothequeInstallee, Decompte.CatalogueArticles.NomFichier));
+
+    /// <summary>
+    /// Chemins vides de la bibliothèque et de multidec.bib remplis avec les fichiers installés avec le programme
+    /// (l'utilisateur peut les changer dans l'onglet « Fichiers »). Renvoie vrai si un chemin a été rempli.
+    /// </summary>
+    public bool CompleterFichiersInstalles(string dossierProgramme)
+    {
+        bool change = false;
+        if (string.IsNullOrWhiteSpace(Bibliotheque) && BibliothequeInstallee(dossierProgramme) is string bibliotheque)
+        {
+            Bibliotheque = bibliotheque;
+            change = true;
+        }
+
+        if (string.IsNullOrWhiteSpace(Articles) && ArticlesInstalles(dossierProgramme) is string articles)
+        {
+            Articles = articles;
+            change = true;
+        }
+
+        return change;
+    }
+
+    /// <summary>
+    /// multidec.bib à lire avec la bibliothèque <paramref name="bibliotheque"/> : celui des paramètres s'il existe,
+    /// sinon celui posé à côté de la bibliothèque, sinon celui installé avec le programme.
+    /// </summary>
+    public string? CheminArticles(string? bibliotheque, string? dossierProgramme = null)
+    {
+        if (Existant(Articles) is string choisi)
+        {
+            return choisi;
+        }
+
+        string? voisin = string.IsNullOrEmpty(bibliotheque) ? null
+            : Existant(Path.Combine(Path.GetDirectoryName(bibliotheque) ?? string.Empty, Decompte.CatalogueArticles.NomFichier));
+        return voisin ?? (dossierProgramme == null ? null : ArticlesInstalles(dossierProgramme));
+    }
+
+    private static string? Existant(string? chemin) => !string.IsNullOrWhiteSpace(chemin) && File.Exists(chemin) ? chemin : null;
 
     /// <summary>Forme écrite d'une valeur de liste : nom de l'énumération, cote « 0.70 », référence.</summary>
     public static string Cle(object? valeur) => valeur switch

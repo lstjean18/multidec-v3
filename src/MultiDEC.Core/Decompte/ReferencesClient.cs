@@ -30,6 +30,7 @@ public sealed class ReferencesClient
     });
 
     private readonly Dictionary<string, string> _table;
+    private readonly Dictionary<string, string> _inverse;
 
     public ReferencesClient(string nom, IEnumerable<KeyValuePair<string, string>> correspondances)
     {
@@ -40,6 +41,15 @@ public sealed class ReferencesClient
             if (!_table.ContainsKey(kv.Key))
             {
                 _table[kv.Key] = kv.Value;
+            }
+        }
+
+        _inverse = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var kv in _table)
+        {
+            if (!_inverse.ContainsKey(kv.Value))
+            {
+                _inverse[kv.Value] = kv.Key; // une référence client pour plusieurs RETOTUB : la première l'emporte
             }
         }
     }
@@ -53,6 +63,9 @@ public sealed class ReferencesClient
     public static ReferencesClient LvTec => _lvTec.Value;
 
     public bool TryGet(string referenceRetotub, out string referenceClient) => _table.TryGetValue(referenceRetotub, out referenceClient!);
+
+    /// <summary>Référence RETOTUB d'une référence client (saisie d'une référence dans le décompte, remarque 61).</summary>
+    public bool TryGetRetotub(string referenceClient, out string referenceRetotub) => _inverse.TryGetValue(referenceClient, out referenceRetotub!);
 
     /// <summary>
     /// CSV « RefRETOTUB;RefClient » (séparateur point-virgule, tabulation ou virgule) ; ligne d'en-tête facultative ;

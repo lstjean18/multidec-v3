@@ -35,6 +35,9 @@ param(
     # Dossier de l'application déjà compilée (utilisé par la CI) ; vide = compilation ici.
     [string]$Source = '',
     [string]$NumeroBuild = 'publication',
+    # Dossier contenant « Blocs 3D - Echafaudage.dwg » et multidec.bib, livrés dans {app}\Bibliotheque (remarque 62).
+    # Par défaut : actions-runner\bibliotheque du profil Windows (dossier de référence sur le serveur de dev).
+    [string]$Bibliotheque = '',
     # Envoyer la version sur le site retotub.com (SFTP) : installateur à nom fixe, copie numérotée, puis version.json.
     [switch]$Envoyer,
     # Ressaisir les paramètres de connexion SFTP (enregistrés chiffrés dans le profil Windows).
@@ -164,6 +167,22 @@ $etape = Join-Path $env:TEMP "MultiDEC-publication-$Version"
 if (Test-Path $etape) { Remove-Item $etape -Recurse -Force }
 robocopy $Source $etape /MIR /NFL /NDL /NJH /NJS /R:1 /W:1 /XF *.vshost.* | Out-Null
 if ($LASTEXITCODE -ge 8) { throw "Copie de $Source impossible" }
+
+# Bibliothèque de blocs et catalogue des articles livrés avec l'application (Laurent 27/11/2026, remarque 62).
+if (-not $Bibliotheque) {
+    $Bibliotheque = Get-ChildItem (Join-Path $env:USERPROFILE 'actions-runner') -Directory -ErrorAction SilentlyContinue |
+        Where-Object { $_.Name -like 'biblioth*' } | Select-Object -First 1 -ExpandProperty FullName
+}
+if (-not $Bibliotheque -or -not (Test-Path $Bibliotheque)) { throw "Dossier de la bibliothèque introuvable (option -Bibliotheque) : '$Bibliotheque'" }
+$dossierBib = Join-Path $etape 'Bibliotheque'
+New-Item -ItemType Directory -Force -Path $dossierBib | Out-Null
+foreach ($nom in 'Blocs 3D - Echafaudage.dwg', 'multidec.bib') {
+    $f = Join-Path $Bibliotheque $nom
+    if (-not (Test-Path $f)) { throw "Fichier absent de la bibliothèque : $f" }
+    Copy-Item $f $dossierBib -Force
+    Write-Host ("Livré avec l'application : Bibliotheque\$nom (" + [math]::Round((Get-Item $f).Length / 1MB, 1) + ' Mo)')
+}
+
 if ($AdresseMisesAJour) {
     [IO.File]::WriteAllText((Join-Path $etape 'mise-a-jour.txt'), $AdresseMisesAJour.Trim() + "`r`n", (New-Object Text.UTF8Encoding $false))
     Write-Host "Adresse des mises à jour : $AdresseMisesAJour"

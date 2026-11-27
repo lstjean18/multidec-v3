@@ -598,9 +598,17 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
                 return $"multidec.bib : {_articles.Nombre} articles.";
             }
 
-            int pieces = Decompte.Sum(l => l.Quantite);
-            var sansPoids = CalculDecompte.SansPoids(Decompte).ToList();
-            string texte = $"{Decompte.Count} références, {pieces} pièces, poids total {CalculDecompte.PoidsTotal(Decompte):N1} kg";
+            var retenues = Decompte.Where(l => l.Quantite > 0).ToList();
+            int pieces = retenues.Sum(l => l.Quantite);
+            var sansPoids = CalculDecompte.SansPoids(retenues).ToList();
+            string texte = $"{retenues.Count} références, {pieces} pièces, poids total {CalculDecompte.PoidsTotal(retenues):N1} kg";
+            int ajoutees = Decompte.Count(l => l.Ajoutee);
+            int modifiees = Decompte.Count(l => l.Modifiee);
+            if (ajoutees + modifiees > 0)
+            {
+                texte += $" – modifié à la main : {modifiees} quantité{(modifiees > 1 ? "s" : "")} modifiée{(modifiees > 1 ? "s" : "")} (M), "
+                         + $"{ajoutees} référence{(ajoutees > 1 ? "s" : "")} ajoutée{(ajoutees > 1 ? "s" : "")} (*)";
+            }
             if (sansPoids.Count > 0)
             {
                 texte += $" (poids inconnu pour : {string.Join(", ", sansPoids)})";
@@ -826,8 +834,61 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
 
     private void CalculerDecompte()
     {
-        Remplir(Decompte, _structure == null ? new List<LigneDecompte>() : CalculDecompte.Calculer(_structure.Elements, _articles, _client));
+        Remplir(Decompte, _structure == null
+            ? new List<LigneDecompte>()
+            : CalculDecompte.Calculer(_structure.Elements, _articles, _client, _projet.CorrectionsDecompte));
         Notifier(nameof(ResumeDecompte));
+        Notifier(nameof(DecompteCorrige));
+    }
+
+    // ---- Décompte modifiable (remarque 61, Laurent 27/11/2026) -----------------------------------
+
+    /// <summary>Le décompte contient des quantités modifiées ou des références ajoutées à la main.</summary>
+    public bool DecompteCorrige => _projet.CorrectionsDecompte.Count > 0;
+
+    /// <summary>Impose la quantité d'une ligne (enregistrée dans le projet) et recalcule le décompte et ses totaux.</summary>
+    public void ModifierQuantite(string reference, int quantite)
+    {
+        var ligne = Decompte.FirstOrDefault(l => string.Equals(l.Reference, reference, StringComparison.OrdinalIgnoreCase));
+        CalculDecompte.Imposer(_projet.CorrectionsDecompte, ligne?.Reference ?? reference, quantite, ligne?.QuantiteCalculee ?? 0);
+        CalculerDecompte();
+    }
+
+    /// <summary>
+    /// Référence RETOTUB d'une saisie (référence RETOTUB, référence du client affiché ou référence client de
+    /// multidec.bib) ; null si elle n'est reconnue nulle part.
+    /// </summary>
+    public string? ReferenceSaisie(string saisie) => CalculDecompte.ReferenceRetotub(saisie, _articles, _client);
+
+    /// <summary>
+    /// Ajoute <paramref name="quantite"/> pièces d'une référence RETOTUB au décompte. Déjà présente : sa quantité est
+    /// augmentée. Renvoie la ligne obtenue (null sans structure générée).
+    /// </summary>
+    public LigneDecompte? AjouterAuDecompte(string reference, int quantite)
+    {
+        if (_structure == null || quantite <= 0)
+        {
+            return null;
+        }
+
+        var ligne = Decompte.FirstOrDefault(l => string.Equals(l.Reference, reference, StringComparison.OrdinalIgnoreCase));
+        CalculDecompte.Imposer(_projet.CorrectionsDecompte, ligne?.Reference ?? reference, (ligne?.Quantite ?? 0) + quantite, ligne?.QuantiteCalculee ?? 0);
+        CalculerDecompte();
+        return Decompte.FirstOrDefault(l => string.Equals(l.Reference, reference, StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>Remet la quantité calculée d'une ligne (une référence ajoutée disparaît).</summary>
+    public void RetablirLigne(string reference)
+    {
+        _projet.CorrectionsDecompte.RemoveAll(c => string.Equals(c.Reference?.Trim(), reference, StringComparison.OrdinalIgnoreCase));
+        CalculerDecompte();
+    }
+
+    /// <summary>Retire toutes les modifications faites à la main dans le décompte.</summary>
+    public void RetablirDecompte()
+    {
+        _projet.CorrectionsDecompte.Clear();
+        CalculerDecompte();
     }
 
     /// <summary>Retire de la structure les pièces supprimées dans le dessin et recalcule le décompte.</summary>

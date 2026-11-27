@@ -192,6 +192,26 @@ public class CapturesManuelTests
         Element(w.OngletsBas, "IHM-decompte-lvtec");
         vm.ReferencesAffichees = MultiDEC.Core.Decompte.ReferencesClient.Retotub;
         Pomper();
+
+        // Décompte modifié à la main (remarque 61) : une quantité changée, une référence ajoutée.
+        if (vm.Decompte.Count > 2)
+        {
+            var ligne = vm.Decompte[2];
+            vm.ModifierQuantite(ligne.Reference, ligne.Quantite + 4);
+            var ajout = vm.Articles.Articles.FirstOrDefault(a => a.PoidsUnitaire != null && a.Reference.StartsWith("HM", StringComparison.Ordinal)
+                                                                && !vm.Decompte.Any(l => l.Reference == a.Reference));
+            if (ajout != null)
+            {
+                vm.AjouterAuDecompte(ajout.Reference, 6);
+            }
+
+            Pomper();
+            Disposer(w);
+            Element(w.OngletsBas, "IHM-decompte-modifie");
+            vm.RetablirDecompte();
+            Pomper();
+        }
+
         Onglet(w.OngletsBas, 0);
         Dessin(w, Vues.Iso, "3D-consoles-iso");
         Dessin(w, Vues.Facade, "3D-consoles-facade");

@@ -20,7 +20,7 @@ public partial class MainWindow
     {
         if (_rendu == null)
         {
-            MessageBox.Show(this, "La mise en plan a besoin de la bibliothèque de blocs (Blocs 3D - Echafaudage.dwg) : choisissez-la dans Fichier.",
+            MessageBox.Show(this, "La mise en plan a besoin de la bibliothèque de blocs (Blocs 3D - Echafaudage.dwg) : indiquez-la dans Outils > Paramètres par défaut, onglet Fichiers.",
                 "Mise en plan", MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
@@ -126,7 +126,7 @@ public partial class MainWindow
         {
             Vm.Generer();
             var projet = Vm.Projet;
-            var lignes = Vm.Decompte.ToList();
+            var lignes = Vm.Decompte.Where(l => l.Quantite > 0).ToList(); // quantités mises à 0 à la main : hors liste
             if (lignes.Count == 0)
             {
                 Mouse.OverrideCursor = null;
