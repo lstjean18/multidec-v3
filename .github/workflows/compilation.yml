@@ -106,6 +106,26 @@ jobs:
             }
           }
           if (-not $p) {
+            # Diagnostic : code d'erreur Windows, autre nom, autre dossier, exe Windows copié dans le même dossier.
+            whoami
+            $essais = @(
+              @{ n = 'CreateProcess direct'; f = $setup.FullName },
+              @{ n = 'copie renommee dans RUNNER_TEMP'; f = (Copy-Item $setup.FullName (Join-Path $env:RUNNER_TEMP 'mdc-inst.exe') -PassThru).FullName },
+              @{ n = 'whoami.exe copie dans installateur-ci'; f = (Copy-Item "$env:WINDIR\System32\whoami.exe" (Join-Path $sortie 'whoami-copie.exe') -PassThru).FullName }
+            )
+            foreach ($e in $essais) {
+              try {
+                $i = New-Object Diagnostics.ProcessStartInfo $e.f, '/?'
+                $i.UseShellExecute = $false
+                if ($e.n -like 'whoami*') { $i.Arguments = '' } else { $i.Arguments = '/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /CURRENTUSER /NOLANCEMENT=1 /DIR="' + $dossier + '"' }
+                $pr = [Diagnostics.Process]::Start($i); $pr.WaitForExit(); Write-Host "DIAG $($e.n) : lancé, code $($pr.ExitCode)"
+              } catch {
+                $w = $_.Exception.InnerException; if (-not $w) { $w = $_.Exception }
+                Write-Host "DIAG $($e.n) : $($w.Message) (code Win32 $($w.NativeErrorCode))"
+              }
+            }
+            Get-WinEvent -LogName 'Microsoft-Windows-AppLocker/EXE and DLL' -MaxEvents 3 -ErrorAction SilentlyContinue | Format-List TimeCreated, Message | Out-String | Write-Host
+            Get-WinEvent -FilterHashtable @{ LogName = 'Application'; StartTime = (Get-Date).AddMinutes(-5) } -MaxEvents 8 -ErrorAction SilentlyContinue | Format-List TimeCreated, ProviderName, Message | Out-String -Width 200 | Write-Host
             try { Get-MpThreatDetection | Select-Object -Last 3 | Format-List | Out-String | Write-Host } catch { Write-Host "Defender : $($_.Exception.Message)" }
             Get-Acl $setup.FullName | Format-List | Out-String | Write-Host
             throw "Installateur impossible à lancer"
