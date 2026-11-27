@@ -92,6 +92,65 @@ public class MiseEnPlanTests
         Assert.True(taille > 10_000);
     }
 
+    /// <summary>
+    /// Remarque 59 (Laurent, 27/11/2026, « génération des plans relativement lente ») : temps de chaque étape avec les
+    /// réglages de l'application, et variantes de l'export PDF (résolution, mode de rendu).
+    /// </summary>
+    [Theory]
+    [InlineData("droite", false)]
+    [InlineData("L", true)]
+    public void Chronometre_mise_en_plan(string nom, bool enL)
+    {
+        var chrono = System.Diagnostics.Stopwatch.StartNew();
+        void Etape(string etape)
+        {
+            _sortie.WriteLine($"CHRONO {nom} {etape} : {chrono.ElapsedMilliseconds} ms");
+            chrono.Restart();
+        }
+
+        var doc = new vdDocumentComponent().Document;
+        var rendu = new RenduVectorDraw(doc);
+        rendu.ChargerBibliotheque(Bibliotheque());
+        Etape("chargement bibliothèque");
+        var projet = ProjetStructure.Nouveau(face: new ParametresFacade { LongueurTotaleSouhaitee = 15, LongueurMaillePreferee = 2.5, HauteurDernierPlancher = 6, NombreAcces = 1 });
+        if (enL)
+        {
+            projet.Forme = FormeStructure.EnL;
+            projet.AjusterFaces();
+        }
+
+        var structure = GenerateurStructure.Generer(projet);
+        Etape("génération du modèle");
+        rendu.Dessiner(structure, TableOrientations.ParDefaut());
+        Etape("dessin 3D");
+        var cartouche = Cartouche.De(projet, structure, "MultiDEC v3 – chrono", 1234, null, o => o.ToString());
+        var plan = GenerateurPlan.Generer(projet, structure, cartouche);
+        var feuilles = MiseEnPage.Feuilles(plan);
+        Etape($"plan et habillage ({feuilles.Count} feuilles, {feuilles.Sum(f => f.Page.Vues.Count)} vues, {feuilles.Sum(f => f.Primitives.Count)} primitives)");
+        var mep = new MiseEnPlanVectorDraw(doc);
+        var pages = mep.Composer(feuilles);
+        Etape("présentations VectorDraw");
+        foreach (var (libelle, resolution, mode) in new[]
+        {
+            ("PDF ombré 300 dpi (actuel)", 300, global::VectorDraw.Render.vdRender.Mode.ShadeOn),
+            ("PDF ombré 200 dpi", 200, global::VectorDraw.Render.vdRender.Mode.ShadeOn),
+            ("PDF ombré 150 dpi", 150, global::VectorDraw.Render.vdRender.Mode.ShadeOn),
+            ("PDF lignes cachées 300 dpi", 300, global::VectorDraw.Render.vdRender.Mode.Hide),
+        })
+        {
+            if (mep.ModeVues != mode)
+            {
+                mep.ModeVues = mode;
+                pages = mep.Composer(feuilles);
+            }
+
+            mep.Resolution = resolution;
+            string pdf = Path.Combine(Path.GetTempPath(), $"chrono-{nom}-{resolution}-{mode}.pdf");
+            mep.ExporterPdf(pages, pdf);
+            Etape($"{libelle} : {new FileInfo(pdf).Length / 1024} Ko");
+        }
+    }
+
     /// <summary>Liste du matériel A4 (27/11/2026) : page 1 en image et PDF dans le log.</summary>
     [Fact]
     public void Liste_materiel_pdf_A4()

@@ -91,6 +91,12 @@ public sealed class ParametresParDefaut
     /// <summary>Nom porté dans la case « Établi par » du cartouche des plans (vide : nom de session Windows).</summary>
     public string? EtabliPar { get; set; }
 
+    /// <summary>Liste du matériel PDF : colonne de la référence RETOTUB (Laurent 27/11/2026, remarque 58).</summary>
+    public bool ListeReferenceRetotub { get; set; } = true;
+
+    /// <summary>Liste du matériel PDF : bandeaux des familles (remarque 58).</summary>
+    public bool ListeFamilles { get; set; } = true;
+
     public static ParametresParDefaut Usine() => new ParametresParDefaut();
 
     /// <summary>Forme écrite d'une valeur de liste : nom de l'énumération, cote « 0.70 », référence.</summary>

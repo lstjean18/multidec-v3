@@ -20,6 +20,15 @@ public sealed class EnTeteListe
     /// <summary>Nom des références client affichées (ex. « LV Tec »), null en références RETOTUB.</summary>
     public string? NomReferencesClient { get; set; }
 
+    /// <summary>
+    /// Colonne de la référence RETOTUB (Paramètres par défaut, Laurent 27/11/2026). Décochée : pas de colonne de
+    /// référence, sauf les références client quand on travaille en références client.
+    /// </summary>
+    public bool AfficherReferenceRetotub { get; set; } = true;
+
+    /// <summary>Bandeaux des familles (décochée : l'ordre par famille est gardé, sans bandeau).</summary>
+    public bool AfficherFamilles { get; set; } = true;
+
     public string Titre { get; set; } = "LISTE DU MATÉRIEL";
 
     public string Pied { get; set; } = "Décompte réalisé avec MultiDEC v3";
@@ -92,12 +101,12 @@ public static class ListeMateriel
         {
             var cellules = colonnes.Select(c => Couper(c.Valeur(l), c.Largeur - 2 * MargeCellule, HauteurTexte)).ToList();
             double h = HauteurLigne(cellules.Max(c => c.Count));
-            bool nouvelleFamille = !string.Equals(l.FamilleAffichee, famille, StringComparison.Ordinal);
+            bool nouvelleFamille = entete.AfficherFamilles && !string.Equals(l.FamilleAffichee, famille, StringComparison.Ordinal);
             double hFamille = HauteurLigne(1);
             if (y - h - (nouvelleFamille ? hFamille : 0) < BasZone)
             {
                 NouvellePage(true);
-                if (!nouvelleFamille)
+                if (entete.AfficherFamilles && !nouvelleFamille)
                 {
                     y = LigneFamille(f, famille + " (suite)", y);
                     rang = 0;
@@ -189,7 +198,7 @@ public static class ListeMateriel
     }
 
     /// <summary>Alertes propres au décompte : références sans poids, sans correspondance client.</summary>
-    public static List<string> AlertesDecompte(IReadOnlyList<LigneDecompte> lignes, string? nomReferencesClient)
+    public static List<string> AlertesDecompte(IReadOnlyList<LigneDecompte> lignes, string? nomReferencesClient, bool referenceRetotubAffichee = true)
     {
         var alertes = new List<string>();
         var sansPoids = CalculDecompte.SansPoids(lignes).ToList();
@@ -203,7 +212,8 @@ public static class ListeMateriel
             var sansRef = CalculDecompte.SansReferenceClient(lignes).ToList();
             if (sansRef.Count > 0)
             {
-                alertes.Add($"Sans référence {nomReferencesClient} (référence RETOTUB indiquée) : " + string.Join(", ", sansRef) + ".");
+                alertes.Add($"Sans référence {nomReferencesClient} ({(referenceRetotubAffichee ? "référence RETOTUB indiquée" : "référence laissée vide")}) : "
+                            + string.Join(", ", sansRef) + ".");
             }
         }
 
@@ -217,10 +227,18 @@ public static class ListeMateriel
         var colonnes = new List<Colonne>();
         if (entete.NomReferencesClient != null)
         {
-            colonnes.Add(new Colonne("Réf. " + entete.NomReferencesClient, 30, false, l => l.ReferenceAffichee));
-            colonnes.Add(new Colonne("Réf. RETOTUB", 32, false, l => l.Reference));
+            if (entete.AfficherReferenceRetotub)
+            {
+                colonnes.Add(new Colonne("Réf. " + entete.NomReferencesClient, 30, false, l => l.ReferenceAffichee));
+                colonnes.Add(new Colonne("Réf. RETOTUB", 32, false, l => l.Reference));
+            }
+            else
+            {
+                // Référence client seulement (vide quand le client n'a pas de correspondance).
+                colonnes.Add(new Colonne("Réf. " + entete.NomReferencesClient, 32, false, l => l.ReferenceClient ?? string.Empty));
+            }
         }
-        else
+        else if (entete.AfficherReferenceRetotub)
         {
             colonnes.Add(new Colonne("Référence", 36, false, l => l.Reference));
         }

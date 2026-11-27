@@ -142,8 +142,10 @@ public partial class MainWindow
                 Date = projet.Date,
                 LogoClient = Vm.Defauts.LogoClient,
                 NomReferencesClient = Vm.NomReferencesClient,
+                AfficherReferenceRetotub = Vm.Defauts.ListeReferenceRetotub,
+                AfficherFamilles = Vm.Defauts.ListeFamilles,
             };
-            var alertes = Vm.Alertes.Concat(ListeMateriel.AlertesDecompte(lignes, entete.NomReferencesClient)).ToList();
+            var alertes = Vm.Alertes.Concat(ListeMateriel.AlertesDecompte(lignes, entete.NomReferencesClient, entete.AfficherReferenceRetotub)).ToList();
             var feuilles = ListeMateriel.Feuilles(entete, lignes, alertes);
 
             string dossier = Path.Combine(Path.GetTempPath(), "MultiDEC", "Plans");

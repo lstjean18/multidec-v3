@@ -265,6 +265,28 @@ public sealed class ParametresParDefautViewModel : ElementParDefaut
         }
     }
 
+    /// <summary>Liste du matériel PDF : colonne de la référence RETOTUB.</summary>
+    public bool ListeReferenceRetotub
+    {
+        get => _p.ListeReferenceRetotub;
+        set
+        {
+            _p.ListeReferenceRetotub = value;
+            Notifier();
+        }
+    }
+
+    /// <summary>Liste du matériel PDF : bandeaux des familles.</summary>
+    public bool ListeFamilles
+    {
+        get => _p.ListeFamilles;
+        set
+        {
+            _p.ListeFamilles = value;
+            Notifier();
+        }
+    }
+
     /// <summary>Remplace les paramètres affichés (import d'un fichier, retour aux paramètres d'usine).</summary>
     public void Remplacer(ParametresParDefaut p)
     {

@@ -80,6 +80,33 @@ public class ListeMaterielTests
     }
 
     [Fact]
+    public void Sans_reference_RETOTUB_ni_bandeaux_de_famille()
+    {
+        // Remarque 58 (Laurent, 27/11/2026) : cases des Paramètres par défaut.
+        var lignes = Lignes(12);
+        var e = EnTete();
+        e.AfficherReferenceRetotub = false;
+        e.AfficherFamilles = false;
+        var f = ListeMateriel.Feuilles(e, lignes, Array.Empty<string>()).Single();
+        var textes = f.Textes.Select(t => t.Contenu).ToList();
+        Assert.DoesNotContain("Référence", textes);
+        Assert.DoesNotContain(textes, t => t.StartsWith("HMREF", StringComparison.Ordinal));
+        Assert.DoesNotContain("Poteaux", textes);
+        Assert.DoesNotContain(f.Primitives.OfType<Polygone>(), g => g.Encre == Encre.FondFamille);
+        Assert.Contains("Désignation", textes);
+
+        // En références client : seulement la colonne du client, vide sans correspondance.
+        e.NomReferencesClient = "LV Tec";
+        f = ListeMateriel.Feuilles(e, lignes, ListeMateriel.AlertesDecompte(lignes, "LV Tec", false)).Single();
+        textes = f.Textes.Select(t => t.Contenu).ToList();
+        Assert.Contains("Réf. LV Tec", textes);
+        Assert.Contains("LV3", textes);
+        Assert.DoesNotContain("Réf. RETOTUB", textes);
+        Assert.DoesNotContain(textes, t => t.StartsWith("HMREF", StringComparison.Ordinal));
+        Assert.Contains(textes, t => t.Contains("référence laissée vide"));
+    }
+
+    [Fact]
     public void Plusieurs_pages_quand_la_liste_est_longue()
     {
         var feuilles = ListeMateriel.Feuilles(EnTete(), Lignes(90), Array.Empty<string>());

@@ -180,4 +180,17 @@ public class ParametresParDefautEcranTests
         Assert.True(vm.DessinerFacade);
         Assert.True(vm.Parametres.LissesEnPied);
     }
+
+    [Fact]
+    public void Cases_de_la_liste_cochees_par_defaut_et_dans_les_anciens_fichiers()
+    {
+        var ancien = ParametresParDefaut.DepuisJson("{}");
+        Assert.True(ancien.ListeReferenceRetotub);
+        Assert.True(ancien.ListeFamilles);
+        var p = ParametresParDefaut.Usine();
+        p.ListeFamilles = false;
+        Assert.False(ParametresParDefaut.DepuisJson(p.VersJson()).ListeFamilles);
+        Assert.True(ParametresParDefaut.DepuisJson(p.VersJson()).ListeReferenceRetotub);
+    }
+
 }

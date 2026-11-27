@@ -113,6 +113,11 @@
             <TextBox Text="{Binding EtabliPar, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center"
                      ToolTip="Nom porté dans le cartouche des plans (vide : nom de la session Windows)" />
           </DockPanel>
+          <TextBlock Text="Liste du matériel (PDF)" FontWeight="SemiBold" Margin="0,16,0,4" />
+          <CheckBox Content="Afficher la référence RETOTUB" IsChecked="{Binding ListeReferenceRetotub}" Margin="0,3"
+                    ToolTip="Décochée : pas de colonne de référence, ou seulement les références client quand on travaille en références client" />
+          <CheckBox Content="Afficher les familles" IsChecked="{Binding ListeFamilles}" Margin="0,3"
+                    ToolTip="Décochée : le matériel reste classé par famille, sans le bandeau portant le nom de la famille" />
         </StackPanel>
       </TabItem>
     </TabControl>
