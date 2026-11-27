@@ -107,19 +107,25 @@ public class MiseEnPageTests
         return p;
     }
 
-    private static string Svg(FeuilleDessinee f, StructureFacade s)
+    internal static string SvgDe(FeuilleDessinee f) => Svg(f, null);
+
+    private static string Svg(FeuilleDessinee f, StructureFacade? s)
     {
         var inv = CultureInfo.InvariantCulture;
         string X(double u) => u.ToString("0.###", inv);
         string Y(double v) => (f.Format.Hauteur - v).ToString("0.###", inv);
-        string Couleur(Encre e) => e switch { Encre.Gris => "#888", Encre.Cote => "#0050a0", Encre.Rouge => "#c00", Encre.Bleu => "#06c", _ => "#000" };
+        string Couleur(Encre e) => e switch
+        {
+            Encre.Gris => "#888", Encre.Cote => "#0050a0", Encre.Rouge => "#c00", Encre.Bleu => "#06c",
+            Encre.Blanc => "#fff", Encre.FondFonce => "#606060", Encre.FondFamille => "#e1f0d6", Encre.FondClair => "#f4f4f4", _ => "#000",
+        };
         var sb = new StringBuilder();
         sb.Append($"<svg xmlns='http://www.w3.org/2000/svg' width='{X(f.Format.Largeur * 4)}' height='{X(f.Format.Hauteur * 4)}' viewBox='0 0 {X(f.Format.Largeur)} {X(f.Format.Hauteur)}'><rect width='100%' height='100%' fill='white'/>");
         foreach (var vue in f.Page.Vues)
         {
             var c = vue.Cadre;
             sb.Append($"<rect x='{X(c.UMin)}' y='{Y(c.VMax)}' width='{X(c.Largeur)}' height='{X(c.Hauteur)}' fill='#f4f4f4' stroke='#ddd' stroke-width='0.2'/>");
-            foreach (var e in s.Elements.Where(e => vue.Faces == null || vue.Faces.Contains(e.NomFace)))
+            foreach (var e in (s?.Elements ?? new System.Collections.Generic.List<ElementPlace>()).Where(e => vue.Faces == null || vue.Faces.Contains(e.NomFace)))
             {
                 var p = vue.VersFeuille(vue.Projection.Projeter(e.Origine));
                 if (p.U >= c.UMin && p.U <= c.UMax && p.V >= c.VMin && p.V <= c.VMax)

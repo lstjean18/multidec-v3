@@ -104,7 +104,25 @@ public sealed class MiseEnPlanVectorDraw
         }
     }
 
-    /// <summary>Écrit le PDF de toutes les feuilles (une page A3 par présentation).</summary>
+    /// <summary>
+    /// Feuilles sans vue 3D (liste du matériel, 27/11/2026) : PDF écrit avec un document VectorDraw à part, sans toucher au
+    /// dessin de la structure. Renvoie le diagnostic (journal).
+    /// </summary>
+    public static List<string> ExporterFeuillesPdf(IReadOnlyList<FeuilleDessinee> feuilles, string chemin, string? dossierLogos = null)
+    {
+        using var composant = new global::VectorDraw.Professional.Components.vdDocumentComponent();
+        var mep = new MiseEnPlanVectorDraw(composant.Document);
+        if (dossierLogos != null)
+        {
+            mep.DossierLogos = dossierLogos;
+        }
+
+        var pages = mep.Composer(feuilles);
+        mep.ExporterPdf(pages, chemin);
+        return mep.Diagnostic;
+    }
+
+    /// <summary>Écrit le PDF de toutes les feuilles (une page par présentation, au format de sa feuille).</summary>
     public void ExporterPdf(IReadOnlyList<vdLayout> pages, string chemin)
     {
         if (File.Exists(chemin))
@@ -244,6 +262,10 @@ public sealed class MiseEnPlanVectorDraw
         Encre.Cote => System.Drawing.Color.FromArgb(0, 80, 160),
         Encre.Rouge => System.Drawing.Color.FromArgb(200, 0, 0),
         Encre.Bleu => System.Drawing.Color.FromArgb(0, 102, 204),
+        Encre.Blanc => System.Drawing.Color.FromArgb(254, 254, 254), // pas 255 : le blanc pur peut être inversé en noir sur fond blanc
+        Encre.FondFonce => System.Drawing.Color.FromArgb(96, 96, 96),
+        Encre.FondFamille => System.Drawing.Color.FromArgb(225, 240, 214),
+        Encre.FondClair => System.Drawing.Color.FromArgb(244, 244, 244),
         _ => System.Drawing.Color.Black,
     };
 

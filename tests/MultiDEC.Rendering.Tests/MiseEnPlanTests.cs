@@ -92,6 +92,48 @@ public class MiseEnPlanTests
         Assert.True(taille > 10_000);
     }
 
+    /// <summary>Liste du matériel A4 (27/11/2026) : page 1 en image et PDF dans le log.</summary>
+    [Fact]
+    public void Liste_materiel_pdf_A4()
+    {
+        var projet = ProjetStructure.Nouveau(face: new ParametresFacade { LongueurTotaleSouhaitee = 15, LongueurMaillePreferee = 2.5, HauteurDernierPlancher = 6, NombreAcces = 1 });
+        var structure = GenerateurStructure.Generer(projet);
+        var bib = Path.Combine(Path.GetDirectoryName(Bibliotheque())!, "multidec.bib");
+        var catalogue = File.Exists(bib) ? MultiDEC.Core.Decompte.CatalogueArticles.Charger(bib) : MultiDEC.Core.Decompte.CatalogueArticles.Vide;
+        var lignes = MultiDEC.Core.Decompte.CalculDecompte.Calculer(structure.Elements, catalogue);
+        var entete = new EnTeteListe
+        {
+            Chantier = "Chantier essai – façade nord",
+            Client = "Client essai",
+            ReferenceEtude = "ET-2026-001",
+            LogoClient = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logos", "RETOTUB.png"),
+        };
+        var alertes = structure.Alertes.Concat(ListeMateriel.AlertesDecompte(lignes, null)).ToList();
+        var feuilles = ListeMateriel.Feuilles(entete, lignes, alertes);
+
+        var doc = new vdDocumentComponent().Document;
+        var mep = new MiseEnPlanVectorDraw(doc);
+        var pages = mep.Composer(feuilles);
+        doc.ActiveLayOut = pages[0];
+        pages[0].ZoomExtents();
+        using (var bmp = new Bitmap(840, 1188))
+        {
+            pages[0].RenderToBitmap(bmp);
+            Fichier(Png(bmp), "liste-materiel-1.png");
+        }
+
+        string pdf = Path.Combine(Path.GetTempPath(), "liste-materiel.pdf");
+        foreach (var d in MiseEnPlanVectorDraw.ExporterFeuillesPdf(feuilles, pdf))
+        {
+            _sortie.WriteLine("DIAG " + d);
+        }
+
+        long taille = new FileInfo(pdf).Length;
+        _sortie.WriteLine($"LISTE : {lignes.Count} lignes (catalogue {catalogue.Nombre} articles), {feuilles.Count} pages, PDF {taille} octets");
+        Fichier(File.ReadAllBytes(pdf), "liste-materiel.pdf");
+        Assert.True(taille > 2_000);
+    }
+
     private static byte[] Png(Bitmap bmp)
     {
         using var flux = new MemoryStream();

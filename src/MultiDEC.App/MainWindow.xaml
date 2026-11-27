@@ -315,8 +315,9 @@
                       ToolTip="Plans A3 cotés (dessus, élévations, profils, isos, détails) en PDF, affichés dans le viewer intégré">
                 <StackPanel><TextBlock Style="{StaticResource Picto}" Text="&#xE8A1;" /><TextBlock Text="Mise en plan" /></StackPanel>
               </Button>
-              <Button Style="{StaticResource BoutonRuban}" IsEnabled="False" ToolTip="À venir : export PDF du décompte">
-                <StackPanel><TextBlock Style="{StaticResource Picto}" Text="&#xE749;" /><TextBlock Text="PDF" /></StackPanel>
+              <Button Style="{StaticResource BoutonRuban}" Click="ListeMateriel_Click"
+                      ToolTip="Liste du matériel en PDF A4 (décompte, totaux et alertes), affichée dans le viewer intégré">
+                <StackPanel><TextBlock Style="{StaticResource Picto}" Text="&#xE749;" /><TextBlock Text="Liste matériel" /></StackPanel>
               </Button>
               <Button Style="{StaticResource BoutonRuban}" IsEnabled="False" ToolTip="À venir : devis">
                 <StackPanel><TextBlock Style="{StaticResource Picto}" Text="&#xE8EF;" /><TextBlock Text="Devis" /></StackPanel>

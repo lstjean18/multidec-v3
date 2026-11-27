@@ -99,10 +99,74 @@ public partial class MainWindow
     }
 
     /// <summary>Nom de fichier du plan : « Plan - chantier » (caractères interdits remplacés).</summary>
-    internal static string NomDuPlan(string? chantier, string? client)
+    internal static string NomDuPlan(string? chantier, string? client, string prefixe = "Plan")
     {
         string libelle = !string.IsNullOrWhiteSpace(chantier) ? chantier! : !string.IsNullOrWhiteSpace(client) ? client! : "structure";
         var interdits = Path.GetInvalidFileNameChars();
-        return "Plan - " + new string(libelle.Trim().Select(c => interdits.Contains(c) ? '_' : c).ToArray());
+        return prefixe + " - " + new string(libelle.Trim().Select(c => interdits.Contains(c) ? '_' : c).ToArray());
+    }
+
+    /// <summary>
+    /// Liste du matériel en PDF A4 (Laurent, 27/11/2026) : en-tête avec logo client, chantier, client, référence étude
+    /// et date ; tableau du décompte ; alertes en bas ; pied « Décompte réalisé avec MultiDEC v3 ».
+    /// </summary>
+    private void ListeMateriel_Click(object sender, RoutedEventArgs e)
+    {
+        int aValider = Vm.PremiereFaceAValider();
+        if (aValider >= 0)
+        {
+            Onglets.SelectedIndex = aValider + 1;
+            MessageBox.Show(this, $"Les paramètres de {Vm.Faces[aValider].Nom} ont changé : cliquez sur « Valider la structure » (bouton rouge) avant d'éditer la liste du matériel.",
+                "Liste du matériel", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        Mouse.OverrideCursor = Cursors.Wait;
+        try
+        {
+            Vm.Generer();
+            var projet = Vm.Projet;
+            var lignes = Vm.Decompte.ToList();
+            if (lignes.Count == 0)
+            {
+                Mouse.OverrideCursor = null;
+                MessageBox.Show(this, "Le décompte est vide : rien à éditer.", "Liste du matériel", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            var entete = new EnTeteListe
+            {
+                Chantier = projet.Chantier,
+                Client = projet.Client,
+                ReferenceEtude = projet.ReferenceEtude,
+                Date = projet.Date,
+                LogoClient = Vm.Defauts.LogoClient,
+                NomReferencesClient = Vm.NomReferencesClient,
+            };
+            var alertes = Vm.Alertes.Concat(ListeMateriel.AlertesDecompte(lignes, entete.NomReferencesClient)).ToList();
+            var feuilles = ListeMateriel.Feuilles(entete, lignes, alertes);
+
+            string dossier = Path.Combine(Path.GetTempPath(), "MultiDEC", "Plans");
+            Directory.CreateDirectory(dossier);
+            string nom = NomDuPlan(projet.Chantier, projet.Client, "Liste matériel");
+            string chemin = Path.Combine(dossier, $"{nom}-{DateTime.Now:yyyyMMdd-HHmmss}.pdf");
+            foreach (var d in MiseEnPlanVectorDraw.ExporterFeuillesPdf(feuilles, chemin))
+            {
+                App.Journaliser("Liste du matériel : " + d);
+            }
+
+            Mouse.OverrideCursor = null;
+            new PlanPdfWindow(chemin, nom + ".pdf", $"{feuilles.Count} page(s) A4 – {lignes.Count} références – {chemin}", "Liste du matériel") { Owner = this }.Show();
+        }
+        catch (Exception ex)
+        {
+            Mouse.OverrideCursor = null;
+            App.Journaliser("Liste du matériel : " + ex);
+            MessageBox.Show(this, "La liste du matériel n'a pas pu être éditée : " + ex.GetBaseException().Message, "Liste du matériel", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+        finally
+        {
+            Mouse.OverrideCursor = null;
+        }
     }
 }

@@ -23,6 +23,16 @@ public enum Encre
     Cote,
     Rouge,
     Bleu,
+    Blanc,
+
+    /// <summary>Fond de l'en-tête des tableaux (gris foncé du logo RETOTUB).</summary>
+    FondFonce,
+
+    /// <summary>Fond des lignes de famille (vert clair).</summary>
+    FondFamille,
+
+    /// <summary>Fond d'une ligne sur deux (gris très clair).</summary>
+    FondClair,
 }
 
 /// <summary>Élément dessiné sur la feuille, en mm (origine en bas à gauche).</summary>

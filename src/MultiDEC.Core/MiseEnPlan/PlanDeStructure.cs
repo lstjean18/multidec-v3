@@ -154,6 +154,9 @@ public sealed class FormatFeuille
 {
     public static readonly FormatFeuille A3Paysage = new FormatFeuille("A3", 420, 297);
 
+    /// <summary>Liste du matériel (Laurent, 27/11/2026).</summary>
+    public static readonly FormatFeuille A4Portrait = new FormatFeuille("A4", 210, 297);
+
     public FormatFeuille(string nom, double largeur, double hauteur)
     {
         Nom = nom;

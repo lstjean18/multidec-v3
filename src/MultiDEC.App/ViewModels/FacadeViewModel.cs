@@ -580,6 +580,9 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
 
     public string TitreReference => _client == null ? "Référence" : "Réf. " + _client.Nom;
 
+    /// <summary>Nom des références client affichées (liste du matériel), null en références RETOTUB.</summary>
+    public string? NomReferencesClient => _client?.Nom;
+
     /// <summary>Bas de l'onglet « Décompte » : nombre de pièces, poids total, références sans poids.</summary>
     public string ResumeDecompte
     {
