@@ -88,9 +88,6 @@ jobs:
       # Installateur (sans signature) construit à chaque compilation, puis installé et désinstallé en silencieux.
       - name: Installateur (Inno Setup) et test d'installation
         shell: powershell
-        # Le lancement de l'installateur non signé est refusé par l'antivirus du serveur (27/11/2026) :
-        # l'échec est signalé sans bloquer l'installation de l'application de test qui suit.
-        continue-on-error: true
         run: |
           $sortie = Join-Path $env:GITHUB_WORKSPACE 'installateur-ci'
           .\publication\Publier-version.ps1 -Version 3.0.0.${{ github.run_number }} -Source src\MultiDEC.App\bin\Release\net48 -Destination $sortie -AdresseMisesAJour "$sortie" -Notes 'Compilation de test'
@@ -138,6 +135,11 @@ jobs:
             if (-not (Test-Path (Join-Path $dossier $f))) { throw "Fichier absent après installation : $f" }
           }
           Write-Host ("INSTALLATION OK : " + (Get-ChildItem $dossier -Recurse -File).Count + " fichiers dans $dossier ; installateur " + [math]::Round($setup.Length / 1MB, 1) + " Mo")
+          # Mise à jour sur place (même commande que MultiDEC) : réinstallation par-dessus l'installation existante.
+          $p = Start-Process $setup.FullName -ArgumentList '/SILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/CLOSEAPPLICATIONS', '/NOLANCEMENT=1' -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw "Mise à jour sur place en échec ($($p.ExitCode))" }
+          if (-not (Test-Path (Join-Path $dossier 'MultiDEC.exe'))) { throw "Mise à jour sur place : MultiDEC.exe absent de $dossier" }
+          Write-Host "MISE A JOUR SUR PLACE OK"
           $desinstalleur = Join-Path $dossier 'unins000.exe'
           $p = Start-Process $desinstalleur -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART' -Wait -PassThru
           Start-Sleep -Seconds 3
