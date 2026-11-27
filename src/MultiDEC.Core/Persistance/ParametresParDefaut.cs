@@ -64,6 +64,9 @@ public sealed class ParametresParDefaut
 
     public bool DessinerFacade { get; set; }
 
+    /// <summary>Recherche d'une nouvelle version publiée au démarrage (mise à jour automatique, 27/11/2026).</summary>
+    public bool RechercherMisesAJour { get; set; } = true;
+
     /// <summary>Valeurs retirées de chaque liste (<see cref="ListesDeChoix"/>), sous la forme de <see cref="Cle"/>.</summary>
     public Dictionary<string, List<string>> Masques { get; set; } = new Dictionary<string, List<string>>();
 

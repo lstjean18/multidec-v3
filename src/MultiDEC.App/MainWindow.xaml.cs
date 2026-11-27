@@ -93,6 +93,19 @@ public partial class MainWindow : Window
 
             string? defaut = Vm.Defauts.Bibliotheque;
             ChargerBibliotheque(!string.IsNullOrEmpty(defaut) && File.Exists(defaut) ? defaut : Reglages.CheminBibliotheque);
+
+            // Double-clic sur un .mdc3 (association créée par l'installateur) : le projet est ouvert au démarrage.
+            string? projet = Environment.GetCommandLineArgs().Skip(1)
+                .FirstOrDefault(a => a.EndsWith(FichierProjet.Extension, StringComparison.OrdinalIgnoreCase) && File.Exists(a));
+            if (projet != null)
+            {
+                OuvrirProjet(projet);
+            }
+
+            if (Vm.Defauts.RechercherMisesAJour)
+            {
+                _ = RechercherMiseAJourAsync(silencieux: true);
+            }
         };
     }
 
@@ -589,21 +602,26 @@ public partial class MainWindow : Window
         var dlg = new OpenFileDialog { Filter = FiltreProjet };
         if (dlg.ShowDialog(this) == true)
         {
-            try
-            {
-                Vm.Ouvrir(dlg.FileName);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(this, ex.Message, "Ouvrir", MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
-            }
+            OuvrirProjet(dlg.FileName);
+        }
+    }
 
-            // Le modèle 3D enregistré (structure + pièces supprimées + abouts remplacés) est redessiné tel quel (point 54).
-            if (_rendu != null && Vm.PremiereFaceAValider() < 0)
-            {
-                Dessiner_Click(this, new RoutedEventArgs());
-            }
+    private void OuvrirProjet(string chemin)
+    {
+        try
+        {
+            Vm.Ouvrir(chemin);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(this, ex.Message, "Ouvrir", MessageBoxButton.OK, MessageBoxImage.Error);
+            return;
+        }
+
+        // Le modèle 3D enregistré (structure + pièces supprimées + abouts remplacés) est redessiné tel quel (point 54).
+        if (_rendu != null && Vm.PremiereFaceAValider() < 0)
+        {
+            Dessiner_Click(this, new RoutedEventArgs());
         }
     }
 

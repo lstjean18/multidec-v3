@@ -317,6 +317,7 @@ public sealed class ParametresParDefautViewModel : ElementParDefaut
         Cases.Add(new CaseParDefaut("About droit", () => g.AboutDroit, v => g.AboutDroit = v));
         Cases.Add(new CaseParDefaut("Échafaudage bâché", () => g.Bache, v => g.Bache = v));
         Cases.Add(new CaseParDefaut("Dessiner façade", () => p.DessinerFacade, v => p.DessinerFacade = v));
+        Cases.Add(new CaseParDefaut("Rechercher les mises à jour au démarrage", () => p.RechercherMisesAJour, v => p.RechercherMisesAJour = v));
 
         Cotes.Add(new CoteParDefaut("Longueur souhaitée (m)", () => f.LongueurTotaleSouhaitee, v => f.LongueurTotaleSouhaitee = v));
         Cotes.Add(new CoteParDefaut("Dernier plancher (m)", () => f.HauteurDernierPlancher, v => f.HauteurDernierPlancher = v));

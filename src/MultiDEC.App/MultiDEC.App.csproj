@@ -28,6 +28,7 @@
     <Reference Include="vdScrollableControl"><HintPath>$(VectorDrawDir)vdScrollableControl.dll</HintPath></Reference>
     <Reference Include="VDrawBaseControl"><HintPath>$(VectorDrawDir)VDrawBaseControl.dll</HintPath></Reference>
     <Reference Include="WindowsFormsIntegration" />
+    <Reference Include="System.Net.Http" />
   </ItemGroup>
   <ItemGroup>
     <!-- Captures d'écran du manuel utilisateur, produites par les tests du serveur. -->

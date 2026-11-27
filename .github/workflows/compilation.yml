@@ -85,6 +85,36 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
+      # Installateur (sans signature) construit à chaque compilation, puis installé et désinstallé en silencieux.
+      - name: Installateur (Inno Setup) et test d'installation
+        shell: powershell
+        run: |
+          $sortie = Join-Path $env:GITHUB_WORKSPACE 'installateur-ci'
+          .\publication\Publier-version.ps1 -Version 3.0.0.${{ github.run_number }} -Source src\MultiDEC.App\bin\Release\net48 -Destination $sortie -AdresseMisesAJour "$sortie" -Notes 'Compilation de test'
+          $setup = Get-ChildItem $sortie -Filter 'MultiDEC-v3-Setup-*.exe' | Select-Object -First 1
+          Get-Content (Join-Path $sortie 'version.json')
+          $dossier = Join-Path $env:RUNNER_TEMP 'MultiDEC-installe'
+          $p = Start-Process $setup.FullName -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/CURRENTUSER', '/NOLANCEMENT=1', "/DIR=`"$dossier`"", "/LOG=`"$sortie\installation.log`"" -Wait -PassThru
+          if ($p.ExitCode -ne 0) { Get-Content "$sortie\installation.log" -Tail 30; throw "Installation en échec ($($p.ExitCode))" }
+          foreach ($f in 'MultiDEC.exe', 'VectorDraw.Professional.dll', 'orientations-blocs.json', 'mise-a-jour.txt') {
+            if (-not (Test-Path (Join-Path $dossier $f))) { throw "Fichier absent après installation : $f" }
+          }
+          Write-Host ("INSTALLATION OK : " + (Get-ChildItem $dossier -Recurse -File).Count + " fichiers dans $dossier ; installateur " + [math]::Round($setup.Length / 1MB, 1) + " Mo")
+          $desinstalleur = Join-Path $dossier 'unins000.exe'
+          $p = Start-Process $desinstalleur -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART' -Wait -PassThru
+          Start-Sleep -Seconds 3
+          if (Test-Path (Join-Path $dossier 'MultiDEC.exe')) { throw 'Désinstallation incomplète' }
+          Write-Host "DESINSTALLATION OK ($($p.ExitCode))"
+
+      - name: Publier l'installateur de test
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: MultiDEC-v3-installateur-${{ github.sha }}
+          path: installateur-ci/
+          if-no-files-found: ignore
+          retention-days: 14
+
       # Copie de l'application hors du dossier de travail du runner : la lancer depuis _work
       # verrouille les fichiers et fait échouer le checkout suivant.
       - name: Installer l'application (actions-runner\MultiDEC-v3)

@@ -212,6 +212,10 @@
       <MenuItem Header="_Outils">
         <MenuItem Header="Paramètres par _défaut…" Click="ParametresParDefaut_Click" />
       </MenuItem>
+      <MenuItem Header="_Aide">
+        <MenuItem Header="Rechercher les _mises à jour…" Click="MisesAJour_Click" />
+        <MenuItem Header="À _propos de MultiDEC…" Click="APropos_Click" />
+      </MenuItem>
     </Menu>
 
     <!-- Ruban -->
