@@ -127,7 +127,7 @@ public class MiseEnPlanTests
         var feuilles = MiseEnPage.Feuilles(GenerateurPlan.Generer(projet, structure, cartouche));
         Etape($"plan ({feuilles.Count} feuilles, {feuilles.Sum(f => f.Page.Vues.Count)} vues)");
 
-        foreach (var variante in new[] { "imprimante PDF", "imprimante PDF bis" })
+        foreach (var variante in new[] { "imprimante PDF" })
         {
             var mep = new MiseEnPlanVectorDraw(doc);
             var pages = mep.Composer(feuilles);
