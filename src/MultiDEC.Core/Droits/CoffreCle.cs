@@ -19,14 +19,45 @@ public static class CoffreCle
 
     private static readonly JsonSerializerOptions Options = new JsonSerializerOptions { WriteIndented = true, PropertyNamingPolicy = JsonNamingPolicy.CamelCase, PropertyNameCaseInsensitive = true };
 
-    /// <summary>Nouvelle paire de clés RSA 3072 bits.</summary>
-    public static RSA Generer()
+    /// <summary>
+    /// Nouvelle paire de clés RSA de <see cref="TailleCle"/> bits. Sous .NET Framework, RSA.Create() donne un
+    /// RSACryptoServiceProvider qui ignore la taille demandée après sa création (1 024 bits, constaté le 28/11/2026) :
+    /// MultiDEC Admin passe donc une fabrique (new RSACng(3072)) et la taille obtenue est toujours contrôlée.
+    /// </summary>
+    public static RSA Generer(Func<RSA>? fabrique = null)
     {
-        var rsa = RSA.Create();
-        rsa.KeySize = TailleCle;
-        rsa.ExportParameters(true); // force la génération
-        return rsa;
+        var rsa = fabrique?.Invoke() ?? RSA.Create();
+        try
+        {
+            if (fabrique == null)
+            {
+                rsa.KeySize = TailleCle;
+            }
+
+            int bits = rsa.ExportParameters(false).Modulus!.Length * 8; // force la génération
+            if (bits < TailleCle)
+            {
+                throw new CryptographicException($"Clé générée de {bits} bits au lieu de {TailleCle}.");
+            }
+
+            return rsa;
+        }
+        catch
+        {
+            rsa.Dispose();
+            throw;
+        }
     }
+
+    /// <summary>Taille en bits d'une clé publique XML « RSAKeyValue ».</summary>
+    public static int TailleBits(string clePubliqueXml)
+    {
+        using var rsa = ListePostes.CreerCle(clePubliqueXml);
+        return rsa.ExportParameters(false).Modulus!.Length * 8;
+    }
+
+    /// <summary>Vrai si la clé est assez longue pour signer la liste (<see cref="TailleCle"/> bits au moins).</summary>
+    public static bool EstSuffisante(string clePubliqueXml) => TailleBits(clePubliqueXml) >= TailleCle;
 
     /// <summary>Clé publique au format XML « RSAKeyValue » (compilée dans MultiDEC).</summary>
     public static string ClePubliqueXml(RSA rsa)
@@ -47,6 +78,11 @@ public static class CoffreCle
     {
         VerifierMotDePasse(motDePasse);
         var p = rsa.ExportParameters(true);
+        if (p.Modulus!.Length * 8 < TailleCle)
+        {
+            throw new ArgumentException($"Clé de {p.Modulus.Length * 8} bits trop courte : {TailleCle} bits au moins.");
+        }
+
         var cle = new CleSerialisee
         {
             Modulus = B(p.Modulus), Exponent = B(p.Exponent), D = B(p.D), P = B(p.P), Q = B(p.Q), DP = B(p.DP), DQ = B(p.DQ), InverseQ = B(p.InverseQ),

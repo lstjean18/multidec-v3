@@ -357,22 +357,45 @@ public partial class MainWindow : Window
 
         try
         {
-            EtatCle.Text = $"Clé présente ({CoffreCle.NomFichier}), empreinte {CoffreCle.Empreinte(_donnees.ClePublique())}. Elle est protégée par un mot de passe, demandé à chaque publication. "
+            string cle = _donnees.ClePublique();
+            int bits = CoffreCle.TailleBits(cle);
+            if (bits < CoffreCle.TailleCle)
+            {
+                EtatCle.Text = $"Clé de {bits} bits seulement, trop courte ({CoffreCle.TailleCle} bits attendus) : cliquez sur « Recréer la clé… » puis transmettez la nouvelle clé publique. "
+                               + "Les licences sont conservées.";
+                EtatCle.Foreground = System.Windows.Media.Brushes.Firebrick;
+                BoutonCreerCle.Content = "Recréer la clé…";
+                BoutonCreerCle.IsEnabled = true;
+                return;
+            }
+
+            EtatCle.Text = $"Clé présente ({CoffreCle.NomFichier}, {bits} bits), empreinte {CoffreCle.Empreinte(cle)}. Elle est protégée par un mot de passe, demandé à chaque publication. "
                            + "Conservez une sauvegarde : sans elle, il faudrait diffuser une nouvelle version de MultiDEC avec une nouvelle clé.";
+            EtatCle.ClearValue(TextBlock.ForegroundProperty);
         }
-        catch (Exception ex) when (ex is InvalidDataException || ex is IOException)
+        catch (Exception ex) when (ex is InvalidDataException || ex is IOException || ex is FormatException)
         {
             EtatCle.Text = "Fichier de clé illisible : " + ex.Message;
         }
 
+        BoutonCreerCle.Content = "Créer la clé…";
         BoutonCreerCle.IsEnabled = false;
     }
 
     private async void CreerCle_Click(object sender, RoutedEventArgs e)
     {
+        bool remplacer = false;
         if (_donnees.CleExiste)
         {
-            return;
+            // Seule une clé trop courte peut être remplacée ici (l'ancienne est conservée à côté).
+            if (CoffreCle.EstSuffisante(_donnees.ClePublique())
+                || MessageBox.Show(this, "Remplacer la clé actuelle, trop courte, par une nouvelle clé de 3 072 bits ?\n\nL'ancienne est conservée dans le dossier de données sous un autre nom. Il faudra transmettre la nouvelle clé publique pour qu'elle soit intégrée à MultiDEC.",
+                    "Recréer la clé", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
+            {
+                return;
+            }
+
+            remplacer = true;
         }
 
         string? motDePasse = FenetreMotDePasse.Demander(this, "Créer la clé de signature",
@@ -386,9 +409,16 @@ public partial class MainWindow : Window
         {
             string coffre = await Task.Run(() =>
             {
-                using var rsa = CoffreCle.Generer();
+                using var rsa = CoffreCle.Generer(() => new RSACng(CoffreCle.TailleCle));
                 return CoffreCle.Chiffrer(rsa, motDePasse);
             });
+            if (remplacer)
+            {
+                string ancienne = Path.Combine(_donnees.Dossier, $"cle-signature-remplacee-{DateTime.Now:yyyyMMdd-HHmmss}.json");
+                File.Move(_donnees.CheminCle, ancienne);
+                _donnees.Tracer($"Remplacement de la clé de signature (ancienne : {Path.GetFileName(ancienne)}).");
+            }
+
             File.WriteAllText(_donnees.CheminCle, coffre);
             _donnees.Tracer($"Création de la clé de signature (empreinte {CoffreCle.Empreinte(CoffreCle.ClePublique(coffre))}).");
             Tracer("Clé de signature créée.");

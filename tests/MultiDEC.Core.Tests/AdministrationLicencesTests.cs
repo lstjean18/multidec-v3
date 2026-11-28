@@ -76,6 +76,16 @@ public class AdministrationLicencesTests
 
         Assert.Throws<UnauthorizedAccessException>(() => CoffreCle.Ouvrir(coffre, "mauvais mot de passe"));
         Assert.Throws<ArgumentException>(() => CoffreCle.Chiffrer(rsa, "court"));
+        Assert.True(CoffreCle.EstSuffisante(CoffreCle.ClePublique(coffre)));
+
+        // Clé trop courte (1 024 bits, comme RSACryptoServiceProvider sous .NET Framework) : refusée.
+        Assert.Throws<CryptographicException>(() => CoffreCle.Generer(() => RSA.Create(1024)));
+        using var courte = RSA.Create(1024);
+        Assert.False(CoffreCle.EstSuffisante(CoffreCle.ClePubliqueXml(courte)));
+        Assert.Equal(1024, CoffreCle.TailleBits(CoffreCle.ClePubliqueXml(courte)));
+        Assert.Throws<ArgumentException>(() => CoffreCle.Chiffrer(courte, "mot de passe solide"));
+        using var fabrique = CoffreCle.Generer(() => RSA.Create(CoffreCle.TailleCle));
+        Assert.Equal(CoffreCle.TailleCle, fabrique.KeySize);
         Assert.Equal(CoffreCle.Empreinte(CoffreCle.ClePubliqueXml(rsa)), CoffreCle.Empreinte(CoffreCle.ClePublique(coffre)));
     }
 
@@ -86,5 +96,14 @@ public class AdministrationLicencesTests
         Assert.Equal(CodeA, RegistreLicences.ExtraireCode(courriel));
         Assert.Equal(CodeA, RegistreLicences.ExtraireCode(CodeA.Replace("-", " ")));
         Assert.Null(RegistreLicences.ExtraireCode("Code : ABCD-EFGH-JKLM-NPQR"));
+    }
+
+    /// <summary>Clé publique compilée dans MultiDEC (créée par Laurent avec MultiDEC Admin le 28/11/2026) : lisible et de 3 072 bits.</summary>
+    [Fact]
+    public void Cle_publique_de_MultiDEC_valide()
+    {
+        string cle = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "cle-publique.xml"));
+        Assert.True(CoffreCle.EstSuffisante(cle));
+        Assert.Equal(CoffreCle.TailleCle, CoffreCle.TailleBits(cle));
     }
 }

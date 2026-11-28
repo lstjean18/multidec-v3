@@ -19,6 +19,7 @@
     <Compile Include="..\..\src\MultiDEC.App\ViewModels\*.cs" Link="Lies\%(Filename).cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\..\src\MultiDEC.App\Droits\cle-publique.xml" Link="cle-publique.xml" CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\..\catalogue\blocs-3D-echafaudage.txt" Link="blocs-3D-echafaudage.txt" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>
