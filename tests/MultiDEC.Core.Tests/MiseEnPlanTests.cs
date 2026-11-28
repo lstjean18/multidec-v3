@@ -224,4 +224,30 @@ public class MiseEnPlanTests
         Assert.Equal("S1", c.Faces[1][0]);
         Assert.Equal("1234kg", new string(c.Poids.Where(char.IsLetterOrDigit).ToArray()));
     }
+
+    [Fact]
+    public void Plan_d_une_tour_seule()
+    {
+        var projet = Droite();
+        var tour = projet.AjouterTour();
+        tour.Hauteur = 6;
+        projet.AvecFacade = false;
+        var plan = Plan(projet);
+        Assert.DoesNotContain(plan.Pages, p => p.Titre.StartsWith("Élévation", StringComparison.Ordinal) || p.Titre == "Vues de profil");
+        var page = Assert.Single(plan.Pages, p => p.Titre == "Tour " + tour.Nom);
+        Assert.Equal(2, page.Vues.Count);
+        Assert.Contains(page.Vues[0].Reperes, r => r.Texte == "+" + Cote.Format(4));
+        Assert.All(plan.Pages.SelectMany(p => p.Vues), v => Assert.True(v.Echelle > 0 || v.EstAxonometrique));
+    }
+
+    [Fact]
+    public void Plan_facade_et_tour()
+    {
+        var projet = Droite();
+        projet.AjouterTour();
+        var plan = Plan(projet);
+        Assert.Contains(plan.Pages, p => p.Titre == "Élévation S1");
+        Assert.Contains(plan.Pages, p => p.Titre == "Tour T1");
+        Assert.Contains(plan.Pages[0].Vues[0].Reperes, r => r.Texte == "T1");
+    }
 }

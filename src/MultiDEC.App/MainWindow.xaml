@@ -183,6 +183,125 @@
         </StackPanel>
       </ScrollViewer>
     </DataTemplate>
+
+    <!-- Onglet d'une tour escalier alu (T1, T2…) : DataContext = TourViewModel (projet multi-ouvrages, 28/11/2026). -->
+    <DataTemplate x:Key="PanneauTour">
+      <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="10,0,10,10">
+          <TextBlock Style="{StaticResource Section}" Text="TOUR ESCALIER À VOLÉES ALU" />
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="170" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+              <RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition />
+            </Grid.RowDefinitions>
+            <TextBlock Style="{StaticResource Etiquette}" Text="Longueur (m)" />
+            <TextBlock Grid.Column="1" Margin="0,2" VerticalAlignment="Center" Text="2,50 (volées de 2,50 m)" />
+            <TextBlock Grid.Row="1" Style="{StaticResource Etiquette}" Text="Largeur (m)" />
+            <ComboBox Grid.Row="1" Grid.Column="1" Margin="0,2" ItemsSource="{x:Static vm:TourViewModel.Largeurs}" SelectedItem="{Binding Largeur}" ItemStringFormat="0.00"
+                      ToolTip="1,50 m : volées de 0,65 m ; 2,00 m : volées larges de 0,88 m" />
+            <TextBlock Grid.Row="2" Style="{StaticResource Etiquette}" Text="Paliers" />
+            <ComboBox Grid.Row="2" Grid.Column="1" Margin="0,2" ItemsSource="{x:Static vm:TourViewModel.Configurations}" DisplayMemberPath="Value" SelectedValuePath="Key"
+                      SelectedValue="{Binding Configuration}" />
+            <TextBlock Grid.Row="3" Style="{StaticResource Etiquette}" Text="Dernier palier (m)" />
+            <TextBox Grid.Row="3" Grid.Column="1" Margin="0,2" Text="{Binding Hauteur, StringFormat=0.00}"
+                     ToolTip="Multiple de 0,50 m ; en xx,50 m la tour part d'un plancher de départ à 0,50 m" />
+            <TextBlock Grid.Row="4" Style="{StaticResource Etiquette}" Text="Entrée au sol" />
+            <ComboBox Grid.Row="4" Grid.Column="1" Margin="0,2" ItemsSource="{x:Static vm:TourViewModel.Entrees}" DisplayMemberPath="Value" SelectedValuePath="Key"
+                      SelectedValue="{Binding Entree}" ToolTip="Bout du pied de la première volée" />
+          </Grid>
+          <TextBlock Text="{Binding ErreurHauteur}" Foreground="#C62828" TextWrapping="Wrap" FontSize="12" Margin="0,2"
+                     Visibility="{Binding HauteurIncorrecte, Converter={StaticResource VisibleSi}}" />
+          <CheckBox Content="Départ poteaux 3 m" IsChecked="{Binding Depart3m}" />
+          <Border Background="#F3F4F6" CornerRadius="6" Padding="8" Margin="0,6,0,0">
+            <TextBlock Text="{Binding Resume}" TextWrapping="Wrap" FontSize="12" />
+          </Border>
+
+          <TextBlock Style="{StaticResource Section}" Text="POSITION" />
+          <CheckBox Content="Accolée à une face de la façade" IsChecked="{Binding Accolee}"
+                    ToolTip="La tour garde ses poteaux, côté A contre la file extérieure de la face, reliée par tubes et colliers ; le garde-corps de la façade s'ouvre devant ses sorties côté A" />
+          <Grid Visibility="{Binding Accolee, Converter={StaticResource VisibleSi}}">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="110" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+              <RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition />
+            </Grid.RowDefinitions>
+            <TextBlock Style="{StaticResource Etiquette}" Text="Face" />
+            <ComboBox Grid.Column="1" Margin="0,2" ItemsSource="{Binding FacesPossibles}" SelectedItem="{Binding FaceAccolee}" />
+            <TextBlock Grid.Row="1" Style="{StaticResource Etiquette}" Text="Début de la tour depuis le début de la face (m)" TextWrapping="Wrap" />
+            <TextBox Grid.Row="1" Grid.Column="1" Margin="0,2" Text="{Binding Abscisse, StringFormat=0.00}" />
+            <TextBlock Grid.Row="2" Style="{StaticResource Etiquette}" Text="Écart avec la file extérieure (m)" TextWrapping="Wrap" />
+            <TextBox Grid.Row="2" Grid.Column="1" Margin="0,2" Text="{Binding Ecart, StringFormat=0.00}" />
+            <Button Grid.Row="3" Grid.ColumnSpan="2" Content="Sorties côté façade aux planchers communs" Command="{Binding SortiesCoteFacade}"
+                    HorizontalAlignment="Left" Padding="10,4" Margin="0,6,0,0" />
+          </Grid>
+          <Grid Visibility="{Binding Seule, Converter={StaticResource VisibleSi}}">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="110" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+              <RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition />
+            </Grid.RowDefinitions>
+            <TextBlock Style="{StaticResource Etiquette}" Text="Position X (m)" />
+            <TextBox Grid.Column="1" Margin="0,2" Text="{Binding PositionX, StringFormat=0.00}" ToolTip="Coin du bout D, côté A, dans le repère du projet (S1 part de X = 0)" />
+            <TextBlock Grid.Row="1" Style="{StaticResource Etiquette}" Text="Position Y (m)" />
+            <TextBox Grid.Row="1" Grid.Column="1" Margin="0,2" Text="{Binding PositionY, StringFormat=0.00}" />
+            <TextBlock Grid.Row="2" Style="{StaticResource Etiquette}" Text="Rotation (°)" />
+            <ComboBox Grid.Row="2" Grid.Column="1" Margin="0,2" ItemsSource="{x:Static vm:TourViewModel.Angles}" SelectedItem="{Binding Angle}" ItemStringFormat="0" />
+            <TextBlock Grid.Row="3" Style="{StaticResource Etiquette}" Text="Stabilité" />
+            <ComboBox Grid.Row="3" Grid.Column="1" Margin="0,2" ItemsSource="{x:Static vm:TourViewModel.Stabilites}" DisplayMemberPath="Value" SelectedValuePath="Key"
+                      SelectedValue="{Binding Stabilite}" />
+            <TextBlock Grid.Row="4" Style="{StaticResource Etiquette}" Text="Distance au bâtiment (m)" />
+            <TextBox Grid.Row="4" Grid.Column="1" Margin="0,2" Text="{Binding DistanceBatiment, StringFormat=0.00}" ToolTip="Côté A : longueur des tubes d'amarrage" />
+          </Grid>
+
+          <TextBlock Style="{StaticResource Section}" Text="PALIERS ET SORTIES" />
+          <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource Discret}" Margin="0,0,0,4"
+                     Text="A : grand côté bâtiment ou façade · C : grand côté extérieur · B et D : bouts. Ouverture de 0,50 ou 1,00 m sur un grand côté, au bout du palier ; sur un bout, seulement là où arrive la volée. Clic droit sur une lisse de la tour dans le dessin : ouvrir ou fermer." />
+          <DataGrid ItemsSource="{Binding Paliers}" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
+                    HeadersVisibility="Column" SelectionMode="Single" MaxHeight="360">
+            <DataGrid.Columns>
+              <DataGridTextColumn Header="Palier (m)" Binding="{Binding Hauteur, StringFormat=0.00}" IsReadOnly="True" Width="70" />
+              <DataGridTemplateColumn Header="Côté A" Width="Auto">
+                <DataGridTemplateColumn.CellTemplate>
+                  <DataTemplate>
+                    <StackPanel Orientation="Horizontal">
+                      <CheckBox IsChecked="{Binding SortieA, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center" Margin="4,0" />
+                      <ComboBox ItemsSource="{x:Static vm:TourViewModel.LargeursOuverture}" SelectedItem="{Binding LargeurA, UpdateSourceTrigger=PropertyChanged}"
+                                ItemStringFormat="0.00" Width="56" IsEnabled="{Binding SortieA}" />
+                    </StackPanel>
+                  </DataTemplate>
+                </DataGridTemplateColumn.CellTemplate>
+              </DataGridTemplateColumn>
+              <DataGridTemplateColumn Header="Côté C" Width="Auto">
+                <DataGridTemplateColumn.CellTemplate>
+                  <DataTemplate>
+                    <StackPanel Orientation="Horizontal">
+                      <CheckBox IsChecked="{Binding SortieC, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center" Margin="4,0" />
+                      <ComboBox ItemsSource="{x:Static vm:TourViewModel.LargeursOuverture}" SelectedItem="{Binding LargeurC, UpdateSourceTrigger=PropertyChanged}"
+                                ItemStringFormat="0.00" Width="56" IsEnabled="{Binding SortieC}" />
+                    </StackPanel>
+                  </DataTemplate>
+                </DataGridTemplateColumn.CellTemplate>
+              </DataGridTemplateColumn>
+              <DataGridTemplateColumn Header="Bout d'arrivée" Width="*">
+                <DataGridTemplateColumn.CellTemplate>
+                  <DataTemplate>
+                    <CheckBox IsChecked="{Binding SortieBout, UpdateSourceTrigger=PropertyChanged}" Content="{Binding TexteBout}" VerticalAlignment="Center" Margin="4,0" />
+                  </DataTemplate>
+                </DataGridTemplateColumn.CellTemplate>
+              </DataGridTemplateColumn>
+            </DataGrid.Columns>
+          </DataGrid>
+          <TextBlock Text="Sortie acrotère (franchissement) : à venir." FontSize="12" Foreground="{StaticResource Discret}" Margin="0,6,0,0" />
+        </StackPanel>
+      </ScrollViewer>
+    </DataTemplate>
   </Window.Resources>
 
   <DockPanel>
@@ -234,6 +353,29 @@
               </Button>
             </StackPanel>
             <TextBlock Style="{StaticResource TitreGroupe}" Text="Projet" />
+          </StackPanel>
+        </Border>
+        <!-- Ouvrages du projet (multi-ouvrages, Laurent 28/11/2026) : façade, tours escalier alu ; tour limon et SafeAccess à venir. -->
+        <Border Style="{StaticResource GroupeRuban}">
+          <StackPanel>
+            <StackPanel Orientation="Horizontal">
+              <Button x:Name="BoutonAjouterFacade" Style="{StaticResource BoutonRuban}" Click="AjouterFacade_Click"
+                      ToolTip="Ajoute l'échafaudage de façade au projet (onglets S1…)">
+                <StackPanel><TextBlock Style="{StaticResource Picto}" Text="&#xE80A;" /><TextBlock Text="+ Façade" /></StackPanel>
+              </Button>
+              <Button Style="{StaticResource BoutonRuban}" Click="AjouterTour_Click" IsEnabled="{Binding PeutAjouterTour}"
+                      ToolTip="Ajoute une tour escalier à volées aluminium (onglet T1, T2…), seule ou accolée à une face">
+                <StackPanel><TextBlock Style="{StaticResource Picto}" Text="&#xE8B7;" /><TextBlock Text="+ Tour escalier alu" /></StackPanel>
+              </Button>
+              <Button Style="{StaticResource BoutonRuban}" IsEnabled="False" ToolTip="À venir : tour escalier à volées limon">
+                <StackPanel><TextBlock Style="{StaticResource Picto}" Text="&#xE8B7;" /><TextBlock Text="+ Tour limon" /></StackPanel>
+              </Button>
+              <Button Style="{StaticResource BoutonRuban}" Click="SupprimerOuvrage_Click"
+                      ToolTip="Retire du projet l'ouvrage de l'onglet ouvert (la tour, ou la façade s'il reste une tour)">
+                <StackPanel><TextBlock Style="{StaticResource Picto}" Text="&#xE74D;" /><TextBlock Text="Supprimer" /></StackPanel>
+              </Button>
+            </StackPanel>
+            <TextBlock Style="{StaticResource TitreGroupe}" Text="Ouvrages" />
           </StackPanel>
         </Border>
 
@@ -750,12 +892,16 @@
         <TabItem Header="Décompte">
           <DockPanel>
             <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="6,4">
+              <TextBlock Text="Ouvrage" VerticalAlignment="Center" Margin="0,0,8,0" />
+              <ComboBox Width="190" Margin="0,0,16,0" ItemsSource="{Binding ChoixOuvragesDecompte}" SelectedValuePath="Key" DisplayMemberPath="Value"
+                        SelectedValue="{Binding OuvrageDecompte}"
+                        ToolTip="Décompte de tout le projet, de la façade ou d'une tour (quantités calculées, sans les modifications faites à la main)" />
               <TextBlock Text="Références affichées" VerticalAlignment="Center" Margin="0,0,8,0" />
               <ComboBox Width="240" ItemsSource="{x:Static vm:FacadeViewModel.ChoixReferences}" SelectedValuePath="Key" DisplayMemberPath="Value"
                         SelectedValue="{Binding ReferencesAffichees}"
                         ToolTip="Travail en références client : le décompte affiche les références du client (LV Tec intégré, ou fichier de correspondance des Paramètres par défaut)" />
             </StackPanel>
-            <WrapPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="6,0,6,4">
+            <WrapPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="6,0,6,4" IsEnabled="{Binding DecompteModifiable}">
               <TextBlock Text="Ajouter la référence" VerticalAlignment="Center" Margin="0,0,8,0" />
               <TextBox x:Name="SaisieReference" Width="150" VerticalContentAlignment="Center" KeyDown="SaisieDecompte_KeyDown"
                        ToolTip="Référence RETOTUB ou référence client : désignation, poids et famille sont repris de multidec.bib" />
@@ -771,7 +917,7 @@
               <TextBlock Text="Double-cliquez une quantité pour la modifier." Foreground="Gray" VerticalAlignment="Center" Margin="16,0,0,0" />
             </WrapPanel>
             <TextBlock DockPanel.Dock="Bottom" Margin="6,4" TextWrapping="Wrap" FontWeight="SemiBold" Text="{Binding ResumeDecompte}" />
-            <DataGrid x:Name="GrilleDecompte" ItemsSource="{Binding Decompte}" AutoGenerateColumns="False" IsReadOnly="False"
+            <DataGrid x:Name="GrilleDecompte" ItemsSource="{Binding Decompte}" AutoGenerateColumns="False" IsReadOnly="{Binding DecompteFiltre}"
                       CanUserAddRows="False" CanUserDeleteRows="False" SelectionMode="Single" CellEditEnding="GrilleDecompte_CellEditEnding">
               <DataGrid.RowStyle>
                 <Style TargetType="DataGridRow">

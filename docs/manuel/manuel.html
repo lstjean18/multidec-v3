@@ -135,6 +135,7 @@
   <table>
     <tr><th style="width:22%">Groupe</th><th>Commandes</th></tr>
     <tr><td>Projet</td><td><span class="ui">Nouveau</span>, <span class="ui">Ouvrir</span>, <span class="ui">Enregistrer</span> un projet .mdc3. Le menu <span class="ui">Fichier &gt; Exporter le modèle…</span> enregistre le dessin 3D dans un format de VectorDraw.</td></tr>
+    <tr><td>Ouvrages</td><td><span class="ui">+ Façade</span>, <span class="ui">+ Tour escalier alu</span>, <span class="ui">Supprimer</span> l'ouvrage ouvert (chapitre 13).</td></tr>
     <tr><td>Structure</td><td><span class="ui">Valider la structure</span> : recalcule la proposition de la face active (le voyant passe au vert). <span class="ui">Dessiner</span> : génère toute la structure en 3D, le décompte et les amarrages.</td></tr>
     <tr><td>Vue</td><td><span class="ui">Zoom tout</span> et les vues normalisées : <span class="ui">Iso</span>, <span class="ui">Façade</span>, <span class="ui">Dessus</span>, <span class="ui">Côté gauche</span>, <span class="ui">Côté droit</span>.</td></tr>
     <tr><td>Affichage</td><td>Mode de rendu (Filaire, Lignes cachées, Ombré, Ombré + arêtes, Réaliste), axes filaires (toujours affichés), case <span class="ui">Dessiner façade</span> pour représenter le mur du bâtiment.</td></tr>
@@ -590,22 +591,56 @@
   <div class="encadre"><span class="titre">Bon à savoir</span><p>Le PDF de travail est écrit dans le dossier temporaire de Windows (<b>%TEMP%\MultiDEC\Plans</b>). Pour le garder, utilisez <span class="ui">Enregistrer sous…</span>.</p></div>
 </section>
 
-<!-- ===================== 12. FICHIERS ===================== -->
+<!-- ===================== 13. TOURS ESCALIER ===================== -->
 <section class="chapitre" id="c13">
-  <div class="entete-chap"><span class="num">13</span><div><h2>Projets et suite</h2><p>Enregistrer, ouvrir, et ce qui arrive ensuite</p></div></div>
+  <div class="entete-chap"><span class="num">13</span><div><h2>Ouvrages et tours escalier</h2><p>Plusieurs ouvrages dans un projet : la façade et des tours escalier à volées alu</p></div></div>
 
-  <h3 id="s13-1"><span class="n">13.1</span>Enregistrer et ouvrir</h3>
+  <h3 id="s13-1"><span class="n">13.1</span>Le ruban Ouvrages</h3>
+  <p>Un projet peut contenir <b>la façade</b> (onglets S1, S2…) et jusqu'à neuf <b>tours escalier à volées aluminium</b> (onglets T1, T2…, en jaune, après les faces). Au bouton <span class="ui">Nouveau</span>, MultiDEC demande le premier ouvrage : échafaudage de façade ou tour escalier alu. Ensuite, le groupe <i>Ouvrages</i> du ruban permet :</p>
+  <ul>
+    <li><span class="ui">+ Façade</span> : remet la façade dans un projet de tour seule (ses réglages sont gardés) ;</li>
+    <li><span class="ui">+ Tour escalier alu</span> : ajoute une tour, à gauche des ouvrages existants, à la hauteur du dernier plancher de S1 ;</li>
+    <li><span class="ui">Supprimer</span> : retire l'ouvrage de l'onglet ouvert (une tour, ou la façade). Le dernier ouvrage du projet ne peut pas être supprimé.</li>
+  </ul>
+  <p>La tour escalier limon arrivera plus tard (bouton grisé).</p>
+
+  <h3 id="s13-2"><span class="n">13.2</span>Onglet d'une tour</h3>
+  <ul>
+    <li><b>Volées de 2,50 m</b>, tour de <b>1,50 m</b> (volées de 0,65 m) ou <b>2,00 m</b> (volées de 0,88 m) de large.</li>
+    <li><b>Configuration</b> : paliers tous les 2 m, ou alternance 1 m / 2 m.</li>
+    <li><b>Hauteur</b> du dernier palier, multiple de 0,50 m. Pour une hauteur en « ,50 » (5,50 m, 7,50 m…), une <b>structure de départ de 0,50 m</b> est ajoutée sous la tour : plancher en plateaux acier, avec une marche à prévoir à l'entrée (alerte).</li>
+    <li><b>Entrée</b> par un bout (B ou D) et départ poteaux 3 m en option.</li>
+    <li><b>Position</b> : tour seule (X, Y, angle) ou <b>accolée</b> à une face, à une abscisse donnée. Accolée, la tour garde ses propres poteaux et elle est liée à la face par des tubes et colliers tous les 4 m. Les sorties côté façade sont proposées aux paliers qui tombent sur un plancher de la face, et la façade est ouverte devant (garde-corps et plinthe retirés).</li>
+    <li><b>Stabilité</b> : amarrée au bâtiment (côté A, tous les 4 m depuis 2 m) ou lestée (alerte à traiter).</li>
+    <li><b>Paliers et sorties</b> : une ligne par palier, du haut vers le bas, avec une sortie possible côté A, côté C (largeur 0,50 ou 1,00 m) et au bout d'arrivée de la volée. Par défaut, la sortie est au dernier palier.</li>
+  </ul>
+  <p>Les côtés de la tour : <b>A</b> côté bâtiment ou façade, <b>C</b> côté opposé, <b>B</b> et <b>D</b> les deux bouts.</p>
+
+  <h3 id="s13-3"><span class="n">13.3</span>Dans le dessin, le décompte et les plans</h3>
+  <ul>
+    <li>Clic droit sur une pièce d'un côté de tour : <span class="ui">Ouvrir / Fermer le côté X de Tn au palier z</span> ajoute ou retire la sortie et redessine.</li>
+    <li>Onglet Décompte, liste <span class="ui">Ouvrage</span> : tout le projet, la façade seule ou une tour. Filtré sur un ouvrage, le décompte n'est pas modifiable (quantités calculées, sans les corrections faites à la main).</li>
+    <li>Mise en plan : une feuille par tour (élévation côté C avec les paliers cotés, vue de dessus avec les côtés A à D) ; la tour est repérée sur la vue de dessus générale.</li>
+  </ul>
+  <div class="encadre"><span class="titre">À venir</span><p>Sortie en acrotère, tours de 3,00 m et tour escalier limon.</p></div>
+</section>
+
+<!-- ===================== 12. FICHIERS ===================== -->
+<section class="chapitre" id="c14">
+  <div class="entete-chap"><span class="num">14</span><div><h2>Projets et suite</h2><p>Enregistrer, ouvrir, et ce qui arrive ensuite</p></div></div>
+
+  <h3 id="s14-1"><span class="n">14.1</span>Enregistrer et ouvrir</h3>
   <p>Un projet MultiDEC v3 est un fichier <b>.mdc3</b>. Il contient les réglages du projet, des faces, les grilles éditées à la main, les abouts remplacés et les pièces supprimées au clic droit : tout ce qu'il faut pour retrouver le même modèle 3D. <span class="ui">Enregistrer sous…</span> propose la référence étude comme nom de fichier. À l'ouverture, le modèle est redessiné automatiquement avec le décompte et les amarrages (si toutes les faces sont validées).</p>
 
-  <h3 id="s13-2"><span class="n">13.2</span>Exporter le modèle</h3>
+  <h3 id="s14-2"><span class="n">14.2</span>Exporter le modèle</h3>
   <p><span class="ui">Fichier &gt; Exporter le modèle…</span> enregistre le dessin affiché dans un fichier autonome, lisible sans MultiDEC : <b>DWG</b> et <b>DXF</b> (version AutoCAD au choix), <b>PDF</b>, <b>DGN</b>, <b>STL</b>, images <b>PNG</b>/<b>EMF</b>, ou formats VectorDraw (VDML, VDCL). Seuls les blocs utilisés par le modèle sont exportés, pas toute la bibliothèque (un DWG de façade pèse moins de 1 Mo). Le SVG, proposé par VectorDraw, ne contient pas les volumes 3D.</p>
 
-  <h3 id="s13-3"><span class="n">13.3</span>Prochaines versions</h3>
+  <h3 id="s14-3"><span class="n">14.3</span>Prochaines versions</h3>
   <ul>
     <li><b>Devis</b> : à partir du décompte, dans la trame Excel choisie dans les Paramètres par défaut.</li>
   </ul>
 
-  <h3 id="s13-4"><span class="n">13.4</span>Lexique</h3>
+  <h3 id="s14-4"><span class="n">14.4</span>Lexique</h3>
   <dl class="lexique">
     <dt>File de poteaux</dt><dd>Alignement de poteaux verticaux. Une façade standard a une file intérieure (côté mur) et une file extérieure (côté vide).</dd>
     <dt>Maille</dt><dd>Intervalle entre deux poteaux d'une file, de 0,70 à 3,00 m.</dd>
