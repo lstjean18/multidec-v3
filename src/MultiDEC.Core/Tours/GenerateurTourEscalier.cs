@@ -153,6 +153,12 @@ public sealed partial class GenerateurTourEscalier
 
     private int NombreVolees => _paliers.Count - 1;
 
+    /// <summary>
+    /// Dernière volée de 1 m : son palier est fait de 2 plateaux en travers (toute la largeur) entre la traverse
+    /// intermédiaire et le bout, dont la traverse ne porte plus rien (Laurent, 28/11/2026).
+    /// </summary>
+    private bool PalierHautEnTravers => NombreVolees >= 1 && Cotes.Egal(_paliers[NombreVolees] - _paliers[NombreVolees - 1], 1.0);
+
     /// <summary>Moitié de la largeur occupée par la volée <paramref name="k"/> (1..n) : 0 côté A, 1 côté C ; la dernière côté A.</summary>
     private int Moitie(int k) => (NombreVolees - k) % 2 == 0 ? 0 : 1;
 
@@ -258,7 +264,8 @@ public sealed partial class GenerateurTourEscalier
                 }
 
                 bool longue = cote == CoteTour.A || cote == CoteTour.C;
-                bool renforce = !longue && k >= 0 && z > Cotes.Tolerance && (k == 0 || _t.BoutArrivee(k) == cote);
+                bool renforce = !longue && k >= 0 && z > Cotes.Tolerance && (k == 0 || _t.BoutArrivee(k) == cote)
+                    && !(k == NombreVolees && PalierHautEnTravers);
                 double longueur = longue ? L : _w;
 
                 // Ouverture d'une sortie : les lisses à +0,50 / +1,00 / +1,50 m sont raccourcies.
@@ -370,9 +377,22 @@ public sealed partial class GenerateurTourEscalier
             var parties = Ouverture(bout, z) is (double debut, double fin)
                 ? new[] { (0.0, debut), (fin, _w) }
                 : new[] { (0.0, _w) };
-            foreach (var (a, b) in parties.Where(p => !SansPalierAttenant(bout, z, p.Item1, p.Item2)))
+            bool enTravers = k == NombreVolees && PalierHautEnTravers;
+            foreach (var (a, b) in parties.Where(p => enTravers || !SansPalierAttenant(bout, z, p.Item1, p.Item2)))
             {
                 Plinthe(bout, a, b, z);
+            }
+
+            if (enTravers)
+            {
+                // Plateaux en travers sur toute la largeur : plinthes aussi le long des grands côtés, entre la traverse
+                // intermédiaire et le bout.
+                double longueur = Cotes.Arrondi(L - LongueurVolee1m);
+                double x0 = bout == CoteTour.B ? Cotes.Arrondi(L - longueur) : 0.0;
+                foreach (var cote in new[] { CoteTour.A, CoteTour.C }.Where(c => Ouverture(c, z) == null))
+                {
+                    Plinthe(cote, x0, Cotes.Arrondi(x0 + longueur), z);
+                }
             }
         }
 
@@ -489,7 +509,14 @@ public sealed partial class GenerateurTourEscalier
                 }
                 else
                 {
-                    PlacerPalierVolee1m(xBout, xHaut, sens, moitie, zHaut);
+                    if (k == NombreVolees)
+                    {
+                        PlacerPalierHautVolee1m(bout, xBout, xHaut, zHaut);
+                    }
+                    else
+                    {
+                        PlacerPalierVolee1m(xBout, xHaut, sens, moitie, zHaut);
+                    }
                 }
             }
 
@@ -538,6 +565,46 @@ public sealed partial class GenerateurTourEscalier
                 ? Cotes.Arrondi(xEntree + GenerateurFacade.RetraitPlateau + GenerateurFacade.LargeurPlateau * (rang + 1))
                 : Cotes.Arrondi(xEntree - GenerateurFacade.RetraitPlateau - GenerateurFacade.LargeurPlateau * rang);
             Ajouter(References.PlateauAcierComplement(_w), Famille.Plateau, new Point3(x, 0, z), Axe.Y, Face.Aucune);
+        }
+    }
+
+    /// <summary>
+    /// Dernière volée de 1 m (Laurent, 28/11/2026) : traverse intermédiaire sous son haut, 2 plateaux acier en travers sur
+    /// toute la largeur jusqu'au bout ; devant une sortie au bout, montant de garde-corps sur la traverse intermédiaire
+    /// relié à celui du bord de l'ouverture par des tubes et colliers juste sous les rosaces de +0,50 et +1,00 m.
+    /// </summary>
+    private void PlacerPalierHautVolee1m(CoteTour bout, double xBout, double xHaut, double z)
+    {
+        Ajouter(References.TraverseIntermediaire(_w), Famille.Traverse, new Point3(xHaut, 0, z), Axe.Y, Face.Exterieure);
+        double xa = Math.Min(xBout, xHaut), xb = Math.Max(xBout, xHaut);
+        foreach (var (_, rang) in GenerateurFacade.RepartitionPlateaux(Cotes.Arrondi(xb - xa), GammePlateaux.Standard))
+        {
+            // Plateau en travers : il part de Y = 0 vers -Y, sa largeur vers les X décroissants.
+            double x = Cotes.Arrondi(xb - GenerateurFacade.RetraitPlateau - GenerateurFacade.LargeurPlateau * rang);
+            Ajouter(References.PlateauAcierComplement(_w), Famille.Plateau, new Point3(x, 0, z), Axe.Y, Face.Aucune);
+        }
+
+        if (Ouverture(bout, z) is not (double debut, double fin))
+        {
+            return;
+        }
+
+        double bord = debut > Cotes.Tolerance ? debut : fin;
+        if (bord <= Cotes.Tolerance || bord >= _w - Cotes.Tolerance)
+        {
+            return;
+        }
+
+        double y = Cotes.Arrondi(-bord);
+        var repere = new RepereCoteTour(bout, z);
+        Ajouter(References.MontantGardeCorps(_p.Modele), Famille.GardeCorps, new Point3(xHaut, y, z), Axe.Z, Face.Exterieure, repere: repere);
+        double longueur = References.LongueurTube(xb - xa) ?? 1.0;
+        foreach (double dz in new[] { 0.45, 0.95 })
+        {
+            double zt = Cotes.Arrondi(z + dz);
+            Ajouter(References.Tube(longueur), Famille.GardeCorps, new Point3(xa, y, zt), Axe.X, Face.Aucune, repere: repere);
+            Ajouter(References.CollierFixe, Famille.GardeCorps, new Point3(xa, y, zt), Axe.Z, Face.Aucune, repere: repere);
+            Ajouter(References.CollierFixe, Famille.GardeCorps, new Point3(xb, y, zt), Axe.Z, Face.Aucune, repere: repere);
         }
     }
 

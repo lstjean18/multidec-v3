@@ -119,8 +119,24 @@ public class TourEscalierTests
         var v1 = Assert.Single(el, e => e.Reference == "HMESCALU175100");
         Assert.Equal(5.0, v1.Origine.Z);
         Assert.Contains(el, e => e.Reference == "HMTIP150" && Cotes.Egal(e.Origine.Z, 5.0));
-        Assert.Contains(el, e => e.Reference == "HMPLA0753CL6" && Cotes.Egal(e.Origine.Z, 5.0));
         Assert.DoesNotContain(el, e => e.Reference == "HMTIP150" && Cotes.Egal(e.Origine.Z, 0));
+
+        // Palier en 2 plateaux de 1,50 m en travers ; traverse du bout normale (rien ne s'y accroche).
+        var plateaux = el.Where(e => e.Famille == Famille.Plateau && Cotes.Egal(e.Origine.Z, 5.0)).ToList();
+        Assert.Equal(2, plateaux.Count);
+        Assert.All(plateaux, p => Assert.True(p.Reference == "HMPLA1503CL6" && p.Axe == Axe.Y));
+        var tip = el.Single(e => e.Reference == "HMTIP150" && Cotes.Egal(e.Origine.Z, 5.0));
+        double xBout = tip.Origine.X < 1.25 ? 0 : 2.5;
+        Assert.All(plateaux, p => Assert.True(p.Origine.X >= Math.Min(xBout, tip.Origine.X) && p.Origine.X <= Math.Max(xBout, tip.Origine.X) + Cotes.Tolerance));
+        Assert.DoesNotContain(el, e => e.Axe == Axe.Y && Cotes.Egal(e.Origine.X, xBout) && Cotes.Egal(e.Origine.Z, 5.0) && e.Reference.Contains("R"));
+
+        // Montant de garde-corps sur la traverse intermédiaire, relié au bord de la sortie par 2 tubes et 4 colliers.
+        Assert.Single(el, e => e.Reference.StartsWith("HMMONTGC", StringComparison.Ordinal) && Cotes.Egal(e.Origine.X, tip.Origine.X) && Cotes.Egal(e.Origine.Z, 5.0));
+        Assert.Equal(2, el.Count(e => e.Reference.StartsWith("HMTUB", StringComparison.Ordinal) && e.Famille == Famille.GardeCorps));
+        Assert.Equal(4, el.Count(e => e.Reference == References.CollierFixe && e.Famille == Famille.GardeCorps));
+
+        var biblio = BibliothequeBlocs.DepuisFichier("blocs-3D-echafaudage.txt");
+        Assert.Empty(biblio.Manquantes(el.Select(e => e.Reference).Where(r => !r.StartsWith("HMTUBAMA", StringComparison.Ordinal) && !References.NonDessinee(r)).ToList()));
     }
 
     [Fact]
@@ -141,12 +157,15 @@ public class TourEscalierTests
         var el = Elements(Tour(7.0, config: ConfigurationTour.Alternes1m2m));
         Assert.Equal(3, el.Count(e => e.Reference == "HMESCALU175100"));
         Assert.Equal(2, el.Count(e => e.Reference == "HMESCALU250200"));
-        // Volées de 1 m à 4 et 7 m : traverse intermédiaire et plateaux de 0,75 m au palier.
+        // Volées de 1 m à 4 et 7 m : traverse intermédiaire ; plateaux de 0,75 m au palier intermédiaire, de 1,50 m en
+        // travers au dernier.
         foreach (double z in new[] { 4.0, 7.0 })
         {
             Assert.Contains(el, e => e.Reference == "HMTIP150" && Cotes.Egal(e.Origine.Z, z));
-            Assert.Contains(el, e => e.Reference == "HMPLA0753CL6" && Cotes.Egal(e.Origine.Z, z));
         }
+
+        Assert.Contains(el, e => e.Reference == "HMPLA0753CL6" && Cotes.Egal(e.Origine.Z, 4.0));
+        Assert.Contains(el, e => e.Reference == "HMPLA1503CL6" && Cotes.Egal(e.Origine.Z, 7.0));
 
         // Les volées de 1 m sont toutes dans la même moitié.
         Assert.Single(el.Where(e => e.Reference == "HMESCALU175100").Select(e => e.Origine.Y < -0.75).Distinct());
