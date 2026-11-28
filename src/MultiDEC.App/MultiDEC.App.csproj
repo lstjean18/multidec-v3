@@ -14,6 +14,8 @@
     <Version>3.0.0</Version>
     <LibelleVersion>v3.0 bêta 1</LibelleVersion>
     <NumeroBuild Condition="'$(NumeroBuild)' == ''">local</NumeroBuild>
+    <!-- Liste des postes autorisés (droits d'utilisation), dossier public des mises à jour indiqué par Laurent le 28/11/2026. -->
+    <AdresseDroits Condition="'$(AdresseDroits)' == ''">https://retotub.com/dl/multidec/postes-autorises.json</AdresseDroits>
     <InformationalVersion>$(LibelleVersion) build $(NumeroBuild)</InformationalVersion>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
   </PropertyGroup>

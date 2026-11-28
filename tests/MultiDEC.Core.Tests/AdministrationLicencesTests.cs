@@ -76,6 +76,16 @@ public class AdministrationLicencesTests
 
         Assert.Throws<UnauthorizedAccessException>(() => CoffreCle.Ouvrir(coffre, "mauvais mot de passe"));
         Assert.Throws<ArgumentException>(() => CoffreCle.Chiffrer(rsa, "court"));
+        Assert.True(CoffreCle.EstSuffisante(CoffreCle.ClePublique(coffre)));
+
+        // Clé trop courte (1 024 bits, comme RSACryptoServiceProvider sous .NET Framework) : refusée.
+        Assert.Throws<CryptographicException>(() => CoffreCle.Generer(() => RSA.Create(1024)));
+        using var courte = RSA.Create(1024);
+        Assert.False(CoffreCle.EstSuffisante(CoffreCle.ClePubliqueXml(courte)));
+        Assert.Equal(1024, CoffreCle.TailleBits(CoffreCle.ClePubliqueXml(courte)));
+        Assert.Throws<ArgumentException>(() => CoffreCle.Chiffrer(courte, "mot de passe solide"));
+        using var fabrique = CoffreCle.Generer(() => RSA.Create(CoffreCle.TailleCle));
+        Assert.Equal(CoffreCle.TailleCle, fabrique.KeySize);
         Assert.Equal(CoffreCle.Empreinte(CoffreCle.ClePubliqueXml(rsa)), CoffreCle.Empreinte(CoffreCle.ClePublique(coffre)));
     }
 
