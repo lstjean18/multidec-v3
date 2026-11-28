@@ -117,9 +117,19 @@ public class OuvragesViewModelTests
         palier.Acrotere = string.Empty;
         Assert.DoesNotContain(tour.Tour.Sorties, s => s.Acrotere);
 
-        Assert.True(tour.AjouterAcrotere(CoteTour.A, 2));
+        Assert.True(tour.BasculerAcrotere(CoteTour.A, 2));
         Assert.Contains(tour.Tour.Sorties, s => s.Acrotere && s.Cote == CoteTour.A && Cotes.Egal(s.Hauteur, 2));
-        Assert.False(tour.AjouterAcrotere(CoteTour.A, 2));
+        Assert.True(tour.AvecAcrotere(CoteTour.A, 2));
+
+        // Une seconde fois : la sortie acrotère est retirée, le côté reste ouvert.
+        Assert.False(tour.BasculerAcrotere(CoteTour.A, 2));
+        Assert.Contains(tour.Tour.Sorties, s => !s.Acrotere && s.Cote == CoteTour.A && Cotes.Egal(s.Hauteur, 2));
+
+        // Sur un côté déjà ouvert (sortie par défaut du dernier palier) : la sortie devient une sortie acrotère.
+        var haut = tour.Paliers[0];
+        var cote = tour.Tour.Sorties.First(s => Cotes.Egal(s.Hauteur, haut.Hauteur)).Cote;
+        Assert.True(tour.BasculerAcrotere(cote, haut.Hauteur));
+        Assert.True(haut.AvecAcrotere || tour.Paliers[0].AvecAcrotere);
     }
 
     [Fact]

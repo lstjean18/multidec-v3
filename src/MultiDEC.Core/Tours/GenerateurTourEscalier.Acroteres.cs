@@ -41,7 +41,7 @@ public sealed partial class GenerateurTourEscalier
             }
 
             new SortieAcrotere(this, s, debut, lp).Construire();
-            _alertes.Add(Fr($"Sortie acrotère côté {s.Cote} au palier {s.Hauteur:0.00} m : toit supposé {TourEscalierAlu.HauteurAcrotere:0.00} m sous le palier, à vérifier sur place."));
+            _alertes.Add(Fr($"Sortie acrotère {NomsCotesTour.Nom(s.Cote)} au palier {s.Hauteur:0.00} m : toit supposé {TourEscalierAlu.HauteurAcrotere:0.00} m sous le palier, à vérifier sur place."));
         }
     }
 

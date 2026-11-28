@@ -32,6 +32,28 @@ public enum CoteTour
     D,
 }
 
+/// <summary>
+/// Noms des côtés pour l'utilisateur (Laurent 28/11/2026 : « A » et « C » ne parlent pas) : gauche et droite vus de
+/// l'extérieur, face au bâtiment.
+/// </summary>
+public static class NomsCotesTour
+{
+    public static string Nom(CoteTour cote) => cote switch
+    {
+        CoteTour.A => "côté bâtiment",
+        CoteTour.B => "bout droit",
+        CoteTour.C => "côté extérieur",
+        _ => "bout gauche",
+    };
+
+    /// <summary>Nom avec une majuscule, pour un en-tête ou une liste.</summary>
+    public static string Titre(CoteTour cote)
+    {
+        string n = Nom(cote);
+        return char.ToUpperInvariant(n[0]) + n.Substring(1);
+    }
+}
+
 /// <summary>Tenue de la tour quand elle n'est pas accolée à une façade.</summary>
 public enum StabiliteTour
 {

@@ -291,7 +291,7 @@ public static class GenerateurPlan
             }
         }
 
-        var vue = new VueDePlan("Tour escalier alu " + tour.Nom + " (côté C)", TypeVue.Elevation, p, Emprise(p, coins.Concat(Origines(ctx, tour.Nom))))
+        var vue = new VueDePlan("Tour escalier alu " + tour.Nom + " (vue de l'extérieur)", TypeVue.Elevation, p, Emprise(p, coins.Concat(Origines(ctx, tour.Nom))))
         {
             Faces = new[] { tour.Nom },
         };
@@ -334,10 +334,10 @@ public static class GenerateurPlan
         var n = Projection.DirectionFace(pose.Angle + 90);
         vue.Cotes.Add(new Cote(p.Projeter(coins[2]), p.Projeter(coins[3]), new Point2(d.X, d.Y), -Rangee));
         vue.Cotes.Add(new Cote(p.Projeter(coins[2]), p.Projeter(coins[0]), new Point2(n.X, n.Y), Rangee));
-        vue.Reperes.Add(new Repere(TypeRepere.Niveau, p.Projeter(GlobalTour(pose, l / 2, 0.35, 0)), "A"));
-        vue.Reperes.Add(new Repere(TypeRepere.Niveau, p.Projeter(GlobalTour(pose, l + 0.35, -w / 2, 0)), "B"));
-        vue.Reperes.Add(new Repere(TypeRepere.Niveau, p.Projeter(GlobalTour(pose, l / 2, -w - 0.35, 0)), "C"));
-        vue.Reperes.Add(new Repere(TypeRepere.Niveau, p.Projeter(GlobalTour(pose, -0.35, -w / 2, 0)), "D"));
+        vue.Reperes.Add(new Repere(TypeRepere.Niveau, p.Projeter(GlobalTour(pose, l / 2, 0.35, 0)), "Bâtiment"));
+        vue.Reperes.Add(new Repere(TypeRepere.Niveau, p.Projeter(GlobalTour(pose, l + 0.35, -w / 2, 0)), "Droite"));
+        vue.Reperes.Add(new Repere(TypeRepere.Niveau, p.Projeter(GlobalTour(pose, l / 2, -w - 0.35, 0)), "Extérieur"));
+        vue.Reperes.Add(new Repere(TypeRepere.Niveau, p.Projeter(GlobalTour(pose, -0.35, -w / 2, 0)), "Gauche"));
         return vue;
     }
 

@@ -221,7 +221,7 @@
 
           <TextBlock Style="{StaticResource Section}" Text="POSITION" />
           <CheckBox Content="Accolée à une face de la façade" IsChecked="{app:Liaison Accolee}"
-                    ToolTip="La tour garde ses poteaux, côté A contre la file extérieure de la face, reliée par tubes et colliers ; le garde-corps de la façade s'ouvre devant ses sorties côté A" />
+                    ToolTip="La tour garde ses poteaux, côté bâtiment contre la file extérieure de la face, reliée par tubes et colliers ; le garde-corps de la façade s'ouvre devant ses sorties côté bâtiment" />
           <Grid Visibility="{app:Liaison Accolee, Converter={StaticResource VisibleSi}}">
             <Grid.ColumnDefinitions>
               <ColumnDefinition Width="*" />
@@ -248,7 +248,7 @@
               <RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition />
             </Grid.RowDefinitions>
             <TextBlock Style="{StaticResource Etiquette}" Text="Position X (m)" />
-            <TextBox Grid.Column="1" Margin="0,2" Text="{app:Liaison PositionX, StringFormat=0.00}" ToolTip="Coin du bout D, côté A, dans le repère du projet (S1 part de X = 0)" />
+            <TextBox Grid.Column="1" Margin="0,2" Text="{app:Liaison PositionX, StringFormat=0.00}" ToolTip="Coin bout gauche, côté bâtiment, dans le repère du projet (S1 part de X = 0)" />
             <TextBlock Grid.Row="1" Style="{StaticResource Etiquette}" Text="Position Y (m)" />
             <TextBox Grid.Row="1" Grid.Column="1" Margin="0,2" Text="{app:Liaison PositionY, StringFormat=0.00}" />
             <TextBlock Grid.Row="2" Style="{StaticResource Etiquette}" Text="Rotation (°)" />
@@ -257,21 +257,21 @@
             <ComboBox Grid.Row="3" Grid.Column="1" Margin="0,2" ItemsSource="{x:Static vm:TourViewModel.Stabilites}" DisplayMemberPath="Value" SelectedValuePath="Key"
                       SelectedValue="{app:Liaison Stabilite}" />
             <TextBlock Grid.Row="4" Style="{StaticResource Etiquette}" Text="Distance au bâtiment (m)" />
-            <TextBox Grid.Row="4" Grid.Column="1" Margin="0,2" Text="{app:Liaison DistanceBatiment, StringFormat=0.00}" ToolTip="Côté A : longueur des tubes d'amarrage" />
+            <TextBox Grid.Row="4" Grid.Column="1" Margin="0,2" Text="{app:Liaison DistanceBatiment, StringFormat=0.00}" ToolTip="Entre le côté bâtiment de la tour et le mur : longueur des tubes d'amarrage" />
             <TextBlock Grid.Row="5" Style="{StaticResource Etiquette}" Text="Hauteur de stabilisation (m)" Visibility="{app:Liaison Stabilisee, Converter={StaticResource VisibleSi}}" />
             <TextBox Grid.Row="5" Grid.Column="1" Margin="0,2" Text="{app:Liaison HauteurStabilisation, StringFormat=0.00}" Visibility="{app:Liaison Stabilisee, Converter={StaticResource VisibleSi}}"
-                     ToolTip="Structure de base côté C, vers le bout opposé à l'entrée : modules de 2,50 m, diagonales verticales et horizontales (autostable &lt; 85 km/h)" />
+                     ToolTip="Structure de base côté extérieur, vers le bout opposé à l'entrée : modules de 2,50 m, diagonales verticales et horizontales (autostable &lt; 85 km/h)" />
           </Grid>
 
           <TextBlock Style="{StaticResource Section}" Text="PALIERS ET SORTIES" />
           <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource Discret}" Margin="0,0,0,4"
-                     Text="A : grand côté bâtiment ou façade · C : grand côté extérieur · B et D : bouts. Ouverture de 0,50 ou 1,00 m sur un grand côté, au bout du palier ; sur un bout, seulement là où arrive la volée. Sortie acrotère : ouverture de 1,00 m, pont de franchissement et structure de sortie posée sur le toit, 1,00 m sous le palier. Clic droit sur une lisse de la tour dans le dessin : ouvrir, ouvrir + sortie acrotère, ou fermer." />
+                     Text="Côtés vus de l'extérieur, face au bâtiment (ou à la façade) : côté bâtiment au fond, côté extérieur devant, bouts gauche et droit. Ouverture de 0,50 ou 1,00 m sur un grand côté, au bout du palier ; sur un bout, seulement là où arrive la volée. Sortie acrotère : ouverture de 1,00 m, pont de franchissement et structure de sortie posée sur le toit, 1,00 m sous le palier. Clic droit sur une lisse de la tour dans le dessin : ouvrir ou fermer le côté, ajouter ou retirer une sortie acrotère." />
           <DataGrid ItemsSource="{app:Liaison Paliers}" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
                     HeadersVisibility="Column" SelectionMode="Single" MaxHeight="360" FrozenColumnCount="1"
                     HorizontalScrollBarVisibility="Auto">
             <DataGrid.Columns>
               <DataGridTextColumn Header="Palier (m)" Binding="{app:Liaison Hauteur, StringFormat=0.00}" IsReadOnly="True" Width="70" />
-              <DataGridTemplateColumn Header="Côté A" Width="Auto">
+              <DataGridTemplateColumn Header="Côté bâtiment" Width="Auto">
                 <DataGridTemplateColumn.CellTemplate>
                   <DataTemplate>
                     <StackPanel Orientation="Horizontal">
@@ -282,7 +282,7 @@
                   </DataTemplate>
                 </DataGridTemplateColumn.CellTemplate>
               </DataGridTemplateColumn>
-              <DataGridTemplateColumn Header="Côté C" Width="Auto">
+              <DataGridTemplateColumn Header="Côté extérieur" Width="Auto">
                 <DataGridTemplateColumn.CellTemplate>
                   <DataTemplate>
                     <StackPanel Orientation="Horizontal">

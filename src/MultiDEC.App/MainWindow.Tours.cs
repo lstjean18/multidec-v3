@@ -196,8 +196,8 @@ public partial class MainWindow
         bool bout = repere.Cote == Core.TourEscalier.CoteTour.B || repere.Cote == Core.TourEscalier.CoteTour.D;
         var palier = tour.Paliers.FirstOrDefault(p => Math.Abs(p.Hauteur - repere.Palier) < 1e-3);
         menu.Enabled = ouverte || palier != null && (!bout || palier.Bout == repere.Cote);
-        menu.Text = string.Format(CultureNombres.Documents, "{0} le côté {1} de {2} au palier {3:0.00} m",
-            ouverte ? "Fermer" : "Ouvrir", repere.Cote, tour.Nom, repere.Palier)
+        menu.Text = string.Format(CultureNombres.Documents, "{0} le {1} de {2} au palier {3:0.00} m",
+            ouverte ? "Fermer" : "Ouvrir", Core.TourEscalier.NomsCotesTour.Nom(repere.Cote), tour.Nom, repere.Palier)
             + (menu.Enabled ? string.Empty : " (pas de palier de ce côté)");
         menu.Tag = (tour, repere);
         menu.Click -= SortieTour_Click;
@@ -205,26 +205,33 @@ public partial class MainWindow
         return true;
     }
 
-    /// <summary>« Ouvrir + sortie acrotère » (v2) : seulement sur un côté fermé qui peut être ouvert à ce palier.</summary>
-    private bool PreparerMenuAcrotere(System.Windows.Forms.ToolStripMenuItem menu, ElementPlace? element)
+    /// <summary>
+    /// « Sortie acrotère » (v2 « Ouvrir + Sortie Acrotère ») : sur un côté fermé ou déjà ouvert (la sortie devient une
+    /// sortie acrotère), ou « Retirer la sortie acrotère » sur une sortie acrotère. Même condition que l'ouverture.
+    /// </summary>
+    private void PreparerMenuAcrotere(System.Windows.Forms.ToolStripMenuItem menu, ElementPlace element, bool possible)
     {
-        if (element?.CoteTour is not { } repere || Vm.TourNommee(element.NomFace) is not TourViewModel tour || tour.SortieOuverte(repere.Cote, repere.Palier))
+        if (element.CoteTour is not { } repere || Vm.TourNommee(element.NomFace) is not TourViewModel tour)
         {
-            return false;
+            return;
         }
 
-        menu.Enabled = true;
+        bool avec = tour.AvecAcrotere(repere.Cote, repere.Palier);
+        menu.Enabled = avec || possible;
+        menu.Text = avec
+            ? string.Format(CultureNombres.Documents, "Retirer la sortie acrotère du palier {0:0.00} m (garder l'ouverture)", repere.Palier)
+            : string.Format(CultureNombres.Documents, "{0} + sortie acrotère sur le {1} au palier {2:0.00} m",
+                tour.SortieOuverte(repere.Cote, repere.Palier) ? "Ouverture" : "Ouvrir", Core.TourEscalier.NomsCotesTour.Nom(repere.Cote), repere.Palier);
         menu.Tag = (tour, repere);
         menu.Click -= AcrotereTour_Click;
         menu.Click += AcrotereTour_Click;
-        return true;
     }
 
     private void AcrotereTour_Click(object? sender, EventArgs e)
     {
         if (sender is System.Windows.Forms.ToolStripMenuItem { Tag: ValueTuple<TourViewModel, Core.TourEscalier.RepereCoteTour> cible })
         {
-            cible.Item1.AjouterAcrotere(cible.Item2.Cote, cible.Item2.Palier);
+            cible.Item1.BasculerAcrotere(cible.Item2.Cote, cible.Item2.Palier);
             Dessiner_Click(this, new RoutedEventArgs());
         }
     }

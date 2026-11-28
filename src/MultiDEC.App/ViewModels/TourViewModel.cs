@@ -41,15 +41,15 @@ public sealed class TourViewModel : INotifyPropertyChanged
 
     public static IReadOnlyList<KeyValuePair<CoteTour, string>> Entrees { get; } = new[]
     {
-        new KeyValuePair<CoteTour, string>(CoteTour.D, "Bout D (gauche, X = 0)"),
-        new KeyValuePair<CoteTour, string>(CoteTour.B, "Bout B (droite, X = 2,50)"),
+        new KeyValuePair<CoteTour, string>(CoteTour.D, "Bout gauche (vu de l'extérieur)"),
+        new KeyValuePair<CoteTour, string>(CoteTour.B, "Bout droit (vu de l'extérieur)"),
     };
 
     public static IReadOnlyList<KeyValuePair<StabiliteTour, string>> Stabilites { get; } = new[]
     {
-        new KeyValuePair<StabiliteTour, string>(StabiliteTour.Amarree, "Amarrée au bâtiment (côté A)"),
+        new KeyValuePair<StabiliteTour, string>(StabiliteTour.Amarree, "Amarrée au bâtiment"),
         new KeyValuePair<StabiliteTour, string>(StabiliteTour.Lestee, "Autostable lestée (note de calcul)"),
-        new KeyValuePair<StabiliteTour, string>(StabiliteTour.Stabilisee, "Stabilisée côté C (2 côtés)"),
+        new KeyValuePair<StabiliteTour, string>(StabiliteTour.Stabilisee, "Stabilisée côté extérieur (2 côtés)"),
     };
 
     public static IReadOnlyList<double> Angles { get; } = new[] { 0.0, 90.0, 180.0, 270.0 };
@@ -252,13 +252,17 @@ public sealed class TourViewModel : INotifyPropertyChanged
     }
 
     /// <summary>
-    /// Clic droit « Ouvrir + sortie acrotère » (v2) : ouvre le côté au palier avec une sortie acrotère (pont de 1,50 m,
-    /// structure droite par défaut). Renvoie false si le côté est déjà ouvert.
+    /// Clic droit « sortie acrotère » (v2 « Ouvrir + Sortie Acrotère ») : ouvre le côté au palier s'il est fermé et y met
+    /// la sortie acrotère (pont de 1,50 m, structure droite par défaut) ; sur une sortie acrotère, la retire en gardant
+    /// l'ouverture. Renvoie true si la sortie acrotère est en place après l'appel.
     /// </summary>
-    public bool AjouterAcrotere(CoteTour cote, double palier)
+    public bool BasculerAcrotere(CoteTour cote, double palier)
     {
-        if (SortieOuverte(cote, palier))
+        var existante = _t.Sorties.FirstOrDefault(s => s.Cote == cote && Cotes.Egal(s.Hauteur, palier));
+        if (existante is { Acrotere: true })
         {
+            existante.Acrotere = false;
+            RecalculerPaliers();
             return false;
         }
 
@@ -267,10 +271,21 @@ public sealed class TourViewModel : INotifyPropertyChanged
             s.Acrotere = false;
         }
 
-        _t.Sorties.Add(new SortieTour(palier, cote, 1.0) { Acrotere = true });
+        if (existante == null)
+        {
+            _t.Sorties.Add(new SortieTour(palier, cote, 1.0) { Acrotere = true });
+        }
+        else
+        {
+            existante.Acrotere = true;
+            existante.Largeur = 1.0;
+        }
+
         RecalculerPaliers();
         return true;
     }
+
+    public bool AvecAcrotere(CoteTour cote, double palier) => _t.Sorties.Any(s => s.Acrotere && s.Cote == cote && Cotes.Egal(s.Hauteur, palier));
 
     public bool SortieOuverte(CoteTour cote, double palier) => _t.Sorties.Any(s => s.Cote == cote && Cotes.Egal(s.Hauteur, palier));
 
@@ -346,7 +361,7 @@ public sealed class PalierTour : INotifyPropertyChanged
     /// <summary>Bout (B ou D) où arrive la volée : seul ce bout peut recevoir une sortie.</summary>
     public CoteTour Bout { get; }
 
-    public string TexteBout => "Bout " + Bout;
+    public string TexteBout => NomsCotesTour.Titre(Bout);
 
     public bool SortieA
     {
@@ -382,9 +397,9 @@ public sealed class PalierTour : INotifyPropertyChanged
     public static IReadOnlyList<KeyValuePair<string, string>> ChoixAcrotere { get; } = new[]
     {
         new KeyValuePair<string, string>(string.Empty, "Non"),
-        new KeyValuePair<string, string>("A", "Côté A"),
-        new KeyValuePair<string, string>("C", "Côté C"),
-        new KeyValuePair<string, string>("Bout", "Bout"),
+        new KeyValuePair<string, string>("A", "Côté bâtiment"),
+        new KeyValuePair<string, string>("C", "Côté extérieur"),
+        new KeyValuePair<string, string>("Bout", "Bout d'arrivée"),
     };
 
     public static IReadOnlyList<double> LongueursPont => TourEscalierAlu.LongueursPont;

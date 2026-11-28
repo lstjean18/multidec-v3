@@ -185,7 +185,7 @@ public sealed partial class GenerateurTourEscalier
             int k = IndexPalier(s.Hauteur);
             if (k <= 0)
             {
-                _alertes.Add(Fr($"Sortie côté {s.Cote} à {s.Hauteur:0.00} m : pas de palier à cette hauteur, ignorée."));
+                _alertes.Add(Fr($"Sortie {NomsCotesTour.Nom(s.Cote)} à {s.Hauteur:0.00} m : pas de palier à cette hauteur, ignorée."));
                 continue;
             }
 
@@ -198,7 +198,7 @@ public sealed partial class GenerateurTourEscalier
             }
             else if (s.Cote != arrivee)
             {
-                _alertes.Add(Fr($"Sortie côté {s.Cote} à {s.Hauteur:0.00} m : le palier est au bout {arrivee}, ignorée."));
+                _alertes.Add(Fr($"Sortie {NomsCotesTour.Nom(s.Cote)} à {s.Hauteur:0.00} m : la volée arrive au {NomsCotesTour.Nom(arrivee)}, ignorée."));
             }
             else
             {

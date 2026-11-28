@@ -110,7 +110,7 @@ public sealed partial class GenerateurTourEscalier
             TubeHorizontal(m.X0, m.Y1, m.X1, m.Y0, zh);
         }
 
-        _alertes.Add("Tour stabilisée côté C : structure autostable pour un vent < 85 km/h ; au-delà, la stabiliser (ancrage, lest…).");
+        _alertes.Add("Tour stabilisée côté extérieur : structure autostable pour un vent < 85 km/h ; au-delà, la stabiliser (ancrage, lest…).");
     }
 
     private static string Cle(double xa, double ya, double xc, double yc)
