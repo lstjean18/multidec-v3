@@ -385,13 +385,11 @@ public sealed partial class GenerateurTourEscalier
 
             if (enTravers)
             {
-                // Plateaux en travers sur toute la largeur : plinthes aussi le long des grands côtés, entre la traverse
-                // intermédiaire et le bout.
-                double longueur = Cotes.Arrondi(L - LongueurVolee1m);
-                double x0 = bout == CoteTour.B ? Cotes.Arrondi(L - longueur) : 0.0;
+                // Plateaux en travers sur toute la largeur : plinthes aussi le long des grands côtés, d'un poteau à
+                // l'autre (une plinthe ne s'arrête pas entre deux poteaux, Laurent 28/11/2026).
                 foreach (var cote in new[] { CoteTour.A, CoteTour.C }.Where(c => Ouverture(c, z) == null))
                 {
-                    Plinthe(cote, x0, Cotes.Arrondi(x0 + longueur), z);
+                    Plinthe(cote, 0, L, z);
                 }
             }
         }
@@ -401,8 +399,8 @@ public sealed partial class GenerateurTourEscalier
             // Plancher de départ dans la moitié sans volée : plinthes le long de ses plateaux seulement.
             bool coteA = Moitie(1) == 1;
             Plinthe(coteA ? CoteTour.A : CoteTour.C, 0, L, _zb);
-            var bout = _t.BoutArrivee(1);
-            Plinthe(bout, coteA ? 0 : Cotes.Arrondi(_w / 2), coteA ? Cotes.Arrondi(_w / 2) : _w, _zb);
+            // Une plinthe va d'un poteau à l'autre (Laurent, 28/11/2026) : toute la largeur du bout opposé à l'entrée.
+            Plinthe(_t.BoutArrivee(1), 0, _w, _zb);
         }
     }
 
