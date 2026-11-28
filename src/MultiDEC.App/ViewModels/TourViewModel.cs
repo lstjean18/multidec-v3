@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Globalization;
 using System.Linq;
+using MultiDEC.Core;
 using System.Runtime.CompilerServices;
 using MultiDEC.Core.Geometrie;
 using MultiDEC.Core.TourEscalier;
@@ -192,7 +192,7 @@ public sealed class TourViewModel : INotifyPropertyChanged
             }
 
             var paliers = _t.Paliers();
-            var fr = CultureInfo.GetCultureInfo("fr-FR");
+            var fr = CultureNombres.Documents;
             string texte = string.Format(fr, "Tour {0:0.00} x {1:0.00} m, {2} volée(s), dernier palier à {3:0.00} m", TourEscalierAlu.Longueur, _t.Largeur, paliers.Count - 1, _t.Hauteur);
             if (_t.HauteurDepart > Cotes.Tolerance)
             {

@@ -1,6 +1,6 @@
 using System;
-using System.Globalization;
 using System.Linq;
+using MultiDEC.Core;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -178,7 +178,7 @@ public partial class MainWindow
         bool bout = repere.Cote == Core.TourEscalier.CoteTour.B || repere.Cote == Core.TourEscalier.CoteTour.D;
         var palier = tour.Paliers.FirstOrDefault(p => Math.Abs(p.Hauteur - repere.Palier) < 1e-3);
         menu.Enabled = ouverte || palier != null && (!bout || palier.Bout == repere.Cote);
-        menu.Text = string.Format(CultureInfo.GetCultureInfo("fr-FR"), "{0} le côté {1} de {2} au palier {3:0.00} m",
+        menu.Text = string.Format(CultureNombres.Documents, "{0} le côté {1} de {2} au palier {3:0.00} m",
             ouverte ? "Fermer" : "Ouvrir", repere.Cote, tour.Nom, repere.Palier)
             + (menu.Enabled ? string.Empty : " (pas de palier de ce côté)");
         menu.Tag = (tour, repere);

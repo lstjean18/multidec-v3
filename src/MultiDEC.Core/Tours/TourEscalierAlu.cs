@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Text.Json.Serialization;
 using MultiDEC.Core.Geometrie;
@@ -176,7 +175,7 @@ public sealed class TourEscalierAlu
 
         if (Configuration == ConfigurationTour.Alternes1m2m && (int)Math.Round(utile) % 3 == 2)
         {
-            return string.Format(CultureInfo.CurrentCulture,
+            return string.Format(CultureNombres.Documents,
                 "Avec des paliers alternés 1 m / 2 m, on ne peut pas atteindre {0:0.00} m : choisissez une hauteur qui ne soit pas « multiple de 3 + 2 » au-dessus du départ.",
                 Hauteur);
         }

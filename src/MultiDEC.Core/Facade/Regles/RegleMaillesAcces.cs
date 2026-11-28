@@ -17,7 +17,7 @@ public static class RegleMaillesAcces
     public static List<string> Ecarts(ProjetStructure projet)
     {
         var ecarts = new List<string>();
-        var fr = CultureInfo.GetCultureInfo("fr-FR");
+        var fr = CultureNombres.Documents;
         foreach (var f in projet.Faces)
         {
             for (int i = 0; i < f.Mailles.Count; i++)

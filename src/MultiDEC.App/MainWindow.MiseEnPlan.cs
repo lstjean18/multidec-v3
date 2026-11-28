@@ -20,7 +20,7 @@ public partial class MainWindow
     {
         if (_rendu == null)
         {
-            MessageBox.Show(this, "La mise en plan a besoin de la bibliothèque de blocs (Blocs 3D - Echafaudage.dwg) : indiquez-la dans Outils > Paramètres par défaut, onglet Fichiers.",
+            Boite.Show(this, "La mise en plan a besoin de la bibliothèque de blocs (Blocs 3D - Echafaudage.dwg) : indiquez-la dans Outils > Paramètres par défaut, onglet Fichiers.",
                 "Mise en plan", MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
@@ -29,7 +29,7 @@ public partial class MainWindow
         if (aValider >= 0)
         {
             Onglets.SelectedIndex = aValider + 1;
-            MessageBox.Show(this, $"Les paramètres de {Vm.Faces[aValider].Nom} ont changé : cliquez sur « Valider la structure » (bouton rouge) avant la mise en plan.",
+            Boite.Show(this, $"Les paramètres de {Vm.Faces[aValider].Nom} ont changé : cliquez sur « Valider la structure » (bouton rouge) avant la mise en plan.",
                 "Mise en plan", MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
@@ -69,7 +69,7 @@ public partial class MainWindow
         {
             Mouse.OverrideCursor = null;
             App.Journaliser("Mise en plan : " + ex);
-            MessageBox.Show(this, "La mise en plan a échoué : " + ex.GetBaseException().Message, "Mise en plan", MessageBoxButton.OK, MessageBoxImage.Warning);
+            Boite.Show(this, "La mise en plan a échoué : " + ex.GetBaseException().Message, "Mise en plan", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
         finally
         {
@@ -83,7 +83,7 @@ public partial class MainWindow
         string chemin = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "MultiDEC-v3-Guide-utilisateur.pdf");
         if (!File.Exists(chemin))
         {
-            MessageBox.Show(this, "Le guide utilisateur est absent du dossier de MultiDEC : " + chemin, "Guide utilisateur", MessageBoxButton.OK, MessageBoxImage.Information);
+            Boite.Show(this, "Le guide utilisateur est absent du dossier de MultiDEC : " + chemin, "Guide utilisateur", MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
 
@@ -94,7 +94,7 @@ public partial class MainWindow
         catch (Exception ex)
         {
             App.Journaliser(ex);
-            MessageBox.Show(this, "Le guide n'a pas pu s'ouvrir : " + ex.GetBaseException().Message, "Guide utilisateur", MessageBoxButton.OK, MessageBoxImage.Warning);
+            Boite.Show(this, "Le guide n'a pas pu s'ouvrir : " + ex.GetBaseException().Message, "Guide utilisateur", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
 
@@ -116,7 +116,7 @@ public partial class MainWindow
         if (aValider >= 0)
         {
             Onglets.SelectedIndex = aValider + 1;
-            MessageBox.Show(this, $"Les paramètres de {Vm.Faces[aValider].Nom} ont changé : cliquez sur « Valider la structure » (bouton rouge) avant d'éditer la liste du matériel.",
+            Boite.Show(this, $"Les paramètres de {Vm.Faces[aValider].Nom} ont changé : cliquez sur « Valider la structure » (bouton rouge) avant d'éditer la liste du matériel.",
                 "Liste du matériel", MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
@@ -130,7 +130,7 @@ public partial class MainWindow
             if (lignes.Count == 0)
             {
                 Mouse.OverrideCursor = null;
-                MessageBox.Show(this, "Le décompte est vide : rien à éditer.", "Liste du matériel", MessageBoxButton.OK, MessageBoxImage.Information);
+                Boite.Show(this, "Le décompte est vide : rien à éditer.", "Liste du matériel", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
 
@@ -164,7 +164,7 @@ public partial class MainWindow
         {
             Mouse.OverrideCursor = null;
             App.Journaliser("Liste du matériel : " + ex);
-            MessageBox.Show(this, "La liste du matériel n'a pas pu être éditée : " + ex.GetBaseException().Message, "Liste du matériel", MessageBoxButton.OK, MessageBoxImage.Warning);
+            Boite.Show(this, "La liste du matériel n'a pas pu être éditée : " + ex.GetBaseException().Message, "Liste du matériel", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
         finally
         {

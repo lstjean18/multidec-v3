@@ -788,7 +788,7 @@ public sealed partial class FacadeViewModel : INotifyPropertyChanged
         _structure = GenerateurStructure.Generer(_projet);
 
         CalculerDecompte();
-        Remplir(Alertes, _structure.Alertes);
+        Remplir(Alertes, _structure.Alertes.Select(MultiDEC.Core.CultureNombres.Localiser).ToList()); // séparateur du poste
         Remplir(ListeAmarrages, _structure.Amarrages.Amarrages);
         Notifier(nameof(Structure));
         Notifier(nameof(Resume));

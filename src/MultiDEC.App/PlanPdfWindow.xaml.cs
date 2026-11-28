@@ -43,7 +43,7 @@ public partial class PlanPdfWindow : Window
         }
         catch (Exception ex)
         {
-            MessageBox.Show(this, ex.Message, "Enregistrer le plan", MessageBoxButton.OK, MessageBoxImage.Warning);
+            Boite.Show(this, ex.Message, "Enregistrer le plan", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
 
@@ -66,7 +66,7 @@ public partial class PlanPdfWindow : Window
         }
         catch (Exception ex)
         {
-            MessageBox.Show(this, "Aucun lecteur PDF n'a pu ouvrir le plan : " + ex.Message, "Mise en plan", MessageBoxButton.OK, MessageBoxImage.Information);
+            Boite.Show(this, "Aucun lecteur PDF n'a pu ouvrir le plan : " + ex.Message, "Mise en plan", MessageBoxButton.OK, MessageBoxImage.Information);
         }
     }
 }

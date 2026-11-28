@@ -34,7 +34,7 @@ public partial class MainWindow
         {
             if (!silencieux)
             {
-                MessageBox.Show(this, "L'adresse des mises à jour n'est pas définie sur ce poste (fichier "
+                Boite.Show(this, "L'adresse des mises à jour n'est pas définie sur ce poste (fichier "
                                 + MiseAJourApplication.FichierAdresse + " à côté de MultiDEC.exe, posé par l'installateur).",
                                 "Mises à jour", MessageBoxButton.OK, MessageBoxImage.Information);
             }
@@ -55,7 +55,7 @@ public partial class MainWindow
                 App.Journaliser(ex);
                 if (!silencieux)
                 {
-                    MessageBox.Show(this, "Impossible de joindre le serveur des mises à jour :\n" + ex.GetBaseException().Message,
+                    Boite.Show(this, "Impossible de joindre le serveur des mises à jour :\n" + ex.GetBaseException().Message,
                                     "Mises à jour", MessageBoxButton.OK, MessageBoxImage.Warning);
                 }
 
@@ -67,7 +67,7 @@ public partial class MainWindow
             {
                 if (!silencieux)
                 {
-                    MessageBox.Show(this, $"MultiDEC est à jour ({VersionApplication.Libelle}).", "Mises à jour", MessageBoxButton.OK, MessageBoxImage.Information);
+                    Boite.Show(this, $"MultiDEC est à jour ({VersionApplication.Libelle}).", "Mises à jour", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
 
                 return;
@@ -75,7 +75,7 @@ public partial class MainWindow
 
             string libelle = string.IsNullOrWhiteSpace(fiche.Libelle) ? fiche.Version : fiche.Libelle!;
             string notes = string.IsNullOrWhiteSpace(fiche.Notes) ? string.Empty : "\n\nNouveautés :\n" + fiche.Notes;
-            var reponse = MessageBox.Show(this,
+            var reponse = Boite.Show(this,
                 $"Une nouvelle version de MultiDEC est disponible : {libelle} (vous avez {VersionApplication.Libelle}).{notes}\n\n"
                 + "L'installer maintenant ? MultiDEC se fermera puis se relancera : enregistrez d'abord votre projet.",
                 "Mise à jour disponible", MessageBoxButton.YesNo, MessageBoxImage.Question);
@@ -124,7 +124,7 @@ public partial class MainWindow
         {
             App.Journaliser(ex);
             fenetre.Close();
-            MessageBox.Show(this, "Mise à jour impossible : " + ex.GetBaseException().Message, "Mises à jour", MessageBoxButton.OK, MessageBoxImage.Warning);
+            Boite.Show(this, "Mise à jour impossible : " + ex.GetBaseException().Message, "Mises à jour", MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
 
@@ -136,7 +136,7 @@ public partial class MainWindow
         catch (Exception ex)
         {
             App.Journaliser(ex);
-            MessageBox.Show(this, "L'installateur n'a pas pu être lancé : " + ex.Message + "\n\nVous pouvez le lancer vous-même : " + installateur,
+            Boite.Show(this, "L'installateur n'a pas pu être lancé : " + ex.Message + "\n\nVous pouvez le lancer vous-même : " + installateur,
                             "Mises à jour", MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }

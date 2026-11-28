@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using MultiDEC.Core.Catalogue;
 using MultiDEC.Core.Facade;
@@ -108,7 +107,7 @@ public static class ToursDansLaStructure
         {
             if (!face.Niveaux.Any(n => Cotes.Egal(n.Hauteur, s.Hauteur)))
             {
-                alertes.Add(string.Format(CultureInfo.GetCultureInfo("fr-FR"),
+                alertes.Add(string.Format(CultureNombres.Documents,
                     "{0} : sortie côté façade à {1:0.00} m, pas de plancher de {2} à cette hauteur.", tour.Nom, s.Hauteur, face.Nom));
             }
         }
@@ -181,7 +180,7 @@ public static class ToursDansLaStructure
             {
                 if (xs[num - 1] < tour.Abscisse - Cotes.Tolerance || xs[num] > tour.Abscisse + TourEscalierAlu.Longueur + Cotes.Tolerance)
                 {
-                    alertes.Add(string.Format(CultureInfo.GetCultureInfo("fr-FR"),
+                    alertes.Add(string.Format(CultureNombres.Documents,
                         "{0} : garde-corps extérieur de {1} retiré sur la maille {2} à {3:0.00} m (sortie de {4}) ; la maille dépasse la tour, protection à compléter.",
                         face.Nom, face.Nom, num, z, tour.Nom));
                 }

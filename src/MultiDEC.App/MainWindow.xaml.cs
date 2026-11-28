@@ -80,16 +80,17 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            MessageBox.Show("Paramètres par défaut illisibles, paramètres d'usine utilisés : " + ex.Message, "Paramètres par défaut", MessageBoxButton.OK, MessageBoxImage.Warning);
+            Boite.Show("Paramètres par défaut illisibles, paramètres d'usine utilisés : " + ex.Message, "Paramètres par défaut", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
 
         Vm.Nouveau();
         ListeRendu(true);
         Loaded += (_, _) =>
         {
+            Localisation.LocaliserTextes(this); // textes fixes au séparateur décimal du poste (remarque 64)
             if (_erreurVectorDraw != null)
             {
-                MessageBox.Show(this, "La vue 3D VectorDraw n'a pas pu être créée sur ce poste :\n" + _erreurVectorDraw
+                Boite.Show(this, "La vue 3D VectorDraw n'a pas pu être créée sur ce poste :\n" + _erreurVectorDraw
                                 + "\n\nMultiDEC reste utilisable pour la saisie et le décompte. Détail dans " + App.CheminJournal,
                                 "MultiDEC", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
@@ -149,7 +150,7 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            MessageBox.Show(this, "Enregistrement impossible : " + ex.Message, "Paramètres par défaut", MessageBoxButton.OK, MessageBoxImage.Warning);
+            Boite.Show(this, "Enregistrement impossible : " + ex.Message, "Paramètres par défaut", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
 
         Vm.Defauts = fenetre.Resultat; // recharge aussi le fichier de références client
@@ -230,7 +231,7 @@ public partial class MainWindow : Window
         catch (Exception ex)
         {
             _rendu = null;
-            MessageBox.Show(this, ex.Message, "Bibliothèque de blocs", MessageBoxButton.OK, MessageBoxImage.Error);
+            Boite.Show(this, ex.Message, "Bibliothèque de blocs", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
@@ -244,7 +245,7 @@ public partial class MainWindow : Window
         catch (Exception ex)
         {
             Vm.Articles = CatalogueArticles.Vide;
-            MessageBox.Show(this, "Lecture de " + chemin + " impossible : " + ex.Message, "Désignations et poids", MessageBoxButton.OK, MessageBoxImage.Warning);
+            Boite.Show(this, "Lecture de " + chemin + " impossible : " + ex.Message, "Désignations et poids", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
 
@@ -255,7 +256,7 @@ public partial class MainWindow : Window
         if (aValider >= 0)
         {
             Onglets.SelectedIndex = aValider + 1;
-            MessageBox.Show(this, $"Les paramètres de {Vm.Faces[aValider].Nom} ont changé : cliquez sur « Valider la structure » (bouton rouge) avant de dessiner.",
+            Boite.Show(this, $"Les paramètres de {Vm.Faces[aValider].Nom} ont changé : cliquez sur « Valider la structure » (bouton rouge) avant de dessiner.",
                             "Dessin", MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
@@ -265,7 +266,7 @@ public partial class MainWindow : Window
             var structure = Vm.Generer();
             if (_rendu == null)
             {
-                MessageBox.Show(this, "Choisissez d'abord la bibliothèque de blocs (Blocs 3D - Echafaudage.dwg). Le décompte est calculé.", "Dessin", MessageBoxButton.OK, MessageBoxImage.Information);
+                Boite.Show(this, "Choisissez d'abord la bibliothèque de blocs (Blocs 3D - Echafaudage.dwg). Le décompte est calculé.", "Dessin", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
 
@@ -280,7 +281,7 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            MessageBox.Show(this, ex.Message, "Dessin de la façade", MessageBoxButton.OK, MessageBoxImage.Warning);
+            Boite.Show(this, ex.Message, "Dessin de la façade", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
 
@@ -408,7 +409,7 @@ public partial class MainWindow : Window
         int i = GrilleMailles.SelectedIndex;
         if (i < 0)
         {
-            MessageBox.Show(this, "Sélectionnez d'abord la maille à supprimer.", "Mailles", MessageBoxButton.OK, MessageBoxImage.Information);
+            Boite.Show(this, "Sélectionnez d'abord la maille à supprimer.", "Mailles", MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
 
@@ -543,7 +544,7 @@ public partial class MainWindow : Window
         }
     }
 
-    private static string FormattableStringFr(FormattableString texte) => texte.ToString(System.Globalization.CultureInfo.GetCultureInfo("fr-FR"));
+    private static string FormattableStringFr(FormattableString texte) => texte.ToString(MultiDEC.Core.CultureNombres.Documents);
 
     private void SupprimerSelection()
     {
@@ -658,7 +659,7 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            MessageBox.Show(this, ex.Message, "Ouvrir", MessageBoxButton.OK, MessageBoxImage.Error);
+            Boite.Show(this, ex.Message, "Ouvrir", MessageBoxButton.OK, MessageBoxImage.Error);
             return;
         }
 
@@ -677,7 +678,7 @@ public partial class MainWindow : Window
     {
         if (_rendu == null || Vm.Structure == null)
         {
-            MessageBox.Show(this, "Dessinez d'abord la structure (bouton Dessiner).", "Exporter le modèle", MessageBoxButton.OK, MessageBoxImage.Information);
+            Boite.Show(this, "Dessinez d'abord la structure (bouton Dessiner).", "Exporter le modèle", MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
 
@@ -697,11 +698,11 @@ public partial class MainWindow : Window
         try
         {
             _rendu.Exporter(chemin!);
-            MessageBox.Show(this, "Modèle exporté : " + chemin, "Exporter le modèle", MessageBoxButton.OK, MessageBoxImage.Information);
+            Boite.Show(this, "Modèle exporté : " + chemin, "Exporter le modèle", MessageBoxButton.OK, MessageBoxImage.Information);
         }
         catch (Exception ex)
         {
-            MessageBox.Show(this, "Export impossible : " + ex.Message, "Exporter le modèle", MessageBoxButton.OK, MessageBoxImage.Warning);
+            Boite.Show(this, "Export impossible : " + ex.Message, "Exporter le modèle", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
 

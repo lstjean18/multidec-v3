@@ -73,7 +73,7 @@ public sealed class DefautDeListe : ElementParDefaut
     internal DefautDeListe(ListeParDefaut liste, string titre, Func<object> lire, Action<object> ecrire)
     {
         _liste = liste;
-        Titre = titre;
+        Titre = MultiDEC.Core.CultureNombres.Localiser(titre); // séparateur du poste (remarque 64)
         _lire = lire;
         _ecrire = ecrire;
     }
@@ -121,7 +121,7 @@ public sealed class ListeParDefaut : ElementParDefaut
     {
         _p = p;
         Cle = cle;
-        Titre = titre;
+        Titre = MultiDEC.Core.CultureNombres.Localiser(titre); // séparateur du poste (remarque 64)
         Masquable = masquable;
         foreach (var (v, libelle) in valeurs)
         {
@@ -164,7 +164,7 @@ public sealed class CaseParDefaut : ElementParDefaut
 
     internal CaseParDefaut(string titre, Func<bool> lire, Action<bool> ecrire)
     {
-        Titre = titre;
+        Titre = MultiDEC.Core.CultureNombres.Localiser(titre); // séparateur du poste (remarque 64)
         _lire = lire;
         _ecrire = ecrire;
     }
@@ -186,7 +186,7 @@ public sealed class CoteParDefaut : ElementParDefaut
 
     internal CoteParDefaut(string titre, Func<double> lire, Action<double> ecrire)
     {
-        Titre = titre;
+        Titre = MultiDEC.Core.CultureNombres.Localiser(titre); // séparateur du poste (remarque 64)
         _lire = lire;
         _ecrire = ecrire;
     }
@@ -208,7 +208,7 @@ public sealed class FichierParDefaut : ElementParDefaut
 
     internal FichierParDefaut(string titre, string filtre, Func<string?> lire, Action<string?> ecrire)
     {
-        Titre = titre;
+        Titre = MultiDEC.Core.CultureNombres.Localiser(titre); // séparateur du poste (remarque 64)
         Filtre = filtre;
         _lire = lire;
         _ecrire = ecrire;

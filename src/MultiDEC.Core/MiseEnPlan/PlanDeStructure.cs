@@ -43,7 +43,7 @@ public sealed class Cote
     /// <summary>Longueur mesurée, en mètres.</summary>
     public double Valeur => Math.Abs((B - A).U * Direction.U + (B - A).V * Direction.V);
 
-    public static string Format(double metres) => metres.ToString("0.00", CultureInfo.GetCultureInfo("fr-FR"));
+    public static string Format(double metres) => metres.ToString("0.00", CultureNombres.Documents);
 }
 
 /// <summary>Place du texte d'une cote trop courte pour le contenir.</summary>

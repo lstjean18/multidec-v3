@@ -16,13 +16,14 @@ public partial class App : Application
         FrameworkElement.LanguageProperty.OverrideMetadata(
             typeof(FrameworkElement),
             new FrameworkPropertyMetadata(XmlLanguage.GetLanguage(CultureInfo.CurrentCulture.IetfLanguageTag)));
+        Localisation.Installer(); // « . » et « , » acceptés dans les champs décimaux (remarque 64)
         base.OnStartup(e);
 
         // Erreur imprévue : message et journal plutôt que la fermeture de l'application par Windows.
         DispatcherUnhandledException += (_, args) =>
         {
             Journaliser(args.Exception);
-            MessageBox.Show("Erreur imprévue : " + args.Exception.Message + "\n\nDétail enregistré dans " + CheminJournal,
+            Boite.Show("Erreur imprévue : " + args.Exception.Message + "\n\nDétail enregistré dans " + CheminJournal,
                             "MultiDEC", MessageBoxButton.OK, MessageBoxImage.Error);
             args.Handled = true;
         };
@@ -48,7 +49,7 @@ public partial class App : Application
         {
             Journaliser(ex);
             demarrage.Close();
-            MessageBox.Show("MultiDEC n'a pas pu démarrer : " + ex.GetBaseException().Message + "\n\nDétail enregistré dans " + CheminJournal,
+            Boite.Show("MultiDEC n'a pas pu démarrer : " + ex.GetBaseException().Message + "\n\nDétail enregistré dans " + CheminJournal,
                             "MultiDEC", MessageBoxButton.OK, MessageBoxImage.Error);
             Shutdown(1);
             return;
@@ -90,7 +91,7 @@ public partial class App : Application
         {
             string avertissement = droits.Avertissement;
             Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, new Action(() =>
-                MessageBox.Show(fenetre, avertissement, "Droits d'utilisation de MultiDEC", MessageBoxButton.OK, MessageBoxImage.Warning)));
+                Boite.Show(fenetre, avertissement, "Droits d'utilisation de MultiDEC", MessageBoxButton.OK, MessageBoxImage.Warning)));
         }
     }
 

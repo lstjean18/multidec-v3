@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using MultiDEC.Core.Catalogue;
 using MultiDEC.Core.Facade;
@@ -139,7 +138,7 @@ public sealed class GenerateurTourEscalier
 
         if (_h > general.SeuilNoteDeCalcul + Cotes.Tolerance)
         {
-            _alertes.Add(string.Format(CultureInfo.GetCultureInfo("fr-FR"), "Tour de plus de {0:0} m : note de calcul obligatoire.", general.SeuilNoteDeCalcul));
+            _alertes.Add(string.Format(CultureNombres.Documents, "Tour de plus de {0:0} m : note de calcul obligatoire.", general.SeuilNoteDeCalcul));
         }
     }
 
@@ -558,5 +557,5 @@ public sealed class GenerateurTourEscalier
     private void Ajouter(string reference, Famille famille, Point3 origine, Axe axe, Face face = Face.Aucune, bool inverse = false, double rotation = 0, RepereCoteTour? repere = null) =>
         _el.Add(new ElementPlace(reference, famille, origine, axe, face, 0, inverse, 0, rotation) { CoteTour = repere });
 
-    private static string Fr(FormattableString texte) => texte.ToString(CultureInfo.GetCultureInfo("fr-FR"));
+    private static string Fr(FormattableString texte) => texte.ToString(CultureNombres.Documents);
 }

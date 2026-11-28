@@ -28,7 +28,7 @@
     <SolidColorBrush x:Key="Accent" Color="#1F5FA8" />
 
     <DataTemplate x:Key="ModeleLibelle">
-      <TextBlock Text="{Binding Converter={StaticResource Libelle}}" />
+      <TextBlock Text="{app:Liaison Converter={StaticResource Libelle}}" />
     </DataTemplate>
 
     <Style x:Key="ListeLibelles" TargetType="ComboBox">
@@ -87,7 +87,7 @@
               <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
             </Border>
             <ControlTemplate.Triggers>
-              <DataTrigger Binding="{Binding FaceActiveAValider}" Value="True">
+              <DataTrigger Binding="{app:Liaison FaceActiveAValider}" Value="True">
                 <Setter TargetName="Fond" Property="Background" Value="#C62828" />
               </DataTrigger>
               <Trigger Property="IsMouseOver" Value="True">
@@ -132,53 +132,53 @@
               <RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition />
             </Grid.RowDefinitions>
             <TextBlock Style="{StaticResource Etiquette}" Text="Longueur souhaitée (m)" />
-            <TextBox Grid.Column="1" Margin="0,2" Text="{Binding LongueurFacade, StringFormat=0.00}" />
+            <TextBox Grid.Column="1" Margin="0,2" Text="{app:Liaison LongueurFacade, StringFormat=0.00}" />
             <TextBlock Grid.Row="1" Style="{StaticResource Etiquette}" Text="Largeur de maille (m)" />
-            <ComboBox Grid.Row="1" Grid.Column="1" Margin="0,2" ItemsSource="{Binding LargeursProposees}" SelectedItem="{Binding LargeurMaille}" ItemStringFormat="0.00" />
+            <ComboBox Grid.Row="1" Grid.Column="1" Margin="0,2" ItemsSource="{app:Liaison LargeursProposees}" SelectedItem="{app:Liaison LargeurMaille}" ItemStringFormat="0.00" />
             <TextBlock Grid.Row="2" Style="{StaticResource Etiquette}" Text="Maille préférée (m)" />
-            <ComboBox Grid.Row="2" Grid.Column="1" Margin="0,2" ItemsSource="{Binding ChoixLongueursMaille}" SelectedItem="{Binding LongueurMaillePreferee}" ItemStringFormat="0.00" />
+            <ComboBox Grid.Row="2" Grid.Column="1" Margin="0,2" ItemsSource="{app:Liaison ChoixLongueursMaille}" SelectedItem="{app:Liaison LongueurMaillePreferee}" ItemStringFormat="0.00" />
             <TextBlock Grid.Row="3" Style="{StaticResource Etiquette}" Text="Nombre d'accès" />
-            <TextBox Grid.Row="3" Grid.Column="1" Margin="0,2" Text="{Binding NombreAcces}" />
+            <TextBox Grid.Row="3" Grid.Column="1" Margin="0,2" Text="{app:Liaison NombreAcces}" />
             <TextBlock Grid.Row="4" Style="{StaticResource Etiquette}" Text="Dernier plancher (m)" />
-            <TextBox Grid.Row="4" Grid.Column="1" Margin="0,2" Text="{Binding HauteurDernierPlancher, StringFormat=0.00}" />
+            <TextBox Grid.Row="4" Grid.Column="1" Margin="0,2" Text="{app:Liaison HauteurDernierPlancher, StringFormat=0.00}" />
             <TextBlock Grid.Row="5" Style="{StaticResource Etiquette}" Text="Distance à la façade (m)" />
-            <TextBox Grid.Row="5" Grid.Column="1" Margin="0,2" Text="{Binding Parametres.DistanceFacade, StringFormat=0.00}" />
+            <TextBox Grid.Row="5" Grid.Column="1" Margin="0,2" Text="{app:Liaison Parametres.DistanceFacade, StringFormat=0.00}" />
           </Grid>
           <TextBlock Text="Le nombre d'accès est recalculé quand la longueur change, puis modifiable." TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource Discret}" Margin="0,4" />
           <Border Background="#F3F4F6" CornerRadius="6" Padding="8" Margin="0,4">
-            <TextBlock Text="{Binding ResumeFace}" TextWrapping="Wrap" FontSize="12" />
+            <TextBlock Text="{app:Liaison ResumeFace}" TextWrapping="Wrap" FontSize="12" />
           </Border>
           <UniformGrid Columns="2" Margin="0,6,0,0">
-            <Button Content="Valider la structure" Command="{Binding Proposer}" Padding="6" Margin="0,0,4,0" Style="{StaticResource BoutonValider}"
+            <Button Content="Valider la structure" Command="{app:Liaison Proposer}" Padding="6" Margin="0,0,4,0" Style="{StaticResource BoutonValider}"
                     ToolTip="Recalcule les grilles de cette face depuis les dimensions (rouge : un paramètre a changé, à valider)" />
-            <Button Content="Copier depuis S1" Command="{Binding CopierS1}" IsEnabled="{Binding PeutCopierS1}" Padding="6" Margin="4,0,0,0"
+            <Button Content="Copier depuis S1" Command="{app:Liaison CopierS1}" IsEnabled="{app:Liaison PeutCopierS1}" Padding="6" Margin="4,0,0,0"
                     ToolTip="Reprend les paramètres et les grilles de S1 (le carré d'angle est conservé)" />
           </UniformGrid>
 
           <TextBlock Style="{StaticResource Section}" Text="DIAGONALES" />
-          <CheckBox Content="Diagonales 1 maille sur 2" IsChecked="{Binding Parametres.DiagonalesRenforcees}" />
-          <CheckBox Content="Diagonale dans la 1re maille" IsChecked="{Binding Parametres.DiagonalePremiereMaille}" />
-          <Button Content="Recocher les cases Diago" Command="{Binding ProposerLesDiagonales}" HorizontalAlignment="Left" Padding="10,4" Margin="0,6,0,0"
+          <CheckBox Content="Diagonales 1 maille sur 2" IsChecked="{app:Liaison Parametres.DiagonalesRenforcees}" />
+          <CheckBox Content="Diagonale dans la 1re maille" IsChecked="{app:Liaison Parametres.DiagonalePremiereMaille}" />
+          <Button Content="Recocher les cases Diago" Command="{app:Liaison ProposerLesDiagonales}" HorizontalAlignment="Left" Padding="10,4" Margin="0,6,0,0"
                   ToolTip="Recoche les cases « Diago » de la grille des mailles : une maille sur 5, ou sur 2 avec l'option" />
           <TextBlock Text="Par défaut une maille sur 5, sens alterné automatiquement." TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource Discret}" Margin="0,4" />
 
           <TextBlock Style="{StaticResource Section}" Text="ACCÈS" />
-          <CheckBox Content="Trappes et plateaux acier" IsChecked="{Binding TrappesAcier}"
+          <CheckBox Content="Trappes et plateaux acier" IsChecked="{app:Liaison TrappesAcier}"
                     ToolTip="Mailles d'accès de 2 m et plus : trappe de 1,00 m + traverse intermédiaire + plateaux" />
-          <CheckBox Content="Lisse GC accès 1,50 m au niveau 0" IsChecked="{Binding Parametres.LisseGcAccesNiveau0}"
+          <CheckBox Content="Lisse GC accès 1,50 m au niveau 0" IsChecked="{app:Liaison Parametres.LisseGcAccesNiveau0}"
                     ToolTip="Lisse à 1,50 m au pied des échelles, du côté où il y a un garde-corps" />
           <TextBlock Text="Trappes acier : les garde-corps MDS de la face passent en lisses (règle v2)." TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource Discret}" Margin="0,4" />
 
           <TextBlock Style="{StaticResource Section}" Text="OPTIONS" />
           <DockPanel Margin="0,2,0,4">
-            <ComboBox DockPanel.Dock="Right" Width="110" Style="{StaticResource ListeLibelles}" ItemsSource="{Binding ChoixTraverses}" SelectedItem="{Binding Parametres.Traverses}"
+            <ComboBox DockPanel.Dock="Right" Width="110" Style="{StaticResource ListeLibelles}" ItemsSource="{app:Liaison ChoixTraverses}" SelectedItem="{app:Liaison Parametres.Traverses}"
                       ToolTip="Traverses des files aux planchers complets ; poutrelle et poutre au-delà de 1,05 m de largeur" />
             <TextBlock Style="{StaticResource Etiquette}" Text="Traverses" />
           </DockPanel>
-          <CheckBox Content="Lisses en pied" IsChecked="{Binding Parametres.LissesEnPied}" />
-          <CheckBox Content="Départ poteaux 3 m côté extérieur" IsChecked="{Binding Parametres.Depart3mExterieur}" />
-          <CheckBox Content="Garde-corps 1,50 m au dernier niveau" IsChecked="{Binding Parametres.GardeCorpsCouvreur}" />
-          <CheckBox Content="Grutable (accessoires de levage)" IsChecked="{Binding Parametres.Grutable}"
+          <CheckBox Content="Lisses en pied" IsChecked="{app:Liaison Parametres.LissesEnPied}" />
+          <CheckBox Content="Départ poteaux 3 m côté extérieur" IsChecked="{app:Liaison Parametres.Depart3mExterieur}" />
+          <CheckBox Content="Garde-corps 1,50 m au dernier niveau" IsChecked="{app:Liaison Parametres.GardeCorpsCouvreur}" />
+          <CheckBox Content="Grutable (accessoires de levage)" IsChecked="{app:Liaison Parametres.Grutable}"
                     ToolTip="Support HMSUPSUNI au pied des poteaux, vis VSZ10070 + écrou VEF10 à la place des goupilles" />
         </StackPanel>
       </ScrollViewer>
@@ -200,29 +200,29 @@
             <TextBlock Style="{StaticResource Etiquette}" Text="Longueur (m)" />
             <TextBlock Grid.Column="1" Margin="0,2" VerticalAlignment="Center" Text="2,50 (volées de 2,50 m)" />
             <TextBlock Grid.Row="1" Style="{StaticResource Etiquette}" Text="Largeur (m)" />
-            <ComboBox Grid.Row="1" Grid.Column="1" Margin="0,2" ItemsSource="{x:Static vm:TourViewModel.Largeurs}" SelectedItem="{Binding Largeur}" ItemStringFormat="0.00"
+            <ComboBox Grid.Row="1" Grid.Column="1" Margin="0,2" ItemsSource="{x:Static vm:TourViewModel.Largeurs}" SelectedItem="{app:Liaison Largeur}" ItemStringFormat="0.00"
                       ToolTip="1,50 m : volées de 0,65 m ; 2,00 m : volées larges de 0,88 m" />
             <TextBlock Grid.Row="2" Style="{StaticResource Etiquette}" Text="Paliers" />
             <ComboBox Grid.Row="2" Grid.Column="1" Margin="0,2" ItemsSource="{x:Static vm:TourViewModel.Configurations}" DisplayMemberPath="Value" SelectedValuePath="Key"
-                      SelectedValue="{Binding Configuration}" />
+                      SelectedValue="{app:Liaison Configuration}" />
             <TextBlock Grid.Row="3" Style="{StaticResource Etiquette}" Text="Dernier palier (m)" />
-            <TextBox Grid.Row="3" Grid.Column="1" Margin="0,2" Text="{Binding Hauteur, StringFormat=0.00}"
+            <TextBox Grid.Row="3" Grid.Column="1" Margin="0,2" Text="{app:Liaison Hauteur, StringFormat=0.00}"
                      ToolTip="Multiple de 0,50 m ; en xx,50 m la tour part d'un plancher de départ à 0,50 m" />
             <TextBlock Grid.Row="4" Style="{StaticResource Etiquette}" Text="Entrée au sol" />
             <ComboBox Grid.Row="4" Grid.Column="1" Margin="0,2" ItemsSource="{x:Static vm:TourViewModel.Entrees}" DisplayMemberPath="Value" SelectedValuePath="Key"
-                      SelectedValue="{Binding Entree}" ToolTip="Bout du pied de la première volée" />
+                      SelectedValue="{app:Liaison Entree}" ToolTip="Bout du pied de la première volée" />
           </Grid>
-          <TextBlock Text="{Binding ErreurHauteur}" Foreground="#C62828" TextWrapping="Wrap" FontSize="12" Margin="0,2"
-                     Visibility="{Binding HauteurIncorrecte, Converter={StaticResource VisibleSi}}" />
-          <CheckBox Content="Départ poteaux 3 m" IsChecked="{Binding Depart3m}" />
+          <TextBlock Text="{app:Liaison ErreurHauteur}" Foreground="#C62828" TextWrapping="Wrap" FontSize="12" Margin="0,2"
+                     Visibility="{app:Liaison HauteurIncorrecte, Converter={StaticResource VisibleSi}}" />
+          <CheckBox Content="Départ poteaux 3 m" IsChecked="{app:Liaison Depart3m}" />
           <Border Background="#F3F4F6" CornerRadius="6" Padding="8" Margin="0,6,0,0">
-            <TextBlock Text="{Binding Resume}" TextWrapping="Wrap" FontSize="12" />
+            <TextBlock Text="{app:Liaison Resume}" TextWrapping="Wrap" FontSize="12" />
           </Border>
 
           <TextBlock Style="{StaticResource Section}" Text="POSITION" />
-          <CheckBox Content="Accolée à une face de la façade" IsChecked="{Binding Accolee}"
+          <CheckBox Content="Accolée à une face de la façade" IsChecked="{app:Liaison Accolee}"
                     ToolTip="La tour garde ses poteaux, côté A contre la file extérieure de la face, reliée par tubes et colliers ; le garde-corps de la façade s'ouvre devant ses sorties côté A" />
-          <Grid Visibility="{Binding Accolee, Converter={StaticResource VisibleSi}}">
+          <Grid Visibility="{app:Liaison Accolee, Converter={StaticResource VisibleSi}}">
             <Grid.ColumnDefinitions>
               <ColumnDefinition Width="*" />
               <ColumnDefinition Width="110" />
@@ -231,15 +231,15 @@
               <RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition />
             </Grid.RowDefinitions>
             <TextBlock Style="{StaticResource Etiquette}" Text="Face" />
-            <ComboBox Grid.Column="1" Margin="0,2" ItemsSource="{Binding FacesPossibles}" SelectedItem="{Binding FaceAccolee}" />
+            <ComboBox Grid.Column="1" Margin="0,2" ItemsSource="{app:Liaison FacesPossibles}" SelectedItem="{app:Liaison FaceAccolee}" />
             <TextBlock Grid.Row="1" Style="{StaticResource Etiquette}" Text="Début de la tour depuis le début de la face (m)" TextWrapping="Wrap" />
-            <TextBox Grid.Row="1" Grid.Column="1" Margin="0,2" Text="{Binding Abscisse, StringFormat=0.00}" />
+            <TextBox Grid.Row="1" Grid.Column="1" Margin="0,2" Text="{app:Liaison Abscisse, StringFormat=0.00}" />
             <TextBlock Grid.Row="2" Style="{StaticResource Etiquette}" Text="Écart avec la file extérieure (m)" TextWrapping="Wrap" />
-            <TextBox Grid.Row="2" Grid.Column="1" Margin="0,2" Text="{Binding Ecart, StringFormat=0.00}" />
-            <Button Grid.Row="3" Grid.ColumnSpan="2" Content="Sorties côté façade aux planchers communs" Command="{Binding SortiesCoteFacade}"
+            <TextBox Grid.Row="2" Grid.Column="1" Margin="0,2" Text="{app:Liaison Ecart, StringFormat=0.00}" />
+            <Button Grid.Row="3" Grid.ColumnSpan="2" Content="Sorties côté façade aux planchers communs" Command="{app:Liaison SortiesCoteFacade}"
                     HorizontalAlignment="Left" Padding="10,4" Margin="0,6,0,0" />
           </Grid>
-          <Grid Visibility="{Binding Seule, Converter={StaticResource VisibleSi}}">
+          <Grid Visibility="{app:Liaison Seule, Converter={StaticResource VisibleSi}}">
             <Grid.ColumnDefinitions>
               <ColumnDefinition Width="*" />
               <ColumnDefinition Width="110" />
@@ -248,32 +248,32 @@
               <RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition />
             </Grid.RowDefinitions>
             <TextBlock Style="{StaticResource Etiquette}" Text="Position X (m)" />
-            <TextBox Grid.Column="1" Margin="0,2" Text="{Binding PositionX, StringFormat=0.00}" ToolTip="Coin du bout D, côté A, dans le repère du projet (S1 part de X = 0)" />
+            <TextBox Grid.Column="1" Margin="0,2" Text="{app:Liaison PositionX, StringFormat=0.00}" ToolTip="Coin du bout D, côté A, dans le repère du projet (S1 part de X = 0)" />
             <TextBlock Grid.Row="1" Style="{StaticResource Etiquette}" Text="Position Y (m)" />
-            <TextBox Grid.Row="1" Grid.Column="1" Margin="0,2" Text="{Binding PositionY, StringFormat=0.00}" />
+            <TextBox Grid.Row="1" Grid.Column="1" Margin="0,2" Text="{app:Liaison PositionY, StringFormat=0.00}" />
             <TextBlock Grid.Row="2" Style="{StaticResource Etiquette}" Text="Rotation (°)" />
-            <ComboBox Grid.Row="2" Grid.Column="1" Margin="0,2" ItemsSource="{x:Static vm:TourViewModel.Angles}" SelectedItem="{Binding Angle}" ItemStringFormat="0" />
+            <ComboBox Grid.Row="2" Grid.Column="1" Margin="0,2" ItemsSource="{x:Static vm:TourViewModel.Angles}" SelectedItem="{app:Liaison Angle}" ItemStringFormat="0" />
             <TextBlock Grid.Row="3" Style="{StaticResource Etiquette}" Text="Stabilité" />
             <ComboBox Grid.Row="3" Grid.Column="1" Margin="0,2" ItemsSource="{x:Static vm:TourViewModel.Stabilites}" DisplayMemberPath="Value" SelectedValuePath="Key"
-                      SelectedValue="{Binding Stabilite}" />
+                      SelectedValue="{app:Liaison Stabilite}" />
             <TextBlock Grid.Row="4" Style="{StaticResource Etiquette}" Text="Distance au bâtiment (m)" />
-            <TextBox Grid.Row="4" Grid.Column="1" Margin="0,2" Text="{Binding DistanceBatiment, StringFormat=0.00}" ToolTip="Côté A : longueur des tubes d'amarrage" />
+            <TextBox Grid.Row="4" Grid.Column="1" Margin="0,2" Text="{app:Liaison DistanceBatiment, StringFormat=0.00}" ToolTip="Côté A : longueur des tubes d'amarrage" />
           </Grid>
 
           <TextBlock Style="{StaticResource Section}" Text="PALIERS ET SORTIES" />
           <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource Discret}" Margin="0,0,0,4"
                      Text="A : grand côté bâtiment ou façade · C : grand côté extérieur · B et D : bouts. Ouverture de 0,50 ou 1,00 m sur un grand côté, au bout du palier ; sur un bout, seulement là où arrive la volée. Clic droit sur une lisse de la tour dans le dessin : ouvrir ou fermer." />
-          <DataGrid ItemsSource="{Binding Paliers}" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
+          <DataGrid ItemsSource="{app:Liaison Paliers}" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
                     HeadersVisibility="Column" SelectionMode="Single" MaxHeight="360">
             <DataGrid.Columns>
-              <DataGridTextColumn Header="Palier (m)" Binding="{Binding Hauteur, StringFormat=0.00}" IsReadOnly="True" Width="70" />
+              <DataGridTextColumn Header="Palier (m)" Binding="{app:Liaison Hauteur, StringFormat=0.00}" IsReadOnly="True" Width="70" />
               <DataGridTemplateColumn Header="Côté A" Width="Auto">
                 <DataGridTemplateColumn.CellTemplate>
                   <DataTemplate>
                     <StackPanel Orientation="Horizontal">
-                      <CheckBox IsChecked="{Binding SortieA, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center" Margin="4,0" />
-                      <ComboBox ItemsSource="{x:Static vm:TourViewModel.LargeursOuverture}" SelectedItem="{Binding LargeurA, UpdateSourceTrigger=PropertyChanged}"
-                                ItemStringFormat="0.00" Width="56" IsEnabled="{Binding SortieA}" />
+                      <CheckBox IsChecked="{app:Liaison SortieA, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center" Margin="4,0" />
+                      <ComboBox ItemsSource="{x:Static vm:TourViewModel.LargeursOuverture}" SelectedItem="{app:Liaison LargeurA, UpdateSourceTrigger=PropertyChanged}"
+                                ItemStringFormat="0.00" Width="56" IsEnabled="{app:Liaison SortieA}" />
                     </StackPanel>
                   </DataTemplate>
                 </DataGridTemplateColumn.CellTemplate>
@@ -282,9 +282,9 @@
                 <DataGridTemplateColumn.CellTemplate>
                   <DataTemplate>
                     <StackPanel Orientation="Horizontal">
-                      <CheckBox IsChecked="{Binding SortieC, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center" Margin="4,0" />
-                      <ComboBox ItemsSource="{x:Static vm:TourViewModel.LargeursOuverture}" SelectedItem="{Binding LargeurC, UpdateSourceTrigger=PropertyChanged}"
-                                ItemStringFormat="0.00" Width="56" IsEnabled="{Binding SortieC}" />
+                      <CheckBox IsChecked="{app:Liaison SortieC, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center" Margin="4,0" />
+                      <ComboBox ItemsSource="{x:Static vm:TourViewModel.LargeursOuverture}" SelectedItem="{app:Liaison LargeurC, UpdateSourceTrigger=PropertyChanged}"
+                                ItemStringFormat="0.00" Width="56" IsEnabled="{app:Liaison SortieC}" />
                     </StackPanel>
                   </DataTemplate>
                 </DataGridTemplateColumn.CellTemplate>
@@ -292,7 +292,7 @@
               <DataGridTemplateColumn Header="Bout d'arrivée" Width="*">
                 <DataGridTemplateColumn.CellTemplate>
                   <DataTemplate>
-                    <CheckBox IsChecked="{Binding SortieBout, UpdateSourceTrigger=PropertyChanged}" Content="{Binding TexteBout}" VerticalAlignment="Center" Margin="4,0" />
+                    <CheckBox IsChecked="{app:Liaison SortieBout, UpdateSourceTrigger=PropertyChanged}" Content="{app:Liaison TexteBout}" VerticalAlignment="Center" Margin="4,0" />
                   </DataTemplate>
                 </DataGridTemplateColumn.CellTemplate>
               </DataGridTemplateColumn>
@@ -363,7 +363,7 @@
                       ToolTip="Ajoute l'échafaudage de façade au projet (onglets S1…)">
                 <StackPanel><TextBlock Style="{StaticResource Picto}" Text="&#xE80A;" /><TextBlock Text="+ Façade" /></StackPanel>
               </Button>
-              <Button Style="{StaticResource BoutonRuban}" Click="AjouterTour_Click" IsEnabled="{Binding PeutAjouterTour}"
+              <Button Style="{StaticResource BoutonRuban}" Click="AjouterTour_Click" IsEnabled="{app:Liaison PeutAjouterTour}"
                       ToolTip="Ajoute une tour escalier à volées aluminium (onglet T1, T2…), seule ou accolée à une face">
                 <StackPanel><TextBlock Style="{StaticResource Picto}" Text="&#xE8B7;" /><TextBlock Text="+ Tour escalier alu" /></StackPanel>
               </Button>
@@ -382,14 +382,14 @@
         <Border Style="{StaticResource GroupeRuban}">
           <StackPanel>
             <StackPanel Orientation="Horizontal">
-              <Button Style="{StaticResource BoutonRuban}" Command="{Binding Proposer}" ToolTip="Recalcule les grilles de la face active depuis ses dimensions">
+              <Button Style="{StaticResource BoutonRuban}" Command="{app:Liaison Proposer}" ToolTip="Recalcule les grilles de la face active depuis ses dimensions">
                 <StackPanel>
                   <TextBlock Text="&#xE82F;">
                     <TextBlock.Style>
                       <Style TargetType="TextBlock" BasedOn="{StaticResource Picto}">
                         <Setter Property="Foreground" Value="#2E7D32" />
                         <Style.Triggers>
-                          <DataTrigger Binding="{Binding FaceActiveAValider}" Value="True">
+                          <DataTrigger Binding="{app:Liaison FaceActiveAValider}" Value="True">
                             <Setter Property="Foreground" Value="#C62828" />
                           </DataTrigger>
                         </Style.Triggers>
@@ -441,7 +441,7 @@
               </ComboBox>
               <CheckBox x:Name="CaseAxes" Content="Axes filaires" IsChecked="True" IsEnabled="False" Margin="0,4,0,0"
                         ToolTip="Les axes filaires sont toujours affichés" />
-              <CheckBox Content="Dessiner façade" IsChecked="{Binding DessinerFacade}" Click="Facade_Click"
+              <CheckBox Content="Dessiner façade" IsChecked="{app:Liaison DessinerFacade}" Click="Facade_Click"
                         ToolTip="Représente le mur du bâtiment à la distance à la façade de chaque face" />
             </StackPanel>
             <TextBlock Style="{StaticResource TitreGroupe}" Text="Affichage" />
@@ -470,7 +470,7 @@
     </Border>
 
     <StatusBar DockPanel.Dock="Bottom">
-      <TextBlock Text="{Binding Resume}" />
+      <TextBlock Text="{app:Liaison Resume}" />
       <Separator />
       <TextBlock x:Name="TexteBibliotheque" />
     </StatusBar>
@@ -502,11 +502,11 @@
                   <RowDefinition /><RowDefinition /><RowDefinition />
                 </Grid.RowDefinitions>
                 <TextBlock Style="{StaticResource Etiquette}" Text="Chantier" />
-                <TextBox Grid.Column="1" Margin="0,2" Text="{Binding Projet.Chantier}" />
+                <TextBox Grid.Column="1" Margin="0,2" Text="{app:Liaison Projet.Chantier}" />
                 <TextBlock Grid.Row="1" Style="{StaticResource Etiquette}" Text="Client" />
-                <TextBox Grid.Row="1" Grid.Column="1" Margin="0,2" Text="{Binding Projet.Client}" />
+                <TextBox Grid.Row="1" Grid.Column="1" Margin="0,2" Text="{app:Liaison Projet.Client}" />
                 <TextBlock Grid.Row="2" Style="{StaticResource Etiquette}" Text="Référence étude" />
-                <TextBox Grid.Row="2" Grid.Column="1" Margin="0,2" Text="{Binding Projet.ReferenceEtude}" />
+                <TextBox Grid.Row="2" Grid.Column="1" Margin="0,2" Text="{app:Liaison Projet.ReferenceEtude}" />
               </Grid>
 
               <TextBlock Style="{StaticResource Section}" Text="MATÉRIEL" />
@@ -519,43 +519,43 @@
                   <RowDefinition /><RowDefinition /><RowDefinition />
                 </Grid.RowDefinitions>
                 <TextBlock Style="{StaticResource Etiquette}" Text="Modèle" />
-                <ComboBox Grid.Column="1" Margin="0,2" Style="{StaticResource ListeLibelles}" ItemsSource="{Binding ChoixModeles}"
-                          SelectedItem="{Binding General.Modele}" SelectionChanged="Modele_SelectionChanged" />
+                <ComboBox Grid.Column="1" Margin="0,2" Style="{StaticResource ListeLibelles}" ItemsSource="{app:Liaison ChoixModeles}"
+                          SelectedItem="{app:Liaison General.Modele}" SelectionChanged="Modele_SelectionChanged" />
                 <TextBlock Grid.Row="1" Style="{StaticResource Etiquette}" Text="Plateaux" />
-                <ComboBox Grid.Row="1" Grid.Column="1" Margin="0,2" ItemsSource="{Binding ChoixGammes}" DisplayMemberPath="Value" SelectedValuePath="Key"
-                          SelectedValue="{Binding General.Plateaux}" />
+                <ComboBox Grid.Row="1" Grid.Column="1" Margin="0,2" ItemsSource="{app:Liaison ChoixGammes}" DisplayMemberPath="Value" SelectedValuePath="Key"
+                          SelectedValue="{app:Liaison General.Plateaux}" />
                 <TextBlock Grid.Row="2" Style="{StaticResource Etiquette}" Text="Socles" />
-                <ComboBox Grid.Row="2" Grid.Column="1" Margin="0,2" ItemsSource="{Binding ChoixSocles}" DisplayMemberPath="Libelle" SelectedValuePath="Reference"
-                          SelectedValue="{Binding General.Socle}" />
+                <ComboBox Grid.Row="2" Grid.Column="1" Margin="0,2" ItemsSource="{app:Liaison ChoixSocles}" DisplayMemberPath="Libelle" SelectedValuePath="Reference"
+                          SelectedValue="{app:Liaison General.Socle}" />
               </Grid>
 
               <TextBlock Style="{StaticResource Section}" Text="FORME DE LA STRUCTURE" />
               <UniformGrid Columns="5">
-                <RadioButton Style="{StaticResource BoutonForme}" GroupName="Forme" IsChecked="{Binding Forme, Converter={StaticResource Egal}, ConverterParameter=Droite}">
+                <RadioButton Style="{StaticResource BoutonForme}" GroupName="Forme" IsChecked="{app:Liaison Forme, Converter={StaticResource Egal}, ConverterParameter=Droite}">
                   <StackPanel>
                     <Path Data="M2,18 H38 V25 H2 Z" Stroke="{StaticResource Accent}" StrokeThickness="2" Width="40" Height="28" HorizontalAlignment="Center" />
                     <TextBlock Text="Droite" FontSize="12" HorizontalAlignment="Center" />
                   </StackPanel>
                 </RadioButton>
-                <RadioButton Style="{StaticResource BoutonForme}" GroupName="Forme" IsChecked="{Binding Forme, Converter={StaticResource Egal}, ConverterParameter=EnL}">
+                <RadioButton Style="{StaticResource BoutonForme}" GroupName="Forme" IsChecked="{app:Liaison Forme, Converter={StaticResource Egal}, ConverterParameter=EnL}">
                   <StackPanel>
                     <Path Data="M2,18 H31 V2 H38 V25 H2 Z" Stroke="{StaticResource Accent}" StrokeThickness="2" Width="40" Height="28" HorizontalAlignment="Center" />
                     <TextBlock Text="En L" FontSize="12" HorizontalAlignment="Center" />
                   </StackPanel>
                 </RadioButton>
-                <RadioButton Style="{StaticResource BoutonForme}" GroupName="Forme" IsChecked="{Binding Forme, Converter={StaticResource Egal}, ConverterParameter=EnU}">
+                <RadioButton Style="{StaticResource BoutonForme}" GroupName="Forme" IsChecked="{app:Liaison Forme, Converter={StaticResource Egal}, ConverterParameter=EnU}">
                   <StackPanel>
                     <Path Data="M2,2 H9 V18 H31 V2 H38 V25 H2 Z" Stroke="{StaticResource Accent}" StrokeThickness="2" Width="40" Height="28" HorizontalAlignment="Center" />
                     <TextBlock Text="En U" FontSize="12" HorizontalAlignment="Center" />
                   </StackPanel>
                 </RadioButton>
-                <RadioButton Style="{StaticResource BoutonForme}" GroupName="Forme" IsChecked="{Binding Forme, Converter={StaticResource Egal}, ConverterParameter=Fermee}">
+                <RadioButton Style="{StaticResource BoutonForme}" GroupName="Forme" IsChecked="{app:Liaison Forme, Converter={StaticResource Egal}, ConverterParameter=Fermee}">
                   <StackPanel>
                     <Path Data="M2,2 H38 V25 H2 Z M9,9 H31 V18 H9 Z" Stroke="{StaticResource Accent}" StrokeThickness="2" Width="40" Height="28" HorizontalAlignment="Center" />
                     <TextBlock Text="Fermée" FontSize="12" HorizontalAlignment="Center" />
                   </StackPanel>
                 </RadioButton>
-                <RadioButton Style="{StaticResource BoutonForme}" GroupName="Forme" IsChecked="{Binding Forme, Converter={StaticResource Egal}, ConverterParameter=Volumique}">
+                <RadioButton Style="{StaticResource BoutonForme}" GroupName="Forme" IsChecked="{app:Liaison Forme, Converter={StaticResource Egal}, ConverterParameter=Volumique}">
                   <StackPanel>
                     <Path Data="M2,2 H38 V25 H2 Z M2,11 H38 M2,18 H38" Stroke="{StaticResource Accent}" StrokeThickness="2" Width="40" Height="28" HorizontalAlignment="Center" />
                     <TextBlock Text="Volumique" FontSize="12" HorizontalAlignment="Center" />
@@ -564,16 +564,16 @@
               </UniformGrid>
               <TextBlock Text="La forme crée les onglets S1 à S4. À partir de S2, la 1re maille est le carré d'angle qui raccorde la face à la précédente. Volumique : modules M1 (contre la façade), M2, M3… côte à côte en profondeur, longueur et largeur propres à chaque module (largeur jusqu'à 3,00 m), accès proposés sur M1."
                          TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource Discret}" Margin="0,6,0,0" />
-              <CheckBox Content="Inverser la structure (bâtiment dans l'angle rentrant)" IsChecked="{Binding Inversee}" Margin="0,6,0,0"
-                        Visibility="{Binding InversionPossible, Converter={StaticResource VisibleSi}}"
+              <CheckBox Content="Inverser la structure (bâtiment dans l'angle rentrant)" IsChecked="{app:Liaison Inversee}" Margin="0,6,0,0"
+                        Visibility="{app:Liaison InversionPossible, Converter={StaticResource VisibleSi}}"
                         ToolTip="Le bâtiment est de l'autre côté de l'échafaudage : les faces tournent dans l'autre sens, côté mur et côté extérieur sont permutés (garde-corps, escaliers, appro… passent de l'autre côté)" />
               <StackPanel Orientation="Horizontal" Margin="0,6,0,0"
-                          Visibility="{Binding EstVolumique, Converter={StaticResource VisibleSi}}">
+                          Visibility="{app:Liaison EstVolumique, Converter={StaticResource VisibleSi}}">
                 <TextBlock Text="Modules" VerticalAlignment="Center" Margin="0,0,8,0" />
-                <ComboBox Width="60" ItemsSource="{x:Static vm:FacadeViewModel.ChoixModules}" SelectedItem="{Binding NombreModules}" />
-                <Button Content="+ Module" Command="{Binding AjouterModule}" Padding="8,2" Margin="6,0,0,0"
+                <ComboBox Width="60" ItemsSource="{x:Static vm:FacadeViewModel.ChoixModules}" SelectedItem="{app:Liaison NombreModules}" />
+                <Button Content="+ Module" Command="{app:Liaison AjouterModule}" Padding="8,2" Margin="6,0,0,0"
                         ToolTip="Ajoute un module derrière le dernier (mêmes mailles que M1, sans accès)" />
-                <CheckBox Content="Planchers en damier" IsChecked="{Binding PlanchersDamier}" VerticalAlignment="Center" Margin="16,0,0,0"
+                <CheckBox Content="Planchers en damier" IsChecked="{app:Liaison PlanchersDamier}" VerticalAlignment="Center" Margin="16,0,0,0"
                           ToolTip="Plateaux orientés une maille sur deux selon X, la suivante selon Y (sur lisses renforcées dès 1,50 m), en décalé d'un module à l'autre" />
               </StackPanel>
 
@@ -590,23 +590,23 @@
                 <TextBlock Grid.Column="1" Text="Garde-corps" FontSize="12" Foreground="{StaticResource Discret}" />
                 <TextBlock Grid.Column="2" Text="Plinthe" FontSize="12" Foreground="{StaticResource Discret}" Margin="4,0,0,0" />
                 <TextBlock Grid.Row="1" Style="{StaticResource Etiquette}" Text="Extérieur (rue)" />
-                <ComboBox Grid.Row="1" Grid.Column="1" Margin="0,2" Style="{StaticResource ListeLibelles}" ItemsSource="{Binding ChoixSecurites}" SelectedItem="{Binding SecuriteExterieure}" />
-                <ComboBox Grid.Row="1" Grid.Column="2" Margin="4,2,0,2" Style="{StaticResource ListeLibelles}" ItemsSource="{Binding ChoixPlinthes}" SelectedItem="{Binding PlintheExterieure}" />
+                <ComboBox Grid.Row="1" Grid.Column="1" Margin="0,2" Style="{StaticResource ListeLibelles}" ItemsSource="{app:Liaison ChoixSecurites}" SelectedItem="{app:Liaison SecuriteExterieure}" />
+                <ComboBox Grid.Row="1" Grid.Column="2" Margin="4,2,0,2" Style="{StaticResource ListeLibelles}" ItemsSource="{app:Liaison ChoixPlinthes}" SelectedItem="{app:Liaison PlintheExterieure}" />
                 <TextBlock Grid.Row="2" Style="{StaticResource Etiquette}" Text="Intérieur (mur)" />
-                <ComboBox Grid.Row="2" Grid.Column="1" Margin="0,2" Style="{StaticResource ListeLibelles}" ItemsSource="{Binding ChoixSecurites}" SelectedItem="{Binding SecuriteInterieure}" />
-                <ComboBox Grid.Row="2" Grid.Column="2" Margin="4,2,0,2" Style="{StaticResource ListeLibelles}" ItemsSource="{Binding ChoixPlinthes}" SelectedItem="{Binding PlintheInterieure}" />
+                <ComboBox Grid.Row="2" Grid.Column="1" Margin="0,2" Style="{StaticResource ListeLibelles}" ItemsSource="{app:Liaison ChoixSecurites}" SelectedItem="{app:Liaison SecuriteInterieure}" />
+                <ComboBox Grid.Row="2" Grid.Column="2" Margin="4,2,0,2" Style="{StaticResource ListeLibelles}" ItemsSource="{app:Liaison ChoixPlinthes}" SelectedItem="{app:Liaison PlintheInterieure}" />
                 <TextBlock Grid.Row="3" Style="{StaticResource Etiquette}" Text="Abouts" />
-                <ComboBox Grid.Row="3" Grid.Column="1" Margin="0,2" Style="{StaticResource ListeLibelles}" ItemsSource="{Binding ChoixSecurites}" SelectedItem="{Binding SecuriteAbouts}" />
-                <ComboBox Grid.Row="3" Grid.Column="2" Margin="4,2,0,2" Style="{StaticResource ListeLibelles}" ItemsSource="{Binding ChoixPlinthes}" SelectedItem="{Binding PlintheAbouts}" />
+                <ComboBox Grid.Row="3" Grid.Column="1" Margin="0,2" Style="{StaticResource ListeLibelles}" ItemsSource="{app:Liaison ChoixSecurites}" SelectedItem="{app:Liaison SecuriteAbouts}" />
+                <ComboBox Grid.Row="3" Grid.Column="2" Margin="4,2,0,2" Style="{StaticResource ListeLibelles}" ItemsSource="{app:Liaison ChoixPlinthes}" SelectedItem="{app:Liaison PlintheAbouts}" />
               </Grid>
               <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
-                <CheckBox Content="About gauche" IsChecked="{Binding General.AboutGauche}" Margin="0,3,16,3" />
-                <CheckBox Content="About droit" IsChecked="{Binding General.AboutDroit}" />
+                <CheckBox Content="About gauche" IsChecked="{app:Liaison General.AboutGauche}" Margin="0,3,16,3" />
+                <CheckBox Content="About droit" IsChecked="{app:Liaison General.AboutDroit}" />
               </StackPanel>
               <TextBlock Text="En L, en U ou fermée, pas d'about aux raccords entre faces." TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource Discret}" />
 
               <TextBlock Style="{StaticResource Section}" Text="AMARRAGES" />
-              <CheckBox Content="Échafaudage bâché" IsChecked="{Binding General.Bache}" />
+              <CheckBox Content="Échafaudage bâché" IsChecked="{app:Liaison General.Bache}" />
               <Grid Margin="0,4,0,0">
                 <Grid.ColumnDefinitions>
                   <ColumnDefinition Width="*" />
@@ -617,12 +617,12 @@
                   <RowDefinition /><RowDefinition /><RowDefinition />
                 </Grid.RowDefinitions>
                 <TextBlock Style="{StaticResource Etiquette}" Text="1er amarrage (m)" />
-                <TextBox Grid.Column="2" Margin="0,2" Text="{Binding General.HauteurPremierAmarrage, StringFormat=0.00}" />
+                <TextBox Grid.Column="2" Margin="0,2" Text="{app:Liaison General.HauteurPremierAmarrage, StringFormat=0.00}" />
                 <TextBlock Grid.Row="1" Style="{StaticResource Etiquette}" Text="Extrémités (m)" />
-                <TextBox Grid.Row="1" Grid.Column="2" Margin="0,2" Text="{Binding General.EspacementAmarrageExtremite, StringFormat=0.##}" />
+                <TextBox Grid.Row="1" Grid.Column="2" Margin="0,2" Text="{app:Liaison General.EspacementAmarrageExtremite, StringFormat=0.##}" />
                 <TextBlock Grid.Row="2" Style="{StaticResource Etiquette}" Text="Courant, non bâché / bâché (m)" />
-                <TextBox Grid.Row="2" Grid.Column="1" Margin="0,2,4,2" Text="{Binding General.EspacementAmarrageCourant, StringFormat=0.##}" />
-                <TextBox Grid.Row="2" Grid.Column="2" Margin="0,2" Text="{Binding General.EspacementAmarrageCourantBache, StringFormat=0.##}" />
+                <TextBox Grid.Row="2" Grid.Column="1" Margin="0,2,4,2" Text="{app:Liaison General.EspacementAmarrageCourant, StringFormat=0.##}" />
+                <TextBox Grid.Row="2" Grid.Column="2" Margin="0,2" Text="{app:Liaison General.EspacementAmarrageCourantBache, StringFormat=0.##}" />
               </Grid>
             </StackPanel>
           </ScrollViewer>
@@ -642,11 +642,11 @@
       <TabControl x:Name="OngletsBas" Grid.Row="2" Grid.ColumnSpan="3" Margin="6,0,6,6">
         <TabItem>
           <TabItem.Header>
-            <Border Background="{Binding CouleurFaceActive}" CornerRadius="2" Padding="6,1" Margin="-4,-1">
-              <TextBlock Text="{Binding TitreGrilles}" />
+            <Border Background="{app:Liaison CouleurFaceActive}" CornerRadius="2" Padding="6,1" Margin="-4,-1">
+              <TextBlock Text="{app:Liaison TitreGrilles}" />
             </Border>
           </TabItem.Header>
-          <Grid Margin="0" Background="{Binding CouleurFaceActive}">
+          <Grid Margin="0" Background="{app:Liaison CouleurFaceActive}">
             <Grid Margin="6">
               <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
@@ -664,39 +664,39 @@
                   <TextBlock Text="Mailles (de gauche à droite)" FontWeight="SemiBold" VerticalAlignment="Center" />
                 </DockPanel>
                 <!-- Colonnes « ConXm » ajoutées par le code, une par niveau avec console. -->
-                <DataGrid x:Name="GrilleMailles" ItemsSource="{Binding Mailles}" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="True"
+                <DataGrid x:Name="GrilleMailles" ItemsSource="{app:Liaison Mailles}" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="True"
                           HeadersVisibility="All" RowHeaderWidth="32" SelectionMode="Single" LoadingRow="GrilleMailles_LoadingRow">
                   <DataGrid.Columns>
                     <DataGridTemplateColumn Header="Longueur" Width="80">
                       <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                          <TextBlock Text="{Binding Longueur, StringFormat=0.00}" Margin="2,0" />
+                          <TextBlock Text="{app:Liaison Longueur, StringFormat=0.00}" Margin="2,0" />
                         </DataTemplate>
                       </DataGridTemplateColumn.CellTemplate>
                       <DataGridTemplateColumn.CellEditingTemplate>
                         <DataTemplate>
                           <!-- Maille d'accès : 1,50 m au moins (Laurent, 25/11/2026). -->
-                          <ComboBox ItemsSource="{Binding Type, Converter={StaticResource LongueursSelonType}}"
-                                    SelectedItem="{Binding Longueur, UpdateSourceTrigger=PropertyChanged}" ItemStringFormat="0.00" />
+                          <ComboBox ItemsSource="{app:Liaison Type, Converter={StaticResource LongueursSelonType}}"
+                                    SelectedItem="{app:Liaison Longueur, UpdateSourceTrigger=PropertyChanged}" ItemStringFormat="0.00" />
                         </DataTemplate>
                       </DataGridTemplateColumn.CellEditingTemplate>
                     </DataGridTemplateColumn>
                     <DataGridTemplateColumn Header="Type" Width="160">
                       <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                          <TextBlock Text="{Binding Type, Converter={StaticResource Libelle}}" Margin="2,0" />
+                          <TextBlock Text="{app:Liaison Type, Converter={StaticResource Libelle}}" Margin="2,0" />
                         </DataTemplate>
                       </DataGridTemplateColumn.CellTemplate>
                       <DataGridTemplateColumn.CellEditingTemplate>
                         <DataTemplate>
-                          <ComboBox Style="{StaticResource ListeLibelles}" ItemsSource="{Binding DataContext.ChoixTypesMaille, RelativeSource={RelativeSource AncestorType=DataGrid}}" SelectedItem="{Binding Type, UpdateSourceTrigger=PropertyChanged}" />
+                          <ComboBox Style="{StaticResource ListeLibelles}" ItemsSource="{app:Liaison DataContext.ChoixTypesMaille, RelativeSource={RelativeSource AncestorType=DataGrid}}" SelectedItem="{app:Liaison Type, UpdateSourceTrigger=PropertyChanged}" />
                         </DataTemplate>
                       </DataGridTemplateColumn.CellEditingTemplate>
                     </DataGridTemplateColumn>
                     <DataGridTemplateColumn Header="Diago" Width="Auto">
                       <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                          <CheckBox IsChecked="{Binding Diagonale, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Center" Margin="0"
+                          <CheckBox IsChecked="{app:Liaison Diagonale, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Center" Margin="0"
                                     ToolTip="Diagonales verticales sur toute la hauteur de la maille" />
                         </DataTemplate>
                       </DataGridTemplateColumn.CellTemplate>
@@ -704,14 +704,14 @@
                     <DataGridTemplateColumn Header="Départ" Width="62">
                       <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                          <TextBlock Text="{Binding HauteurDepart, StringFormat=0.00}" Margin="2,0"
+                          <TextBlock Text="{app:Liaison HauteurDepart, StringFormat=0.00}" Margin="2,0"
                                      ToolTip="Hauteur du sol sous la maille (sol en pente) : la maille part de cette hauteur, par pas de 0,50 m" />
                         </DataTemplate>
                       </DataGridTemplateColumn.CellTemplate>
                       <DataGridTemplateColumn.CellEditingTemplate>
                         <DataTemplate>
-                          <ComboBox ItemsSource="{Binding DataContext.ChoixHauteursDepart, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                    SelectedItem="{Binding HauteurDepart, UpdateSourceTrigger=PropertyChanged}" ItemStringFormat="0.00" />
+                          <ComboBox ItemsSource="{app:Liaison DataContext.ChoixHauteursDepart, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                    SelectedItem="{app:Liaison HauteurDepart, UpdateSourceTrigger=PropertyChanged}" ItemStringFormat="0.00" />
                         </DataTemplate>
                       </DataGridTemplateColumn.CellEditingTemplate>
                     </DataGridTemplateColumn>
@@ -730,25 +730,25 @@
                       </DataGridTemplateColumn.CellTemplate>
                       <DataGridTemplateColumn.CellEditingTemplate>
                         <DataTemplate>
-                          <ComboBox ItemsSource="{Binding DataContext.ChoixHauteursMaille, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                          <ComboBox ItemsSource="{app:Liaison DataContext.ChoixHauteursMaille, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                     SelectedValuePath="Key" DisplayMemberPath="Value"
-                                    SelectedValue="{Binding EcartHauteur, UpdateSourceTrigger=PropertyChanged}" />
+                                    SelectedValue="{app:Liaison EcartHauteur, UpdateSourceTrigger=PropertyChanged}" />
                         </DataTemplate>
                       </DataGridTemplateColumn.CellEditingTemplate>
                     </DataGridTemplateColumn>
                     <DataGridTemplateColumn Header="Stab." Width="60">
                       <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                          <TextBlock Text="{Binding Stabilisation, Converter={StaticResource CoteOptionnelle}}" Margin="2,0"
+                          <TextBlock Text="{app:Liaison Stabilisation, Converter={StaticResource CoteOptionnelle}}" Margin="2,0"
                                      ToolTip="Stabilisation côté extérieur : file de poteaux à cette distance, lisses et diagonales jusqu'à 2 m sous le dernier plancher" />
                         </DataTemplate>
                       </DataGridTemplateColumn.CellTemplate>
                       <DataGridTemplateColumn.CellEditingTemplate>
                         <DataTemplate>
-                          <ComboBox ItemsSource="{Binding DataContext.ChoixStabilisation, RelativeSource={RelativeSource AncestorType=DataGrid}}" SelectedItem="{Binding Stabilisation, UpdateSourceTrigger=PropertyChanged}">
+                          <ComboBox ItemsSource="{app:Liaison DataContext.ChoixStabilisation, RelativeSource={RelativeSource AncestorType=DataGrid}}" SelectedItem="{app:Liaison Stabilisation, UpdateSourceTrigger=PropertyChanged}">
                             <ComboBox.ItemTemplate>
                               <DataTemplate>
-                                <TextBlock Text="{Binding Converter={StaticResource CoteOptionnelle}}" />
+                                <TextBlock Text="{app:Liaison Converter={StaticResource CoteOptionnelle}}" />
                               </DataTemplate>
                             </ComboBox.ItemTemplate>
                           </ComboBox>
@@ -758,8 +758,8 @@
                     <DataGridTemplateColumn x:Name="ColonneLest" Header="Lest" Width="Auto" Visibility="Collapsed">
                       <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                          <CheckBox IsChecked="{Binding Lest, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Center" Margin="0"
-                                    IsEnabled="{Binding Stabilisation, Converter={StaticResource PositifEnBooleen}}"
+                          <CheckBox IsChecked="{app:Liaison Lest, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Center" Margin="0"
+                                    IsEnabled="{app:Liaison Stabilisation, Converter={StaticResource PositifEnBooleen}}"
                                     ToolTip="Platelage à 0,50 m dans la stabilisation (entre la file extérieure et la file de stabilisation) pour poser du lest" />
                         </DataTemplate>
                       </DataGridTemplateColumn.CellTemplate>
@@ -767,17 +767,17 @@
                     <DataGridTemplateColumn Header="Poutre" Width="70">
                       <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                          <TextBlock Text="{Binding Poutre, Converter={StaticResource CoteOptionnelle}}" Margin="2,0"
+                          <TextBlock Text="{app:Liaison Poutre, Converter={StaticResource CoteOptionnelle}}" Margin="2,0"
                                      ToolTip="Poutre de franchissement sous ce niveau, sur cette maille et la suivante : la file entre les deux est supprimée dessous" />
                         </DataTemplate>
                       </DataGridTemplateColumn.CellTemplate>
                       <DataGridTemplateColumn.CellEditingTemplate>
                         <DataTemplate>
-                          <ComboBox ItemsSource="{Binding DataContext.HauteursPoutre, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                    SelectedItem="{Binding Poutre, UpdateSourceTrigger=PropertyChanged}">
+                          <ComboBox ItemsSource="{app:Liaison DataContext.HauteursPoutre, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                    SelectedItem="{app:Liaison Poutre, UpdateSourceTrigger=PropertyChanged}">
                             <ComboBox.ItemTemplate>
                               <DataTemplate>
-                                <TextBlock Text="{Binding Converter={StaticResource CoteOptionnelle}}" />
+                                <TextBlock Text="{app:Liaison Converter={StaticResource CoteOptionnelle}}" />
                               </DataTemplate>
                             </ComboBox.ItemTemplate>
                           </ComboBox>
@@ -787,11 +787,11 @@
                     <DataGridTemplateColumn Header="Prof. recette" Width="80">
                       <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                          <TextBlock Text="{Binding ProfondeurRecette, StringFormat=0.00}" Margin="2,0" ToolTip="Profondeur de la recette côté extérieur">
+                          <TextBlock Text="{app:Liaison ProfondeurRecette, StringFormat=0.00}" Margin="2,0" ToolTip="Profondeur de la recette côté extérieur">
                             <TextBlock.Style>
                               <Style TargetType="TextBlock">
                                 <Style.Triggers>
-                                  <DataTrigger Binding="{Binding Type, Converter={StaticResource Egal}, ConverterParameter=Recette}" Value="False">
+                                  <DataTrigger Binding="{app:Liaison Type, Converter={StaticResource Egal}, ConverterParameter=Recette}" Value="False">
                                     <Setter Property="Visibility" Value="Hidden" />
                                   </DataTrigger>
                                 </Style.Triggers>
@@ -802,12 +802,12 @@
                       </DataGridTemplateColumn.CellTemplate>
                       <DataGridTemplateColumn.CellEditingTemplate>
                         <DataTemplate>
-                          <ComboBox ItemsSource="{Binding DataContext.ChoixProfondeursRecette, RelativeSource={RelativeSource AncestorType=DataGrid}}" SelectedItem="{Binding ProfondeurRecette, UpdateSourceTrigger=PropertyChanged}"
-                                    ItemStringFormat="0.00" IsEnabled="{Binding Type, Converter={StaticResource Egal}, ConverterParameter=Recette}" />
+                          <ComboBox ItemsSource="{app:Liaison DataContext.ChoixProfondeursRecette, RelativeSource={RelativeSource AncestorType=DataGrid}}" SelectedItem="{app:Liaison ProfondeurRecette, UpdateSourceTrigger=PropertyChanged}"
+                                    ItemStringFormat="0.00" IsEnabled="{app:Liaison Type, Converter={StaticResource Egal}, ConverterParameter=Recette}" />
                         </DataTemplate>
                       </DataGridTemplateColumn.CellEditingTemplate>
                     </DataGridTemplateColumn>
-                    <DataGridTextColumn Header="Jonction" Binding="{Binding Jonction}" IsReadOnly="True" Width="Auto">
+                    <DataGridTextColumn Header="Jonction" Binding="{app:Liaison Jonction}" IsReadOnly="True" Width="Auto">
                       <DataGridTextColumn.CellStyle>
                         <Style TargetType="DataGridCell">
                           <Setter Property="Background" Value="#F6F7F9" />
@@ -822,38 +822,38 @@
 
               <DockPanel Grid.Column="2">
                 <TextBlock DockPanel.Dock="Top" Text="Niveaux de plancher" FontWeight="SemiBold" Margin="0,0,0,8" />
-                <DataGrid ItemsSource="{Binding Niveaux}" AutoGenerateColumns="False" CanUserAddRows="True" CanUserDeleteRows="True">
+                <DataGrid ItemsSource="{app:Liaison Niveaux}" AutoGenerateColumns="False" CanUserAddRows="True" CanUserDeleteRows="True">
                   <DataGrid.Columns>
-                    <DataGridTextColumn Header="Niveau (m)" Binding="{Binding Hauteur, StringFormat=0.00}" Width="80" />
+                    <DataGridTextColumn Header="Niveau (m)" Binding="{app:Liaison Hauteur, StringFormat=0.00}" Width="80" />
                     <DataGridTemplateColumn Header="Type" Width="150">
                       <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                          <TextBlock Text="{Binding Type, Converter={StaticResource Libelle}}" Margin="2,0" />
+                          <TextBlock Text="{app:Liaison Type, Converter={StaticResource Libelle}}" Margin="2,0" />
                         </DataTemplate>
                       </DataGridTemplateColumn.CellTemplate>
                       <DataGridTemplateColumn.CellEditingTemplate>
                         <DataTemplate>
-                          <ComboBox Style="{StaticResource ListeLibelles}" ItemsSource="{Binding DataContext.ChoixTypesPlancher, RelativeSource={RelativeSource AncestorType=DataGrid}}" SelectedItem="{Binding Type, UpdateSourceTrigger=PropertyChanged}" />
+                          <ComboBox Style="{StaticResource ListeLibelles}" ItemsSource="{app:Liaison DataContext.ChoixTypesPlancher, RelativeSource={RelativeSource AncestorType=DataGrid}}" SelectedItem="{app:Liaison Type, UpdateSourceTrigger=PropertyChanged}" />
                         </DataTemplate>
                       </DataGridTemplateColumn.CellEditingTemplate>
                     </DataGridTemplateColumn>
                     <DataGridTemplateColumn Header="Console" Width="130">
                       <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                          <TextBlock Text="{Binding Console}" Margin="2,0" />
+                          <TextBlock Text="{app:Liaison Console}" Margin="2,0" />
                         </DataTemplate>
                       </DataGridTemplateColumn.CellTemplate>
                       <DataGridTemplateColumn.CellEditingTemplate>
                         <DataTemplate>
-                          <ComboBox ItemsSource="{Binding DataContext.Consoles, RelativeSource={RelativeSource AncestorType=DataGrid}}"
-                                    SelectedItem="{Binding Console, UpdateSourceTrigger=PropertyChanged}" />
+                          <ComboBox ItemsSource="{app:Liaison DataContext.Consoles, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                    SelectedItem="{app:Liaison Console, UpdateSourceTrigger=PropertyChanged}" />
                         </DataTemplate>
                       </DataGridTemplateColumn.CellEditingTemplate>
                     </DataGridTemplateColumn>
                     <DataGridTemplateColumn Header="Pare-grav." Width="Auto">
                       <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                          <CheckBox IsChecked="{Binding PareGravois, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Center"
+                          <CheckBox IsChecked="{app:Liaison PareGravois, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Center"
                                     ToolTip="Pare-gravois à ce niveau sur toute la longueur de la face (consoles, tôles, lisses)" />
                         </DataTemplate>
                       </DataGridTemplateColumn.CellTemplate>
@@ -861,7 +861,7 @@
                     <DataGridTemplateColumn Header="Diago H" Width="Auto">
                       <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                          <CheckBox IsChecked="{Binding DiagoH, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Center"
+                          <CheckBox IsChecked="{app:Liaison DiagoH, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Center"
                                     ToolTip="Diagonales horizontales à ce niveau dans les mailles de travail, sens alterné automatiquement" />
                         </DataTemplate>
                       </DataGridTemplateColumn.CellTemplate>
@@ -869,7 +869,7 @@
                     <DataGridTemplateColumn x:Name="ColonneAppro" Header="Appro" Width="Auto" Visibility="Collapsed">
                       <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                          <CheckBox IsChecked="{Binding Appro, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Center"
+                          <CheckBox IsChecked="{app:Liaison Appro, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Center"
                                     ToolTip="Niveau desservi par les modules d'approvisionnement" />
                         </DataTemplate>
                       </DataGridTemplateColumn.CellTemplate>
@@ -877,7 +877,7 @@
                     <DataGridTemplateColumn x:Name="ColonneRecette" Header="Recette" Width="Auto" Visibility="Collapsed">
                       <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                          <CheckBox IsChecked="{Binding Recette, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Center"
+                          <CheckBox IsChecked="{app:Liaison Recette, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Center"
                                     ToolTip="Niveau desservi par les recettes (plancher et garde-corps)" />
                         </DataTemplate>
                       </DataGridTemplateColumn.CellTemplate>
@@ -893,15 +893,15 @@
           <DockPanel>
             <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="6,4">
               <TextBlock Text="Ouvrage" VerticalAlignment="Center" Margin="0,0,8,0" />
-              <ComboBox Width="190" Margin="0,0,16,0" ItemsSource="{Binding ChoixOuvragesDecompte}" SelectedValuePath="Key" DisplayMemberPath="Value"
-                        SelectedValue="{Binding OuvrageDecompte}"
+              <ComboBox Width="190" Margin="0,0,16,0" ItemsSource="{app:Liaison ChoixOuvragesDecompte}" SelectedValuePath="Key" DisplayMemberPath="Value"
+                        SelectedValue="{app:Liaison OuvrageDecompte}"
                         ToolTip="Décompte de tout le projet, de la façade ou d'une tour (quantités calculées, sans les modifications faites à la main)" />
               <TextBlock Text="Références affichées" VerticalAlignment="Center" Margin="0,0,8,0" />
               <ComboBox Width="240" ItemsSource="{x:Static vm:FacadeViewModel.ChoixReferences}" SelectedValuePath="Key" DisplayMemberPath="Value"
-                        SelectedValue="{Binding ReferencesAffichees}"
+                        SelectedValue="{app:Liaison ReferencesAffichees}"
                         ToolTip="Travail en références client : le décompte affiche les références du client (LV Tec intégré, ou fichier de correspondance des Paramètres par défaut)" />
             </StackPanel>
-            <WrapPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="6,0,6,4" IsEnabled="{Binding DecompteModifiable}">
+            <WrapPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="6,0,6,4" IsEnabled="{app:Liaison DecompteModifiable}">
               <TextBlock Text="Ajouter la référence" VerticalAlignment="Center" Margin="0,0,8,0" />
               <TextBox x:Name="SaisieReference" Width="150" VerticalContentAlignment="Center" KeyDown="SaisieDecompte_KeyDown"
                        ToolTip="Référence RETOTUB ou référence client : désignation, poids et famille sont repris de multidec.bib" />
@@ -912,49 +912,49 @@
                       ToolTip="Ajoute la référence au décompte (repérée par un astérisque dans la liste du matériel)" />
               <Button Content="Rétablir la ligne" Padding="10,2" Margin="16,0,0,0" Click="RetablirLigne_Click"
                       ToolTip="Ligne sélectionnée : remet la quantité calculée, ou retire la référence ajoutée" />
-              <Button Content="Tout rétablir" Padding="10,2" Margin="6,0,0,0" Click="RetablirDecompte_Click" IsEnabled="{Binding DecompteCorrige}"
+              <Button Content="Tout rétablir" Padding="10,2" Margin="6,0,0,0" Click="RetablirDecompte_Click" IsEnabled="{app:Liaison DecompteCorrige}"
                       ToolTip="Retire toutes les modifications faites à la main dans le décompte" />
               <TextBlock Text="Double-cliquez une quantité pour la modifier." Foreground="Gray" VerticalAlignment="Center" Margin="16,0,0,0" />
             </WrapPanel>
-            <TextBlock DockPanel.Dock="Bottom" Margin="6,4" TextWrapping="Wrap" FontWeight="SemiBold" Text="{Binding ResumeDecompte}" />
-            <DataGrid x:Name="GrilleDecompte" ItemsSource="{Binding Decompte}" AutoGenerateColumns="False" IsReadOnly="{Binding DecompteFiltre}"
+            <TextBlock DockPanel.Dock="Bottom" Margin="6,4" TextWrapping="Wrap" FontWeight="SemiBold" Text="{app:Liaison ResumeDecompte}" />
+            <DataGrid x:Name="GrilleDecompte" ItemsSource="{app:Liaison Decompte}" AutoGenerateColumns="False" IsReadOnly="{app:Liaison DecompteFiltre}"
                       CanUserAddRows="False" CanUserDeleteRows="False" SelectionMode="Single" CellEditEnding="GrilleDecompte_CellEditEnding">
               <DataGrid.RowStyle>
                 <Style TargetType="DataGridRow">
                   <Style.Triggers>
-                    <DataTrigger Binding="{Binding Modifiee}" Value="True"><Setter Property="Background" Value="#FFF6E0" /></DataTrigger>
-                    <DataTrigger Binding="{Binding Ajoutee}" Value="True"><Setter Property="Background" Value="#E6F0FA" /></DataTrigger>
+                    <DataTrigger Binding="{app:Liaison Modifiee}" Value="True"><Setter Property="Background" Value="#FFF6E0" /></DataTrigger>
+                    <DataTrigger Binding="{app:Liaison Ajoutee}" Value="True"><Setter Property="Background" Value="#E6F0FA" /></DataTrigger>
                   </Style.Triggers>
                 </Style>
               </DataGrid.RowStyle>
               <DataGrid.Columns>
-                <DataGridTextColumn Header="" Binding="{Binding Repere}" Width="26" IsReadOnly="True" FontWeight="Bold">
+                <DataGridTextColumn Header="" Binding="{app:Liaison Repere}" Width="26" IsReadOnly="True" FontWeight="Bold">
                   <DataGridTextColumn.HeaderStyle>
                     <Style TargetType="DataGridColumnHeader">
                       <Setter Property="ToolTip" Value="* : référence ajoutée à la main ; M : quantité modifiée à la main" />
                     </Style>
                   </DataGridTextColumn.HeaderStyle>
                 </DataGridTextColumn>
-                <DataGridTextColumn Header="Famille" Binding="{Binding FamilleAffichee}" Width="130" IsReadOnly="True" />
-                <DataGridTextColumn x:Name="ColonneReference" Header="Référence" Binding="{Binding ReferenceAffichee}" Width="150" IsReadOnly="True" />
-                <DataGridTextColumn x:Name="ColonneRefRetotub" Header="Réf. RETOTUB" Binding="{Binding Reference}" Width="150" Visibility="Collapsed" IsReadOnly="True" />
-                <DataGridTextColumn Header="Désignation" Binding="{Binding Designation}" Width="*" MinWidth="200" IsReadOnly="True" />
-                <DataGridTextColumn x:Name="ColonneQuantite" Header="Quantité" Binding="{Binding Quantite}" Width="70">
+                <DataGridTextColumn Header="Famille" Binding="{app:Liaison FamilleAffichee}" Width="130" IsReadOnly="True" />
+                <DataGridTextColumn x:Name="ColonneReference" Header="Référence" Binding="{app:Liaison ReferenceAffichee}" Width="150" IsReadOnly="True" />
+                <DataGridTextColumn x:Name="ColonneRefRetotub" Header="Réf. RETOTUB" Binding="{app:Liaison Reference}" Width="150" Visibility="Collapsed" IsReadOnly="True" />
+                <DataGridTextColumn Header="Désignation" Binding="{app:Liaison Designation}" Width="*" MinWidth="200" IsReadOnly="True" />
+                <DataGridTextColumn x:Name="ColonneQuantite" Header="Quantité" Binding="{app:Liaison Quantite}" Width="70">
                   <DataGridTextColumn.ElementStyle>
                     <Style TargetType="TextBlock"><Setter Property="HorizontalAlignment" Value="Right" /></Style>
                   </DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>
-                <DataGridTextColumn Header="Calculée" Binding="{Binding QuantiteCalculee}" Width="70" IsReadOnly="True" Foreground="Gray">
+                <DataGridTextColumn Header="Calculée" Binding="{app:Liaison QuantiteCalculee}" Width="70" IsReadOnly="True" Foreground="Gray">
                   <DataGridTextColumn.ElementStyle>
                     <Style TargetType="TextBlock"><Setter Property="HorizontalAlignment" Value="Right" /></Style>
                   </DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>
-                <DataGridTextColumn Header="Poids U (kg)" Binding="{Binding PoidsUnitaire, StringFormat=N2}" Width="90" IsReadOnly="True">
+                <DataGridTextColumn Header="Poids U (kg)" Binding="{app:Liaison PoidsUnitaire, StringFormat=N2}" Width="90" IsReadOnly="True">
                   <DataGridTextColumn.ElementStyle>
                     <Style TargetType="TextBlock"><Setter Property="HorizontalAlignment" Value="Right" /></Style>
                   </DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>
-                <DataGridTextColumn Header="Poids total (kg)" Binding="{Binding PoidsTotal, StringFormat=N1}" Width="110" IsReadOnly="True">
+                <DataGridTextColumn Header="Poids total (kg)" Binding="{app:Liaison PoidsTotal, StringFormat=N1}" Width="110" IsReadOnly="True">
                   <DataGridTextColumn.ElementStyle>
                     <Style TargetType="TextBlock"><Setter Property="HorizontalAlignment" Value="Right" /></Style>
                   </DataGridTextColumn.ElementStyle>
@@ -965,18 +965,18 @@
         </TabItem>
 
         <TabItem Header="Amarrages">
-          <DataGrid ItemsSource="{Binding ListeAmarrages}" AutoGenerateColumns="False" IsReadOnly="True">
+          <DataGrid ItemsSource="{app:Liaison ListeAmarrages}" AutoGenerateColumns="False" IsReadOnly="True">
             <DataGrid.Columns>
-              <DataGridTextColumn Header="Face" Binding="{Binding NomFace}" Width="60" />
-              <DataGridTextColumn Header="File" Binding="{Binding NumeroFile}" Width="60" />
-              <DataGridTextColumn Header="Abscisse dans la face (m)" Binding="{Binding X, StringFormat=0.00}" Width="170" />
-              <DataGridTextColumn Header="Hauteur (m)" Binding="{Binding Hauteur, StringFormat=0.00}" Width="100" />
+              <DataGridTextColumn Header="Face" Binding="{app:Liaison NomFace}" Width="60" />
+              <DataGridTextColumn Header="File" Binding="{app:Liaison NumeroFile}" Width="60" />
+              <DataGridTextColumn Header="Abscisse dans la face (m)" Binding="{app:Liaison X, StringFormat=0.00}" Width="170" />
+              <DataGridTextColumn Header="Hauteur (m)" Binding="{app:Liaison Hauteur, StringFormat=0.00}" Width="100" />
             </DataGrid.Columns>
           </DataGrid>
         </TabItem>
 
-        <TabItem Header="{Binding TitreAlertes}">
-          <ListBox ItemsSource="{Binding Alertes}" />
+        <TabItem Header="{app:Liaison TitreAlertes}">
+          <ListBox ItemsSource="{app:Liaison Alertes}" />
         </TabItem>
       </TabControl>
     </Grid>

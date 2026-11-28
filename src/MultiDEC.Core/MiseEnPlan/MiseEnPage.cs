@@ -138,7 +138,7 @@ public sealed class FeuilleDessinee
 /// </summary>
 public static class MiseEnPage
 {
-    private static readonly CultureInfo Fr = CultureInfo.GetCultureInfo("fr-FR");
+    private static CultureInfo Fr => CultureNombres.Documents; // séparateur décimal du poste (remarque 64)
 
     public const double HauteurTexteCote = 2.2;
     public const double HauteurTitre = 3.5;
