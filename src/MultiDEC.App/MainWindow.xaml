@@ -267,7 +267,8 @@
           <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource Discret}" Margin="0,0,0,4"
                      Text="A : grand côté bâtiment ou façade · C : grand côté extérieur · B et D : bouts. Ouverture de 0,50 ou 1,00 m sur un grand côté, au bout du palier ; sur un bout, seulement là où arrive la volée. Sortie acrotère : ouverture de 1,00 m, pont de franchissement et structure de sortie posée sur le toit, 1,00 m sous le palier. Clic droit sur une lisse de la tour dans le dessin : ouvrir, ouvrir + sortie acrotère, ou fermer." />
           <DataGrid ItemsSource="{app:Liaison Paliers}" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
-                    HeadersVisibility="Column" SelectionMode="Single" MaxHeight="360">
+                    HeadersVisibility="Column" SelectionMode="Single" MaxHeight="360" FrozenColumnCount="1"
+                    HorizontalScrollBarVisibility="Auto">
             <DataGrid.Columns>
               <DataGridTextColumn Header="Palier (m)" Binding="{app:Liaison Hauteur, StringFormat=0.00}" IsReadOnly="True" Width="70" />
               <DataGridTemplateColumn Header="Côté A" Width="Auto">
@@ -299,7 +300,7 @@
                   </DataTemplate>
                 </DataGridTemplateColumn.CellTemplate>
               </DataGridTemplateColumn>
-              <DataGridTemplateColumn Header="Acrotère" Width="*">
+              <DataGridTemplateColumn Header="Acrotère" Width="Auto">
                 <DataGridTemplateColumn.CellTemplate>
                   <DataTemplate>
                     <StackPanel Orientation="Horizontal">
