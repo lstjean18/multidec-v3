@@ -177,7 +177,7 @@ public class TourEscalierTests
         var t = Tour(6.5);
         Assert.Equal(0.5, t.HauteurDepart);
         var r = GenerateurTourEscalier.Generer(t, General);
-        Assert.Contains(r.Elements, e => e.Reference == "HMPLA2503CL6" && Cotes.Egal(e.Origine.Z, 0.5));
+        Assert.DoesNotContain(r.Elements, e => e.Reference == "HMPLA2503CL6" && Cotes.Egal(e.Origine.Z, 0.5));
         Assert.Contains(r.Alertes, a => a.Contains("Départ à 0,50 m"));
         Assert.Equal(new[] { 2.5, 4.5, 6.5 }, r.Elements.Where(e => e.Reference.StartsWith("HMESCALU", StringComparison.Ordinal)).Select(e => e.Origine.Z).OrderBy(z => z));
     }
@@ -192,8 +192,11 @@ public class TourEscalierTests
         var el = Elements(t);
         double x0 = entree == CoteTour.D ? -0.70 : 2.50, x1 = x0 + 0.70, xLoin = entree == CoteTour.D ? x0 : x1;
 
-        // Ni plateaux ni plinthes au niveau 0 dans la maille d'entrée (on marche au sol, Laurent 28/11/2026).
-        Assert.DoesNotContain(el, e => (e.Famille == Famille.Plateau || e.Famille == Famille.Plinthe) && Cotes.Egal(e.Origine.Z, 0));
+        // Deux plateaux au niveau 0 (première marche), de la largeur de la tour, sans plinthe.
+        var plateaux = el.Where(e => e.Famille == Famille.Plateau && Cotes.Egal(e.Origine.Z, 0)).ToList();
+        Assert.Equal(2, plateaux.Count);
+        Assert.All(plateaux, p => Assert.True(p.Origine.X > x0 && p.Origine.X <= x1 + Cotes.Tolerance && p.Axe == Axe.Y));
+        Assert.DoesNotContain(el, e => e.Famille == Famille.Plinthe && Cotes.Egal(e.Origine.Z, 0));
 
         // Poteaux de 1 m au bout extérieur, lisses à 0,50 et 1,00 m et plinthes de 0,70 m sur les grands côtés.
         Assert.Equal(2, el.Where(e => e.Famille == Famille.Poteau && Cotes.Egal(e.Origine.X, xLoin)).Select(e => e.Origine.Y).Distinct().Count());
@@ -205,12 +208,11 @@ public class TourEscalierTests
 
         Assert.DoesNotContain(el, e => e.Axe == Axe.Y && Cotes.Egal(e.Origine.X, xLoin) && e.Origine.Z > Cotes.Tolerance);
 
-        // Plancher à 0,50 m seulement hors de la volée (pas de plateaux sous l'escalier).
-        var volee = el.First(e => e.Famille == Famille.Escalier && e.Reference.StartsWith("HMESCALU", StringComparison.Ordinal) && Cotes.Egal(e.Origine.Z, 2.5));
-        bool voleeCoteA = volee.Origine.Y > -largeur / 2;
-        var plancher = el.Where(e => e.Famille == Famille.Plateau && Cotes.Egal(e.Origine.Z, 0.5)).ToList();
-        Assert.NotEmpty(plancher);
-        Assert.All(plancher, p => Assert.True(voleeCoteA ? p.Origine.Y < -largeur / 2 + 0.01 : p.Origine.Y > -largeur / 2 - 0.01, $"plateau à Y = {p.Origine.Y}"));
+        // Pas de plancher ni de plinthe à 0,50 m dans la tour ; traverse renforcée seulement au bout d'entrée (pied de la volée).
+        Assert.DoesNotContain(el, e => (e.Famille == Famille.Plateau || e.Famille == Famille.Plinthe) && Cotes.Egal(e.Origine.Z, 0.5));
+        double xOppose = entree == CoteTour.D ? 2.5 : 0;
+        Assert.Contains(el, e => e.Axe == Axe.Y && Cotes.Egal(e.Origine.X, xOppose) && Cotes.Egal(e.Origine.Z, 0.5) && !e.Reference.EndsWith("R", StringComparison.Ordinal) && !e.Reference.Contains("LISR"));
+        Assert.DoesNotContain(el, e => e.Axe == Axe.Y && Cotes.Egal(e.Origine.X, xOppose) && Cotes.Egal(e.Origine.Z, 0.5) && (e.Reference.EndsWith("R", StringComparison.Ordinal) || e.Reference.Contains("LISR")));
 
         // L'autre moitié du bout d'entrée fermée : montant de garde-corps et lisses courtes à +0,50 / +1,00 m, sans plinthe.
         double xEntree = entree == CoteTour.D ? 0 : 2.5;
@@ -520,9 +522,9 @@ public class TourEscalierTests
             Assert.All(plinthes.Where(e => Cotes.Egal(e.Origine.Z, paliers[k])), e => Assert.True(Math.Abs(e.Origine.X - x) < 0.1));
         }
 
-        // Départ de 0,50 m : plancher en plateaux, plinthes sur les grands côtés.
+        // Départ de 0,50 m : pas de plancher dans la tour, donc pas de plinthe à 0,50 m (Laurent, 28/11/2026).
         var depart = new TourEscalierAlu { Hauteur = 6.5 };
-        Assert.Contains(Elements(depart), e => e.Famille == Famille.Plinthe && e.Axe == Axe.X && Cotes.Egal(e.Origine.Z, 0.5));
+        Assert.DoesNotContain(Elements(depart), e => e.Famille == Famille.Plinthe && e.Axe == Axe.X && Cotes.Egal(e.Origine.Z, 0.5));
     }
 
     // ---- Sorties acrotère (v2 « Ouvrir + Sortie Acrotère », Laurent 28/11/2026) ----

@@ -264,7 +264,7 @@ public sealed partial class GenerateurTourEscalier
                 }
 
                 bool longue = cote == CoteTour.A || cote == CoteTour.C;
-                bool renforce = !longue && k >= 0 && z > Cotes.Tolerance && (k == 0 || _t.BoutArrivee(k) == cote)
+                bool renforce = !longue && k >= 0 && z > Cotes.Tolerance && (k == 0 ? cote == _t.Entree : _t.BoutArrivee(k) == cote)
                     && !(k == NombreVolees && PalierHautEnTravers);
                 double longueur = longue ? L : _w;
 
@@ -365,8 +365,7 @@ public sealed partial class GenerateurTourEscalier
     /// <summary>
     /// Plinthes seulement le long d'un plateau ou d'un palier d'escalier (Laurent, 28/11/2026 ; v2 : une plinthe par niveau,
     /// au bout du palier) : à chaque palier, au bout d'arrivée de la volée (raccourcie devant une sortie) ; au dernier palier,
-    /// seulement devant la moitié de la dernière volée. Départ de 0,50 m : plancher en plateaux, plinthes sur les trois côtés
-    /// autres que l'entrée.
+    /// seulement devant la moitié de la dernière volée. Départ de 0,50 m : pas de plancher ni de plinthe dans la tour.
     /// </summary>
     private void PlacerPlinthes()
     {
@@ -392,15 +391,6 @@ public sealed partial class GenerateurTourEscalier
                     Plinthe(cote, 0, L, z);
                 }
             }
-        }
-
-        if (_zb > Cotes.Tolerance)
-        {
-            // Plancher de départ dans la moitié sans volée : plinthes le long de ses plateaux seulement.
-            bool coteA = Moitie(1) == 1;
-            Plinthe(coteA ? CoteTour.A : CoteTour.C, 0, L, _zb);
-            // Une plinthe va d'un poteau à l'autre (Laurent, 28/11/2026) : toute la largeur du bout opposé à l'entrée.
-            Plinthe(_t.BoutArrivee(1), 0, _w, _zb);
         }
     }
 
@@ -620,28 +610,8 @@ public sealed partial class GenerateurTourEscalier
         }
     }
 
-    /// <summary>Départ de 0,50 m : plancher en plateaux acier dans la moitié sans volée (pas sous l'escalier, Laurent 28/11/2026).</summary>
-    private void PlacerPlancherDepart()
-    {
-        double yBord = Moitie(1) == 1 ? 0.0 : Cotes.Arrondi(-_w / 2);
-
-        // Première volée de 1 m : ses plateaux en travers couvrent le pied jusqu'à l'entrée ; le plancher s'arrête à la
-        // traverse intermédiaire (il ne la coupe pas, Laurent 28/11/2026).
-        double x0 = 0, longueur = L;
-        if (Cotes.Egal(_paliers[1] - _zb, 1.0))
-        {
-            longueur = LongueurVolee1m;
-            x0 = _t.BoutArrivee(1) == CoteTour.B ? Cotes.Arrondi(L - LongueurVolee1m) : 0;
-        }
-
-        foreach (var (_, rang) in GenerateurFacade.RepartitionPlateaux(_w / 2, GammePlateaux.Standard))
-        {
-            double y = Cotes.Arrondi(yBord - GenerateurFacade.RetraitPlateau - GenerateurFacade.LargeurPlateau * rang);
-            Ajouter(References.PlateauAcierComplement(longueur), Famille.Plateau, new Point3(x0, y, _zb), Axe.X, Face.Aucune);
-        }
-
-        PlacerMailleEntree();
-    }
+    /// <summary>Départ de 0,50 m : pas de plancher dans la tour (Laurent, 28/11/2026), seulement la maille d'entrée.</summary>
+    private void PlacerPlancherDepart() => PlacerMailleEntree();
 
     /// <summary>Saillie de la console de la marche intermédiaire (HMCON300).</summary>
     private const double LargeurConsoleMarche = 0.30;
@@ -651,8 +621,8 @@ public sealed partial class GenerateurTourEscalier
 
     /// <summary>
     /// Départ de 0,50 m (hauteur en xx,50 m, Laurent 28/11/2026) : maille complémentaire de 0,70 m devant le bout d'entrée,
-    /// structure de 1,00 m de haut avec traverses au sol et lisses tous les 0,50 m sur les deux grands côtés, sans plateaux
-    /// ni plinthes (on marche au sol) ; le bout extérieur reste ouvert (entrée) ; marche à 0,25 m sur consoles.
+    /// structure de 1,00 m de haut avec traverses au sol et lisses tous les 0,50 m sur les deux grands côtés, sans plinthes,
+    /// 2 plateaux au niveau 0 ; le bout extérieur reste ouvert (entrée) ; marche à 0,25 m sur consoles.
     /// </summary>
     private void PlacerMailleEntree()
     {
@@ -681,6 +651,13 @@ public sealed partial class GenerateurTourEscalier
 
         // Bout extérieur : traverse au niveau 0 seulement (entrée).
         Ajouter(References.LisseOuTraverse(_w), Famille.Traverse, new Point3(xLoin, 0, 0), Axe.Y, Face.Aucune, inverse: _t.Entree == CoteTour.D);
+
+        // Plateaux en travers au niveau 0 (première marche), longueur = largeur de la tour, sans plinthes.
+        foreach (var (variante, rang) in GenerateurFacade.RepartitionPlateaux(e, _p.Plateaux))
+        {
+            double x = Cotes.Arrondi(x1 - GenerateurFacade.RetraitPlateau - GenerateurFacade.LargeurPlateau * rang);
+            Ajouter(References.Plateau(_p.Plateaux, _w, e, variante), Famille.Plateau, new Point3(x, 0, 0), Axe.Y, Face.Aucune);
+        }
 
         // Marche intermédiaire à mi-hauteur (Laurent, 28/11/2026) : collier rosace sur les deux poteaux du bout d'entrée,
         // console HMCON300 vers l'extérieur sur chacun, plateau de la largeur de la tour posé dessus.
