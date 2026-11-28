@@ -19,6 +19,7 @@ public partial class ParametresParDefautWindow : Window
         InitializeComponent();
         _vm = new ParametresParDefautViewModel(actuels);
         DataContext = _vm;
+        Loaded += (_, _) => Localisation.LocaliserTextes(this); // séparateur décimal du poste (remarque 64)
     }
 
     public ParametresParDefaut Resultat => _vm.Resultat;
@@ -39,7 +40,7 @@ public partial class ParametresParDefautWindow : Window
         }
         catch (Exception ex)
         {
-            MessageBox.Show(this, "Import impossible : " + ex.Message, Title, MessageBoxButton.OK, MessageBoxImage.Warning);
+            Boite.Show(this, "Import impossible : " + ex.Message, Title, MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
 
@@ -54,7 +55,7 @@ public partial class ParametresParDefautWindow : Window
 
     private void Usine_Click(object sender, RoutedEventArgs e)
     {
-        if (MessageBox.Show(this, "Revenir aux paramètres d'usine ? Les fichiers sont aussi effacés (bibliothèque et multidec.bib : ceux installés avec MultiDEC).", Title,
+        if (Boite.Show(this, "Revenir aux paramètres d'usine ? Les fichiers sont aussi effacés (bibliothèque et multidec.bib : ceux installés avec MultiDEC).", Title,
                             MessageBoxButton.OKCancel, MessageBoxImage.Question) == MessageBoxResult.OK)
         {
             var usine = ParametresParDefaut.Usine();

@@ -41,10 +41,11 @@ public sealed class EnTeteListe
 /// </summary>
 public static class ListeMateriel
 {
-    private static readonly CultureInfo Fr = CultureInfo.GetCultureInfo("fr-FR");
+    /// <summary>Français, séparateur décimal du poste (remarque 64).</summary>
+    private static CultureInfo Fr => CultureNombres.Documents;
 
-    /// <summary>Format des nombres : virgule décimale, espace ordinaire comme séparateur de milliers (police du PDF).</summary>
-    private static readonly NumberFormatInfo Nombres = Format();
+    /// <summary>Format des nombres : séparateur décimal du poste, espace ordinaire pour les milliers (police du PDF).</summary>
+    private static NumberFormatInfo Nombres => CultureNombres.Documents.NumberFormat;
 
     public const double Gauche = 12;
     public const double Droite = 198;
@@ -432,10 +433,4 @@ public static class ListeMateriel
         return texte.TrimEnd() + "…";
     }
 
-    private static NumberFormatInfo Format()
-    {
-        var n = (NumberFormatInfo)Fr.NumberFormat.Clone();
-        n.NumberGroupSeparator = " ";
-        return n;
-    }
 }

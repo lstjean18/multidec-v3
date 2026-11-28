@@ -42,7 +42,7 @@ public sealed class Cartouche
     /// <summary>Mentions importantes (note de calcul obligatoire…).</summary>
     public List<string> Mentions { get; } = new List<string>();
 
-    private static readonly CultureInfo Fr = CultureInfo.GetCultureInfo("fr-FR");
+    private static CultureInfo Fr => CultureNombres.Documents; // séparateur décimal du poste (remarque 64)
 
     public static string Metres(double m) => m.ToString("0.00", Fr) + " m";
 

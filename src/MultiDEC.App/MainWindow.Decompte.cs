@@ -32,7 +32,7 @@ public partial class MainWindow
             GrilleDecompte.CancelEdit(DataGridEditingUnit.Row);
             if (!valide)
             {
-                MessageBox.Show(this, $"« {texte} » n'est pas une quantité valide (nombre entier, 0 ou plus).", "Décompte",
+                Boite.Show(this, $"« {texte} » n'est pas une quantité valide (nombre entier, 0 ou plus).", "Décompte",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
@@ -55,7 +55,7 @@ public partial class MainWindow
     {
         if (Vm.Structure == null)
         {
-            MessageBox.Show(this, "Générez d'abord la structure : le décompte est calculé à partir du dessin.", "Décompte",
+            Boite.Show(this, "Générez d'abord la structure : le décompte est calculé à partir du dessin.", "Décompte",
                 MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
@@ -69,7 +69,7 @@ public partial class MainWindow
 
         if (!int.TryParse(SaisieQuantite.Text.Trim(), NumberStyles.Integer, CultureInfo.CurrentCulture, out int quantite) || quantite <= 0)
         {
-            MessageBox.Show(this, "Indiquez une quantité entière supérieure à 0.", "Décompte", MessageBoxButton.OK, MessageBoxImage.Warning);
+            Boite.Show(this, "Indiquez une quantité entière supérieure à 0.", "Décompte", MessageBoxButton.OK, MessageBoxImage.Warning);
             SaisieQuantite.Focus();
             SaisieQuantite.SelectAll();
             return;
@@ -78,7 +78,7 @@ public partial class MainWindow
         string? reference = Vm.ReferenceSaisie(saisie);
         if (reference == null)
         {
-            var reponse = MessageBox.Show(this,
+            var reponse = Boite.Show(this,
                 $"« {saisie} » est introuvable dans multidec.bib et dans les références client." + Environment.NewLine
                 + "L'ajouter quand même, sans désignation ni poids ?",
                 "Décompte", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No);
@@ -98,7 +98,7 @@ public partial class MainWindow
             Selectionner(ligne.Reference);
             if (dejaPresente)
             {
-                MessageBox.Show(this, $"{ligne.ReferenceAffichee} était déjà dans le décompte : sa quantité passe à {ligne.Quantite}.", "Décompte",
+                Boite.Show(this, $"{ligne.ReferenceAffichee} était déjà dans le décompte : sa quantité passe à {ligne.Quantite}.", "Décompte",
                     MessageBoxButton.OK, MessageBoxImage.Information);
             }
         }
@@ -112,7 +112,7 @@ public partial class MainWindow
     {
         if (GrilleDecompte.SelectedItem is not LigneDecompte ligne)
         {
-            MessageBox.Show(this, "Sélectionnez la ligne à rétablir.", "Décompte", MessageBoxButton.OK, MessageBoxImage.Information);
+            Boite.Show(this, "Sélectionnez la ligne à rétablir.", "Décompte", MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
 
@@ -128,7 +128,7 @@ public partial class MainWindow
 
     private void RetablirDecompte_Click(object sender, RoutedEventArgs e)
     {
-        if (MessageBox.Show(this, "Retirer toutes les quantités modifiées et les références ajoutées à la main ?", "Décompte",
+        if (Boite.Show(this, "Retirer toutes les quantités modifiées et les références ajoutées à la main ?", "Décompte",
                 MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) == MessageBoxResult.Yes)
         {
             GrilleDecompte.CancelEdit(DataGridEditingUnit.Row);

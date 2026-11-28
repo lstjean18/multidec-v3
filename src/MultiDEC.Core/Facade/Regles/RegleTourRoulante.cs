@@ -53,7 +53,7 @@ public static class RegleTourRoulante
         if (!quatrePieds)
         {
             int mailles = faces.Sum(f => f.Mailles.Count);
-            ecarts.Add(string.Format(CultureInfo.GetCultureInfo("fr-FR"),
+            ecarts.Add(string.Format(CultureNombres.Documents,
                 "Socles à roue : seulement sur une structure à 4 pieds ; ici {0} maille(s) sur {1} face(s) ou module(s).", mailles, faces.Count));
         }
 
@@ -64,7 +64,7 @@ public static class RegleTourRoulante
             double h = f.Mailles.Select(m => m.HauteurMax(p.HauteurDernierPlancher)).DefaultIfEmpty(p.HauteurDernierPlancher).Max();
             double longueur = f.LongueurObtenue;
             var limite = Limites.Where(x => Cotes.Egal(x.Largeur, l)).Select(x => ((double, double)?)(x.HauteurMax, x.LongueurMin)).FirstOrDefault();
-            var fr = CultureInfo.GetCultureInfo("fr-FR");
+            var fr = CultureNombres.Documents;
             if (limite == null)
             {
                 ecarts.Add(string.Format(fr, "{0} : largeur {1:0.00} m impossible en tour roulante (1,00 / 1,05 / 1,50 / 2,00 / 2,50 / 3,00 m).", f.Nom, l));

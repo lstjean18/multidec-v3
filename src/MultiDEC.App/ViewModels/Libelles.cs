@@ -49,9 +49,10 @@ public static class Libelles
 
         if (valeur is GammePlateaux g)
         {
-            return LibellesPlateaux.Libelle(g);
+            return MultiDEC.Core.CultureNombres.Localiser(LibellesPlateaux.Libelle(g));
         }
 
-        return Table.TryGetValue(valeur, out var libelle) ? libelle : valeur.ToString() ?? string.Empty;
+        // Libellés écrits avec la virgule (« Travail + escalier 1,50 ») : séparateur décimal du poste (remarque 64).
+        return MultiDEC.Core.CultureNombres.Localiser(Table.TryGetValue(valeur, out var libelle) ? libelle : valeur.ToString() ?? string.Empty);
     }
 }

@@ -120,7 +120,7 @@ public partial class FenetreDroits : Window
         catch (Exception ex) when (ex is System.ComponentModel.Win32Exception || ex is InvalidOperationException)
         {
             Copier_Click(sender, e);
-            MessageBox.Show(this, $"Aucune messagerie n'est configurée sur ce poste.\n\nLe code du poste a été copié : envoyez-le par e-mail à {DroitsApplication.AdresseDemandes}.",
+            Boite.Show(this, $"Aucune messagerie n'est configurée sur ce poste.\n\nLe code du poste a été copié : envoyez-le par e-mail à {DroitsApplication.AdresseDemandes}.",
                             "Demander l'accès", MessageBoxButton.OK, MessageBoxImage.Information);
         }
     }

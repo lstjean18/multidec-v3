@@ -181,6 +181,10 @@ Les points marqués **[à valider]** sont des choix faits en v3 faute de règle 
   dossier actions-runner\bibliotheque par Publier-version.ps1) ; chemins vides des Paramètres par défaut remplis avec
   ces fichiers (lignes « Bibliothèque de blocs » et « Catalogue multidec.bib », modifiables).
 - **63** (27/11) Menu « Bibliothèque » supprimé : la bibliothèque se choisit dans Outils > Paramètres par défaut.
+- **64** (28/11) Séparateur décimal du poste partout (réglage Windows, personnalisé compris) : liaisons WPF `app:Liaison`
+  (ConverterCulture = culture du poste), touches « . » et « , » remplacées par le séparateur dans les champs décimaux,
+  textes fixes, libellés, alertes et messages remis au séparateur (`CultureNombres.Localiser`) ; documents (plans,
+  cartouche, liste) en français avec le séparateur du poste (`CultureNombres.Documents`).
 
 ## Remarques 51 et 52 (codées le 25/11/2026, 23h45)
 
