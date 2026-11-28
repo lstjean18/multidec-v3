@@ -49,7 +49,7 @@ public sealed class ResultatTour
 /// - sorties : ouverture de 0,50 / 1,00 m sur un grand côté, ou sur le bout où arrive la volée (montant de garde-corps,
 ///   lisses et plinthe raccourcies) ;
 /// - diagonales de 2 m sur les quatre côtés, sauf devant l'entrée et les sorties ;
-/// - départ à 0,50 m (hauteur en xx,50 m) : plancher de départ en plateaux acier.
+/// - départ à 0,50 m (hauteur en xx,50 m) : plancher de départ en plateaux acier et maille d'entrée de 0,70 m au niveau 0.
 /// </summary>
 public sealed partial class GenerateurTourEscalier
 {
@@ -555,7 +555,58 @@ public sealed partial class GenerateurTourEscalier
             Ajouter(References.PlateauAcierComplement(L), Famille.Plateau, new Point3(0, y, _zb), Axe.X, Face.Aucune);
         }
 
-        _alertes.Add(Fr($"Départ à {_zb:0.00} m : plancher de départ en plateaux acier, prévoir une marche pour y accéder."));
+        PlacerMailleEntree();
+    }
+
+    /// <summary>Largeur de la maille d'entrée d'une tour à départ de 0,50 m.</summary>
+    public const double LargeurMailleEntree = 0.70;
+
+    /// <summary>
+    /// Départ de 0,50 m (hauteur en xx,50 m, Laurent 28/11/2026) : maille complémentaire de 0,70 m devant le bout d'entrée,
+    /// plateaux au niveau 0 (posés sur des traverses de 0,70 m), structure de 1,00 m de haut avec lisses tous les 0,50 m
+    /// et plinthes de 0,70 m au niveau 0 sur les deux grands côtés ; le bout extérieur reste ouvert (entrée).
+    /// </summary>
+    private void PlacerMailleEntree()
+    {
+        double e = LargeurMailleEntree;
+        double x0 = _t.Entree == CoteTour.D ? -e : L, x1 = Cotes.Arrondi(x0 + e);
+        double xLoin = _t.Entree == CoteTour.D ? x0 : x1;
+
+        foreach (double y in new[] { 0.0, -_w })
+        {
+            foreach (var t in ReglePoteaux.Empiler(_p, false, gardeCorps: false, sommetVise: 1.0))
+            {
+                Ajouter(t.Reference, t.Famille, new Point3(xLoin, y, t.Z), Axe.Z, y < 0 ? Face.Exterieure : Face.Interieure);
+            }
+        }
+
+        // Grands côtés : traverse porteuse au niveau 0, lisses à 0,50 et 1,00 m, plinthe au niveau 0.
+        string barre = References.LisseOuTraverse(e);
+        foreach (var (y, face) in new[] { (0.0, Face.Interieure), (-_w, Face.Exterieure) })
+        {
+            foreach (double z in new[] { 0.0, 0.5, 1.0 })
+            {
+                Ajouter(barre, z > Cotes.Tolerance ? Famille.Lisse : Famille.Traverse, new Point3(x0, y, z), Axe.X, face);
+            }
+
+            var type = _p.PlintheExterieure;
+            if (References.Plinthe(type, e) is string plinthe)
+            {
+                Ajouter(plinthe, Famille.Plinthe, new Point3(x0, y, 0), Axe.X, face);
+            }
+        }
+
+        // Bout extérieur : traverse au niveau 0 seulement (entrée).
+        Ajouter(References.LisseOuTraverse(_w), Famille.Traverse, new Point3(xLoin, 0, 0), Axe.Y, Face.Aucune, inverse: _t.Entree == CoteTour.D);
+
+        // Plateaux en travers (longueur = largeur de la tour), largeur vers les X décroissants depuis leur origine.
+        foreach (var (variante, rang) in GenerateurFacade.RepartitionPlateaux(e, _p.Plateaux))
+        {
+            double x = Cotes.Arrondi(x1 - GenerateurFacade.RetraitPlateau - GenerateurFacade.LargeurPlateau * rang);
+            Ajouter(References.Plateau(_p.Plateaux, _w, e, variante), Famille.Plateau, new Point3(x, 0, 0), Axe.Y, Face.Aucune);
+        }
+
+        _alertes.Add(Fr($"Départ à {_zb:0.00} m : maille d'entrée de {e:0.00} m au niveau 0 devant le {NomsCotesTour.Nom(_t.Entree)}, escalier à partir de {_zb:0.00} m."));
     }
 
     // ------------------------------------------------------------------------------------------

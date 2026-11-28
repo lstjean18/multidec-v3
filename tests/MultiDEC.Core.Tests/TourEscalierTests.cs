@@ -148,6 +148,36 @@ public class TourEscalierTests
         Assert.Equal(new[] { 2.5, 4.5, 6.5 }, r.Elements.Where(e => e.Reference.StartsWith("HMESCALU", StringComparison.Ordinal)).Select(e => e.Origine.Z).OrderBy(z => z));
     }
 
+    [Theory]
+    [InlineData(CoteTour.D, 1.50)]
+    [InlineData(CoteTour.B, 2.00)]
+    public void Depart_de_50_cm_maille_d_entree_de_70_cm(CoteTour entree, double largeur)
+    {
+        var t = new TourEscalierAlu { Hauteur = 6.5, Largeur = largeur, Entree = entree };
+        t.SortieParDefaut();
+        var el = Elements(t);
+        double x0 = entree == CoteTour.D ? -0.70 : 2.50, x1 = x0 + 0.70, xLoin = entree == CoteTour.D ? x0 : x1;
+
+        // Deux plateaux au niveau 0, de la largeur de la tour, dans la maille d'entrée.
+        var plateaux = el.Where(e => e.Famille == Famille.Plateau && Cotes.Egal(e.Origine.Z, 0)).ToList();
+        Assert.Equal(2, plateaux.Count);
+        Assert.All(plateaux, p => Assert.True(p.Origine.X > x0 && p.Origine.X <= x1 + Cotes.Tolerance && p.Axe == Axe.Y));
+
+        // Poteaux de 1 m au bout extérieur, lisses à 0,50 et 1,00 m et plinthes de 0,70 m sur les grands côtés.
+        Assert.Equal(2, el.Where(e => e.Famille == Famille.Poteau && Cotes.Egal(e.Origine.X, xLoin)).Select(e => e.Origine.Y).Distinct().Count());
+        Assert.DoesNotContain(el, e => e.Famille == Famille.Poteau && Cotes.Egal(e.Origine.X, xLoin) && e.Origine.Z > 0.5);
+        foreach (double z in new[] { 0.5, 1.0 })
+        {
+            Assert.Equal(2, el.Count(e => e.Famille == Famille.Lisse && e.Reference == "HMTRA070" && Cotes.Egal(e.Origine.X, x0) && Cotes.Egal(e.Origine.Z, z)));
+        }
+
+        Assert.Equal(2, el.Count(e => e.Famille == Famille.Plinthe && Cotes.Egal(e.Origine.X, x0) && Cotes.Egal(e.Origine.Z, 0)));
+        Assert.DoesNotContain(el, e => e.Axe == Axe.Y && Cotes.Egal(e.Origine.X, xLoin) && e.Origine.Z > Cotes.Tolerance);
+
+        var biblio = BibliothequeBlocs.DepuisFichier("blocs-3D-echafaudage.txt");
+        Assert.Empty(biblio.Manquantes(el.Select(e => e.Reference).Where(r => !r.StartsWith("HMTUBAMA", StringComparison.Ordinal) && !References.NonDessinee(r)).ToList()));
+    }
+
     [Fact]
     public void Poteaux_jusqu_au_garde_corps_du_dernier_palier()
     {
