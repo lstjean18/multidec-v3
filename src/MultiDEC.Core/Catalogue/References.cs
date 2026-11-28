@@ -83,6 +83,12 @@ public static class References
     /// <summary>Tube acier : HMTUB + longueur en cm (ex. HMTUB300).</summary>
     public static string Tube(double longueur) => "HMTUB" + Cotes.EnCm3(longueur);
 
+    /// <summary>Collier rosace sur poteau (marche intermédiaire d'une tour à départ de 0,50 m).</summary>
+    public const string CollierRosace = "HMCOL49ROSACE";
+
+    /// <summary>Console de 0,30 m de la marche intermédiaire d'une tour à départ de 0,50 m (Laurent, 28/11/2026).</summary>
+    public const string ConsoleMarche = "HMCON300";
+
     /// <summary>Collier fixe pour tube de 49.</summary>
     public const string CollierFixe = "HMCOLF49";
 

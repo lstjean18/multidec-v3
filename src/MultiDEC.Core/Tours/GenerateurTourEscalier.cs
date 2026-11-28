@@ -643,6 +643,9 @@ public sealed partial class GenerateurTourEscalier
         PlacerMailleEntree();
     }
 
+    /// <summary>Saillie de la console de la marche intermédiaire (HMCON300).</summary>
+    private const double LargeurConsoleMarche = 0.30;
+
     /// <summary>Largeur de la maille d'entrée d'une tour à départ de 0,50 m.</summary>
     public const double LargeurMailleEntree = 0.70;
 
@@ -654,6 +657,7 @@ public sealed partial class GenerateurTourEscalier
     private void PlacerMailleEntree()
     {
         double e = LargeurMailleEntree;
+        double xTour = XBout(_t.Entree);
         double x0 = _t.Entree == CoteTour.D ? -e : L, x1 = Cotes.Arrondi(x0 + e);
         double xLoin = _t.Entree == CoteTour.D ? x0 : x1;
 
@@ -691,7 +695,20 @@ public sealed partial class GenerateurTourEscalier
             Ajouter(References.Plateau(_p.Plateaux, _w, e, variante), Famille.Plateau, new Point3(x, 0, 0), Axe.Y, Face.Aucune);
         }
 
-        _alertes.Add(Fr($"Départ à {_zb:0.00} m : maille d'entrée de {e:0.00} m au niveau 0 devant le {NomsCotesTour.Nom(_t.Entree)}, escalier à partir de {_zb:0.00} m."));
+        // Marche intermédiaire à mi-hauteur (Laurent, 28/11/2026) : collier rosace sur les deux poteaux du bout d'entrée,
+        // console HMCON300 vers l'extérieur sur chacun, plateau de la largeur de la tour posé dessus.
+        double zm = Cotes.Arrondi(_zb / 2);
+        bool versMoinsX = _t.Entree == CoteTour.D;
+        foreach (var (y, face) in new[] { (0.0, Face.Interieure), (-_w, Face.Exterieure) })
+        {
+            Ajouter(References.CollierRosace, Famille.Console, new Point3(xTour, y, zm), Axe.Z, face);
+            Ajouter(References.ConsoleMarche, Famille.Console, new Point3(xTour, y, zm), Axe.X, face, rotation: versMoinsX ? 180 : 0);
+        }
+
+        double xMarche = versMoinsX ? xTour : Cotes.Arrondi(xTour + LargeurConsoleMarche);
+        Ajouter(References.PlateauAcierComplement(_w), Famille.Plateau, new Point3(Cotes.Arrondi(xMarche - GenerateurFacade.RetraitPlateau), 0, zm), Axe.Y, Face.Aucune);
+
+        _alertes.Add(Fr($"Départ à {_zb:0.00} m : maille d'entrée de {e:0.00} m au niveau 0 devant le {NomsCotesTour.Nom(_t.Entree)}, marche à {zm:0.00} m, escalier à partir de {_zb:0.00} m."));
     }
 
     // ------------------------------------------------------------------------------------------

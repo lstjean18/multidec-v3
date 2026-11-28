@@ -225,6 +225,13 @@ public class TourEscalierTests
 
         Assert.DoesNotContain(el, e => e.Famille == Famille.Plinthe && e.Axe == Axe.Y && Cotes.Egal(e.Origine.X, xEntree) && Cotes.Egal(e.Origine.Z, 0.5));
 
+        // Marche à 0,25 m : 2 colliers rosace et 2 consoles HMCON300 sur les poteaux du bout d'entrée, un plateau dessus.
+        Assert.Equal(2, el.Count(e => e.Reference == "HMCOL49ROSACE" && Cotes.Egal(e.Origine.X, xEntree) && Cotes.Egal(e.Origine.Z, 0.25)));
+        Assert.Equal(2, el.Count(e => e.Reference == "HMCON300" && Cotes.Egal(e.Origine.X, xEntree) && Cotes.Egal(e.Origine.Z, 0.25)));
+        var marche = Assert.Single(el, e => e.Famille == Famille.Plateau && Cotes.Egal(e.Origine.Z, 0.25));
+        Assert.Equal(largeur == 2.0 ? "HMPLA2003CL6" : "HMPLA1503CL6", marche.Reference);
+        Assert.True(entree == CoteTour.D ? marche.Origine.X <= 0 && marche.Origine.X > -0.31 : marche.Origine.X > 2.5 && marche.Origine.X <= 2.81, $"marche en X = {marche.Origine.X}");
+
         // Multi-RETO : poteaux de départ de 1,00 m (HMPOTDP10), pas de 2 m.
         var mr = GenerateurTourEscalier.Generer(t, new ParametresGeneraux { Modele = ModeleEchafaudage.MultiReto }).Elements;
         Assert.Equal(2, mr.Count(e => e.Reference == "HMPOTDP10" && Cotes.Egal(e.Origine.X, xLoin)));
