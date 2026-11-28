@@ -45,7 +45,8 @@ public static class ReglePoteaux
     /// <param name="depart3m">Départ 3 m (côté extérieur ou file d'extrémité, si l'option est cochée et la hauteur ≥ 3 m).</param>
     /// <param name="gardeCorps">Le poteau porte un garde-corps au dernier niveau.</param>
     /// <param name="sommetVise">Sommet imposé (poteaux d'une sous-maille rapportée, d'une stabilisation) ; sinon calculé.</param>
-    public static List<TronconPoteau> Empiler(ParametresFacade p, bool depart3m, bool gardeCorps, double? sommetVise = null)
+    /// <param name="departCourt">Multi-RETO : poteau de départ de 0,50 / 1,00 / 1,50 m si le sommet visé est plus bas que 2 m.</param>
+    public static List<TronconPoteau> Empiler(ParametresFacade p, bool depart3m, bool gardeCorps, double? sommetVise = null, bool departCourt = false)
     {
         var socle = CatalogueSocles.De(p.Socle);
         var t = new List<TronconPoteau>();
@@ -70,6 +71,14 @@ public static class ReglePoteaux
         switch (p.Modele)
         {
             case ModeleEchafaudage.MultiReto:
+                if (departCourt && !depart3m && sommetVise is double court && court < 2.0 - Cotes.Tolerance && PoteauDepartCourt(court) is string dp)
+                {
+                    // Structure basse (maille d'entrée de tour…) : poteau de départ de 0,50 / 1,00 / 1,50 m (Laurent, 28/11/2026).
+                    t.Add(new TronconPoteau(dp, Famille.Poteau, 0));
+                    z = court;
+                    break;
+                }
+
                 t.Add(new TronconPoteau(depart3m ? "HMPOTDP30" : "HMPOTDP20", Famille.Poteau, 0));
                 z = depart3m ? 3.0 : 2.0;
                 break;
@@ -122,6 +131,10 @@ public static class ReglePoteaux
 
         return t;
     }
+
+    /// <summary>Poteau de départ Multi-RETO court : HMPOTDP05 / HMPOTDP10 / HMPOTDP15, sinon null.</summary>
+    private static string? PoteauDepartCourt(double hauteur) =>
+        Cotes.Egal(hauteur, 0.5) ? "HMPOTDP05" : Cotes.Egal(hauteur, 1.0) ? "HMPOTDP10" : Cotes.Egal(hauteur, 1.5) ? "HMPOTDP15" : null;
 
     /// <summary>
     /// Poteaux posés sur une poutre de franchissement (v2 clPoutre) : de <paramref name="zDepart"/> au sommet,

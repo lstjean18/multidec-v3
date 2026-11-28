@@ -574,7 +574,7 @@ public sealed partial class GenerateurTourEscalier
 
         foreach (double y in new[] { 0.0, -_w })
         {
-            foreach (var t in ReglePoteaux.Empiler(_p, false, gardeCorps: false, sommetVise: 1.0))
+            foreach (var t in ReglePoteaux.Empiler(_p, false, gardeCorps: false, sommetVise: 1.0, departCourt: true))
             {
                 Ajouter(t.Reference, t.Famille, new Point3(xLoin, y, t.Z), Axe.Z, y < 0 ? Face.Exterieure : Face.Interieure);
             }

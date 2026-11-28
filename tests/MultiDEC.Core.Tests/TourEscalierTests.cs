@@ -174,6 +174,10 @@ public class TourEscalierTests
         Assert.Equal(2, el.Count(e => e.Famille == Famille.Plinthe && Cotes.Egal(e.Origine.X, x0) && Cotes.Egal(e.Origine.Z, 0)));
         Assert.DoesNotContain(el, e => e.Axe == Axe.Y && Cotes.Egal(e.Origine.X, xLoin) && e.Origine.Z > Cotes.Tolerance);
 
+        // Multi-RETO : poteaux de départ de 1,00 m (HMPOTDP10), pas de 2 m.
+        var mr = GenerateurTourEscalier.Generer(t, new ParametresGeneraux { Modele = ModeleEchafaudage.MultiReto }).Elements;
+        Assert.Equal(2, mr.Count(e => e.Reference == "HMPOTDP10" && Cotes.Egal(e.Origine.X, xLoin)));
+
         var biblio = BibliothequeBlocs.DepuisFichier("blocs-3D-echafaudage.txt");
         Assert.Empty(biblio.Manquantes(el.Select(e => e.Reference).Where(r => !r.StartsWith("HMTUBAMA", StringComparison.Ordinal) && !References.NonDessinee(r)).ToList()));
     }
