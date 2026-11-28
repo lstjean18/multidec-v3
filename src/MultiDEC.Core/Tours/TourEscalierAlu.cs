@@ -234,14 +234,16 @@ public sealed class TourEscalierAlu
         var montees = new List<int>();
         if (Configuration == ConfigurationTour.Niveaux2m)
         {
-            if (utile % 2 == 1)
-            {
-                montees.Add(1); // v2 NIVEAU_00 : premier palier à 1 m quand la hauteur est impaire
-            }
-
             for (int i = utile % 2; i < utile; i += 2)
             {
                 montees.Add(2);
+            }
+
+            if (utile % 2 == 1)
+            {
+                // Hauteur impaire : volée de 1 m en haut de la tour (Laurent, 28/11/2026, inverse de la v2 qui la mettait
+                // au pied) ; au pied, ses plateaux couperaient la traverse intermédiaire.
+                montees.Add(1);
             }
         }
         else

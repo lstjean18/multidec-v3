@@ -24,9 +24,9 @@ public class TourEscalierTests
 
     [Theory]
     [InlineData(6.0, ConfigurationTour.Niveaux2m, "0 2 4 6")]
-    [InlineData(7.0, ConfigurationTour.Niveaux2m, "0 1 3 5 7")]
+    [InlineData(7.0, ConfigurationTour.Niveaux2m, "0 2 4 6 7")]
     [InlineData(6.5, ConfigurationTour.Niveaux2m, "0.5 2.5 4.5 6.5")]
-    [InlineData(7.5, ConfigurationTour.Niveaux2m, "0.5 1.5 3.5 5.5 7.5")]
+    [InlineData(7.5, ConfigurationTour.Niveaux2m, "0.5 2.5 4.5 6.5 7.5")]
     [InlineData(7.0, ConfigurationTour.Alternes1m2m, "0 1 3 4 6 7")]
     [InlineData(6.0, ConfigurationTour.Alternes1m2m, "0 1 3 4 6")]
     [InlineData(3.5, ConfigurationTour.Alternes1m2m, "0.5 1.5 3.5")]
@@ -111,13 +111,28 @@ public class TourEscalierTests
     }
 
     [Fact]
-    public void Hauteur_impaire_premiere_volee_de_1m_avec_traverse_intermediaire()
+    public void Hauteur_impaire_derniere_volee_de_1m_en_haut()
     {
+        // Laurent 28/11/2026 : la volée de 1 m en haut de la tour (inverse de la v2), palier en plateaux de 0,75 m qui
+        // s'arrêtent à la traverse intermédiaire.
         var el = Elements(Tour(5.0));
         var v1 = Assert.Single(el, e => e.Reference == "HMESCALU175100");
-        Assert.Equal(1.0, v1.Origine.Z);
-        Assert.Contains(el, e => e.Reference == "HMTIP150" && Cotes.Egal(e.Origine.Z, 0));
-        Assert.Contains(el, e => e.Reference == "HMPLA1503CL6" && Cotes.Egal(e.Origine.Z, 0));
+        Assert.Equal(5.0, v1.Origine.Z);
+        Assert.Contains(el, e => e.Reference == "HMTIP150" && Cotes.Egal(e.Origine.Z, 5.0));
+        Assert.Contains(el, e => e.Reference == "HMPLA0753CL6" && Cotes.Egal(e.Origine.Z, 5.0));
+        Assert.DoesNotContain(el, e => e.Reference == "HMTIP150" && Cotes.Egal(e.Origine.Z, 0));
+    }
+
+    [Fact]
+    public void Depart_de_50_cm_et_volee_de_1m_au_pied_plateaux_sans_couper_la_traverse_intermediaire()
+    {
+        var el = Elements(Tour(3.5, config: ConfigurationTour.Alternes1m2m));
+        var tip = Assert.Single(el, e => e.Reference == "HMTIP150" && Cotes.Egal(e.Origine.Z, 0.5));
+        foreach (var p in el.Where(e => e.Famille == Famille.Plateau && Cotes.Egal(e.Origine.Z, 0.5) && e.Axe == Axe.X))
+        {
+            double x0 = p.Origine.X, x1 = x0 + 1.75;
+            Assert.True(p.Reference == "HMPLA1753CL6" && (Cotes.Egal(x0, tip.Origine.X) || Cotes.Egal(x1, tip.Origine.X)), $"{p.Reference} en X = {x0}, traverse en {tip.Origine.X}");
+        }
     }
 
     [Fact]

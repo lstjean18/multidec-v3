@@ -559,10 +559,20 @@ public sealed partial class GenerateurTourEscalier
     private void PlacerPlancherDepart()
     {
         double yBord = Moitie(1) == 1 ? 0.0 : Cotes.Arrondi(-_w / 2);
+
+        // Première volée de 1 m : ses plateaux en travers couvrent le pied jusqu'à l'entrée ; le plancher s'arrête à la
+        // traverse intermédiaire (il ne la coupe pas, Laurent 28/11/2026).
+        double x0 = 0, longueur = L;
+        if (Cotes.Egal(_paliers[1] - _zb, 1.0))
+        {
+            longueur = LongueurVolee1m;
+            x0 = _t.BoutArrivee(1) == CoteTour.B ? Cotes.Arrondi(L - LongueurVolee1m) : 0;
+        }
+
         foreach (var (_, rang) in GenerateurFacade.RepartitionPlateaux(_w / 2, GammePlateaux.Standard))
         {
             double y = Cotes.Arrondi(yBord - GenerateurFacade.RetraitPlateau - GenerateurFacade.LargeurPlateau * rang);
-            Ajouter(References.PlateauAcierComplement(L), Famille.Plateau, new Point3(0, y, _zb), Axe.X, Face.Aucune);
+            Ajouter(References.PlateauAcierComplement(longueur), Famille.Plateau, new Point3(x0, y, _zb), Axe.X, Face.Aucune);
         }
 
         PlacerMailleEntree();
