@@ -355,7 +355,22 @@ public partial class MainWindow : Window
             Vm.IndexFaceActive = Onglets.SelectedIndex - 1;
         }
 
+        AfficherGrillesFace();
         MettreEnEvidence();
+    }
+
+    /// <summary>
+    /// Onglet du bas « mailles et niveaux » : masqué sur l'onglet d'une tour ou sans façade (Laurent, 28/11/2026) ; s'il était
+    /// ouvert, on passe au décompte.
+    /// </summary>
+    private void AfficherGrillesFace()
+    {
+        bool visible = TourActive == null && Vm.AvecFacade;
+        OngletGrilles.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
+        if (!visible && ReferenceEquals(OngletsBas.SelectedItem, OngletGrilles))
+        {
+            OngletsBas.SelectedIndex = 1;
+        }
     }
 
     private void Vm_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)

@@ -658,7 +658,7 @@
 
       <!-- Grilles de la face active, décompte, amarrages, alertes. -->
       <TabControl x:Name="OngletsBas" Grid.Row="2" Grid.ColumnSpan="3" Margin="6,0,6,6">
-        <TabItem>
+        <TabItem x:Name="OngletGrilles">
           <TabItem.Header>
             <Border Background="{app:Liaison CouleurFaceActive}" CornerRadius="2" Padding="6,1" Margin="-4,-1">
               <TextBlock Text="{app:Liaison TitreGrilles}" />

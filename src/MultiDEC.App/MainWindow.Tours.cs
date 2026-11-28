@@ -52,6 +52,7 @@ public partial class MainWindow
         }
 
         BoutonAjouterFacade.IsEnabled = !Vm.AvecFacade;
+        AfficherGrillesFace();
     }
 
     /// <summary>Tour de l'onglet ouvert, ou null.</summary>
