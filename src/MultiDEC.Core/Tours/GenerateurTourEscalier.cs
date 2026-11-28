@@ -227,9 +227,8 @@ public sealed partial class GenerateurTourEscalier
 
     /// <summary>
     /// Lisses des bouts (Laurent, 28/11/2026) : au bout d'un palier d'escalier, lisses tous les 0,50 m de 0 à 2 m au-dessus
-    /// du palier ; au bout opposé, pas de lisse entre +0,50 et +1,50 m (la volée suivante y monte). Au sol, le palier est
-    /// au bout d'arrivée de la première volée et l'entrée est le bout opposé (départ à 0,50 m : entrée traitée comme une
-    /// ouverture). Au-dessus du dernier palier, le garde-corps reste complet. Une lisse demandée par un palier l'emporte.
+    /// du palier ; au bout opposé, pas de lisse entre +0,50 et +1,50 m (la volée suivante y monte). Au sol, pas de palier :
+    /// aucune lisse entre 0,50 et 1,50 m sur les deux bouts (départ à 0,50 m : entrée traitée comme une ouverture). Au-dessus du dernier palier, le garde-corps reste complet. Une lisse demandée par un palier l'emporte.
     /// </summary>
     private bool SansLisseDeBout(CoteTour cote, double z)
     {
@@ -246,9 +245,9 @@ public sealed partial class GenerateurTourEscalier
                 continue;
             }
 
-            var palier = k == 0 ? _t.BoutArrivee(1) : _t.BoutArrivee(k);
+            // Au sol, il n'y a pas de palier : aucun des deux bouts n'a de lisse entre 0,50 et 1,50 m (Laurent, 28/11/2026).
             double dz = Cotes.Arrondi(z - _paliers[k]);
-            if (palier != cote && dz >= 0.5 - Cotes.Tolerance && dz <= 1.5 + Cotes.Tolerance)
+            if ((k == 0 || _t.BoutArrivee(k) != cote) && dz >= 0.5 - Cotes.Tolerance && dz <= 1.5 + Cotes.Tolerance)
             {
                 exclue = true;
             }
@@ -259,11 +258,10 @@ public sealed partial class GenerateurTourEscalier
             return false;
         }
 
-        for (int k = 0; k <= NombreVolees; k++)
+        for (int k = 1; k <= NombreVolees; k++)
         {
-            var palier = k == 0 ? _t.BoutArrivee(1) : _t.BoutArrivee(k);
             double dz = Cotes.Arrondi(z - _paliers[k]);
-            if (palier == cote && dz >= -Cotes.Tolerance && dz <= 2.0 + Cotes.Tolerance)
+            if (_t.BoutArrivee(k) == cote && dz >= -Cotes.Tolerance && dz <= 2.0 + Cotes.Tolerance)
             {
                 return false;
             }

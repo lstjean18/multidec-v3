@@ -498,8 +498,9 @@ public class TourEscalierTests
         // Bout gauche (entrée) : sol, puis rien de 0,50 à 1,50 m ; 2 m ; rien de 2,50 à 3,50 m ; palier de 4 m : 4 à 6 m ;
         // au-dessus du dernier palier (6 m, bout droit) : garde-corps complet.
         Assert.Equal(new[] { 0.0, 2.0, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0 }, Niveaux(0));
-        // Bout droit : palier au sol (arrivée de la 1re volée) et à 2 m : 0 à 4 m ; rien de 4,50 à 5,50 m ; 6 m et garde-corps.
-        Assert.Equal(new[] { 0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 6.0, 6.5, 7.0 }, Niveaux(2.5).Where(z => z < 6 || z >= 6).ToList());
+        // Bout droit : pas de palier au sol, donc rien de 0,50 à 1,50 m ; palier à 2 m : 2 à 4 m ; rien de 4,50 à 5,50 m ;
+        // 6 m et garde-corps.
+        Assert.Equal(new[] { 0.0, 2.0, 2.5, 3.0, 3.5, 4.0, 6.0, 6.5, 7.0 }, Niveaux(2.5));
     }
 
     [Fact]
