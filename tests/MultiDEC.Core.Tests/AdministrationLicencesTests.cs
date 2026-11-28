@@ -97,4 +97,13 @@ public class AdministrationLicencesTests
         Assert.Equal(CodeA, RegistreLicences.ExtraireCode(CodeA.Replace("-", " ")));
         Assert.Null(RegistreLicences.ExtraireCode("Code : ABCD-EFGH-JKLM-NPQR"));
     }
+
+    /// <summary>Clé publique compilée dans MultiDEC (créée par Laurent avec MultiDEC Admin le 28/11/2026) : lisible et de 3 072 bits.</summary>
+    [Fact]
+    public void Cle_publique_de_MultiDEC_valide()
+    {
+        string cle = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "cle-publique.xml"));
+        Assert.True(CoffreCle.EstSuffisante(cle));
+        Assert.Equal(CoffreCle.TailleCle, CoffreCle.TailleBits(cle));
+    }
 }
