@@ -121,4 +121,19 @@ public class OuvragesViewModelTests
         Assert.Contains(tour.Tour.Sorties, s => s.Acrotere && s.Cote == CoteTour.A && Cotes.Egal(s.Hauteur, 2));
         Assert.False(tour.AjouterAcrotere(CoteTour.A, 2));
     }
+
+    [Fact]
+    public void Ajouter_une_tour_en_supprimant_les_autres_ouvrages()
+    {
+        var vm = new FacadeViewModel();
+        vm.AjouterTour();
+        var seule = vm.AjouterTourSeule();
+        Assert.False(vm.AvecFacade);
+        Assert.Equal(seule, Assert.Single(vm.Tours));
+        Assert.Equal("T1", seule.Nom);
+        Assert.Single(vm.Projet.Tours);
+        Assert.True(vm.AUnOuvrage);
+        var s = vm.Generer();
+        Assert.All(s.Elements, e => Assert.Equal(seule.Nom, e.NomFace));
+    }
 }

@@ -72,6 +72,24 @@ public partial class MainWindow
 
     private void AjouterTour_Click(object sender, RoutedEventArgs e)
     {
+        if (Vm.AUnOuvrage)
+        {
+            var reponse = MessageBox.Show(this,
+                "Supprimer les autres ouvrages du projet (façade et tours) ?\n\nOui : la nouvelle tour reste seule (la façade est mise de côté, « + Façade » la remet).\nNon : la tour s'ajoute aux ouvrages existants.",
+                "Ajouter une tour escalier", MessageBoxButton.YesNoCancel, MessageBoxImage.Question, MessageBoxResult.Yes); // souvent une tour seule (Laurent)
+            if (reponse == MessageBoxResult.Cancel)
+            {
+                return;
+            }
+
+            if (reponse == MessageBoxResult.Yes)
+            {
+                Vm.AjouterTourSeule();
+                _ongletApresReconstruction = 1;
+                return;
+            }
+        }
+
         Vm.AjouterTour();
         _ongletApresReconstruction = NombreOngletsFaces + Vm.Tours.Count; // onglet de la nouvelle tour
     }

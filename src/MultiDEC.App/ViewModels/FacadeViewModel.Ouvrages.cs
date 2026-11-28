@@ -51,6 +51,29 @@ public sealed partial class FacadeViewModel
         return vm;
     }
 
+    /// <summary>
+    /// Ajoute une tour en supprimant les autres ouvrages (façade mise de côté, autres tours supprimées), en gardant les
+    /// réglages du projet (Laurent, 28/11/2026 : la question est posée à l'ajout d'une tour).
+    /// </summary>
+    public TourViewModel AjouterTourSeule()
+    {
+        var nouvelle = AjouterTour();
+        foreach (var autre in Tours.Where(t => t != nouvelle).ToList())
+        {
+            _projet.Tours.Remove(autre.Tour);
+            Tours.Remove(autre);
+        }
+
+        nouvelle.Tour.Nom = "T1"; // seule tour du projet
+        nouvelle.PositionX = 0;
+        _projet.AvecFacade = false;
+        OuvragesModifies();
+        return nouvelle;
+    }
+
+    /// <summary>Le projet a déjà au moins un ouvrage dessiné (façade ou tour).</summary>
+    public bool AUnOuvrage => _projet.AvecFacade || Tours.Count > 0;
+
     /// <summary>Supprime une tour ; refusé si c'est le dernier ouvrage du projet.</summary>
     public bool SupprimerTour(TourViewModel tour)
     {
