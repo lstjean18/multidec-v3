@@ -373,4 +373,28 @@ public class TourEscalierTests
         Assert.True(relu.AvecFacade);
         Assert.Empty(relu.Tours);
     }
+
+    [Fact]
+    public void Diagonales_dans_l_emprise_de_la_tour()
+    {
+        // Laurent, 28/11/2026 : des diagonales partaient dans le vide (sens inversé posé depuis X = 0).
+        var t = new TourEscalierAlu { Hauteur = 8 };
+        var dias = GenerateurTourEscalier.Generer(t, General).Elements.Where(e => e.Famille == Famille.DiagonaleVerticale).ToList();
+        Assert.NotEmpty(dias);
+        foreach (var d in dias.Where(d => d.Axe == Axe.X))
+        {
+            Assert.Equal(d.Inverse ? TourEscalierAlu.Longueur : 0, d.Origine.X, 3);
+        }
+
+        foreach (var d in dias.Where(d => d.Axe == Axe.Y))
+        {
+            Assert.Equal(d.Inverse ? -t.Largeur : 0, d.Origine.Y, 3);
+            Assert.Equal(d.Inverse ? 180 : 0, d.Rotation, 3);
+        }
+
+        // Zigzag : les deux sens existent sur les grands côtés et sur les bouts.
+        Assert.Contains(dias, d => d.Axe == Axe.X && d.Inverse);
+        Assert.Contains(dias, d => d.Axe == Axe.X && !d.Inverse);
+        Assert.Contains(dias, d => d.Axe == Axe.Y && d.Inverse);
+    }
 }

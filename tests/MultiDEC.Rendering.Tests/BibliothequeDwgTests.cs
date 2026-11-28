@@ -175,6 +175,7 @@ public class BibliothequeDwgTests
         Escalier3m(rendu, doc, Path.GetFileNameWithoutExtension(fichier));
         VolumiqueEtHauteurs(rendu, doc, Path.GetFileNameWithoutExtension(fichier));
         AngleEnL(rendu, doc, Path.GetFileNameWithoutExtension(fichier));
+        TourEscalier(rendu, doc, Path.GetFileNameWithoutExtension(fichier));
     }
 
     /// <summary>
@@ -568,6 +569,54 @@ public class BibliothequeDwgTests
         rendu.MettreEnEvidence("S2");
         rendu.Vue(Vues.Iso);
         Image(doc, nom + "-L-S2");
+    }
+
+    /// <summary>
+    /// Tour escalier alu seule (2,00 m, 8 m, origine en 0) : chaque pièce doit tomber dans l'emprise de la tour
+    /// (Laurent, 28/11/2026 : diagonales qui partaient dans le vide).
+    /// </summary>
+    private void TourEscalier(RenduVectorDraw rendu, vdDocument doc, string nom)
+    {
+        var projet = ProjetStructure.Nouveau(face: new ParametresFacade { LongueurTotaleSouhaitee = 10, HauteurDernierPlancher = 8 });
+        var tour = projet.AjouterTour();
+        tour.Largeur = 2.0;
+        tour.Hauteur = 8;
+        tour.PositionX = 0;
+        tour.PositionY = 0;
+        projet.AvecFacade = false;
+        var s = GenerateurStructure.Generer(projet);
+        var rapport = rendu.Dessiner(s, TableOrientations.ParDefaut());
+        _sortie.WriteLine($"TOUR : {rapport.Inseres} insérés, manquants : {string.Join(", ", rapport.BlocsManquants)}, alertes : {string.Join(" | ", s.Alertes)}");
+        int diagonalesHors = 0;
+        foreach (var g in rapport.Inserts.GroupBy(x => x.Element.Famille))
+        {
+            var bx = g.Select(x => x.Insert.BoundingBox).ToList();
+            _sortie.WriteLine(string.Format(CultureInfo.InvariantCulture, "TOUR {0,-20} {1,3}  X {2:0.00}..{3:0.00}  Y {4:0.00}..{5:0.00}  Z {6:0.00}..{7:0.00}",
+                g.Key, g.Count(), bx.Min(b => b.Min.x), bx.Max(b => b.Max.x), bx.Min(b => b.Min.y), bx.Max(b => b.Max.y), bx.Min(b => b.Min.z), bx.Max(b => b.Max.z)));
+            foreach (var x in g)
+            {
+                var b = x.Insert.BoundingBox;
+                bool dedans = b.Min.x > -0.3 && b.Max.x < 2.8 && b.Min.y > -2.3 && b.Max.y < 1.3 && b.Min.z > -0.6 && b.Max.z < 9.6;
+                if (!dedans)
+                {
+                    _sortie.WriteLine(string.Format(CultureInfo.InvariantCulture, "TOUR HORS {0,-18} o=({1:0.00},{2:0.00},{3:0.00}) inv={4} rot={5}  X {6:0.00}..{7:0.00}  Y {8:0.00}..{9:0.00}  Z {10:0.00}..{11:0.00}",
+                        x.Element.Reference, x.Element.Origine.X, x.Element.Origine.Y, x.Element.Origine.Z, x.Element.Inverse, x.Element.Rotation, b.Min.x, b.Max.x, b.Min.y, b.Max.y, b.Min.z, b.Max.z));
+                    if (x.Element.Famille == Famille.DiagonaleVerticale)
+                    {
+                        diagonalesHors++;
+                    }
+                }
+            }
+        }
+
+        rendu.Rendu(ModeRendu.OmbreAretes);
+        rendu.Vue(Vues.Iso);
+        Image(doc, nom + "-TOUR-iso");
+        rendu.Vue(Vues.Facade);
+        Image(doc, nom + "-TOUR-facade");
+        rendu.Vue(Vues.CoteGauche);
+        Image(doc, nom + "-TOUR-cote");
+        Assert.Equal(0, diagonalesHors);
     }
 
     private void Image(vdDocument doc, string nom)

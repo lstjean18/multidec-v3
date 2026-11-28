@@ -367,6 +367,7 @@ public sealed class GenerateurTourEscalier
         for (double z = _zb; z + 2.0 <= _h + Cotes.Tolerance; z = Cotes.Arrondi(z + 2.0), tranche++)
         {
             bool inverse = tranche % 2 == 1;
+            double xLong = inverse ? L : 0; // sens inversé : origine au bout B, la diagonale part vers -X
             int longues = 0;
             int bouts = 0;
             foreach (var cote in new[] { CoteTour.A, CoteTour.B, CoteTour.C, CoteTour.D })
@@ -383,16 +384,19 @@ public sealed class GenerateurTourEscalier
                 switch (cote)
                 {
                     case CoteTour.A:
-                        Ajouter(References.DiagonaleVerticale(L), Famille.DiagonaleVerticale, new Point3(0, GenerateurFacade.DemiTube, z0), Axe.X, Face.Interieure, inverse: inverse, repere: repere);
+                        Ajouter(References.DiagonaleVerticale(L), Famille.DiagonaleVerticale, new Point3(xLong, GenerateurFacade.DemiTube, z0), Axe.X, Face.Interieure, inverse: inverse, repere: repere);
                         longues++;
                         break;
                     case CoteTour.C:
-                        Ajouter(References.DiagonaleVerticale(L), Famille.DiagonaleVerticale, new Point3(0, Cotes.Arrondi(-_w - GenerateurFacade.DemiTube), z0), Axe.X, Face.Exterieure, inverse: inverse, repere: repere);
+                        Ajouter(References.DiagonaleVerticale(L), Famille.DiagonaleVerticale, new Point3(xLong, Cotes.Arrondi(-_w - GenerateurFacade.DemiTube), z0), Axe.X, Face.Exterieure, inverse: inverse, repere: repere);
                         longues++;
                         break;
                     default:
                         double x = cote == CoteTour.B ? L + GenerateurFacade.DemiTube : -GenerateurFacade.DemiTube;
-                        Ajouter(References.DiagonaleVerticale(_w), Famille.DiagonaleVerticale, new Point3(Cotes.Arrondi(x), 0, z0), Axe.Y, Face.Exterieure, inverse: inverse, repere: repere);
+                        // En travers, le sens se change par un demi-tour autour de Z depuis le côté C (l'inversion d'un bloc
+                        // en travers ne fait que retourner sa face).
+                        Ajouter(References.DiagonaleVerticale(_w), Famille.DiagonaleVerticale, new Point3(Cotes.Arrondi(x), inverse ? -_w : 0, z0), Axe.Y,
+                            Face.Exterieure, inverse: inverse, rotation: inverse ? 180 : 0, repere: repere);
                         bouts++;
                         break;
                 }
