@@ -665,6 +665,24 @@ public class BibliothequeDwgTests
         Image(doc, nom + "-TOUR-STAB-dessus");
         rendu.Vue(Vues.Facade);
         Image(doc, nom + "-TOUR-STAB-facade");
+
+        // Départ à 0,50 m (6,50 m) : maille d'entrée de 0,70 m au niveau 0 devant le bout gauche (Laurent, 28/11/2026).
+        tour.Sorties.Clear();
+        tour.Hauteur = 6.5;
+        tour.Stabilite = StabiliteTour.Amarree;
+        tour.SortieParDefaut();
+        var sd = GenerateurStructure.Generer(projet);
+        var rd = rendu.Dessiner(sd, TableOrientations.ParDefaut());
+        _sortie.WriteLine($"TOUR-DEPART : {rd.Inseres} insérés, manquants : {string.Join(", ", rd.BlocsManquants)}");
+        foreach (var x in rd.Inserts.Where(x => x.Element.Origine.Z < 1.1 && x.Insert.BoundingBox.Min.x < -0.05))
+        {
+            var b = x.Insert.BoundingBox;
+            _sortie.WriteLine(string.Format(CultureInfo.InvariantCulture, "DEPART {0,-14} o=({1:0.00},{2:0.00},{3:0.00}) {4} inv={5} rot={6:0}  X {7:0.00}..{8:0.00}  Y {9:0.00}..{10:0.00}  Z {11:0.00}..{12:0.00}",
+                x.Element.Reference, x.Element.Origine.X, x.Element.Origine.Y, x.Element.Origine.Z, x.Element.Axe, x.Element.Inverse, x.Element.Rotation, b.Min.x, b.Max.x, b.Min.y, b.Max.y, b.Min.z, b.Max.z));
+        }
+
+        rendu.Vue(Vues.Iso);
+        Image(doc, nom + "-TOUR-DEPART-iso");
         Assert.Equal(0, diagonalesHors);
     }
 
