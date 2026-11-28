@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    MultiDEC Admin (Laurent, 27/11/2026) : application séparée de RETOTUB pour gérer les licences (postes autorisés),
+    signer et publier leur liste, et publier les versions de MultiDEC (installateur + version.json) sur retotub.com.
+    Sans VectorDraw. Utilisable par un collaborateur : données dans un dossier partagé, clé protégée par mot de passe.
+  -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <RootNamespace>MultiDEC.Admin</RootNamespace>
+    <AssemblyName>MultiDEC-Admin</AssemblyName>
+    <ApplicationIcon>..\MultiDEC.App\MultiDEC.ico</ApplicationIcon>
+    <Version>1.0.0</Version>
+    <Product>MultiDEC Admin</Product>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\MultiDEC.Core\MultiDEC.Core.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Security" />
+    <!-- Envoi SFTP (même outil que publication\Publier-version.ps1) ; WinSCP.exe est copié à côté de l'exe. -->
+    <PackageReference Include="WinSCP" Version="6.7.1" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="..\MultiDEC.App\MultiDEC.ico" Link="MultiDEC.ico" />
+  </ItemGroup>
+</Project>

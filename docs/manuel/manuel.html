@@ -65,7 +65,7 @@
 
 <!-- ===================== 2. DÉMARRAGE ===================== -->
 <section class="chapitre" id="c2">
-  <div class="entete-chap"><span class="num">2</span><div><h2>Premier démarrage</h2><p>Installation, mises à jour, bibliothèque de blocs</p></div></div>
+  <div class="entete-chap"><span class="num">2</span><div><h2>Premier démarrage</h2><p>Installation, mises à jour, droits d'utilisation, bibliothèque de blocs</p></div></div>
 
   <h3>Installer MultiDEC</h3>
   <p>Lancer <b>MultiDEC-v3-Setup-<i>version</i>.exe</b>. L'installation ne demande pas de droits administrateur : MultiDEC s'installe dans le profil de l'utilisateur (<i>%LOCALAPPDATA%\Programs\RETOTUB\MultiDEC v3</i>), avec un raccourci dans le menu Démarrer (et sur le Bureau si la case est cochée). Les fichiers <b>.mdc3</b> s'ouvrent ensuite d'un double-clic. Il faut Microsoft .NET Framework 4.8, présent sur Windows 10 et 11 : l'installateur prévient s'il manque. La désinstallation se fait depuis <span class="ui">Paramètres</span> › <span class="ui">Applications</span> de Windows.</p>
@@ -74,6 +74,18 @@
   <p>Au démarrage, MultiDEC regarde si une version plus récente a été publiée et propose de l'installer. En répondant <span class="ui">Oui</span>, la nouvelle version est téléchargée et contrôlée, MultiDEC se ferme, s'installe et se relance : enregistrer son projet avant. Le menu <span class="ui">Aide</span> › <span class="ui">Rechercher les mises à jour…</span> fait la même vérification à la demande, et <span class="ui">Aide</span> › <span class="ui">À propos de MultiDEC…</span> donne la version installée, les dossiers utiles (installation, journal des erreurs) et les licences des composants tiers. Ce guide est livré avec MultiDEC : <span class="ui">Aide</span> › <span class="ui">Guide utilisateur</span> l'ouvre dans la visionneuse intégrée ; il est aussi publié sur le site RETOTUB avec chaque version. La recherche au démarrage se désactive dans les Paramètres par défaut (case <span class="ui">Rechercher les mises à jour au démarrage</span>).</p>
   <div class="encadre attention"><span class="titre">Antivirus</span>
     <p>Tant que l'installateur n'est pas signé numériquement, Windows SmartScreen ou un antivirus peuvent le bloquer ou demander confirmation (« Informations complémentaires › Exécuter quand même »). Si le blocage persiste, faire autoriser le fichier par l'administrateur du poste.</p>
+  </div>
+
+  <h3>Droits d'utilisation</h3>
+  <p>Chaque poste doit être autorisé par RETOTUB. Au démarrage, MultiDEC calcule le <b>code du poste</b> (16 caractères, par exemple <span class="ref">K7QM-3XPA-W9DT-HN4C</span>, tiré de l'identifiant de Windows et de la carte mère) puis consulte la liste des postes autorisés publiée par RETOTUB sur retotub.com.</p>
+  <ul>
+    <li><b>Poste autorisé</b> : MultiDEC démarre normalement. Une semaine avant l'expiration du droit, un message le rappelle.</li>
+    <li><b>Poste non autorisé ou droit expiré</b> : la fenêtre <span class="ui">Droits d'utilisation de MultiDEC</span> affiche le code du poste. <span class="ui">Demander l'accès par e-mail…</span> prépare un message à <b>multidec@retotub.com</b> avec ce code : compléter la société, le nom et le téléphone, puis l'envoyer. <span class="ui">Copier le code</span> le met dans le presse-papiers pour l'envoyer autrement. Une fois le poste ajouté par RETOTUB, <span class="ui">Réessayer</span> lance MultiDEC.</li>
+    <li><b>Sans connexion à Internet</b> : MultiDEC démarre si la dernière vérification réussie date de moins de <b>30 jours</b>. Il prévient quand il reste moins d'une semaine. La toute première utilisation d'un poste demande une connexion.</li>
+  </ul>
+  <p>Le menu <span class="ui">Aide</span> › <span class="ui">Droits d'utilisation…</span> affiche à tout moment le code du poste, la date de la dernière vérification et l'échéance du droit, et permet de revérifier.</p>
+  <div class="encadre"><span class="titre">Bon à savoir</span>
+    <p>Le code change si Windows est réinstallé ou si la carte mère est remplacée : il faut alors refaire une demande. Il ne change pas avec le disque, la mémoire ou la carte réseau. Une date de Windows reculée bloque le démarrage hors ligne : remettre la date à l'heure, ou connecter le poste.</p>
   </div>
 
   <h3>Bibliothèque de blocs</h3>
