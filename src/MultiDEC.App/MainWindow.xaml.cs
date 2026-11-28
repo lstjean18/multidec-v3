@@ -479,7 +479,9 @@ public partial class MainWindow : Window
         // Clic droit sur une pièce d'un côté de tour escalier : ouvrir ou fermer ce côté au palier (sortie).
         var separateurTour = new System.Windows.Forms.ToolStripSeparator();
         var sortieTour = new System.Windows.Forms.ToolStripMenuItem("Ouvrir");
+        var acrotereTour = new System.Windows.Forms.ToolStripMenuItem("Ouvrir + sortie acrotère");
         menu.Items.Insert(0, separateurTour);
+        menu.Items.Insert(0, acrotereTour);
         menu.Items.Insert(0, sortieTour);
         menu.Opening += (_, _) =>
         {
@@ -496,6 +498,7 @@ public partial class MainWindow : Window
             remplacer.Visible = about;
             separateurAbout.Visible = about;
             separateurTour.Visible = sortieTour.Visible = PreparerMenuTour(sortieTour, element);
+            acrotereTour.Visible = sortieTour.Visible && PreparerMenuAcrotere(acrotereTour, element);
             if (about)
             {
                 MenuRemplacerAbout(remplacer, element!.NomFace, element.About!);

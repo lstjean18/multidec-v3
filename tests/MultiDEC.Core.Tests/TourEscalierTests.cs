@@ -435,4 +435,92 @@ public class TourEscalierTests
         var depart = new TourEscalierAlu { Hauteur = 6.5 };
         Assert.Contains(Elements(depart), e => e.Famille == Famille.Plinthe && e.Axe == Axe.X && Cotes.Egal(e.Origine.Z, 0.5));
     }
+
+    // ---- Sorties acrotère (v2 « Ouvrir + Sortie Acrotère », Laurent 28/11/2026) ----
+
+    private static TourEscalierAlu TourAcrotere(CoteTour cote, bool tournee, double largeur = 1.50, double pont = 1.50)
+    {
+        var t = new TourEscalierAlu { Hauteur = 6, Largeur = largeur };
+        t.Sorties.Clear();
+        var bout = t.BoutArrivee(t.Paliers().Count - 1);
+        t.Sorties.Add(new SortieTour(6, cote == CoteTour.B || cote == CoteTour.D ? bout : cote) { Acrotere = true, LongueurPont = pont, Tournee = tournee });
+        return t;
+    }
+
+    [Theory]
+    [InlineData(CoteTour.A, false)]
+    [InlineData(CoteTour.C, false)]
+    [InlineData(CoteTour.B, false)]
+    [InlineData(CoteTour.A, true)]
+    [InlineData(CoteTour.C, true)]
+    [InlineData(CoteTour.B, true)]
+    public void Sortie_acrotere_hors_de_la_tour_et_au_toit(CoteTour cote, bool tournee)
+    {
+        foreach (double largeur in TourEscalierAlu.Largeurs)
+        {
+            var t = TourAcrotere(cote, tournee, largeur);
+            var r = GenerateurTourEscalier.Generer(t, General);
+            var acro = r.Elements.Where(e => e.CoteTour != null && e.Famille == Famille.Escalier && e.Reference.StartsWith("HMESCALU175", StringComparison.Ordinal)
+                && Cotes.Egal(e.Origine.Z, 6) && (e.Origine.X < -0.01 || e.Origine.X > 2.51 || e.Origine.Y > 0.01 || e.Origine.Y < -largeur - 0.01)).ToList();
+            Assert.Single(acro); // la volée de sortie, hors de l'emprise de la tour
+
+            // Poteaux de la sortie posés sur le toit, 1,00 m sous le palier, hors de la tour du bon côté.
+            var socles = r.Elements.Where(e => e.Famille == Famille.Socle && Cotes.Egal(e.Origine.Z, 5 + CatalogueSocles.De(new ParametresFacade().Socle).ZSocle)).ToList();
+            Assert.Equal(tournee ? 5 : 4, socles.Count); // pont : 2 ; droite : 2 de plus ; tournée : 3 de plus (v2)
+            Assert.All(socles, e => Assert.True(cote switch
+            {
+                CoteTour.A => e.Origine.Y > 0.5,
+                CoteTour.C => e.Origine.Y < -largeur - 0.5,
+                _ => e.Origine.X > 2.5 + 0.5 || e.Origine.X < -0.5,
+            }, e.ToString()));
+            Assert.Contains(r.Alertes, a => a.Contains("acrotère"));
+        }
+    }
+
+    [Fact]
+    public void Sortie_acrotere_ouverture_de_1m_et_pont()
+    {
+        var t = TourAcrotere(CoteTour.B, false, 1.50, 2.00);
+        var el = Elements(t);
+        var bout = t.Sorties[0].Cote;
+        double x = bout == CoteTour.B ? TourEscalierAlu.Longueur : 0;
+        // Ouverture de 1,00 m sur le bout d'une tour de 1,50 m : il reste une traverse de 0,50 m (v2 HMTRA050).
+        Assert.Contains(el, e => e.Reference == "HMTRA050" && Cotes.Egal(e.Origine.X, x) && Cotes.Egal(e.Origine.Z, 6.5));
+        // Pont de 2,00 m : trois plateaux, deux plinthes, deux tubes de garde-corps par côté, tube de contreventement.
+        Assert.Equal(3, el.Count(e => e.Famille == Famille.Plateau && e.Reference.Contains("200") && Cotes.Egal(e.Origine.Z, 6)));
+        Assert.Equal(2, el.Count(e => e.Reference == "HMPLIM200AX"));
+        Assert.Contains(el, e => e.Reference.StartsWith("HMTUB", StringComparison.Ordinal) && Cotes.Egal(e.Origine.Z, 5.9));
+    }
+
+    [Fact]
+    public void Sortie_acrotere_tournee_vers_le_milieu_du_cote()
+    {
+        var t = TourAcrotere(CoteTour.A, true);
+        var bout = t.BoutArrivee(t.Paliers().Count - 1);
+        var el = Elements(t);
+        var volee = Assert.Single(el, e => e.Reference.StartsWith("HMESCALU175", StringComparison.Ordinal) && e.Origine.Y > 0.5);
+        // Ouverture au bout d'arrivée : la volée de sortie part vers le milieu du côté A.
+        Assert.Equal(bout == CoteTour.D ? 0.0 : 180.0, ((volee.Rotation % 360) + 360) % 360, 3);
+    }
+
+    [Fact]
+    public void Sortie_acrotere_references_au_catalogue()
+    {
+        var biblio = BibliothequeBlocs.DepuisFichier("blocs-3D-echafaudage.txt");
+        foreach (var cote in new[] { CoteTour.A, CoteTour.B, CoteTour.C })
+        {
+            foreach (bool tournee in new[] { false, true })
+            {
+                foreach (double largeur in TourEscalierAlu.Largeurs)
+                {
+                    foreach (double pont in TourEscalierAlu.LongueursPont)
+                    {
+                        var t = TourAcrotere(cote, tournee, largeur, pont);
+                        var manquantes = biblio.Manquantes(Elements(t).Select(e => e.Reference).Where(r => !r.StartsWith("HMTUBAMA", StringComparison.Ordinal) && !References.NonDessinee(r)).ToList());
+                        Assert.True(manquantes.Count == 0, $"{cote} {(tournee ? "T" : "D")} {largeur} {pont} : {string.Join(", ", manquantes)}");
+                    }
+                }
+            }
+        }
+    }
 }

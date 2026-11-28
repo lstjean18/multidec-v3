@@ -51,7 +51,7 @@ public sealed class ResultatTour
 /// - diagonales de 2 m sur les quatre côtés, sauf devant l'entrée et les sorties ;
 /// - départ à 0,50 m (hauteur en xx,50 m) : plancher de départ en plateaux acier.
 /// </summary>
-public sealed class GenerateurTourEscalier
+public sealed partial class GenerateurTourEscalier
 {
     private const double L = TourEscalierAlu.Longueur;
 
@@ -119,6 +119,7 @@ public sealed class GenerateurTourEscalier
         PlacerPlinthes();
         PlacerDiagonales();
         PlacerVolees();
+        PlacerAcroteres();
         if (_zb > Cotes.Tolerance)
         {
             PlacerPlancherDepart();

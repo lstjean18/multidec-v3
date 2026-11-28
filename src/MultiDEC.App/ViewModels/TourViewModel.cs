@@ -241,6 +241,27 @@ public sealed class TourViewModel : INotifyPropertyChanged
         return existante == null;
     }
 
+    /// <summary>
+    /// Clic droit « Ouvrir + sortie acrotère » (v2) : ouvre le côté au palier avec une sortie acrotère (pont de 1,50 m,
+    /// structure droite par défaut). Renvoie false si le côté est déjà ouvert.
+    /// </summary>
+    public bool AjouterAcrotere(CoteTour cote, double palier)
+    {
+        if (SortieOuverte(cote, palier))
+        {
+            return false;
+        }
+
+        foreach (var s in _t.Sorties.Where(s => Cotes.Egal(s.Hauteur, palier)))
+        {
+            s.Acrotere = false;
+        }
+
+        _t.Sorties.Add(new SortieTour(palier, cote, 1.0) { Acrotere = true });
+        RecalculerPaliers();
+        return true;
+    }
+
     public bool SortieOuverte(CoteTour cote, double palier) => _t.Sorties.Any(s => s.Cote == cote && Cotes.Egal(s.Hauteur, palier));
 
     /// <summary>Reconstruit la grille des paliers ; les sorties à une hauteur qui n'est plus un palier sont retirées.</summary>
@@ -345,6 +366,79 @@ public sealed class PalierTour : INotifyPropertyChanged
         get => Sortie(Bout) != null;
         set => Basculer(Bout, value);
     }
+
+    /// <summary>Côtés proposés pour une sortie acrotère (v2 « Ouvrir + Sortie Acrotère »).</summary>
+    public static IReadOnlyList<KeyValuePair<string, string>> ChoixAcrotere { get; } = new[]
+    {
+        new KeyValuePair<string, string>(string.Empty, "Non"),
+        new KeyValuePair<string, string>("A", "Côté A"),
+        new KeyValuePair<string, string>("C", "Côté C"),
+        new KeyValuePair<string, string>("Bout", "Bout"),
+    };
+
+    public static IReadOnlyList<double> LongueursPont => TourEscalierAlu.LongueursPont;
+
+    /// <summary>Côté de la sortie acrotère de ce palier (vide : aucune) ; la choisir ouvre le côté.</summary>
+    public string Acrotere
+    {
+        get => SortieAcrotere is SortieTour s ? (s.Cote == Bout ? "Bout" : s.Cote.ToString()) : string.Empty;
+        set
+        {
+            var avant = SortieAcrotere;
+            double pont = avant?.LongueurPont ?? 1.50;
+            bool tournee = avant?.Tournee ?? false;
+            foreach (var s in _t.Sorties.Where(s => Cotes.Egal(s.Hauteur, Hauteur)))
+            {
+                s.Acrotere = false;
+            }
+
+            CoteTour? cote = value switch { "A" => CoteTour.A, "C" => CoteTour.C, "Bout" => Bout, _ => (CoteTour?)null };
+            if (cote is CoteTour c)
+            {
+                var s = Sortie(c);
+                if (s == null)
+                {
+                    _t.Sorties.Add(s = new SortieTour(Hauteur, c, 1.0));
+                }
+
+                s.Acrotere = true;
+                s.LongueurPont = pont;
+                s.Tournee = tournee;
+            }
+
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(string.Empty));
+        }
+    }
+
+    public bool AvecAcrotere => SortieAcrotere != null;
+
+    /// <summary>Longueur du pont de franchissement de l'acrotère.</summary>
+    public double LongueurPont
+    {
+        get => SortieAcrotere?.LongueurPont ?? 1.50;
+        set
+        {
+            if (SortieAcrotere is SortieTour s)
+            {
+                s.LongueurPont = value;
+            }
+        }
+    }
+
+    /// <summary>Structure de sortie tournée à 90° (sinon droite, dans le prolongement du pont).</summary>
+    public bool AcrotereTournee
+    {
+        get => SortieAcrotere?.Tournee ?? false;
+        set
+        {
+            if (SortieAcrotere is SortieTour s)
+            {
+                s.Tournee = value;
+            }
+        }
+    }
+
+    private SortieTour? SortieAcrotere => _t.Sorties.FirstOrDefault(s => s.Acrotere && Cotes.Egal(s.Hauteur, Hauteur));
 
     private SortieTour? Sortie(CoteTour cote) => _t.Sorties.FirstOrDefault(s => s.Cote == cote && Cotes.Egal(s.Hauteur, Hauteur));
 

@@ -6,6 +6,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using MultiDEC.Core.Facade;
+using MultiDEC.Core.TourEscalier;
 using MultiDEC.Rendering.VectorDraw;
 using VectorDraw.Professional.Components;
 using VectorDraw.Professional.vdObjects;
@@ -616,6 +617,29 @@ public class BibliothequeDwgTests
         Image(doc, nom + "-TOUR-facade");
         rendu.Vue(Vues.CoteGauche);
         Image(doc, nom + "-TOUR-cote");
+
+        // Sorties acrotère (v2) : droite côté C au palier de 6 m, tournée au bout du dernier palier.
+        var bout = tour.BoutArrivee(tour.Paliers().Count - 1);
+        tour.Sorties.Clear();
+        tour.Sorties.Add(new SortieTour(6, CoteTour.C) { Acrotere = true, LongueurPont = 1.5 });
+        tour.Sorties.Add(new SortieTour(8, bout) { Acrotere = true, LongueurPont = 1.0, Tournee = true });
+        var sa = GenerateurStructure.Generer(projet);
+        var ra = rendu.Dessiner(sa, TableOrientations.ParDefaut());
+        _sortie.WriteLine($"TOUR-ACRO : {ra.Inseres} insérés, manquants : {string.Join(", ", ra.BlocsManquants)}, alertes : {string.Join(" | ", sa.Alertes)}");
+        foreach (var x in ra.Inserts.Where(x => x.Element.Origine.Y < -2.05 || x.Element.Origine.X > 2.55 || x.Element.Origine.X < -0.05))
+        {
+            var b = x.Insert.BoundingBox;
+            _sortie.WriteLine(string.Format(CultureInfo.InvariantCulture, "ACRO {0,-18} o=({1:0.00},{2:0.00},{3:0.00}) {4} inv={5} rot={6}  X {7:0.00}..{8:0.00}  Y {9:0.00}..{10:0.00}  Z {11:0.00}..{12:0.00}",
+                x.Element.Reference, x.Element.Origine.X, x.Element.Origine.Y, x.Element.Origine.Z, x.Element.Axe, x.Element.Inverse, x.Element.Rotation, b.Min.x, b.Max.x, b.Min.y, b.Max.y, b.Min.z, b.Max.z));
+        }
+
+        rendu.Rendu(ModeRendu.OmbreAretes);
+        rendu.Vue(Vues.Iso);
+        Image(doc, nom + "-TOUR-ACRO-iso");
+        rendu.Vue(Vues.Dessus);
+        Image(doc, nom + "-TOUR-ACRO-dessus");
+        rendu.Vue(Vues.Facade);
+        Image(doc, nom + "-TOUR-ACRO-facade");
         Assert.Equal(0, diagonalesHors);
     }
 

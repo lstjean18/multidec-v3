@@ -101,4 +101,24 @@ public class OuvragesViewModelTests
         Assert.True(tour.BasculerSortie(CoteTour.C, communs[0]) && tour.SortieOuverte(CoteTour.C, communs[0]));
         Assert.False(tour.BasculerSortie(CoteTour.C, communs[0]));
     }
+
+    [Fact]
+    public void Sortie_acrotere_depuis_la_grille_et_le_clic_droit()
+    {
+        var vm = new FacadeViewModel();
+        var tour = vm.AjouterTour();
+        tour.Hauteur = 6;
+        var palier = tour.Paliers[1]; // 4 m
+        palier.Acrotere = "C";
+        Assert.True(palier.SortieC && palier.AvecAcrotere);
+        palier.LongueurPont = 2.0;
+        palier.AcrotereTournee = true;
+        Assert.Contains(tour.Tour.Sorties, s => s.Acrotere && s.Cote == CoteTour.C && Cotes.Egal(s.LongueurPont, 2.0) && s.Tournee);
+        palier.Acrotere = string.Empty;
+        Assert.DoesNotContain(tour.Tour.Sorties, s => s.Acrotere);
+
+        Assert.True(tour.AjouterAcrotere(CoteTour.A, 2));
+        Assert.Contains(tour.Tour.Sorties, s => s.Acrotere && s.Cote == CoteTour.A && Cotes.Egal(s.Hauteur, 2));
+        Assert.False(tour.AjouterAcrotere(CoteTour.A, 2));
+    }
 }

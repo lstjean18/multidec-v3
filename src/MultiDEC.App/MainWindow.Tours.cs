@@ -187,6 +187,30 @@ public partial class MainWindow
         return true;
     }
 
+    /// <summary>« Ouvrir + sortie acrotère » (v2) : seulement sur un côté fermé qui peut être ouvert à ce palier.</summary>
+    private bool PreparerMenuAcrotere(System.Windows.Forms.ToolStripMenuItem menu, ElementPlace? element)
+    {
+        if (element?.CoteTour is not { } repere || Vm.TourNommee(element.NomFace) is not TourViewModel tour || tour.SortieOuverte(repere.Cote, repere.Palier))
+        {
+            return false;
+        }
+
+        menu.Enabled = true;
+        menu.Tag = (tour, repere);
+        menu.Click -= AcrotereTour_Click;
+        menu.Click += AcrotereTour_Click;
+        return true;
+    }
+
+    private void AcrotereTour_Click(object? sender, EventArgs e)
+    {
+        if (sender is System.Windows.Forms.ToolStripMenuItem { Tag: ValueTuple<TourViewModel, Core.TourEscalier.RepereCoteTour> cible })
+        {
+            cible.Item1.AjouterAcrotere(cible.Item2.Cote, cible.Item2.Palier);
+            Dessiner_Click(this, new RoutedEventArgs());
+        }
+    }
+
     private void SortieTour_Click(object? sender, EventArgs e)
     {
         if (sender is System.Windows.Forms.ToolStripMenuItem { Tag: ValueTuple<TourViewModel, Core.TourEscalier.RepereCoteTour> cible })

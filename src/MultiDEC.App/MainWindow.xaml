@@ -262,7 +262,7 @@
 
           <TextBlock Style="{StaticResource Section}" Text="PALIERS ET SORTIES" />
           <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource Discret}" Margin="0,0,0,4"
-                     Text="A : grand côté bâtiment ou façade · C : grand côté extérieur · B et D : bouts. Ouverture de 0,50 ou 1,00 m sur un grand côté, au bout du palier ; sur un bout, seulement là où arrive la volée. Clic droit sur une lisse de la tour dans le dessin : ouvrir ou fermer." />
+                     Text="A : grand côté bâtiment ou façade · C : grand côté extérieur · B et D : bouts. Ouverture de 0,50 ou 1,00 m sur un grand côté, au bout du palier ; sur un bout, seulement là où arrive la volée. Sortie acrotère : ouverture de 1,00 m, pont de franchissement et structure de sortie posée sur le toit, 1,00 m sous le palier. Clic droit sur une lisse de la tour dans le dessin : ouvrir, ouvrir + sortie acrotère, ou fermer." />
           <DataGrid ItemsSource="{app:Liaison Paliers}" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
                     HeadersVisibility="Column" SelectionMode="Single" MaxHeight="360">
             <DataGrid.Columns>
@@ -289,16 +289,30 @@
                   </DataTemplate>
                 </DataGridTemplateColumn.CellTemplate>
               </DataGridTemplateColumn>
-              <DataGridTemplateColumn Header="Bout d'arrivée" Width="*">
+              <DataGridTemplateColumn Header="Bout d'arrivée" Width="Auto">
                 <DataGridTemplateColumn.CellTemplate>
                   <DataTemplate>
                     <CheckBox IsChecked="{app:Liaison SortieBout, UpdateSourceTrigger=PropertyChanged}" Content="{app:Liaison TexteBout}" VerticalAlignment="Center" Margin="4,0" />
                   </DataTemplate>
                 </DataGridTemplateColumn.CellTemplate>
               </DataGridTemplateColumn>
+              <DataGridTemplateColumn Header="Acrotère" Width="*">
+                <DataGridTemplateColumn.CellTemplate>
+                  <DataTemplate>
+                    <StackPanel Orientation="Horizontal">
+                      <ComboBox ItemsSource="{x:Static vm:PalierTour.ChoixAcrotere}" SelectedValuePath="Key" DisplayMemberPath="Value"
+                                SelectedValue="{app:Liaison Acrotere, UpdateSourceTrigger=PropertyChanged}" Width="74" Margin="2,0"
+                                ToolTip="Sortie acrotère : ouverture de 1,00 m, pont de franchissement, structure de sortie sur le toit (1,00 m sous le palier)" />
+                      <ComboBox ItemsSource="{x:Static vm:PalierTour.LongueursPont}" SelectedItem="{app:Liaison LongueurPont, UpdateSourceTrigger=PropertyChanged}"
+                                ItemStringFormat="0.00" Width="56" Margin="2,0" IsEnabled="{app:Liaison AvecAcrotere}" ToolTip="Longueur du pont de franchissement (m)" />
+                      <CheckBox IsChecked="{app:Liaison AcrotereTournee, UpdateSourceTrigger=PropertyChanged}" Content="Tournée" VerticalAlignment="Center" Margin="4,0"
+                                IsEnabled="{app:Liaison AvecAcrotere}" ToolTip="Structure de sortie tournée à 90° le long du côté (sinon droite, dans le prolongement du pont)" />
+                    </StackPanel>
+                  </DataTemplate>
+                </DataGridTemplateColumn.CellTemplate>
+              </DataGridTemplateColumn>
             </DataGrid.Columns>
           </DataGrid>
-          <TextBlock Text="Sortie acrotère (franchissement) : à venir." FontSize="12" Foreground="{StaticResource Discret}" Margin="0,6,0,0" />
         </StackPanel>
       </ScrollViewer>
     </DataTemplate>

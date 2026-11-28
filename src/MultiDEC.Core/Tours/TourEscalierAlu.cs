@@ -67,7 +67,19 @@ public sealed class SortieTour
     /// </summary>
     public double Largeur { get; set; }
 
-    public override string ToString() => FormattableString.Invariant($"{Hauteur:0.00} {Cote} {Largeur:0.00}");
+    /// <summary>
+    /// Sortie acrotère (v2 « Ouvrir + Sortie Acrotère ») : ouverture de 1,00 m, pont de franchissement de l'acrotère, puis
+    /// structure de sortie avec une volée de 1 m jusqu'au toit, 1,00 m sous le palier.
+    /// </summary>
+    public bool Acrotere { get; set; }
+
+    /// <summary>Longueur du pont de franchissement de l'acrotère : 0,70 / 1,00 / 1,50 / 2,00 m (v2).</summary>
+    public double LongueurPont { get; set; } = 1.50;
+
+    /// <summary>Structure de sortie tournée à 90° (v2 « T ») plutôt que droite dans le prolongement du pont (« D »).</summary>
+    public bool Tournee { get; set; }
+
+    public override string ToString() => FormattableString.Invariant($"{Hauteur:0.00} {Cote} {Largeur:0.00}{(Acrotere ? $" acrotère {LongueurPont:0.00}{(Tournee ? " T" : " D")}" : string.Empty)}");
 }
 
 /// <summary>
@@ -230,8 +242,19 @@ public sealed class TourEscalierAlu
     }
 
     /// <summary>Largeur de l'ouverture d'une sortie : celle demandée sur un grand côté (0,50 / 1,00), imposée sur un bout.</summary>
+    /// <summary>Longueurs de pont d'acrotère proposées (v2).</summary>
+    public static readonly double[] LongueursPont = { 0.70, 1.00, 1.50, 2.00 };
+
+    /// <summary>Hauteur du toit sous le palier de sortie acrotère (v2 : 1,00 m, structure de sortie posée sur le toit).</summary>
+    public const double HauteurAcrotere = 1.00;
+
     public double LargeurOuverture(SortieTour s)
     {
+        if (s.Acrotere)
+        {
+            return 1.00; // v2 : ConstruitFaceOuverte(1) pour une sortie acrotère
+        }
+
         if (s.Cote == CoteTour.B || s.Cote == CoteTour.D)
         {
             return VoleeLarge ? 1.00 : 0.80;
