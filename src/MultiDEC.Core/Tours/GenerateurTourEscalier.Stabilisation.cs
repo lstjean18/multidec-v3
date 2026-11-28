@@ -120,7 +120,7 @@ public sealed partial class GenerateurTourEscalier
         return FormattableString.Invariant($"{a.Item1};{a.Item2};{b.Item1};{b.Item2}");
     }
 
-    /// <summary>Un côté de module : lisses tous les 1,00 m du pied au sommet, diagonales de 2 m en zigzag.</summary>
+    /// <summary>Un côté de module : lisses tous les 1,00 m du pied au sommet, diagonales de 2 m parallèles.</summary>
     private void CoteStabilisation(double xa, double ya, double xc, double yc, double hs)
     {
         bool enX = Cotes.Egal(ya, yc);
@@ -150,7 +150,7 @@ public sealed partial class GenerateurTourEscalier
         int tranche = 0;
         for (double z = 0; z + 2.0 <= hs + Cotes.Tolerance; z = Cotes.Arrondi(z + 2.0), tranche++)
         {
-            bool inverse = tranche % 2 == 1;
+            bool inverse = false; // diagonales parallèles sur une même face (Laurent, 28/11/2026)
             if (enX)
             {
                 Ajouter(dia, Famille.DiagonaleVerticale, new Point3(inverse ? x1 : x0, Cotes.Arrondi(ya - GenerateurFacade.DemiTube), z), Axe.X, Face.Exterieure, inverse: inverse);

@@ -225,9 +225,52 @@ public sealed partial class GenerateurTourEscalier
     private (double Debut, double Fin)? Ouverture(CoteTour cote, double palier) =>
         _ouvertures.Where(o => o.Cote == cote && Cotes.Egal(o.Palier, palier)).Select(o => ((double, double)?)(o.Debut, o.Fin)).FirstOrDefault();
 
-    /// <summary>Entrée au sol : bout du pied de la première volée, pas de lisse entre le départ et 2 m au-dessus.</summary>
-    private bool DansEntree(CoteTour cote, double z) =>
-        cote == _t.Entree && _zb <= Cotes.Tolerance && z > Cotes.Tolerance && z < 2.0 - Cotes.Tolerance;
+    /// <summary>
+    /// Lisses des bouts (Laurent, 28/11/2026) : au bout d'un palier d'escalier, lisses tous les 0,50 m de 0 à 2 m au-dessus
+    /// du palier ; au bout opposé, pas de lisse entre +0,50 et +1,50 m (la volée suivante y monte). Au sol, le palier est
+    /// au bout d'arrivée de la première volée et l'entrée est le bout opposé (départ à 0,50 m : entrée traitée comme une
+    /// ouverture). Au-dessus du dernier palier, le garde-corps reste complet. Une lisse demandée par un palier l'emporte.
+    /// </summary>
+    private bool SansLisseDeBout(CoteTour cote, double z)
+    {
+        if (cote == CoteTour.A || cote == CoteTour.C || z <= Cotes.Tolerance)
+        {
+            return false;
+        }
+
+        bool exclue = false;
+        for (int k = 0; k < NombreVolees; k++)
+        {
+            if (k == 0 && _zb > Cotes.Tolerance)
+            {
+                continue;
+            }
+
+            var palier = k == 0 ? _t.BoutArrivee(1) : _t.BoutArrivee(k);
+            double dz = Cotes.Arrondi(z - _paliers[k]);
+            if (palier != cote && dz >= 0.5 - Cotes.Tolerance && dz <= 1.5 + Cotes.Tolerance)
+            {
+                exclue = true;
+            }
+        }
+
+        if (!exclue)
+        {
+            return false;
+        }
+
+        for (int k = 0; k <= NombreVolees; k++)
+        {
+            var palier = k == 0 ? _t.BoutArrivee(1) : _t.BoutArrivee(k);
+            double dz = Cotes.Arrondi(z - _paliers[k]);
+            if (palier == cote && dz >= -Cotes.Tolerance && dz <= 2.0 + Cotes.Tolerance)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
 
     // ------------------------------------------------------------------------------------------
     // Poteaux, lisses, plinthes, diagonales
@@ -258,7 +301,7 @@ public sealed partial class GenerateurTourEscalier
             int k = IndexPalier(z);
             foreach (var cote in new[] { CoteTour.A, CoteTour.B, CoteTour.C, CoteTour.D })
             {
-                if (DansEntree(cote, z))
+                if (SansLisseDeBout(cote, z))
                 {
                     continue;
                 }
@@ -406,7 +449,7 @@ public sealed partial class GenerateurTourEscalier
     }
 
     /// <summary>
-    /// Diagonales de 2 m de haut sur les quatre côtés, par tranches de 2 m depuis le départ, en zigzag ; pas de diagonale
+    /// Diagonales de 2 m de haut sur les quatre côtés, par tranches de 2 m depuis le départ, parallèles (Laurent, 28/11/2026) ; pas de diagonale
     /// devant l'entrée ni dans une tranche où le côté a une sortie.
     /// </summary>
     private void PlacerDiagonales()
@@ -414,7 +457,7 @@ public sealed partial class GenerateurTourEscalier
         int tranche = 0;
         for (double z = _zb; z + 2.0 <= _h + Cotes.Tolerance; z = Cotes.Arrondi(z + 2.0), tranche++)
         {
-            bool inverse = tranche % 2 == 1;
+            bool inverse = false; // parallèles : deux diagonales d'une face n'arrivent jamais au même nœud (Laurent, 28/11/2026)
             double xLong = inverse ? L : 0; // sens inversé : origine au bout B, la diagonale part vers -X
             int longues = 0;
             int bouts = 0;
