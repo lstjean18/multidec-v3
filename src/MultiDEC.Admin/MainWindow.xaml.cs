@@ -389,9 +389,7 @@ public partial class MainWindow : Window
         {
             // Seule une clé trop courte peut être remplacée ici (l'ancienne est conservée à côté).
             if (CoffreCle.EstSuffisante(_donnees.ClePublique())
-                || MessageBox.Show(this, "Remplacer la clé actuelle, trop courte, par une nouvelle clé de 3 072 bits ?
-
-L'ancienne est conservée dans le dossier de données sous un autre nom. Il faudra transmettre la nouvelle clé publique pour qu'elle soit intégrée à MultiDEC.",
+                || MessageBox.Show(this, "Remplacer la clé actuelle, trop courte, par une nouvelle clé de 3 072 bits ?\n\nL'ancienne est conservée dans le dossier de données sous un autre nom. Il faudra transmettre la nouvelle clé publique pour qu'elle soit intégrée à MultiDEC.",
                     "Recréer la clé", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
             {
                 return;
