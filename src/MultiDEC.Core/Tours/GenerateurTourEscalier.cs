@@ -327,33 +327,59 @@ public sealed class GenerateurTourEscalier
 
     private static Face FaceDe(CoteTour cote) => cote == CoteTour.A ? Face.Interieure : Face.Exterieure;
 
-    /// <summary>Plinthes aux paliers sur les quatre côtés (raccourcies devant une sortie), sauf au pied de l'entrée.</summary>
+    /// <summary>
+    /// Dernier palier, bout d'arrivée : la moitié qui n'est pas celle de la dernière volée n'a pas de palier (aucune volée ne
+    /// repart) ; un bout de plinthe entièrement de ce côté ne sert à rien (Laurent, 28/11/2026).
+    /// </summary>
+    private bool SansPalierAttenant(CoteTour cote, double z, double debut, double fin)
+    {
+        if (NombreVolees < 1 || !Cotes.Egal(z, _paliers[NombreVolees]) || cote != _t.BoutArrivee(NombreVolees))
+        {
+            return false;
+        }
+
+        double milieu = _w / 2;
+        return Moitie(NombreVolees) == 0 ? debut >= milieu - Cotes.Tolerance : fin <= milieu + Cotes.Tolerance;
+    }
+
+    /// <summary>
+    /// Plinthes seulement le long d'un plateau ou d'un palier d'escalier (Laurent, 28/11/2026 ; v2 : une plinthe par niveau,
+    /// au bout du palier) : à chaque palier, au bout d'arrivée de la volée (raccourcie devant une sortie) ; au dernier palier,
+    /// seulement devant la moitié de la dernière volée. Départ de 0,50 m : plancher en plateaux, plinthes sur les trois côtés
+    /// autres que l'entrée.
+    /// </summary>
     private void PlacerPlinthes()
     {
-        foreach (double z in _paliers.Where(z => z > Cotes.Tolerance))
+        for (int k = 1; k <= NombreVolees; k++)
         {
-            foreach (var cote in new[] { CoteTour.A, CoteTour.B, CoteTour.C, CoteTour.D })
+            double z = _paliers[k];
+            var bout = _t.BoutArrivee(k);
+            var parties = Ouverture(bout, z) is (double debut, double fin)
+                ? new[] { (0.0, debut), (fin, _w) }
+                : new[] { (0.0, _w) };
+            foreach (var (a, b) in parties.Where(p => !SansPalierAttenant(bout, z, p.Item1, p.Item2)))
             {
-                bool longue = cote == CoteTour.A || cote == CoteTour.C;
-                var type = longue ? _p.PlintheExterieure : (_p.PlintheAbouts == TypePlinthe.Sans ? _p.PlintheExterieure : _p.PlintheAbouts);
-                if (Cotes.Egal(z, _zb) && cote == _t.Entree)
-                {
-                    continue;
-                }
-
-                double longueur = longue ? L : _w;
-                var parties = Ouverture(cote, z) is (double debut, double fin)
-                    ? new[] { (0.0, debut), (fin, longueur) }
-                    : new[] { (0.0, longueur) };
-                foreach (var (a, b) in parties)
-                {
-                    double l = Cotes.Arrondi(b - a);
-                    if (l > Cotes.Tolerance && References.Plinthe(type, l) is string plinthe)
-                    {
-                        Barre(plinthe, Famille.Plinthe, cote, a, z, z);
-                    }
-                }
+                Plinthe(bout, a, b, z);
             }
+        }
+
+        if (_zb > Cotes.Tolerance)
+        {
+            foreach (var cote in new[] { CoteTour.A, CoteTour.B, CoteTour.C, CoteTour.D }.Where(c => c != _t.Entree))
+            {
+                Plinthe(cote, 0, cote == CoteTour.A || cote == CoteTour.C ? L : _w, _zb);
+            }
+        }
+    }
+
+    private void Plinthe(CoteTour cote, double debut, double fin, double z)
+    {
+        bool longue = cote == CoteTour.A || cote == CoteTour.C;
+        var type = longue ? _p.PlintheExterieure : (_p.PlintheAbouts == TypePlinthe.Sans ? _p.PlintheExterieure : _p.PlintheAbouts);
+        double l = Cotes.Arrondi(fin - debut);
+        if (l > Cotes.Tolerance && References.Plinthe(type, l) is string plinthe)
+        {
+            Barre(plinthe, Famille.Plinthe, cote, debut, z, z);
         }
     }
 

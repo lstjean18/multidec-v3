@@ -397,4 +397,42 @@ public class TourEscalierTests
         Assert.Contains(dias, d => d.Axe == Axe.X && !d.Inverse);
         Assert.Contains(dias, d => d.Axe == Axe.Y && d.Inverse);
     }
+
+    [Fact]
+    public void Pas_de_plinthe_sans_palier_au_dernier_niveau()
+    {
+        // Laurent, 28/11/2026 : au dernier palier, le bout de plinthe à côté de la sortie de bout ne sert à rien.
+        foreach (double largeur in TourEscalierAlu.Largeurs)
+        {
+            var t = new TourEscalierAlu { Largeur = largeur, Hauteur = 6 };
+            t.Sorties.Clear();
+            t.SortieParDefaut();
+            var bout = t.BoutArrivee(t.Paliers().Count - 1);
+            double x = bout == CoteTour.B ? TourEscalierAlu.Longueur : 0;
+            var el = Elements(t);
+            Assert.DoesNotContain(el, e => e.Famille == Famille.Plinthe && Cotes.Egal(e.Origine.Z, 6) && e.Axe == Axe.Y && Math.Abs(e.Origine.X - x) < 0.1);
+            // Aux paliers intermédiaires, les plinthes des bouts restent.
+            Assert.Contains(el, e => e.Famille == Famille.Plinthe && Cotes.Egal(e.Origine.Z, 4) && e.Axe == Axe.Y);
+        }
+    }
+
+    [Fact]
+    public void Plinthes_seulement_le_long_d_un_palier()
+    {
+        // Laurent, 28/11/2026 : une plinthe seulement le long d'un plateau ou d'un palier d'escalier.
+        var t = new TourEscalierAlu { Hauteur = 8 };
+        var el = Elements(t);
+        var plinthes = el.Where(e => e.Famille == Famille.Plinthe).ToList();
+        Assert.DoesNotContain(plinthes, e => e.Axe == Axe.X); // pas sur les grands côtés
+        var paliers = t.Paliers();
+        for (int k = 1; k < paliers.Count; k++)
+        {
+            double x = t.BoutArrivee(k) == CoteTour.B ? TourEscalierAlu.Longueur : 0;
+            Assert.All(plinthes.Where(e => Cotes.Egal(e.Origine.Z, paliers[k])), e => Assert.True(Math.Abs(e.Origine.X - x) < 0.1));
+        }
+
+        // Départ de 0,50 m : plancher en plateaux, plinthes sur les grands côtés.
+        var depart = new TourEscalierAlu { Hauteur = 6.5 };
+        Assert.Contains(Elements(depart), e => e.Famille == Famille.Plinthe && e.Axe == Axe.X && Cotes.Egal(e.Origine.Z, 0.5));
+    }
 }
