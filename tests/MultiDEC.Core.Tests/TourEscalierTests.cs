@@ -540,7 +540,8 @@ public class TourEscalierTests
 
         // Emprise de 5,00 × (largeur + 2,50), vers le bout opposé à l'entrée.
         var socles = r.Elements.Where(e => e.Famille == Famille.Socle).Select(e => (e.Origine.X, e.Origine.Y)).Distinct().ToList();
-        Assert.Equal(9, socles.Count);
+        Assert.Equal(8, socles.Count); // pas de poteau au coin isolé du module d'angle (Laurent, 28/11/2026)
+        Assert.DoesNotContain(socles, p => Cotes.Egal(p.Y, -largeur - 2.5) && Cotes.Egal(Math.Abs(p.X - 1.25), 3.75));
         Assert.Equal(-largeur - 2.5, socles.Min(p => p.Y), 3);
         Assert.Equal(entree == CoteTour.D ? 5.0 : 2.5, socles.Max(p => p.X), 3);
         Assert.Equal(entree == CoteTour.D ? 0.0 : -2.5, socles.Min(p => p.X), 3);

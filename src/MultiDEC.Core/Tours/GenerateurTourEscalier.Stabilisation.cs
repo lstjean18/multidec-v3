@@ -53,9 +53,10 @@ public sealed partial class GenerateurTourEscalier
         var moduleAngle = (X0: xb0, X1: xb1, Y0: yC, Y1: yLoin, Plein: !AngleEnTubesSeuls);
         var modules = new[] { moduleC, moduleBout, moduleAngle };
 
-        // Poteaux : tous les coins des modules, sauf ceux de la tour.
+        // Poteaux : coins des modules pleins, sauf ceux de la tour (le coin isolé du module en tubes seuls ne sert à rien,
+        // Laurent 28/11/2026 : les tubes du module d'angle vont d'un poteau existant à l'autre).
         var tour = new HashSet<(double, double)> { (0, 0), (L, 0), (0, yC), (L, yC) };
-        var poteaux = modules.SelectMany(m => new[] { (m.X0, m.Y0), (m.X1, m.Y0), (m.X0, m.Y1), (m.X1, m.Y1) })
+        var poteaux = modules.Where(m => m.Plein).SelectMany(m => new[] { (m.X0, m.Y0), (m.X1, m.Y0), (m.X0, m.Y1), (m.X1, m.Y1) })
             .Select(p => (Cotes.Arrondi(p.Item1), Cotes.Arrondi(p.Item2))).Distinct().Where(p => !tour.Contains(p)).ToList();
         foreach (var (x, y) in poteaux)
         {
