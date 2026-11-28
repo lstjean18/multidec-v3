@@ -112,6 +112,9 @@ public sealed class ElementPlace
     /// <summary>About (bout de face et niveau) auquel appartient l'élément : menu « Remplacer l'about par ». Null sinon.</summary>
     public RepereAbout? About { get; internal set; }
 
+    /// <summary>Côté et palier d'une tour escalier auxquels appartient l'élément : menu « Ouvrir / Fermer ». Null sinon.</summary>
+    public TourEscalier.RepereCoteTour? CoteTour { get; internal set; }
+
     /// <summary>
     /// Copie de l'élément placée dans la structure : rotation de <paramref name="angle"/> degrés autour de Z
     /// puis translation de <paramref name="origineFace"/> (point de la structure où tombe l'origine de la face).
@@ -130,6 +133,7 @@ public sealed class ElementPlace
             NomFace = nomFace,
             AngleFace = angle,
             About = About,
+            CoteTour = CoteTour,
         };
     }
 

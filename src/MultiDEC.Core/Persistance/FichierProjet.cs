@@ -20,8 +20,9 @@ public static class FichierProjet
     /// <summary>
     /// 2 : consoles par niveau + cases par maille, case « Diagonale » par maille (23/11/2026).
     /// 3 : structure à plusieurs faces (S1…S4) et paramètres généraux communs (24/11/2026).
+    /// 4 : projet multi-ouvrages, tours escalier alu (T1, T2…) et façade facultative (28/11/2026).
     /// </summary>
-    public const int VersionFormat = 3;
+    public const int VersionFormat = 4;
 
     private static readonly JsonSerializerOptions Options = new JsonSerializerOptions
     {

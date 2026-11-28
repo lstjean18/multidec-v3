@@ -73,6 +73,65 @@ public sealed class ProjetStructure
     /// <summary>Faces de la structure, S1 d'abord.</summary>
     public List<FaceEchafaudage> Faces { get; set; } = new List<FaceEchafaudage>();
 
+    // ---- Ouvrages (projet multi-ouvrages, Laurent 28/11/2026) ----------------------------------
+
+    /// <summary>
+    /// Le projet contient la façade (faces S1…). Un projet de tour seule garde ses faces en réserve (paramètres conservés)
+    /// mais ne les génère pas ; « + Façade » la remet.
+    /// </summary>
+    public bool AvecFacade { get; set; } = true;
+
+    /// <summary>Tours escalier alu du projet (T1, T2…), seules ou accolées à une face.</summary>
+    public List<TourEscalier.TourEscalierAlu> Tours { get; set; } = new List<TourEscalier.TourEscalierAlu>();
+
+    /// <summary>Nombre maximum de tours dans un projet.</summary>
+    public const int ToursMaxi = 9;
+
+    /// <summary>
+    /// Ajoute une tour T1, T2… (premier numéro libre), avec la sortie par défaut au dernier palier. Elle est posée à gauche
+    /// des ouvrages existants, à 1 m du début de S1 (ou de la tour précédente).
+    /// </summary>
+    public TourEscalier.TourEscalierAlu AjouterTour(TourEscalier.TourEscalierAlu? modele = null)
+    {
+        int n = 1;
+        while (Tours.Any(t => t.Nom == "T" + n))
+        {
+            n++;
+        }
+
+        var tour = modele?.Copie() ?? new TourEscalier.TourEscalierAlu();
+        tour.Nom = "T" + n;
+        tour.FaceAccolee = null;
+        double gauche = Tours.Where(t => !t.EstAccolee).Select(t => t.PositionX).DefaultIfEmpty(0).Min();
+        tour.PositionX = Cotes.Arrondi(Math.Min(0, gauche) - TourEscalier.TourEscalierAlu.Longueur - 1.0);
+        tour.PositionY = 0;
+        tour.Angle = 0;
+        if (modele == null && AvecFacade && Faces.Count > 0)
+        {
+            tour.Hauteur = Faces[0].Parametres.HauteurDernierPlancher;
+            if (tour.ErreurHauteur() != null)
+            {
+                tour.Hauteur = Math.Max(2.0, Math.Floor(tour.Hauteur / 2) * 2);
+            }
+        }
+
+        if (modele == null)
+        {
+            tour.SortieParDefaut();
+        }
+
+        Tours.Add(tour);
+        return tour;
+    }
+
+    /// <summary>Le projet ne contient plus rien à dessiner.</summary>
+    [JsonIgnore]
+    public bool SansOuvrage => !AvecFacade && Tours.Count == 0;
+
+    /// <summary>Faces générées : toutes, ou aucune si le projet n'a pas de façade.</summary>
+    [JsonIgnore]
+    public IReadOnlyList<FaceEchafaudage> FacesGenerees => AvecFacade ? Faces : (IReadOnlyList<FaceEchafaudage>)Array.Empty<FaceEchafaudage>();
+
     /// <summary>Pièces supprimées à la main dans le dessin (point 54) : retirées à chaque génération, enregistrées dans le .mdc3.</summary>
     public List<PieceSupprimee> PiecesSupprimees { get; set; } = new List<PieceSupprimee>();
 
