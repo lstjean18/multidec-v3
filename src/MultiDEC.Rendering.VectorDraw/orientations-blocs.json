@@ -1,0 +1,9 @@
+// Réglages d'orientation des blocs, modifiables sans recompiler. Ils complètent les réglages par défaut
+// du programme (TableOrientations.ParDefaut) : une entrée remplace le réglage par défaut de même préfixe.
+// prefixe : début de la référence ; le préfixe le plus long l'emporte.
+// rotationZ / rotationX : rotations supplémentaires en degrés ; rotationZBloc : rotation du bloc avant les symétries ; miroirZ : retourne toujours le bloc ;
+// miroirFaceInterieure : retourne le bloc côté intérieur ; retourneEnTravers / retourneEnLong : retourne le bloc
+// posé en travers / en long ; decalage : [dx, dy, dz] en mètres.
+// Exemple : { "prefixe": "HMCON700", "rotationZ": 180 }
+[
+]

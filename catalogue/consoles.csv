@@ -1,0 +1,20 @@
+Sel;Ref;Désignation;MR;MS;Largeur;DecZMR;DecZMS;AccBoutMS;Superposable
+X;HMCON300;Console de 0,30m chape / platine;X;X;0.4;;0.04;;X
+X;HMTRA030;Traverse de 0m30 en console;X;X;0.3;;0.04;;X
+X;HMCON400E;Console de 0,40m chape / chape;X;X;0.4;;0.04;HMEMB;X
+X;HMCON400E2;Console de 0,40m chape / nipple;;X;0.4;;;;X
+X;HMCON700E;Console de 0,70m chape / chape;X;X;0.7;;0.04;HMEMB;
+X;HMCON700E2;Console de 0,70m chape / nipple;;X;0.7;;;;
+X;HMCON700EE;Console de 0,70m chape / chape;X;X;0.7;;0.04;HMEMB;X
+X;HMCON700EE2;Console de 0,70m chape / nipple;;X;0.7;;;;X
+X;HMCON700MR2;Console de 0,70m chape / 1/4 tour;X;;0.7;;0.04;;X
+X;HMCON750E;Console de 0,75m chape / chape;;X;0.75;;;HMEMB;
+X;HMCON750EE;Console de 0,75m chape / chape;X;X;0.75;;0.04;HMEMB;X
+X;HMCON750MR;Console de 0,75m chape / 1/4 tour;X;;0.75;;0.04;;
+X;HMCON750MR2;Console de 0,75m chape / 1/4 tour;X;;0.75;;0.04;;X
+X;HMCON1000E;Console de 1,00m chape / chape;X;X;1;;0.04;HMEMB;
+X;HMCON1000E2;Console de 1,00m chape / nipple;;X;1;;;;
+X;HMCON1050E;Console de 1,05m chape / chape;X;X;1.05;;0.04;HMEMB;
+X;HMCON1050EE;Console de 1,05m chape / chape;X;X;1.05;;0.04;;X
+X;HMCON1050MR;Console de 1,05m chape / 1/4 tour;X;;1.05;;0.04;;
+X;HMCON1050MR2;Console de 1,05m chape / 1/4 tour;X;;1.05;;0.04;;X

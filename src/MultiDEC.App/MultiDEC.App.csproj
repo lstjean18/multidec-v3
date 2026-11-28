@@ -1,0 +1,82 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Application WPF MultiDEC v3 (VS 2022). La vue 3D VectorDraw est hébergée dans un WindowsFormsHost. -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <RootNamespace>MultiDEC.App</RootNamespace>
+    <AssemblyName>MultiDEC</AssemblyName>
+    <PlatformTarget>x86</PlatformTarget>
+    <!-- Icône reprise de MultiDEC v2 (mutlidec.ico, branche version2024), Laurent 24/11/2026. -->
+    <ApplicationIcon>MultiDEC.ico</ApplicationIcon>
+    <!-- Version affichée sur l'écran de démarrage (Laurent, 25/11/2026) ; NumeroBuild = run du CI (/p:NumeroBuild=...). -->
+    <Version>3.0.0</Version>
+    <LibelleVersion>v3.0 bêta 1</LibelleVersion>
+    <NumeroBuild Condition="'$(NumeroBuild)' == ''">local</NumeroBuild>
+    <InformationalVersion>$(LibelleVersion) build $(NumeroBuild)</InformationalVersion>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\MultiDEC.Core\MultiDEC.Core.csproj" />
+    <ProjectReference Include="..\MultiDEC.Rendering.VectorDraw\MultiDEC.Rendering.VectorDraw.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="VectorDraw.Professional"><HintPath>$(VectorDrawDir)VectorDraw.Professional.dll</HintPath></Reference>
+    <Reference Include="VectorDraw.Geometry"><HintPath>$(VectorDrawDir)VectorDraw.Geometry.dll</HintPath></Reference>
+    <Reference Include="VectorDraw.Render"><HintPath>$(VectorDrawDir)VectorDraw.Render.dll</HintPath></Reference>
+    <Reference Include="vdScrollableControl"><HintPath>$(VectorDrawDir)vdScrollableControl.dll</HintPath></Reference>
+    <Reference Include="VDrawBaseControl"><HintPath>$(VectorDrawDir)VDrawBaseControl.dll</HintPath></Reference>
+    <Reference Include="WindowsFormsIntegration" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Drawing" />
+    <!-- Droits d'utilisation : UUID de la carte mère (WMI), mémoire locale chiffrée (DPAPI). -->
+    <Reference Include="System.Management" />
+    <Reference Include="System.Security" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Viewer PDF intégré de la mise en plan (PDFium, moteur de Chrome ; licence Apache 2.0), x86 comme l'application. -->
+    <PackageReference Include="PdfiumViewer" Version="2.13.0" />
+    <PackageReference Include="PdfiumViewer.Native.x86.v8-xfa" Version="2018.4.8.256" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Captures d'écran du manuel utilisateur, produites par les tests du serveur. -->
+    <InternalsVisibleTo Include="MultiDEC.Rendering.Tests" />
+    <AssemblyMetadata Include="Libelle" Value="$(LibelleVersion)" />
+    <AssemblyMetadata Include="Build" Value="$(NumeroBuild)" />
+    <!-- Adresse de la liste des postes autorisés (vide : à côté de la fiche des mises à jour, mise-a-jour.txt). -->
+    <AssemblyMetadata Include="AdresseDroits" Value="$(AdresseDroits)" />
+  </ItemGroup>
+  <ItemGroup>
+    <!--
+      Droits d'utilisation (Laurent, 27/11/2026) : clé publique de RETOTUB (MultiDEC Admin, « Copier la clé publique »)
+      compilée dans l'exe. Fichier absent : contrôle des droits inactif (versions de développement).
+    -->
+    <EmbeddedResource Include="Droits\cle-publique.xml" LogicalName="MultiDEC.App.cle-publique-droits.xml" Condition="Exists('Droits\cle-publique.xml')" />
+  </ItemGroup>
+  <ItemGroup>
+    <!--
+      Licence d'exécution VectorDraw compilée dans l'exe (LC.exe, comme la v2 : My Project\licenses.licx). Sans elle,
+      le contrôle VectorDraw refuse de se créer sur un poste sans licence de développement (Laurent, 26/11/2026).
+    -->
+    <None Remove="Properties\licenses.licx" />
+    <EmbeddedResource Include="Properties\licenses.licx" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="MultiDEC.ico" />
+    <!-- Écran de démarrage avec le logo MultiDEC repris de la v2 (SplashScreen1, version2024), Laurent 24/11/2026. -->
+    <Resource Include="Splash.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Guide utilisateur livré avec l'application (menu Aide) et publié sur le site avec chaque version. -->
+    <None Include="..\..\docs\manuel\MultiDEC-v3-Guide-utilisateur.pdf" Link="MultiDEC-v3-Guide-utilisateur.pdf" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <!--
+    Toutes les DLL VectorDraw à côté de l'exécutable, y compris celles chargées dynamiquement
+    (rendu OpenGL vdrawgl, solides 3D SolidModel/slapi, conversion vdxFcnv) : sans elles,
+    les volumes ne s'affichent pas en rendu ombré. Les contrôles ActiveX (VDraw*5, AxVD*) sont exclus.
+  -->
+  <ItemGroup>
+    <None Include="$(VectorDrawDir)*.dll" Exclude="$(VectorDrawDir)AxVD*.dll;$(VectorDrawDir)VDraw*5.dll;$(VectorDrawDir)VdrawPro5.dll;$(VectorDrawDir)VDgridLib.dll" Link="%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" Visible="false" />
+  </ItemGroup>
+</Project>

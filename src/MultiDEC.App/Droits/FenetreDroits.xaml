@@ -1,0 +1,32 @@
+<Window x:Class="MultiDEC.App.Droits.FenetreDroits"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Droits d'utilisation de MultiDEC" Width="560" SizeToContent="Height" ResizeMode="NoResize"
+        WindowStartupLocation="CenterScreen" FontFamily="Segoe UI" FontSize="13">
+  <!-- Droits d'utilisation (Laurent, 27/11/2026) : poste refusé au démarrage, ou état des droits (menu Aide). -->
+  <StackPanel Margin="18">
+    <TextBlock x:Name="Titre" FontSize="17" FontWeight="SemiBold" Margin="0,0,0,10" TextWrapping="Wrap" />
+    <TextBlock x:Name="Message" TextWrapping="Wrap" Margin="0,0,0,14" />
+
+    <TextBlock Text="Code de ce poste" Foreground="#57606A" />
+    <DockPanel Margin="0,4,0,6">
+      <Button DockPanel.Dock="Right" Content="Copier le code" Click="Copier_Click" Padding="12,4" Margin="8,0,0,0" />
+      <TextBox x:Name="Code" IsReadOnly="True" FontFamily="Consolas" FontSize="22" FontWeight="Bold"
+               VerticalContentAlignment="Center" HorizontalContentAlignment="Center" Padding="4" />
+    </DockPanel>
+    <TextBlock x:Name="Details" TextWrapping="Wrap" Foreground="#57606A" Margin="0,0,0,14" />
+
+    <TextBlock TextWrapping="Wrap" Margin="0,0,0,14">
+      <Run Text="Pour obtenir ou prolonger un droit d'utilisation, envoyez ce code à" />
+      <Hyperlink x:Name="LienAdresse" Click="Demander_Click"><Run x:Name="Adresse" /></Hyperlink><Run Text=". RETOTUB ajoute le poste à la liste des postes autorisés : MultiDEC démarre dès la vérification suivante." />
+    </TextBlock>
+
+    <DockPanel>
+      <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+        <Button x:Name="BoutonReessayer" Content="Réessayer" Click="Reessayer_Click" Padding="14,4" Margin="8,0,0,0" />
+        <Button x:Name="BoutonFermer" Content="Quitter" IsCancel="True" Click="Fermer_Click" Padding="14,4" Margin="8,0,0,0" />
+      </StackPanel>
+      <Button Content="Demander l'accès par e-mail…" Click="Demander_Click" Padding="12,4" HorizontalAlignment="Left" />
+    </DockPanel>
+  </StackPanel>
+</Window>

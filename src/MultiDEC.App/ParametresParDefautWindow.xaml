@@ -1,0 +1,132 @@
+<Window x:Class="MultiDEC.App.ParametresParDefautWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:app="clr-namespace:MultiDEC.App"
+        Title="Paramètres par défaut" Height="720" Width="900" MinHeight="480" MinWidth="640"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False" FontFamily="Segoe UI" FontSize="13">
+  <!--
+    Paramètres par défaut de l'utilisateur (Laurent, 24/11/2026) : valeurs utilisées au « Nouveau » et à l'ouverture
+    du programme, valeurs retirées des listes, fichiers de référence. DataContext = ParametresParDefautViewModel.
+  -->
+  <Window.Resources>
+    <SolidColorBrush x:Key="Discret" Color="#57606A" />
+  </Window.Resources>
+
+  <DockPanel Margin="10">
+    <TextBlock DockPanel.Dock="Top" TextWrapping="Wrap" Foreground="{StaticResource Discret}" Margin="0,0,0,8"
+               Text="Ces réglages s'appliquent à chaque « Nouveau » et à l'ouverture du programme, pour votre profil Windows. Décochez une valeur pour la retirer de la liste dans l'application ; la liste déroulante donne la valeur par défaut. Exportez-les pour les réimporter chez un autre utilisateur." />
+
+    <DockPanel DockPanel.Dock="Bottom" Margin="0,10,0,0">
+      <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
+        <Button Content="Enregistrer" IsDefault="True" Click="Enregistrer_Click" Padding="16,4" Margin="4,0" />
+        <Button Content="Annuler" IsCancel="True" Padding="16,4" Margin="4,0,0,0" />
+      </StackPanel>
+      <StackPanel Orientation="Horizontal">
+        <Button Content="Importer…" Click="Importer_Click" Padding="10,4" Margin="0,0,4,0" />
+        <Button Content="Exporter…" Click="Exporter_Click" Padding="10,4" Margin="4,0" />
+        <Button Content="Paramètres d'usine" Click="Usine_Click" Padding="10,4" Margin="4,0" />
+      </StackPanel>
+    </DockPanel>
+
+    <TabControl>
+      <TabItem Header="Listes de choix">
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+          <ItemsControl ItemsSource="{app:Liaison Listes}" Margin="4">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <GroupBox Header="{app:Liaison Titre}" Margin="0,0,0,8">
+                  <StackPanel>
+                    <ItemsControl ItemsSource="{app:Liaison Defauts}">
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                          <StackPanel Orientation="Horizontal" Margin="0,2">
+                            <TextBlock Text="{app:Liaison Titre}" Width="90" VerticalAlignment="Center" />
+                            <ComboBox ItemsSource="{app:Liaison Proposees}" SelectedItem="{app:Liaison Choix}" DisplayMemberPath="Libelle" MinWidth="220" />
+                          </StackPanel>
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <TextBlock Text="Valeurs proposées :" Foreground="{StaticResource Discret}" Margin="0,4,0,0" />
+                    <ItemsControl ItemsSource="{app:Liaison Valeurs}" IsEnabled="{app:Liaison Masquable}">
+                      <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                          <WrapPanel />
+                        </ItemsPanelTemplate>
+                      </ItemsControl.ItemsPanel>
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                          <CheckBox Content="{app:Liaison Libelle}" IsChecked="{app:Liaison Proposee}" Margin="0,2,14,2" />
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                  </StackPanel>
+                </GroupBox>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </ScrollViewer>
+      </TabItem>
+
+      <TabItem Header="Cases et cotes">
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+          <StackPanel Margin="8">
+            <TextBlock Text="CASES À COCHER" FontSize="11" FontWeight="Bold" Foreground="{StaticResource Discret}" Margin="0,4,0,6" />
+            <ItemsControl ItemsSource="{app:Liaison Cases}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <CheckBox Content="{app:Liaison Titre}" IsChecked="{app:Liaison Valeur}" Margin="0,3" />
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <TextBlock Text="COTES" FontSize="11" FontWeight="Bold" Foreground="{StaticResource Discret}" Margin="0,14,0,6" />
+            <ItemsControl ItemsSource="{app:Liaison Cotes}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <StackPanel Orientation="Horizontal" Margin="0,2">
+                    <TextBlock Text="{app:Liaison Titre}" Width="200" VerticalAlignment="Center" />
+                    <TextBox Text="{app:Liaison Valeur, StringFormat=0.00}" Width="90" />
+                  </StackPanel>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </ScrollViewer>
+      </TabItem>
+
+      <TabItem Header="Fichiers">
+        <StackPanel Margin="8">
+          <ItemsControl ItemsSource="{app:Liaison Fichiers}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <DockPanel Margin="0,4">
+                  <TextBlock Text="{app:Liaison Titre}" Width="170" VerticalAlignment="Center" />
+                  <Button DockPanel.Dock="Right" Content="Aucun" Click="EffacerFichier_Click" Padding="8,2" Margin="4,0,0,0" />
+                  <Button DockPanel.Dock="Right" Content="Parcourir…" Click="ChoisirFichier_Click" Padding="8,2" Margin="6,0,0,0" />
+                  <TextBox Text="{app:Liaison Chemin, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center" />
+                </DockPanel>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+          <DockPanel Margin="0,4">
+            <TextBlock Text="Références affichées" Width="170" VerticalAlignment="Center" />
+            <ComboBox Width="260" HorizontalAlignment="Left" ItemsSource="{app:Liaison ChoixReferences}" SelectedValuePath="Key" DisplayMemberPath="Value"
+                      SelectedValue="{app:Liaison ReferencesAffichees}"
+                      ToolTip="Choix par défaut des références du décompte et de la liste du matériel (modifiable ensuite dans l'onglet « Décompte »). « Client (fichier de correspondance) » utilise le fichier Références clients ci-dessus." />
+          </DockPanel>
+          <TextBlock TextWrapping="Wrap" Foreground="{StaticResource Discret}" Margin="0,10,0,0"
+                     Text="La bibliothèque de blocs et le catalogue multidec.bib sont chargés à l'ouverture du programme (vides : ceux installés avec MultiDEC). La trame des devis, les références clients et le logo servent au décompte, au devis et à la mise en plan." />
+          <DockPanel Margin="0,14,0,0">
+            <TextBlock Text="Plans : « Établi par »" Width="170" VerticalAlignment="Center" />
+            <TextBox Text="{app:Liaison EtabliPar, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center"
+                     ToolTip="Nom porté dans le cartouche des plans (vide : nom de la session Windows)" />
+          </DockPanel>
+          <TextBlock Text="Liste du matériel (PDF)" FontWeight="SemiBold" Margin="0,16,0,4" />
+          <CheckBox Content="Afficher la référence RETOTUB" IsChecked="{app:Liaison ListeReferenceRetotub}" Margin="0,3"
+                    ToolTip="Décochée : pas de colonne de référence, ou seulement les références client quand on travaille en références client" />
+          <CheckBox Content="Afficher les familles" IsChecked="{app:Liaison ListeFamilles}" Margin="0,3"
+                    ToolTip="Décochée : le matériel reste classé par famille, sans le bandeau portant le nom de la famille" />
+        </StackPanel>
+      </TabItem>
+    </TabControl>
+  </DockPanel>
+</Window>

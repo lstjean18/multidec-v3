@@ -1,0 +1,45 @@
+<Window x:Class="MultiDEC.Admin.FenetreLicence"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Licence" Width="560" SizeToContent="Height" ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False" FontFamily="Segoe UI" FontSize="13">
+  <StackPanel Margin="14">
+    <Grid>
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="130" />
+        <ColumnDefinition Width="*" />
+      </Grid.ColumnDefinitions>
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
+        <RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
+      </Grid.RowDefinitions>
+      <TextBlock Text="Code du poste" VerticalAlignment="Center" />
+      <DockPanel Grid.Column="1" Margin="0,3">
+        <Button DockPanel.Dock="Right" Content="Coller l'e-mail…" Click="CollerEmail_Click" Padding="8,2" Margin="6,0,0,0"
+                ToolTip="Colle le texte de l'e-mail de demande : le code y est retrouvé" />
+        <TextBox x:Name="Code" FontFamily="Consolas" FontSize="15" TextChanged="Code_TextChanged" />
+      </DockPanel>
+      <TextBlock x:Name="EtatCode" Grid.Row="1" Grid.Column="1" Margin="0,0,0,6" FontSize="12" />
+      <TextBlock Grid.Row="2" Text="Demandeur" VerticalAlignment="Center" />
+      <TextBox x:Name="Demandeur" Grid.Row="2" Grid.Column="1" Margin="0,3" ToolTip="Nom et prénom" />
+      <TextBlock Grid.Row="3" Text="Entreprise" VerticalAlignment="Center" />
+      <TextBox x:Name="Entreprise" Grid.Row="3" Grid.Column="1" Margin="0,3" />
+      <TextBlock Grid.Row="4" Text="E-mail" VerticalAlignment="Center" />
+      <TextBox x:Name="Email" Grid.Row="4" Grid.Column="1" Margin="0,3" />
+      <TextBlock Grid.Row="5" Text="Expiration" VerticalAlignment="Center" />
+      <StackPanel Grid.Row="5" Grid.Column="1" Orientation="Horizontal" Margin="0,3">
+        <DatePicker x:Name="Expiration" Width="140" />
+        <CheckBox x:Name="SansLimite" Content="Sans limite" VerticalAlignment="Center" Margin="10,0,0,0" Checked="SansLimite_Changed" Unchecked="SansLimite_Changed" />
+        <Button Content="+1 an" Click="UnAn_Click" Padding="8,1" Margin="10,0,0,0" />
+      </StackPanel>
+      <CheckBox x:Name="Suspendue" Grid.Row="6" Grid.Column="1" Margin="0,6" Content="Suspendue (conservée mais retirée de la liste publiée)" />
+      <TextBlock Grid.Row="7" Text="Notes" Margin="0,6,0,0" />
+      <TextBox x:Name="Notes" Grid.Row="7" Grid.Column="1" Margin="0,3" Height="70" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"
+               ToolTip="Poste concerné, conditions, n° de commande…" />
+    </Grid>
+    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+      <Button Content="Enregistrer" IsDefault="True" Click="Enregistrer_Click" Padding="16,4" />
+      <Button Content="Annuler" IsCancel="True" Padding="16,4" Margin="8,0,0,0" />
+    </StackPanel>
+  </StackPanel>
+</Window>

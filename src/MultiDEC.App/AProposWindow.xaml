@@ -1,0 +1,44 @@
+<Window x:Class="MultiDEC.App.AProposWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="À propos de MultiDEC" Width="560" SizeToContent="Height" ResizeMode="NoResize"
+        ShowInTaskbar="False" WindowStartupLocation="CenterOwner" FontFamily="Segoe UI" FontSize="13">
+  <!--
+    Logo MultiDEC de l'écran de démarrage, en plus petit (Laurent, 27/11/2026), version, emplacements utiles
+    et mentions des composants tiers (VectorDraw, PDFium / PdfiumViewer…).
+  -->
+  <StackPanel Margin="20,16,20,16">
+    <Image Source="Splash.png" Width="330" Height="210" Stretch="Uniform" HorizontalAlignment="Center"
+           RenderOptions.BitmapScalingMode="HighQuality" />
+    <TextBlock x:Name="TexteTitre" Margin="0,12,0,0" FontSize="16" FontWeight="SemiBold" HorizontalAlignment="Center" />
+    <TextBlock x:Name="TexteVersion" Margin="0,2,0,0" Foreground="#57606A" HorizontalAlignment="Center" />
+    <TextBlock Text="© RETOTUB – tous droits réservés" Margin="0,2,0,12" Foreground="#57606A" HorizontalAlignment="Center" />
+
+    <Grid Margin="0,0,0,12">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="Auto" />
+        <ColumnDefinition Width="*" />
+      </Grid.ColumnDefinitions>
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="Auto" />
+      </Grid.RowDefinitions>
+      <TextBlock Text="Installé dans :" Foreground="#57606A" Margin="0,0,10,3" />
+      <TextBlock x:Name="TexteDossier" Grid.Column="1" TextWrapping="Wrap" Margin="0,0,0,3" />
+      <TextBlock Grid.Row="1" Text="Mises à jour :" Foreground="#57606A" Margin="0,0,10,3" />
+      <TextBlock x:Name="TexteMisesAJour" Grid.Row="1" Grid.Column="1" TextWrapping="Wrap" Margin="0,0,0,3" />
+      <TextBlock Grid.Row="2" Text="Journal des erreurs :" Foreground="#57606A" Margin="0,0,10,0" />
+      <TextBlock x:Name="TexteJournal" Grid.Row="2" Grid.Column="1" TextWrapping="Wrap" />
+    </Grid>
+
+    <TextBlock Text="Composants tiers" FontWeight="SemiBold" Margin="0,0,0,4" />
+    <Border BorderBrush="#D0D7DE" BorderThickness="1" Background="#F6F8FA" Padding="8,6">
+      <ScrollViewer MaxHeight="150" VerticalScrollBarVisibility="Auto">
+        <TextBlock x:Name="TexteLicences" TextWrapping="Wrap" FontSize="12" />
+      </ScrollViewer>
+    </Border>
+
+    <Button Content="Fermer" IsCancel="True" IsDefault="True" HorizontalAlignment="Right" Padding="20,3" Margin="0,14,0,0" />
+  </StackPanel>
+</Window>

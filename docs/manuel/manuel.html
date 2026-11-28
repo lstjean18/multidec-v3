@@ -1,0 +1,642 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>MultiDEC v3 – Guide utilisateur</title>
+<link rel="stylesheet" href="manuel.css">
+</head>
+<body>
+
+<!-- ===================== PAGE DE GARDE (style de la notice 2018) ===================== -->
+<div class="couverture">
+  <img class="logo" src="images/couverture/logo-retotub.png" alt="RETOTUB">
+  <div class="titre-caps">GUIDE UTILISATEUR</div>
+  <div class="nom"><span class="multi">Multi</span><span class="dec">DEC</span></div>
+  <div class="version">Version 3.0 bêta 1</div>
+  <div class="cartouche">Novembre 2026</div>
+</div>
+
+<!-- ===================== SOMMAIRE ===================== -->
+<div class="sommaire">
+  <h1>Sommaire</h1>
+  <p class="sous">MultiDEC v3 : conception d'échafaudages de façade RETOTUB en 3D, décompte et amarrages.</p>
+  <ol id="toc"></ol>
+</div>
+
+<!-- ===================== 1. PRÉSENTATION ===================== -->
+<section class="chapitre" id="c1">
+  <div class="entete-chap"><span class="num">1</span><div><h2>Présentation</h2><p>Ce que fait MultiDEC v3 et ce qui change par rapport à la v2</p></div></div>
+
+  <div class="cote large">
+    <div>
+      <p>MultiDEC conçoit des échafaudages de façade avec le matériel RETOTUB. À partir de quelques cotes (longueur de façade, largeur de maille, hauteur du dernier plancher…), il propose une structure conforme aux règles de montage de la notice technique : mailles, niveaux de plancher, accès, garde-corps, diagonales et amarrages.</p>
+      <p>La structure est ensuite ajustable maille par maille, puis dessinée en 3D avec les vrais blocs de la bibliothèque RETOTUB. Chaque bloc posé correspond à une référence produit : le <b>décompte</b> (quantités et poids) et la <b>liste des amarrages</b> sont donc toujours fidèles au dessin.</p>
+      <h4>Systèmes pris en charge</h4>
+      <ul>
+        <li><b>Multi-RETO</b> (MR) ;</li>
+        <li><b>Multi-RETO à embase</b> (MRE) ;</li>
+        <li><b>Multi-SYSTEM</b> (MS, par défaut).</li>
+      </ul>
+    </div>
+    <figure><img src="images/splash.png" alt=""><figcaption><b>Écran de démarrage.</b> Il s'affiche pendant le chargement de la bibliothèque de blocs ; en bas à droite, le numéro de version (v3.0 bêta 1) et de build, aussi rappelés dans la barre de titre.</figcaption></figure>
+  </div>
+
+  <h3>Les nouveautés de la v3</h3>
+  <div class="deux">
+    <ul>
+      <li>Interface en ruban, onglets par face et dessin 3D intégré.</li>
+      <li>Structures droite, en L, en U, fermée et <b>volumique</b> (plusieurs modules en profondeur).</li>
+      <li><b>Amarrages placés sur le dessin</b> (et plus seulement comptés), avec tubes, colliers, pitons et chevilles.</li>
+      <li>Sol en pente : hauteur de départ par maille.</li>
+      <li>Abouts remplaçables par un déport en console ou un autre garde-corps, d'un clic droit.</li>
+    </ul>
+    <ul>
+      <li>Façade du bâtiment dessinée, ouverte sous les poutres de franchissement.</li>
+      <li>Bouton <span class="ui">Valider la structure</span> qui signale en rouge une face à recalculer.</li>
+      <li>Paramètres par défaut propres à chaque utilisateur, exportables.</li>
+      <li>Format de projet <b>.mdc3</b>.</li>
+      <li>Décompte en <b>références client</b> (LV Tec intégré).</li>
+    </ul>
+  </div>
+  <div class="encadre attention"><span class="titre">Anciens projets</span>
+    <p>Les fichiers <b>.mdc</b> des versions précédentes ne s'ouvrent pas dans la v3 : les projets sont à ressaisir.</p>
+  </div>
+</section>
+
+<!-- ===================== 2. DÉMARRAGE ===================== -->
+<section class="chapitre" id="c2">
+  <div class="entete-chap"><span class="num">2</span><div><h2>Premier démarrage</h2><p>Installation, mises à jour, droits d'utilisation, bibliothèque de blocs</p></div></div>
+
+  <h3>Installer MultiDEC</h3>
+  <p>Lancer <b>MultiDEC-v3-Setup-<i>version</i>.exe</b>. L'installation ne demande pas de droits administrateur : MultiDEC s'installe dans le profil de l'utilisateur (<i>%LOCALAPPDATA%\Programs\RETOTUB\MultiDEC v3</i>), avec un raccourci dans le menu Démarrer (et sur le Bureau si la case est cochée). Les fichiers <b>.mdc3</b> s'ouvrent ensuite d'un double-clic. Il faut Microsoft .NET Framework 4.8, présent sur Windows 10 et 11 : l'installateur prévient s'il manque. La désinstallation se fait depuis <span class="ui">Paramètres</span> › <span class="ui">Applications</span> de Windows.</p>
+
+  <h3>Mises à jour</h3>
+  <p>Au démarrage, MultiDEC regarde si une version plus récente a été publiée et propose de l'installer. En répondant <span class="ui">Oui</span>, la nouvelle version est téléchargée et contrôlée, MultiDEC se ferme, s'installe et se relance : enregistrer son projet avant. Le menu <span class="ui">Aide</span> › <span class="ui">Rechercher les mises à jour…</span> fait la même vérification à la demande, et <span class="ui">Aide</span> › <span class="ui">À propos de MultiDEC…</span> donne la version installée, les dossiers utiles (installation, journal des erreurs) et les licences des composants tiers. Ce guide est livré avec MultiDEC : <span class="ui">Aide</span> › <span class="ui">Guide utilisateur</span> l'ouvre dans la visionneuse intégrée ; il est aussi publié sur le site RETOTUB avec chaque version. La recherche au démarrage se désactive dans les Paramètres par défaut (case <span class="ui">Rechercher les mises à jour au démarrage</span>).</p>
+  <div class="encadre attention"><span class="titre">Antivirus</span>
+    <p>Tant que l'installateur n'est pas signé numériquement, Windows SmartScreen ou un antivirus peuvent le bloquer ou demander confirmation (« Informations complémentaires › Exécuter quand même »). Si le blocage persiste, faire autoriser le fichier par l'administrateur du poste.</p>
+  </div>
+
+  <h3>Droits d'utilisation</h3>
+  <p>Chaque poste doit être autorisé par RETOTUB. Au démarrage, MultiDEC calcule le <b>code du poste</b> (16 caractères, par exemple <span class="ref">K7QM-3XPA-W9DT-HN4C</span>, tiré de l'identifiant de Windows et de la carte mère) puis consulte la liste des postes autorisés publiée par RETOTUB sur retotub.com.</p>
+  <ul>
+    <li><b>Poste autorisé</b> : MultiDEC démarre normalement. Une semaine avant l'expiration du droit, un message le rappelle.</li>
+    <li><b>Poste non autorisé ou droit expiré</b> : la fenêtre <span class="ui">Droits d'utilisation de MultiDEC</span> affiche le code du poste. <span class="ui">Demander l'accès par e-mail…</span> prépare un message à <b>multidec@retotub.com</b> avec ce code : compléter la société, le nom et le téléphone, puis l'envoyer. <span class="ui">Copier le code</span> le met dans le presse-papiers pour l'envoyer autrement. Une fois le poste ajouté par RETOTUB, <span class="ui">Réessayer</span> lance MultiDEC.</li>
+    <li><b>Sans connexion à Internet</b> : MultiDEC démarre si la dernière vérification réussie date de moins de <b>30 jours</b>. Il prévient quand il reste moins d'une semaine. La toute première utilisation d'un poste demande une connexion.</li>
+  </ul>
+  <p>Le menu <span class="ui">Aide</span> › <span class="ui">Droits d'utilisation…</span> affiche à tout moment le code du poste, la date de la dernière vérification et l'échéance du droit, et permet de revérifier.</p>
+  <div class="encadre"><span class="titre">Bon à savoir</span>
+    <p>Le code change si Windows est réinstallé ou si la carte mère est remplacée : il faut alors refaire une demande. Il ne change pas avec le disque, la mémoire ou la carte réseau. Une date de Windows reculée bloque le démarrage hors ligne : remettre la date à l'heure, ou connecter le poste.</p>
+  </div>
+
+  <h3>Bibliothèque de blocs</h3>
+  <p>MultiDEC dessine la structure en insérant des <b>blocs 3D</b>, un par référence produit (<span class="ref">HMPOT20</span>, <span class="ref">HMLIS250</span>, <span class="ref">HMSOCREG</span>…). Il lui faut donc une bibliothèque de blocs :</p>
+  <ul>
+    <li><b>Blocs 3D - Echafaudage.dwg</b> : la bibliothèque de référence ;</li>
+    <li><b>multidec.bib</b> : les désignations, les poids et les familles des références, utilisés par le décompte.</li>
+  </ul>
+  <p>Les deux fichiers sont <b>livrés avec l'installateur</b>, dans le sous-dossier <i>Bibliotheque</i> du dossier d'installation : MultiDEC les charge au démarrage sans rien régler.</p>
+
+  <h3>Changer de bibliothèque</h3>
+  <p>Les chemins utilisés sont dans <span class="ui">Outils</span> › <span class="ui">Paramètres par défaut…</span>, onglet <span class="ui">Fichiers</span> (voir chapitre 11) : lignes <span class="ui">Bibliothèque de blocs</span> et <span class="ui">Catalogue multidec.bib</span>, remplies avec les fichiers installés. <span class="ui">Parcourir…</span> choisit un autre fichier (.dwg ou .dxf pour la bibliothèque) ; il est chargé dès l'enregistrement des paramètres, sans relancer MultiDEC. Une ligne laissée vide reprend le fichier installé au démarrage suivant.</p>
+  <p>La barre d'état, en bas de la fenêtre, rappelle la bibliothèque chargée.</p>
+  <figure><img src="images/ihm/parametres-fichiers.png" alt=""><figcaption><b>Paramètres par défaut, onglet Fichiers.</b> Bibliothèque de blocs et multidec.bib chargés au démarrage, trame Excel des devis, références clients, logo client et références affichées par défaut dans le décompte.</figcaption></figure>
+
+  <div class="encadre"><span class="titre">Bon à savoir</span>
+    <p>Si une référence calculée n'existe pas dans la bibliothèque, le bloc n'est pas dessiné et l'onglet <span class="ui">Alertes</span> donne la liste des blocs absents. Les tubes d'amarrage, qui manquent encore dans la bibliothèque, sont représentés provisoirement par un <b>cercle barré d'une croix</b>.</p>
+  </div>
+</section>
+
+<!-- ===================== 3. INTERFACE ===================== -->
+<section class="chapitre" id="c3">
+  <div class="entete-chap"><span class="num">3</span><div><h2>L'interface</h2><p>Une seule fenêtre : saisie à gauche, dessin à droite, grilles en bas</p></div></div>
+
+  <figure><div class="annotee">
+    <img src="images/ihm/principale.png" alt="">
+    <span class="pastille" style="left:17%;top:1.3%">1</span>
+    <span class="pastille" style="left:72%;top:7%">2</span>
+    <span class="pastille" style="left:10%;top:15.4%">3</span>
+    <span class="pastille" style="left:95%;top:17%">4</span>
+    <span class="pastille" style="left:28%;top:65.2%">5</span>
+    <span class="pastille" style="left:41%;top:97.5%">6</span></div>
+    <figcaption><b>Fenêtre principale</b> après le dessin d'une façade droite de 20 m.</figcaption>
+  </figure>
+
+  <ol class="legende-num">
+    <li><b>Menu</b> : Fichier (nouveau, ouvrir, enregistrer, enregistrer sous, quitter), Affichage (zoom et vues), Outils (paramètres par défaut, où se choisit aussi la bibliothèque de blocs), Aide.</li>
+    <li><b>Ruban</b> : les commandes courantes, regroupées par usage (détail ci-dessous).</li>
+    <li><b>Onglets de saisie</b> : <span class="ui">Général</span> pour tout le projet, puis un onglet par face (S1 à S4) ou par module (M1, M2…).</li>
+    <li><b>Dessin 3D</b> : la structure dessinée, orientable et zoomable à la souris.</li>
+    <li><b>Onglets du bas</b> : grilles des mailles et des niveaux de la face active, décompte, amarrages et alertes.</li>
+    <li><b>Barre d'état</b> : nombre de mailles, longueur, nombre d'éléments et d'amarrages, bibliothèque chargée.</li>
+  </ol>
+  <div class="encadre"><span class="titre">Séparateur décimal</span>
+    <p>MultiDEC écrit les nombres avec le séparateur décimal réglé dans Windows sur le poste (« , » ou « . ») : écrans, messages, plans, cartouche et liste du matériel. À la saisie, les touches « , » et « . » sont acceptées toutes les deux dans les champs de cotes ; ce guide est écrit avec la virgule.</p>
+  </div>
+
+  <h3>Le ruban</h3>
+  <figure><img src="images/ihm/ruban.png" alt=""></figure>
+  <table>
+    <tr><th style="width:22%">Groupe</th><th>Commandes</th></tr>
+    <tr><td>Projet</td><td><span class="ui">Nouveau</span>, <span class="ui">Ouvrir</span>, <span class="ui">Enregistrer</span> un projet .mdc3. Le menu <span class="ui">Fichier &gt; Exporter le modèle…</span> enregistre le dessin 3D dans un format de VectorDraw.</td></tr>
+    <tr><td>Structure</td><td><span class="ui">Valider la structure</span> : recalcule la proposition de la face active (le voyant passe au vert). <span class="ui">Dessiner</span> : génère toute la structure en 3D, le décompte et les amarrages.</td></tr>
+    <tr><td>Vue</td><td><span class="ui">Zoom tout</span> et les vues normalisées : <span class="ui">Iso</span>, <span class="ui">Façade</span>, <span class="ui">Dessus</span>, <span class="ui">Côté gauche</span>, <span class="ui">Côté droit</span>.</td></tr>
+    <tr><td>Affichage</td><td>Mode de rendu (Filaire, Lignes cachées, Ombré, Ombré + arêtes, Réaliste), axes filaires (toujours affichés), case <span class="ui">Dessiner façade</span> pour représenter le mur du bâtiment.</td></tr>
+    <tr><td>Sortie</td><td><span class="ui">Mise en plan</span>, <span class="ui">PDF</span> et <span class="ui">Devis</span> : prévus dans une prochaine version (grisés).</td></tr>
+  </table>
+</section>
+
+<!-- ===================== 4. DÉMARCHE ===================== -->
+<section class="chapitre" id="c4">
+  <div class="entete-chap"><span class="num">4</span><div><h2>Démarche en six étapes</h2><p>De la page blanche au décompte</p></div></div>
+
+  <div class="etapes">
+    <div class="etape"><b>Nouveau projet</b><span>Ruban › Nouveau. Les valeurs de départ sont celles des Paramètres par défaut.</span></div>
+    <div class="etape"><b>Onglet Général</b><span>Chantier, matériel, forme de la structure, garde-corps et plinthes, amarrages.</span></div>
+    <div class="etape"><b>Onglet de chaque face</b><span>Longueur, largeur de maille, dernier plancher, accès, options.</span></div>
+    <div class="etape"><b>Valider la structure</b><span>MultiDEC propose les mailles et les niveaux : le bouton passe au vert.</span></div>
+    <div class="etape"><b>Ajuster les grilles</b><span>Types de maille, consoles, poutres, escaliers, hauteurs… maille par maille.</span></div>
+    <div class="etape"><b>Dessiner</b><span>Contrôler le dessin 3D, puis lire le décompte, les amarrages et les alertes.</span></div>
+  </div>
+
+  <figure><img src="images/3d/droite.jpg" style="max-height:105mm;margin:auto" alt=""><figcaption><b>Résultat en rendu réaliste</b> : façade droite, maille d'accès avec trappes et échelles, plateaux de départ au pied de l'accès, diagonales, garde-corps et plinthes.</figcaption></figure>
+
+  <div class="encadre"><span class="titre">Principe</span>
+    <p>La proposition automatique n'écrase jamais les réglages faits à la main dans les grilles, sauf si l'on clique à nouveau sur <span class="ui">Valider la structure</span>. Ordre conseillé : régler d'abord les cotes, valider, puis affiner les grilles.</p>
+  </div>
+</section>
+
+<!-- ===================== 5. GÉNÉRAL ===================== -->
+<section class="chapitre" id="c5">
+  <div class="entete-chap"><span class="num">5</span><div><h2>Onglet Général</h2><p>Les réglages communs à toute la structure</p></div></div>
+
+  <div class="cote etroit">
+    <div>
+      <h3 id="s5-1"><span class="n">5.1</span>Projet</h3>
+      <p><b>Chantier</b>, <b>Client</b> et <b>Référence étude</b> identifient le projet. La référence étude sert de nom proposé à l'enregistrement.</p>
+
+      <h3 id="s5-2"><span class="n">5.2</span>Matériel</h3>
+      <ul>
+        <li><b>Modèle</b> : Multi-RETO, Multi-RETO à embase ou Multi-SYSTEM. Le modèle fixe les poteaux, embases, goupilles et la liste des consoles proposées.</li>
+        <li><b>Plateaux</b> : gamme Optissimo, Standard, Standard NF (par défaut) ou Anti Contamination NF.</li>
+        <li><b>Socles</b> : socle réglable HMSOCREG ou HMSOCREG800, socles à roue (avec ou sans frein), vérins orientables.</li>
+      </ul>
+      <div class="encadre attention"><span class="titre">Socles à roue : tour roulante</span>
+        <p>Une structure sur roues est une tour à <b>4 pieds</b> : une seule maille, structure droite, largeur de 1,00 m au moins. Le dernier plancher et la longueur dépendent de la largeur :</p>
+        <table>
+          <tr><th>Largeur</th><th>Dernier plancher maxi</th><th>Longueur mini</th></tr>
+          <tr><td>1,00 et 1,05 m</td><td>2 m</td><td>1,50 m</td></tr>
+          <tr><td>1,50 m</td><td>4 m</td><td>1,50 m</td></tr>
+          <tr><td>2,00 m</td><td>6 m</td><td>2,00 m</td></tr>
+          <tr><td>2,50 m</td><td>8 m</td><td>2,50 m</td></tr>
+          <tr><td>3,00 m</td><td>10 m</td><td>3,00 m</td></tr>
+        </table>
+        <p>Hors de ces règles, MultiDEC dit ce qui ne va pas, rappelle la règle et <b>ne dessine pas</b>. Sur roues : protection intérieure posée d'office, diagonales en travers aux abouts, pas d'amarrage. L'option <span class="ui">Grutable</span> est elle aussi réservée aux structures à 4 pieds.</p>
+      </div>
+
+      <h3 id="s5-3"><span class="n">5.3</span>Garde-corps et plinthes</h3>
+      <p>Pour chaque côté, la protection et la plinthe :</p>
+      <ul>
+        <li><b>Extérieur (rue)</b> : par défaut garde-corps MDS 2, plinthe axée ;</li>
+        <li><b>Intérieur (mur)</b> : par défaut sans ;</li>
+        <li><b>Abouts</b> (bouts de la structure) : par défaut MDS 2.</li>
+      </ul>
+      <p>Protections proposées : <i>Sans</i>, <i>MDS 2</i>, <i>Lisses</i>, <i>Garde-corps d'about</i>. La plinthe se règle seule selon la protection choisie (MDS 2 → bois, lisses → axée, sans → sans), puis reste modifiable. Un about de plus de 1,05 m (modules volumiques larges) est toujours protégé par des lisses, et un garde-corps de plus de 1,05 m passe en lisses là où une lisse porte des plateaux (damier), car il serait dans le même plan ; une alerte le signale. Les cases <span class="ui">About gauche</span> et <span class="ui">About droit</span> décident si les bouts de la structure sont protégés. En L, en U ou fermée, il n'y a pas d'about aux raccords entre faces.</p>
+    </div>
+    <figure><img src="images/ihm/general.png" alt=""><figcaption><b>Onglet Général</b> (haut et bas du panneau).</figcaption></figure>
+  </div>
+
+  <h3 id="s5-4"><span class="n">5.4</span>Forme de la structure</h3>
+  <p>Les cinq boutons créent les onglets de faces. À partir de S2, la première maille de chaque face est le <b>carré d'angle</b> qui la raccorde à la face précédente : la longueur saisie pour S2, S3… <b>ne l'inclut pas</b>. Toutes les faces doivent avoir leur premier plancher à la même hauteur, sinon la structure n'est pas dessinée et un message l'indique.</p>
+  <table>
+    <tr><th style="width:18%">Forme</th><th>Faces</th></tr>
+    <tr><td>Droite</td><td>Une face, S1.</td></tr>
+    <tr><td>En L</td><td>S1 et S2 en équerre.</td></tr>
+    <tr><td>En U</td><td>S1, S2 et S3.</td></tr>
+    <tr><td>Fermée</td><td>S1 à S4, le tour complet du bâtiment.</td></tr>
+    <tr><td>Volumique</td><td>Modules M1 (contre la façade), M2, M3… côte à côte en profondeur, chacun avec sa longueur et sa largeur (jusqu'à 3,00 m).</td></tr>
+  </table>
+
+  <div class="deux">
+    <figure><img src="images/3d/forme-L.jpg" alt=""><figcaption><b>En L.</b> Carré d'angle au départ de S2, abouts uniquement aux bouts libres.</figcaption></figure>
+    <figure><img src="images/3d/L-inverse-facade.jpg" alt=""><figcaption><b>En L inversée</b>, avec le mur du bâtiment : le bâtiment est dans l'angle rentrant.</figcaption></figure>
+  </div>
+  <div class="deux">
+    <figure><img src="images/3d/forme-U.jpg" alt=""><figcaption><b>En U</b> : S1 (couleur de face bleue) puis S2 et S3.</figcaption></figure>
+    <figure><img src="images/3d/forme-fermee.jpg" alt=""><figcaption><b>Fermée</b> : les quatre faces forment le tour du bâtiment.</figcaption></figure>
+  </div>
+
+  <h4>Inverser la structure</h4>
+  <p>En L, en U ou fermée, la case <span class="ui">Inverser la structure (bâtiment dans l'angle rentrant)</span> fait tourner les faces dans l'autre sens. Chaque face garde son côté mur côté bâtiment : garde-corps, escaliers, appro et sous-mailles rapportées passent de l'autre côté du dessin.</p>
+
+  <h4>Structure volumique</h4>
+  <div class="cote large">
+    <div>
+      <p>Le nombre de modules se choisit dans la liste <span class="ui">Modules</span> ; <span class="ui">+ Module</span> ajoute un module derrière le dernier (jusqu'à 12), avec les mêmes mailles que M1 mais sans accès.</p>
+      <ul>
+        <li>Largeurs possibles : 0,70 à 1,05 m, et en volumique seulement 1,50 / 2,00 / 2,50 / 3,00 m.</li>
+        <li>Les modules peuvent avoir des longueurs différentes : la partie qui dépasse reçoit ses garde-corps côté vide.</li>
+        <li>Poteaux et lisses communs à deux modules ne sont comptés qu'une fois. Pas de protection ni de diagonale entre deux modules.</li>
+        <li>Les accès sont proposés sur M1 ; les amarrages sont posés sur M1.</li>
+        <li><span class="ui">Planchers en damier</span> : l'orientation des plateaux alterne d'une maille à l'autre (plateaux selon la longueur, puis selon la largeur), en décalé d'un module à l'autre.</li>
+        <li>Diagonales verticales sur <b>chaque maille</b> qui a un garde-corps (lisses ou MDS 2), face par face : face extérieure, côté mur, parties qui dépassent d'un module voisin et abouts. Jamais de diagonale à l'intérieur de la structure.</li>
+      </ul>
+    </div>
+    <figure><img src="images/3d/volumique.jpg" alt=""><figcaption><b>Volumique, trois modules</b> de largeurs et longueurs différentes.</figcaption></figure>
+  </div>
+
+  <h3 id="s5-5"><span class="n">5.5</span>Amarrages</h3>
+  <p>Les amarrages sont calculés pour <b>toutes les files</b> de poteaux, en quinconce entre files voisines, et placés sur le dessin.</p>
+  <table>
+    <tr><th style="width:38%">Réglage</th><th>Rôle (valeurs par défaut)</th></tr>
+    <tr><td>Échafaudage bâché</td><td>Resserre l'espacement courant et le contrôle de surface (1 ancrage pour 10 m² au lieu de 24 m²).</td></tr>
+    <tr><td>1er amarrage (m)</td><td>Hauteur du premier amarrage (2,00 m).</td></tr>
+    <tr><td>Extrémités (m)</td><td>Espacement vertical sur les files d'extrémité (4 m).</td></tr>
+    <tr><td>Courant, non bâché / bâché (m)</td><td>Espacement vertical sur les files courantes (8 m / 4 m).</td></tr>
+  </table>
+  <p>Au-delà de 24 m de hauteur, une alerte rappelle que la note de calcul est obligatoire ; elle est recommandée dès que l'échafaudage est bâché.</p>
+</section>
+
+<!-- ===================== 6. ONGLET DE FACE ===================== -->
+<section class="chapitre" id="c6">
+  <div class="entete-chap"><span class="num">6</span><div><h2>Onglet de face</h2><p>S1 à S4 (ou M1, M2… en volumique) : cotes et options de la face</p></div></div>
+
+  <div class="cote etroit">
+    <div>
+      <h3 id="s6-1"><span class="n">6.1</span>Dimensions</h3>
+      <table>
+        <tr><th style="width:42%">Champ</th><th>Rôle</th></tr>
+        <tr><td>Longueur souhaitée</td><td>Longueur visée ; MultiDEC la compose avec des mailles standard (0,70 à 3,00 m).</td></tr>
+        <tr><td>Largeur de maille</td><td>Distance entre file intérieure et file extérieure (0,70 / 0,75 / 1,00 / 1,05 m).</td></tr>
+        <tr><td>Maille préférée</td><td>Longueur des mailles courantes et des mailles d'accès (1,50 m au moins pour un accès).</td></tr>
+        <tr><td>Nombre d'accès</td><td>Proposé à chaque changement de longueur (un accès tous les 20 m), puis modifiable.</td></tr>
+        <tr><td>Dernier plancher</td><td>Hauteur du plancher le plus haut ; les niveaux sont proposés tous les 2 m en dessous.</td></tr>
+        <tr><td>Distance à la façade</td><td>Écart entre la file intérieure et le mur (0,20 m maximum en usage courant).</td></tr>
+      </table>
+      <p>La ligne grisée sous les champs résume la proposition : longueur obtenue, nombre de mailles et de niveaux, hauteur totale.</p>
+
+      <h3 id="s6-2"><span class="n">6.2</span>Valider la structure</h3>
+      <p>Le bouton <span class="ui">Valider la structure</span> (aussi dans le ruban) recalcule les mailles et les niveaux de la face.</p>
+      <figure><img src="images/ihm/valider-vert.png" style="width:70mm" alt=""><figcaption><b>Vert</b> : la face est à jour.</figcaption></figure>
+      <figure><img src="images/ihm/valider-rouge.png" style="width:70mm" alt=""><figcaption><b>Rouge</b> : une cote a changé depuis la dernière validation (ici la longueur).</figcaption></figure>
+      <p>Le bouton passe au rouge si la longueur, la largeur, la maille préférée, le nombre d'accès, le dernier plancher, le carré d'angle ou la forme ont changé. <span class="ui">Dessiner</span> refuse alors de dessiner et ouvre l'onglet de la première face à valider. Les modifications faites à la main dans les grilles, elles, ne font pas passer le bouton au rouge.</p>
+      <p><span class="ui">Copier depuis S1</span> (faces S2 et suivantes) recopie dans la face active les réglages de la face S1.</p>
+    </div>
+    <figure><img src="images/ihm/face.png" alt=""><figcaption><b>Onglet de la face S1.</b></figcaption></figure>
+  </div>
+
+  <h3 id="s6-3"><span class="n">6.3</span>Diagonales</h3>
+  <p>Les diagonales verticales occupent toute la hauteur des mailles cochées dans la colonne <b>Diago</b> de la grille. Par défaut, une maille sur cinq est cochée, et le sens alterne automatiquement d'une maille cochée à la suivante.</p>
+  <ul>
+    <li><span class="ui">Diagonales 1 maille sur 2</span> : coche une maille sur deux.</li>
+    <li><span class="ui">Diagonale dans la 1re maille</span> : commence par la première maille.</li>
+    <li><span class="ui">Recocher les cases Diago</span> : remet les cases selon la règle après des retouches manuelles.</li>
+  </ul>
+  <p>Les diagonales sont posées côté extérieur ; si une protection intérieure est choisie, elles sont aussi posées côté intérieur, sur les mêmes mailles. Pas de diagonale sur un côté sans protection.</p>
+  <p>La maille juste avant et la maille juste après une <b>poutre de franchissement</b> reçoivent toujours des diagonales, même si leur case n'est pas cochée (voir 8.6).</p>
+  <div class="encadre"><span class="titre">Lisses renforcées</span>
+    <p>Toute lisse de 1,50 m ou plus qui porte des plateaux est une lisse renforcée (<span class="ref">HMLISR150</span> à <span class="ref">HMLISR300</span>) : traverses des modules volumiques larges, plateaux en damier, platelage de lest.</p>
+  </div>
+
+  <h3 id="s6-4"><span class="n">6.4</span>Accès</h3>
+  <ul>
+    <li>Une maille d'accès mesure <b>1,50 m au moins</b> : la grille ne propose pas de longueur plus courte pour une maille d'accès, et une maille d'accès plus courte est refusée au dessin. Avec une maille préférée de 0,70 ou 1,00 m, les accès sont proposés en 1,50 m.</li>
+    <li>Les mailles d'accès reçoivent une trappe par niveau côté intérieur, en sens alterné, avec échelle (maille ≤ 2 m) et deux plateaux de départ au pied du premier accès.</li>
+    <li>Chaque plancher à trappe (maille d'accès, ou maille plus haute que ses voisines, y compris au-dessus du dernier plancher) a toujours une <b>plinthe</b> et une <b>lisse à 1,50 m</b> du plancher, qui protège en montant à l'échelle : côté extérieur, et aussi côté mur s'il y a un garde-corps côté mur.</li>
+    <li><span class="ui">Trappes et plateaux acier</span> : trappes et plateaux en acier ; les garde-corps MDS de la face passent alors en lisses.</li>
+    <li><span class="ui">Lisse GC accès 1,50 m au niveau 0</span> : lisse de sécurité au-dessus des plateaux de départ.</li>
+    <li>Premier plancher entre 0,50 et 1,50 m : un portillon et une échelle sont posés à l'about de départ.</li>
+  </ul>
+
+  <h3 id="s6-5"><span class="n">6.5</span>Options</h3>
+  <table>
+    <tr><th style="width:42%">Option</th><th>Effet</th></tr>
+    <tr><td>Traverses</td><td>Type des traverses aux planchers complets : Lisse, Renforcé ; Poutrelle ou Poutre au-delà de 1,05 m de largeur (volumique).</td></tr>
+    <tr><td>Lisses en pied</td><td>Lisses au niveau 0 des deux côtés de chaque maille.</td></tr>
+    <tr><td>Départ poteaux 3 m côté extérieur</td><td>Poteaux de 3 m en pied sur la file extérieure et les files d'extrémité, pour décaler les jonctions.</td></tr>
+    <tr><td>Garde-corps 1,50 m au dernier niveau</td><td>Protection couvreur : lisse supplémentaire à 1,50 m au-dessus du dernier plancher.</td></tr>
+    <tr><td>Grutable</td><td>Accessoires de levage : support HMSUPSUNI au pied des poteaux, vis et écrous à la place des goupilles.</td></tr>
+  </table>
+</section>
+
+<!-- ===================== 7. GRILLES ===================== -->
+<section class="chapitre" id="c7">
+  <div class="entete-chap"><span class="num">7</span><div><h2>Mailles et niveaux</h2><p>Les deux grilles éditables de l'onglet du bas</p></div></div>
+
+  <p>L'onglet <span class="ui">Mailles et niveaux · S1</span> montre la face active ; sa couleur reprend celle de la face sur le dessin (<span class="pastille-couleur" style="background:#cfe3f6"></span> S1 bleu, <span class="pastille-couleur" style="background:#d4efd6"></span> S2 vert, <span class="pastille-couleur" style="background:#fbe0cc"></span> S3 pêche, <span class="pastille-couleur" style="background:#e2dcf3"></span> S4 lavande).</p>
+
+  <h3 id="s7-1"><span class="n">7.1</span>Grille des mailles</h3>
+  <p>Une ligne par maille, de gauche à droite en regardant la façade depuis la rue. <span class="ui">Ajouter</span> insère une maille après la maille sélectionnée (à la fin sinon), <span class="ui">Insérer avant</span> la place avant, <span class="ui">Supprimer</span> la retire.</p>
+  <table>
+    <tr><th style="width:20%">Colonne</th><th>Rôle</th></tr>
+    <tr><td>Longueur</td><td>0,70 à 3,00 m (1,50 m au moins pour un accès).</td></tr>
+    <tr><td>Type</td><td>Travail, Accès, Travail + accès rapporté, + appro, + recette, + escalier 1,50, + demi-escalier 0,70 ou 1,00 (chapitre 8).</td></tr>
+    <tr><td>Diago</td><td>Diagonales verticales sur toute la hauteur de la maille.</td></tr>
+    <tr><td>Départ</td><td>Hauteur de pied de la maille, par pas de 0,50 m : sol en pente ou obstacle.</td></tr>
+    <tr><td>Ht max</td><td>Dernier plancher de la maille, si elle s'arrête plus bas ou monte plus haut que la face (écart multiple de 2 m).</td></tr>
+    <tr><td>Stab.</td><td>Distance d'une stabilisation (file supplémentaire côté extérieur).</td></tr>
+    <tr><td>Lest</td><td>Avec une stabilisation : platelage de lest à 0,50 m (8.3).</td></tr>
+    <tr><td>Poutre</td><td>Hauteur du plancher porté par une poutre de franchissement (sur la maille de gauche de la paire).</td></tr>
+    <tr><td>Prof. recette</td><td>Profondeur de la recette pour une maille « Travail + recette ».</td></tr>
+    <tr><td>Jonction</td><td>Information : carré d'angle ou jonction avec un module voisin (non modifiable).</td></tr>
+    <tr><td>Con<i>X</i>m, PareGrav<i>X</i>m</td><td>Une colonne par niveau à console ou à pare-gravois : cochée, la maille reçoit la console ou le pare-gravois à ce niveau.</td></tr>
+  </table>
+
+  <h3 id="s7-2"><span class="n">7.2</span>Grille des niveaux</h3>
+  <p>Une ligne par niveau de plancher, du haut vers le bas, tous les 2 m ; le niveau 0 est en « accès seul ».</p>
+  <table>
+    <tr><th style="width:20%">Colonne</th><th>Rôle</th></tr>
+    <tr><td>Niveau (m)</td><td>Hauteur du plancher. La dernière ligne vide permet d'ajouter un niveau (par exemple un premier plancher à 1 m).</td></tr>
+    <tr><td>Type</td><td><b>Complet</b> (plancher sur toutes les mailles de travail) ou <b>Accès seul</b> (plancher dans les mailles d'accès, lisses ailleurs).</td></tr>
+    <tr><td>Console</td><td>Référence de la console posée à ce niveau ; la colonne Con<i>X</i>m apparaît alors dans la grille des mailles, cochée partout.</td></tr>
+    <tr><td>Pare-grav., Diago H, Appro, Recette</td><td>Pare-gravois à ce niveau (ajoute la colonne PareGrav<i>X</i>m) ; diagonales horizontales ; niveau desservi par les appro ou les recettes (colonnes visibles seulement si une telle maille existe).</td></tr>
+  </table>
+  <figure><img src="images/ihm/mailles-niveaux.png" alt=""><figcaption><b>Grilles de la face S1</b> avec une console et un pare-gravois au niveau 4 m (colonnes Con4m et PareGrav4m), un départ à 0,50 m sur la maille 5 et une stabilisation de 1,50 m lestée (case Lest) sur la maille 6.</figcaption></figure>
+</section>
+
+<!-- ===================== 8. FONCTIONS DE STRUCTURE ===================== -->
+<section class="chapitre" id="c8">
+  <div class="entete-chap"><span class="num">8</span><div><h2>Fonctions de structure</h2><p>Ce que donnent les réglages des grilles sur l'échafaudage</p></div></div>
+
+  <h3 id="s8-1"><span class="n">8.1</span>Consoles et déports d'about</h3>
+  <div class="cote large">
+    <div>
+      <p>Choisir une console dans la colonne <b>Console</b> d'un niveau complet, puis décocher dans la colonne Con<i>X</i>m les mailles qui n'en ont pas besoin. La liste ne propose que les consoles du modèle retenu et gardées dans les Paramètres par défaut.</p>
+      <ul>
+        <li>Selon la fixation, un poteau est posé en bout de console (chape ou nipple) ; une console à platine ne peut pas en recevoir et une alerte le signale.</li>
+        <li>Là où la maille voisine n'a pas de console, l'about de la console reçoit un garde-corps en lisses avec plinthe.</li>
+        <li>Côté mur, le garde-corps en bout de console est toujours en lisses, avec plinthe.</li>
+      </ul>
+      <h4>Déport d'about</h4>
+      <p>D'un <b>clic droit sur un about</b> dans le dessin, le menu <span class="ui">Remplacer l'about par</span> propose une autre protection, un <b>déport en console</b> ou le retour aux paramètres. Le déport pose deux consoles, leurs poteaux, une lisse de pied, des plateaux et des garde-corps en lisses avec plinthes. Le choix est enregistré dans le projet.</p>
+    </div>
+    <figure><img src="images/3d/deport-console.jpg" alt=""><figcaption><b>Déport en console</b> à l'about gauche (niveau 4 m), console sur la 2e maille et poutre de franchissement à droite, avec le mur du bâtiment.</figcaption></figure>
+  </div>
+
+  <h3 id="s8-2"><span class="n">8.2</span>Pare-gravois</h3>
+  <div class="cote large">
+    <div>
+      <p>Cocher <b>Pare-grav.</b> dans la grille des niveaux : consoles de pare-gravois, tôles inclinées tous les 0,80 m, crochets et lisses sont posés sur les mailles cochées dans la colonne PareGrav<i>X</i>m (toutes à la création).</p>
+      <p>L'exemple ci-contre montre aussi les trappes et plateaux acier et le portillon d'about posé quand le premier plancher est à 1 m.</p>
+    </div>
+    <figure><img src="images/3d/pare-gravois-trappes.jpg" alt=""><figcaption><b>Pare-gravois à 2 m</b> sur S1 d'une structure en L, trappes acier.</figcaption></figure>
+  </div>
+
+  <h3 id="s8-3"><span class="n">8.3</span>Sous-mailles rapportées et stabilisation</h3>
+  <div class="cote large">
+    <div>
+      <p>Les types « Travail + … » ajoutent une sous-maille côté extérieur, portée par une file de poteaux supplémentaire :</p>
+      <ul>
+        <li><b>Accès rapporté 0,70 m</b> : trappes et échelles en sens alterné sur toute la hauteur, la maille principale garde ses planchers.</li>
+        <li><b>Appro 2,00 m</b> : plancher, poutrelles et garde-corps basculant aux niveaux cochés dans la colonne <b>Appro</b>.</li>
+        <li><b>Recette</b> : plancher et garde-corps en lisses, profondeur choisie, aux niveaux cochés dans la colonne <b>Recette</b>.</li>
+      </ul>
+      <p>Aux niveaux desservis, la maille principale n'a pas de garde-corps extérieur. Si aucun niveau n'est coché, une alerte le signale.</p>
+      <p>La sous-maille monte toujours <b>jusqu'à la hauteur max de sa maille</b> (colonne Ht max), y compris quand la maille dépasse le dernier plancher de la face.</p>
+      <p>La colonne <b>Stab.</b> ajoute une <b>stabilisation</b> : une file à la distance choisie, reliée par des lisses et des diagonales jusqu'à 2 m sous le dernier plancher. La case <b>Lest</b> de la maille ajoute un <b>platelage à 0,50 m</b> entre la file extérieure et la file de stabilisation, pour y poser du lest : plateaux de la longueur de la maille, sur lisses porteuses (renforcées à partir de 1,50 m de profondeur). Les diagonales en travers intermédiaires de la première levée sont alors supprimées, car elles traverseraient les plateaux ; celles des abouts de la stabilisation restent.</p>
+    </div>
+    <figure><img src="images/3d/sous-mailles.jpg" alt=""><figcaption>De gauche à droite : <b>stabilisation</b>, <b>accès rapporté</b>, <b>appro</b> et <b>recette</b>.</figcaption></figure>
+  </div>
+
+  <h3 id="s8-4"><span class="n">8.4</span>Escaliers</h3>
+  <div class="cote large">
+    <div>
+      <p>Trois types de maille (mailles de 2,50 ou 3,00 m) ajoutent une tour d'escalier côté extérieur :</p>
+      <ul>
+        <li><b>Escalier 1,50</b> : deux volées par niveau en sens alterné, garde-corps des deux côtés de chaque volée ;</li>
+        <li><b>Demi-escalier 0,70</b> ou <b>1,00</b> : une volée par niveau, toujours dans le même sens.</li>
+      </ul>
+      <p>La tour reçoit ses traverses renforcées, lisses, plinthes et diagonales ; côté maille, le garde-corps est remplacé par une fermeture ouverte au bout d'arrivée. Volées et garde-corps de volée sont dessinés en bleu.</p>
+      <p>Avec un <b>premier plancher à 1 m</b>, la première volée sort de la tour sur la maille voisine, pied au sol.</p>
+    </div>
+    <figure><img src="images/3d/escaliers.jpg" alt=""><figcaption><b>Escalier 1,50</b> (à gauche) et <b>demi-escalier 1,00</b> (à droite).</figcaption></figure>
+  </div>
+  <figure><img src="images/3d/premier-plancher-1m.jpg" alt=""><figcaption><b>Vue de façade, premier plancher à 1 m</b> : la volée de 1 m sort de la tour d'escalier ; stabilisation à gauche.</figcaption></figure>
+
+  <h3 id="s8-5"><span class="n">8.5</span>Hauteurs par maille (Ht max)</h3>
+  <div class="cote large">
+    <div>
+      <p>La colonne <b>Ht max</b> donne le dernier plancher de chaque maille. Plus bas que la face : la maille s'arrête. Plus haut : des planchers sont ajoutés tous les 2 m (pignon, cage d'ascenseur…).</p>
+      <p>Les abouts reçoivent leurs garde-corps du côté de la voisine plus basse, et une maille qui dépasse ses voisines a un plateau à trappe à chaque plancher qu'aucune voisine n'atteint. Un écart qui n'est pas un multiple de 2 m est refusé avec une alerte.</p>
+    </div>
+    <figure><img src="images/3d/ht-max.jpg" alt=""><figcaption>Une maille <b>arrêtée à 4 m</b>, une autre <b>montée à 8 m</b>.</figcaption></figure>
+  </div>
+
+  <h3 id="s8-6"><span class="n">8.6</span>Poutre de franchissement</h3>
+  <div class="cote large">
+    <div>
+      <p>Pour enjamber un passage, saisir dans la colonne <b>Poutre</b> la hauteur du plancher porté, sur la maille de gauche d'une paire de mailles de travail identiques.</p>
+      <p>MultiDEC pose deux poutres 0,50 m sous ce plancher, supprime la file du milieu en dessous, ajoute les tubes en diagonale horizontale, les diagonales en V au-dessus et les abouts sur les mailles voisines. La maille d'avant et celle d'après reçoivent des diagonales verticales d'office, côté extérieur et, s'il y a une protection intérieure, côté intérieur. Si les conditions ne sont pas réunies (par exemple sur la première ou la dernière maille), la poutre est ignorée et une alerte l'explique.</p>
+      <p>Avec <span class="ui">Dessiner façade</span>, le mur laisse un passage sous la poutre.</p>
+    </div>
+    <figure><img src="images/3d/poutre-pignon.jpg" alt=""><figcaption><b>Poutre</b> au niveau 4 m sur deux mailles, et maille d'accès montée plus haut.</figcaption></figure>
+  </div>
+
+  <h3 id="s8-7"><span class="n">8.7</span>Sol en pente (Départ)</h3>
+  <div class="cote large">
+    <div>
+      <p>La colonne <b>Départ</b> donne la hauteur du pied de chaque maille, par pas de 0,50 m. Une file part du plus bas départ de ses deux mailles ; rien n'est posé sous le départ (planchers, traverses, diagonales, amarrages).</p>
+      <p>Le départ est ignoré, avec une alerte, sur une maille à sous-maille rapportée, à escalier, à stabilisation ou à poutre.</p>
+    </div>
+    <figure><img src="images/3d/sol-en-pente.jpg" alt=""><figcaption>Départs à <b>0 / 0,50 / 1,00 / 1,50 m</b>.</figcaption></figure>
+  </div>
+
+  <h3 id="s8-8"><span class="n">8.8</span>Amarrages</h3>
+  <p>Chaque amarrage comprend un tube d'amarrage (le plus court couvrant la largeur, la distance à la façade et 10 cm), deux colliers fixes dessinés sur les poteaux, un piton <span class="ref">EZPITON12</span> et une cheville <span class="ref">EZCHEVILLE14</span> (ces deux derniers dans le décompte seulement). Sur le dessin, les amarrages apparaissent sous la forme d'un cercle barré d'une croix, en attendant les blocs définitifs.</p>
+
+  <h3 id="s8-9"><span class="n">8.9</span>Façade du bâtiment</h3>
+  <div class="cote large">
+    <div>
+      <p>La case <span class="ui">Dessiner façade</span> du ruban dessine le mur du bâtiment à la distance à la façade de la file intérieure, aussi haut que l'échafaudage. Les murs de deux faces voisines se raccordent dans l'angle, sortant ou rentrant. Le mur est recalculé à chaque dessin.</p>
+      <p>Une console ne traverse pas le mur : derrière une maille à consoles, le mur est <b>renfoncé</b> et reste à la distance à la façade du bout de la console. Si la maille a des consoles à tous ses niveaux, le renfoncement occupe toute la hauteur du mur ; sinon il va de 0,10 m sous le point le plus bas de la console à 2 m au-dessus de son plancher.</p>
+    </div>
+    <figure><img src="images/3d/dessiner-facade.jpg" alt=""><figcaption><b>Structure en L</b> avec le mur du bâtiment.</figcaption></figure>
+  </div>
+</section>
+
+<!-- ===================== 9. DESSIN 3D ===================== -->
+<section class="chapitre" id="c9">
+  <div class="entete-chap"><span class="num">9</span><div><h2>Le dessin 3D</h2><p>Dessiner, regarder, corriger</p></div></div>
+
+  <h3 id="s9-1"><span class="n">9.1</span>Dessiner</h3>
+  <p><span class="ui">Dessiner</span> génère toutes les faces, met à jour le décompte, la liste des amarrages et les alertes. Si une face est à valider (bouton rouge), le dessin est refusé et l'onglet de cette face s'ouvre.</p>
+
+  <h3 id="s9-2"><span class="n">9.2</span>Vues et rendus</h3>
+  <ul>
+    <li>Molette : zoom. Bouton du milieu enfoncé : déplacement.</li>
+    <li>Vues normalisées : <span class="ui">Iso</span>, <span class="ui">Façade</span>, <span class="ui">Dessus</span>, <span class="ui">Côté gauche</span>, <span class="ui">Côté droit</span>, et <span class="ui">Zoom tout</span>.</li>
+    <li>Rendus : Filaire, Lignes cachées, Ombré, Ombré + arêtes, Réaliste. Le rendu par défaut se règle dans les Paramètres par défaut.</li>
+    <li>L'élément sous le curseur est surligné en rouge. Chaque face a sa couleur pastel, reprise sur l'onglet de ses grilles.</li>
+  </ul>
+
+  <h3 id="s9-3"><span class="n">9.3</span>Clic droit dans le dessin</h3>
+  <table>
+    <tr><th style="width:34%">Commande</th><th>Effet</th></tr>
+    <tr><td>Remplacer l'about par</td><td>Visible sur un about ou un déport : autre protection, déport en console (liste des consoles compatibles) ou retour aux paramètres. Le dessin est refait aussitôt.</td></tr>
+    <tr><td>Supprimer la sélection</td><td>Retire les blocs sélectionnés ; le décompte suit. Les pièces supprimées sont enregistrées avec le projet et restent retirées à chaque <span class="ui">Dessiner</span> (une alerte en donne le nombre).</td></tr>
+    <tr><td>Rétablir les pièces supprimées (N)</td><td>Visible quand des pièces ont été supprimées : les remet toutes et refait le dessin.</td></tr>
+    <tr><td>Zoom tout</td><td>Recadre toute la structure.</td></tr>
+  </table>
+  <div class="deux">
+    <figure><img src="images/3d/ombre-aretes.jpg" style="height:82mm;margin:auto" alt=""><figcaption>Rendu <b>Ombré + arêtes</b>.</figcaption></figure>
+    <figure><img src="images/3d/mur-ouvert.jpg" style="height:82mm;margin:auto" alt=""><figcaption><b>Vue côté bâtiment</b> de l'exemple 8.1 : mur ouvert sous la poutre, et renfoncé derrière la console du niveau 4 m.</figcaption></figure>
+  </div>
+</section>
+
+<!-- ===================== 10. RÉSULTATS ===================== -->
+<section class="chapitre" id="c10">
+  <div class="entete-chap"><span class="num">10</span><div><h2>Décompte, amarrages et alertes</h2><p>Les résultats du dessin</p></div></div>
+
+  <h3 id="s10-1"><span class="n">10.1</span>Décompte</h3>
+  <p>Une ligne par référence : famille, référence, désignation, quantité, poids unitaire et poids total. Désignations, poids et ordre de classement viennent du fichier <b>multidec.bib</b>. Le total (références, pièces, poids) est rappelé sous le tableau.</p>
+  <h4>Modifier le décompte</h4>
+  <ul>
+    <li><b>Changer une quantité</b> : double-cliquer la quantité, taper la nouvelle valeur, puis <span class="ui">Entrée</span>. Les poids et le total suivent. La ligne passe en jaune, repérée <b>M</b> ; la colonne <i>Calculée</i> rappelle la quantité issue du dessin. Une quantité à 0 retire la ligne de la liste du matériel.</li>
+    <li><b>Ajouter une référence</b> : taper une référence RETOTUB ou une référence client dans <span class="ui">Ajouter la référence</span>, la quantité, puis <span class="ui">Ajouter</span> (ou <span class="ui">Entrée</span>). Désignation, poids et famille sont repris de multidec.bib. La ligne passe en bleu, repérée <b>*</b>, et porte un astérisque dans la liste du matériel. Une référence déjà présente voit sa quantité augmentée ; une référence inconnue peut être ajoutée après confirmation, sans désignation ni poids (famille <i>Divers</i>).</li>
+    <li><b>Revenir en arrière</b> : <span class="ui">Rétablir la ligne</span> remet la quantité calculée de la ligne sélectionnée (ou retire la référence ajoutée) ; <span class="ui">Tout rétablir</span> retire toutes les modifications.</li>
+  </ul>
+  <p>Les modifications sont enregistrées avec le projet (.mdc3) et conservées quand on redessine : une quantité modifiée reste imposée même si le dessin change. Le total sous le tableau indique combien de quantités ont été modifiées et de références ajoutées.</p>
+  <figure><img src="images/ihm/decompte-modifie.png" alt=""><figcaption><b>Décompte modifié à la main</b> : une quantité modifiée (M, en jaune, quantité calculée à côté) et une référence ajoutée (*, en bleu).</figcaption></figure>
+  <h4>Travailler en références client</h4>
+  <p>La liste <span class="ui">Références affichées</span>, en haut de l'onglet, choisit les références du décompte :</p>
+  <ul>
+    <li><b>RETOTUB</b> (par défaut) ;</li>
+    <li><b>Client LV Tec</b> : les références LV Tec sont intégrées à MultiDEC (par exemple <span class="ref">HMSOCREG</span> → <span class="ref">A1SOR050_L</span>) ;</li>
+    <li><b>Client (fichier de correspondance)</b> : un fichier CSV choisi dans les Paramètres par défaut, onglet Fichiers, avec la référence RETOTUB en 1re colonne et la référence client en 2e (séparateur point-virgule).</li>
+  </ul>
+  <p>En références client, la colonne <b>Réf. RETOTUB</b> s'affiche à côté de la référence du client. Une pièce sans équivalent garde sa référence RETOTUB ; la liste de ces pièces est rappelée sous le tableau. Le choix par défaut se règle dans les Paramètres par défaut, onglet <span class="ui">Fichiers</span> (<i>Références affichées</i>).</p>
+  <figure><img src="images/ihm/decompte-lvtec.png" alt=""><figcaption><b>Décompte en références LV Tec</b> : référence client, référence RETOTUB à côté ; les chevilles d'amarrage n'ont pas d'équivalent LV Tec.</figcaption></figure>
+  <figure><img src="images/ihm/decompte.png" alt=""><figcaption><b>Onglet Décompte.</b></figcaption></figure>
+
+  <h3 id="s10-2"><span class="n">10.2</span>Amarrages</h3>
+  <p>La position de chaque amarrage : face, numéro de file, abscisse dans la face et hauteur. Leur nombre est aussi affiché dans la barre d'état.</p>
+  <figure><img src="images/ihm/amarrages.png" alt=""><figcaption><b>Onglet Amarrages</b> : files d'extrémité tous les 4 m, files courantes tous les 8 m en quinconce.</figcaption></figure>
+
+  <h3 id="s10-3"><span class="n">10.3</span>Alertes</h3>
+  <p>L'onglet indique entre parenthèses le nombre d'alertes. On y trouve les réglages ignorés (poutre impossible, départ sur une maille qui ne l'accepte pas…), les blocs absents de la bibliothèque et les conseils de sécurité (note de calcul, diagonales renforcées…).</p>
+  <figure><img src="images/ihm/alertes.png" alt=""><figcaption><b>Onglet Alertes</b> : une poutre demandée sur la première maille est ignorée.</figcaption></figure>
+  <div class="encadre"><span class="titre">Conseil</span><p>Consulter les alertes après chaque dessin : un réglage ignoré n'empêche pas le dessin, mais il n'apparaît pas sur la structure.</p></div>
+</section>
+
+<!-- ===================== 11. PARAMÈTRES PAR DÉFAUT ===================== -->
+<section class="chapitre" id="c11">
+  <div class="entete-chap"><span class="num">11</span><div><h2>Paramètres par défaut</h2><p>Menu Outils › Paramètres par défaut…</p></div></div>
+
+  <p>Ces réglages sont propres à chaque utilisateur Windows. Ils s'appliquent à chaque <span class="ui">Nouveau</span> et à l'ouverture du programme.</p>
+  <figure><img src="images/ihm/parametres.png" alt=""><figcaption><b>Onglet Listes de choix.</b></figcaption></figure>
+
+  <div class="cote large">
+    <div>
+      <h3 id="s11-1"><span class="n">11.1</span>Les trois onglets</h3>
+      <ul>
+        <li><b>Listes de choix</b> : pour chaque liste (modèle, plateaux, socles, protections, plinthes, consoles, forme, rendu…), la valeur par défaut et les valeurs proposées. Décocher une valeur la retire des listes de l'application ; une valeur utilisée par un projet ouvert reste toutefois proposée.</li>
+        <li><b>Cases et cotes</b> : l'état initial des cases à cocher et les cotes de départ (longueur, dernier plancher, distance à la façade).</li>
+        <li><b>Fichiers</b> : bibliothèque de blocs et catalogue multidec.bib (fichiers installés par défaut, voir chapitre 2), trame Excel des devis, références clients (fichier CSV de correspondance, voir 10.1), logo client, <i>Références affichées</i> par défaut dans le décompte (RETOTUB, LV Tec ou fichier client), « Établi par » des plans et réglages de la liste du matériel.</li>
+      </ul>
+      <h3 id="s11-2"><span class="n">11.2</span>Boutons</h3>
+      <ul>
+        <li><span class="ui">Exporter…</span> / <span class="ui">Importer…</span> : fichier <b>.mdcpar</b> pour transmettre ses réglages à un collègue.</li>
+        <li><span class="ui">Paramètres d'usine</span> : revient aux valeurs livrées.</li>
+        <li><span class="ui">Enregistrer</span> / <span class="ui">Annuler</span>.</li>
+      </ul>
+    </div>
+    <figure><img src="images/ihm/parametres-cases.png" alt=""><figcaption><b>Onglet Cases et cotes.</b></figcaption></figure>
+  </div>
+</section>
+
+<!-- ===================== 12. MISE EN PLAN ===================== -->
+<section class="chapitre" id="c12">
+  <div class="entete-chap"><span class="num">12</span><div><h2>Mise en plan</h2><p>Plans A3 cotés en PDF, affichés dans MultiDEC</p></div></div>
+
+  <h3 id="s12-1"><span class="n">12.1</span>Produire les plans</h3>
+  <p>Bouton <span class="ui">Mise en plan</span> du ruban (groupe <i>Sortie</i>). MultiDEC redessine la structure, compose les feuilles, écrit un PDF et l'ouvre dans sa visionneuse intégrée. Toutes les faces doivent être validées (aucun bouton rouge). Aucune installation n'est nécessaire : la visionneuse utilise le moteur PDF de Chrome (PDFium), livré avec MultiDEC.</p>
+  <p>Dans la visionneuse :</p>
+  <ul>
+    <li>zoom et défilement des pages ;</li>
+    <li><span class="ui">Enregistrer sous…</span> propose « Plan - <i>chantier</i>.pdf » ;</li>
+    <li><span class="ui">Imprimer…</span> imprime en A3 paysage ;</li>
+    <li><span class="ui">Ouvrir dans le lecteur PDF</span> ouvre le même fichier dans le lecteur du poste.</li>
+  </ul>
+
+  <h3 id="s12-2"><span class="n">12.2</span>Les feuilles</h3>
+  <p>Toutes les feuilles sont au format <b>A3 paysage</b>. Les vues sont dessinées en couleur comme à l'écran et cotées en mètres, à une échelle normalisée (1/50, 1/75, 1/100…) indiquée sous chaque vue.</p>
+  <ol>
+    <li><b>Vue de dessus</b> : mailles en chaîne et longueur de chaque face (côté extérieur), largeur de la structure et distance à la façade.</li>
+    <li><b>Élévation de chaque face</b>, vue de l'extérieur. Elle cote les mailles en chaîne et la longueur totale (en bas), ainsi que les niveaux et la hauteur totale (à gauche). Les altitudes des planchers (« +2,00 ») sont à droite. Les amarrages sont repérés par un triangle bleu et les détails par un cadre rouge avec leur lettre.</li>
+    <li><b>Profils gauche et droit</b> (bouts de la structure) : distance au mur, largeur entre files, encombrement total (consoles comprises) et niveaux.</li>
+    <li><b>Vues isométriques</b> côté extérieur et côté bâtiment, sans échelle.</li>
+    <li><b>Détails</b>, créés seulement s'ils existent : accès, escalier, poutre de franchissement, console, pare-gravois, recette, about modifié. Un détail par sorte, repéré par la même lettre sur toutes les élévations où il apparaît.</li>
+  </ol>
+  <figure><img src="images/plans/elevation.png" alt=""><figcaption><b>Élévation d'une façade de 15 m</b> : mailles et niveaux cotés, amarrages, détail A (maille d'accès), cartouche.</figcaption></figure>
+  <figure><img src="images/plans/dessus-L.png" alt=""><figcaption><b>Vue de dessus d'une structure en L</b> : chaîne des mailles et longueur de chaque face, largeur et distance à la façade.</figcaption></figure>
+  <figure><img src="images/plans/profils.png" alt=""><figcaption><b>Profils</b> : distance au mur, largeur, encombrement et niveaux, à la même échelle.</figcaption></figure>
+
+  <h3 id="s12-3"><span class="n">12.3</span>Le cartouche</h3>
+  <ul>
+    <li>Logo RETOTUB (logo 2017), logo du modèle (Multi-RETO ou Multi-SYSTEM) et mention « Plan établi avec MultiDEC » suivie de la version et du build.</li>
+    <li><b>Logo client</b> : l'image choisie dans les Paramètres par défaut, onglet Fichiers.</li>
+    <li><b>Projet</b> : client, chantier, référence de l'étude, date et « Établi par ». Ce nom se règle dans les Paramètres par défaut, onglet Fichiers ; à défaut, c'est le nom de session Windows.</li>
+    <li><b>Structure</b> : forme, modèle, plateaux, protections, abouts, bâche.</li>
+    <li><b>Faces</b> : longueur, hauteur et nombre d'amarrages de chaque face ; poids total du matériel. Au-delà de la hauteur réglementaire, la mention « note de calcul obligatoire » est ajoutée en rouge.</li>
+    <li>Titre de la feuille, échelle, indice et numéro de page.</li>
+  </ul>
+  <h3 id="s12-4"><span class="n">12.4</span>Liste du matériel</h3>
+  <p>Bouton <span class="ui">Liste matériel</span> du ruban (groupe <i>Sortie</i>) : le décompte en PDF <b>A4 portrait</b>, ouvert dans la même visionneuse (enregistrement proposé sous « Liste matériel - <i>chantier</i>.pdf »).</p>
+  <ul>
+    <li><b>En-tête</b> : logo client (Paramètres par défaut ; à défaut, logo RETOTUB), chantier, client, référence de l'étude et date du projet.</li>
+    <li><b>Tableau</b> : mêmes informations que l'onglet Décompte (référence, désignation, quantité, poids unitaire et total), regroupées par famille. En références client, les colonnes « Réf. client » et « Réf. RETOTUB » sont toutes deux imprimées.</li>
+    <li><b>Total</b> : nombre de références, de pièces et poids total. Les références ajoutées à la main dans le décompte portent un astérisque, expliqué sous le total.</li>
+    <li><b>Alertes</b> sous le tableau : celles de l'onglet Alertes, plus les références sans poids ou sans correspondance client.</li>
+    <li><b>Réglages</b> (Paramètres par défaut, onglet Fichiers, « Liste du matériel (PDF) ») : <span class="ui">Afficher la référence RETOTUB</span> ; décochée, la liste n'a plus de colonne de référence, ou seulement celle du client quand on travaille en références client. <span class="ui">Afficher les familles</span> ; décochée, le matériel reste classé par famille mais sans bandeau.</li>
+    <li><b>Pied de page</b> : « Décompte réalisé avec MultiDEC v3 » et numéro de page. Une longue liste continue sur plusieurs pages, l'en-tête du tableau étant répété.</li>
+  </ul>
+  <figure><img src="images/plans/liste-materiel.png" alt="" style="width:58%"><figcaption><b>Liste du matériel</b> d'une façade de 15 m, sans logo client (logo RETOTUB).</figcaption></figure>
+  <div class="encadre"><span class="titre">Bon à savoir</span><p>Le PDF de travail est écrit dans le dossier temporaire de Windows (<b>%TEMP%\MultiDEC\Plans</b>). Pour le garder, utilisez <span class="ui">Enregistrer sous…</span>.</p></div>
+</section>
+
+<!-- ===================== 12. FICHIERS ===================== -->
+<section class="chapitre" id="c13">
+  <div class="entete-chap"><span class="num">13</span><div><h2>Projets et suite</h2><p>Enregistrer, ouvrir, et ce qui arrive ensuite</p></div></div>
+
+  <h3 id="s13-1"><span class="n">13.1</span>Enregistrer et ouvrir</h3>
+  <p>Un projet MultiDEC v3 est un fichier <b>.mdc3</b>. Il contient les réglages du projet, des faces, les grilles éditées à la main, les abouts remplacés et les pièces supprimées au clic droit : tout ce qu'il faut pour retrouver le même modèle 3D. <span class="ui">Enregistrer sous…</span> propose la référence étude comme nom de fichier. À l'ouverture, le modèle est redessiné automatiquement avec le décompte et les amarrages (si toutes les faces sont validées).</p>
+
+  <h3 id="s13-2"><span class="n">13.2</span>Exporter le modèle</h3>
+  <p><span class="ui">Fichier &gt; Exporter le modèle…</span> enregistre le dessin affiché dans un fichier autonome, lisible sans MultiDEC : <b>DWG</b> et <b>DXF</b> (version AutoCAD au choix), <b>PDF</b>, <b>DGN</b>, <b>STL</b>, images <b>PNG</b>/<b>EMF</b>, ou formats VectorDraw (VDML, VDCL). Seuls les blocs utilisés par le modèle sont exportés, pas toute la bibliothèque (un DWG de façade pèse moins de 1 Mo). Le SVG, proposé par VectorDraw, ne contient pas les volumes 3D.</p>
+
+  <h3 id="s13-3"><span class="n">13.3</span>Prochaines versions</h3>
+  <ul>
+    <li><b>Devis</b> : à partir du décompte, dans la trame Excel choisie dans les Paramètres par défaut.</li>
+  </ul>
+
+  <h3 id="s13-4"><span class="n">13.4</span>Lexique</h3>
+  <dl class="lexique">
+    <dt>File de poteaux</dt><dd>Alignement de poteaux verticaux. Une façade standard a une file intérieure (côté mur) et une file extérieure (côté vide).</dd>
+    <dt>Maille</dt><dd>Intervalle entre deux poteaux d'une file, de 0,70 à 3,00 m.</dd>
+    <dt>Niveau</dt><dd>Hauteur d'un plancher ; les niveaux sont espacés de 2 m, les rosaces des poteaux tous les 0,50 m.</dd>
+    <dt>About</dt><dd>Bout de la structure ou d'une console, fermé par un garde-corps d'about.</dd>
+    <dt>Carré d'angle</dt><dd>Première maille d'une face à partir de S2, qui la raccorde à la face précédente.</dd>
+    <dt>Console</dt><dd>Élargissement du plancher côté mur, fixé sur les poteaux intérieurs.</dd>
+    <dt>Déport</dt><dd>Plancher en console prolongeant la structure au-delà de son about.</dd>
+    <dt>Sous-maille rapportée</dt><dd>Accès, appro ou recette accolé côté extérieur d'une maille de travail.</dd>
+    <dt>Recette</dt><dd>Plate-forme de réception de charges.</dd>
+    <dt>Stabilisation</dt><dd>File supplémentaire écartée de la structure et reliée par lisses et diagonales, lorsqu'on ne peut pas amarrer.</dd>
+  </dl>
+</section>
+
+<script>
+  // Sommaire construit depuis les titres ; les numéros de page sont injectés par generer.py (seconde passe).
+  const pages = window.PAGES || {};
+  const toc = document.getElementById('toc');
+  document.querySelectorAll('section.chapitre').forEach(sec => {
+    const num = sec.querySelector('.entete-chap .num').textContent;
+    const titre = sec.querySelector('.entete-chap h2').textContent;
+    toc.insertAdjacentHTML('beforeend', `<li class="chap"><a href="#${sec.id}"><span class="n">${num}</span><span class="t">${titre}</span><span class="p">${pages[sec.id] || ''}</span></a></li>`);
+    sec.querySelectorAll('h3[id]').forEach(h => {
+      const n = h.querySelector('.n').textContent;
+      const t = h.textContent.replace(n, '');
+      toc.insertAdjacentHTML('beforeend', `<li class="sec"><a href="#${h.id}"><span class="n">${n}</span><span class="t">${t}</span><span class="p">${pages[h.id] || ''}</span></a></li>`);
+    });
+  });
+</script>
+</body>
+</html>

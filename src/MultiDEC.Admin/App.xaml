@@ -1,0 +1,9 @@
+<Application x:Class="MultiDEC.Admin.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             StartupUri="MainWindow.xaml">
+  <Application.Resources>
+    <SolidColorBrush x:Key="Discret" Color="#57606A" />
+    <SolidColorBrush x:Key="Bleu" Color="#1F5FA8" />
+  </Application.Resources>
+</Application>

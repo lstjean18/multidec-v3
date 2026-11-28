@@ -1,0 +1,24 @@
+<Project>
+  <!-- Réglages communs à tous les projets de la solution. -->
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <Company>RETOTUB</Company>
+    <Product>MultiDEC v3</Product>
+    <Version>3.0.0-alpha</Version>
+    <NeutralLanguage>fr-FR</NeutralLanguage>
+  </PropertyGroup>
+
+  <!--
+    Dossier des DLL VectorDraw Developer Framework 9.9003.
+    Valeur par défaut = installation standard ; à surcharger sur un poste en créant
+    un fichier Directory.Build.props.user (non versionné) à la racine :
+      <Project><PropertyGroup><VectorDrawDir>D:\...\</VectorDrawDir></PropertyGroup></Project>
+  -->
+  <Import Project="Directory.Build.props.user" Condition="Exists('$(MSBuildThisFileDirectory)Directory.Build.props.user')" />
+  <PropertyGroup>
+    <VectorDrawDir Condition="'$(VectorDrawDir)' == ''">C:\Program Files (x86)\VectorDraw\Common\</VectorDrawDir>
+  </PropertyGroup>
+</Project>

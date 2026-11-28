@@ -1,0 +1,226 @@
+name: Compilation
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: compilation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Tests du cœur métier sur un runner GitHub (pas besoin de VectorDraw).
+  tests:
+    name: Tests du cœur (Linux)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: Tests
+        run: dotnet test tests/MultiDEC.Core.Tests --configuration Release --logger "console;verbosity=normal"
+
+  # Solution complète sur le serveur de dev (runner auto-hébergé : VS 2022 + licence VectorDraw 9.9003).
+  solution:
+    name: Solution complète (serveur de dev)
+    runs-on: [self-hosted, Windows]
+    defaults:
+      run:
+        working-directory: ci
+    env:
+      # Le service du runner tourne sous un compte système : son profil NuGet par défaut
+      # (C:\Windows\system32\config\systemprofile) est redirigé pour les processus 32 bits et
+      # les paquets restaurés y deviennent introuvables. On fixe un cache dans le dossier du runner.
+      NUGET_PACKAGES: ${{ github.workspace }}\..\_nuget
+      # Bibliothèque de blocs pour le test de la façade réelle (dossier ou fichier).
+      MULTIDEC_BIBLIOTHEQUE: 'X:\Commun\0 -- Blocs RETOTUB - CLIENT\ÉCHAFAUDAGE\AUTOCAD'
+    steps:
+      # Sources dans le sous-dossier « ci » : si MultiDEC a été lancé depuis l'ancien emplacement
+      # (_work\multidec-v3\multidec-v3\src\...), ses fichiers verrouillés ne bloquent plus le checkout.
+      - uses: actions/checkout@v4
+        with:
+          path: ci
+
+      - name: Vérifier VectorDraw
+        shell: powershell
+        run: |
+          $vd = 'C:\Program Files (x86)\VectorDraw\Common\'
+          if (-not (Test-Path (Join-Path $vd 'VectorDraw.Professional.dll'))) {
+            Write-Error "DLL VectorDraw introuvables dans $vd"
+            exit 1
+          }
+          Get-ChildItem $vd -Filter '*.dll' | Select-Object Name, @{n='Version';e={$_.VersionInfo.FileVersion}} | Format-Table -AutoSize
+
+      - name: Compiler (MSBuild VS 2022)
+        shell: powershell
+        run: |
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $msbuild = & $vswhere -latest -version '[17.0,18.0)' -requires Microsoft.Component.MSBuild -find 'MSBuild\**\Bin\MSBuild.exe' | Select-Object -First 1
+          if (-not $msbuild) { Write-Error 'MSBuild de Visual Studio 2022 introuvable'; exit 1 }
+          Write-Host "MSBuild : $msbuild"
+          & $msbuild MultiDEC.sln /restore /m /nologo /v:minimal /p:Configuration=Release /p:NumeroBuild=${{ github.run_number }} /clp:Summary
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          # Contenu de la sortie de l'application (contrôle des dépendances copiées : PDFium, logos…).
+          Get-ChildItem src\MultiDEC.App\bin\Release\net48 -Recurse -File | Where-Object { $_.Extension -ne '.xml' } |
+            ForEach-Object { $_.FullName.Substring((Resolve-Path src\MultiDEC.App\bin\Release\net48).Path.Length + 1) } |
+            Where-Object { $_ -notlike 'VectorDraw*' -and $_ -notlike 'vd*' } | Sort-Object | ForEach-Object { Write-Host "SORTIE $_" }
+
+      - name: Tests (serveur)
+        shell: powershell
+        run: |
+          dotnet test tests/MultiDEC.Core.Tests --configuration Release --no-build
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Tests du rendu VectorDraw (serveur)
+        shell: powershell
+        run: |
+          dotnet test tests/MultiDEC.Rendering.Tests --configuration Release --no-build --logger "console;verbosity=detailed"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Publier l'image du rendu (test de la façade réelle)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rendu-serveur-${{ github.sha }}
+          path: rendu-serveur/
+          if-no-files-found: ignore
+          retention-days: 14
+
+      # Installateur (sans signature) construit à chaque compilation, puis installé et désinstallé en silencieux.
+      - name: Installateur (Inno Setup) et test d'installation
+        shell: powershell
+        run: |
+          # Fichiers temporaires d'Inno Setup (is-*.tmp, _unins.tmp) dans le dossier du runner et non dans C:\Windows\Temp
+          # (compte SYSTEM) : l'antivirus WatchGuard y bloquait le désinstalleur non signé (Laurent, 27/11/2026).
+          $tempInno = Join-Path $env:RUNNER_TEMP 'inno-temp'
+          New-Item -ItemType Directory -Force -Path $tempInno | Out-Null
+          $env:TEMP = $tempInno
+          $env:TMP = $tempInno
+          Write-Host "TEMP : $env:TEMP"
+          $sortie = Join-Path $env:GITHUB_WORKSPACE 'installateur-ci'
+          # Dossier hors du checkout, conservé d'une compilation à l'autre : on le vide pour ne pas tester un ancien installateur.
+          if (Test-Path $sortie) { Remove-Item $sortie -Recurse -Force }
+          # Bibliothèque de blocs et multidec.bib livrés avec l'installateur : dossier actions-runner\bibliotheque.
+          $runner = (Resolve-Path (Join-Path $env:GITHUB_WORKSPACE '..\..\..')).Path
+          $bib = Get-ChildItem $runner -Directory | Where-Object { $_.Name -like 'biblioth*' } | Select-Object -First 1 -ExpandProperty FullName
+          Write-Host "Bibliothèque livrée : $bib"
+          .\publication\Publier-version.ps1 -Version 3.0.0.${{ github.run_number }} -Source src\MultiDEC.App\bin\Release\net48 -Destination $sortie -AdresseMisesAJour "$sortie" -Notes 'Compilation de test' -Bibliotheque $bib
+          $setup = Get-Item (Join-Path $sortie 'MultiDEC-v3-Setup-3.0.0.${{ github.run_number }}.exe')
+          Get-Content (Join-Path $sortie 'version.json')
+          $dossier = Join-Path $env:RUNNER_TEMP 'MultiDEC-installe'
+          # Lancement refusé (« Accès refusé ») juste après la construction : antivirus qui analyse l'exe non signé ? On réessaie et on trace.
+          Write-Host ("Signature : " + (Get-AuthenticodeSignature $setup.FullName).Status)
+          $p = $null
+          for ($essai = 1; $essai -le 6 -and -not $p; $essai++) {
+            try {
+              $p = Start-Process $setup.FullName -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/CURRENTUSER', '/NOLANCEMENT=1', "/DIR=`"$dossier`"", "/LOG=`"$sortie\installation.log`"" -Wait -PassThru
+            } catch {
+              Write-Warning "Essai $essai : $($_.Exception.Message)"
+              Start-Sleep -Seconds 10
+            }
+          }
+          if (-not $p) {
+            # Diagnostic : code d'erreur Windows, autre nom, autre dossier, exe Windows copié dans le même dossier.
+            whoami
+            $essais = @(
+              @{ n = 'CreateProcess direct'; f = $setup.FullName },
+              @{ n = 'copie renommee dans RUNNER_TEMP'; f = (Copy-Item $setup.FullName (Join-Path $env:RUNNER_TEMP 'mdc-inst.exe') -PassThru).FullName },
+              @{ n = 'whoami.exe copie dans installateur-ci'; f = (Copy-Item "$env:WINDIR\System32\whoami.exe" (Join-Path $sortie 'whoami-copie.exe') -PassThru).FullName }
+            )
+            foreach ($e in $essais) {
+              try {
+                $i = New-Object Diagnostics.ProcessStartInfo $e.f, '/?'
+                $i.UseShellExecute = $false
+                if ($e.n -like 'whoami*') { $i.Arguments = '' } else { $i.Arguments = '/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /CURRENTUSER /NOLANCEMENT=1 /DIR="' + $dossier + '"' }
+                $pr = [Diagnostics.Process]::Start($i); $pr.WaitForExit(); Write-Host "DIAG $($e.n) : lancé, code $($pr.ExitCode)"
+              } catch {
+                $w = $_.Exception.InnerException; if (-not $w) { $w = $_.Exception }
+                Write-Host "DIAG $($e.n) : $($w.Message) (code Win32 $($w.NativeErrorCode))"
+              }
+            }
+            Get-WinEvent -LogName 'Microsoft-Windows-AppLocker/EXE and DLL' -MaxEvents 3 -ErrorAction SilentlyContinue | Format-List TimeCreated, Message | Out-String | Write-Host
+            Get-WinEvent -FilterHashtable @{ LogName = 'Application'; StartTime = (Get-Date).AddMinutes(-5) } -MaxEvents 8 -ErrorAction SilentlyContinue | Format-List TimeCreated, ProviderName, Message | Out-String -Width 200 | Write-Host
+            try { Get-MpThreatDetection | Select-Object -Last 3 | Format-List | Out-String | Write-Host } catch { Write-Host "Defender : $($_.Exception.Message)" }
+            Get-Acl $setup.FullName | Format-List | Out-String | Write-Host
+            throw "Installateur impossible à lancer"
+          }
+          if ($p.ExitCode -ne 0) { Get-Content "$sortie\installation.log" -Tail 30; throw "Installation en échec ($($p.ExitCode))" }
+          foreach ($f in 'MultiDEC.exe', 'VectorDraw.Professional.dll', 'orientations-blocs.json', 'mise-a-jour.txt', 'PdfiumViewer.dll', 'x86\pdfium.dll', 'Logos\RETOTUB.png', 'MultiDEC-v3-Guide-utilisateur.pdf', 'Bibliotheque\Blocs 3D - Echafaudage.dwg', 'Bibliotheque\multidec.bib') {
+            if (-not (Test-Path (Join-Path $dossier $f))) {
+              Write-Host "INSTALLES : $((Get-ChildItem $dossier -Recurse -File | ForEach-Object { $_.FullName.Substring($dossier.Length + 1) }) -join ' | ')"
+              Select-String -Path "$sortie\installation.log" -Pattern ([IO.Path]::GetFileNameWithoutExtension($f)) | ForEach-Object { Write-Host "LOG $($_.Line)" }
+              Write-Host "SOURCE ETAPE : $(Test-Path (Join-Path 'src\MultiDEC.App\bin\Release\net48' $f))"
+              throw "Fichier absent après installation : $f"
+            }
+          }
+          Write-Host ("INSTALLATION OK : " + (Get-ChildItem $dossier -Recurse -File).Count + " fichiers dans $dossier ; installateur " + [math]::Round($setup.Length / 1MB, 1) + " Mo")
+          # Mise à jour sur place (même commande que MultiDEC) : réinstallation par-dessus l'installation existante.
+          $p = Start-Process $setup.FullName -ArgumentList '/SILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/CLOSEAPPLICATIONS', '/NOLANCEMENT=1' -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw "Mise à jour sur place en échec ($($p.ExitCode))" }
+          if (-not (Test-Path (Join-Path $dossier 'MultiDEC.exe'))) { throw "Mise à jour sur place : MultiDEC.exe absent de $dossier" }
+          Write-Host "MISE A JOUR SUR PLACE OK"
+          $desinstalleur = Join-Path $dossier 'unins000.exe'
+          $p = Start-Process $desinstalleur -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART' -Wait -PassThru
+          Start-Sleep -Seconds 3
+          if (Test-Path (Join-Path $dossier 'MultiDEC.exe')) { throw 'Désinstallation incomplète' }
+          Write-Host "DESINSTALLATION OK ($($p.ExitCode))"
+
+      - name: Publier l'installateur de test
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: MultiDEC-v3-installateur-${{ github.sha }}
+          path: installateur-ci/
+          if-no-files-found: ignore
+          retention-days: 14
+
+      # Copie de l'application hors du dossier de travail du runner : la lancer depuis _work
+      # verrouille les fichiers et fait échouer le checkout suivant.
+      - name: Installer l'application (actions-runner\MultiDEC-v3)
+        shell: powershell
+        continue-on-error: true
+        run: |
+          $dest = Join-Path $env:GITHUB_WORKSPACE '..\..\..\MultiDEC-v3'
+          robocopy src\MultiDEC.App\bin\Release\net48 $dest /MIR /NFL /NDL /NJH /NJS /R:1 /W:1 | Out-Null
+          if ($LASTEXITCODE -ge 8) {
+            # MultiDEC encore ouvert (éventuellement dans une autre session du serveur) : on dit qui, et on installe à côté.
+            Get-CimInstance Win32_Process -Filter "Name='MultiDEC.exe'" | ForEach-Object {
+              $o = Invoke-CimMethod -InputObject $_ -MethodName GetOwner
+              Write-Host "OUVERT : PID $($_.ProcessId), session $($_.SessionId), $($o.Domain)\$($o.User), $($_.ExecutablePath), lancé $($_.CreationDate)"
+            }
+            $dest = Join-Path $env:GITHUB_WORKSPACE '..\..\..\MultiDEC-v3-essai'
+            robocopy src\MultiDEC.App\bin\Release\net48 $dest /MIR /NFL /NDL /NJH /NJS /R:1 /W:1 | Out-Null
+            if ($LASTEXITCODE -ge 8) { Write-Warning "Copie impossible, aussi dans $dest" ; exit 1 }
+            Write-Warning ("MultiDEC-v3 verrouillé : application installée dans " + (Resolve-Path $dest))
+            exit 1
+          }
+          Write-Host ("Application installée dans " + (Resolve-Path $dest))
+          exit 0
+
+      - name: Publier l'application compilée
+        uses: actions/upload-artifact@v4
+        with:
+          name: MultiDEC-v3-${{ github.sha }}
+          path: ci/src/MultiDEC.App/bin/Release/net48/
+          retention-days: 14
+
+      # MultiDEC Admin (licences, publication) : copie à côté de l'application et artefact à transmettre.
+      - name: Installer MultiDEC Admin (actions-runner\MultiDEC-Admin)
+        shell: powershell
+        continue-on-error: true
+        run: |
+          $dest = Join-Path $env:GITHUB_WORKSPACE '..\..\..\MultiDEC-Admin'
+          robocopy src\MultiDEC.Admin\bin\Release\net48 $dest /MIR /NFL /NDL /NJH /R:1 /W:1
+          if ($LASTEXITCODE -ge 8) { Write-Warning "Copie incomplète : MultiDEC Admin est peut-être ouvert depuis $dest" ; exit 1 }
+          Write-Host ("MultiDEC Admin installé dans " + (Resolve-Path $dest))
+          exit 0
+
+      - name: Publier MultiDEC Admin
+        uses: actions/upload-artifact@v4
+        with:
+          name: MultiDEC-Admin-${{ github.sha }}
+          path: ci/src/MultiDEC.Admin/bin/Release/net48/
+          retention-days: 30

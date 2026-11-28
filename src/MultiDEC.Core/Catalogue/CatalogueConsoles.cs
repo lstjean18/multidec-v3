@@ -1,0 +1,136 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using MultiDEC.Core.Facade;
+using MultiDEC.Core.Geometrie;
+
+namespace MultiDEC.Core.Catalogue;
+
+/// <summary>Fixation au bout d'une console (Laurent, 24/11/2026).</summary>
+public enum FixationBout
+{
+    /// <summary>Platine : aucun poteau possible en bout, donc ni lisse ni garde-corps.</summary>
+    Platine,
+
+    /// <summary>
+    /// Chape : en Multi-RETO, poteau de départ HMPOTDP10 directement pour le garde-corps ; en Multi-SYSTEM, embase HMEMB
+    /// (pour accrocher la lisse) puis HMPOT10 dessus s'il faut le garde-corps.
+    /// </summary>
+    Chape,
+
+    /// <summary>Nipple : embase intégrée, lisses accrochées directement au bout, poteau posé dessus s'il faut le garde-corps.</summary>
+    Nipple,
+}
+
+/// <summary>Caractéristiques d'une console.</summary>
+public sealed class ConsoleInfo
+{
+    public ConsoleInfo(string reference, double largeur, FixationBout fixation, bool multiReto, bool multiSystem)
+    {
+        Reference = reference;
+        Largeur = largeur;
+        Fixation = fixation;
+        MultiReto = multiReto;
+        MultiSystem = multiSystem;
+    }
+
+    public string Reference { get; }
+
+    /// <summary>Débord de la console vers la façade (m).</summary>
+    public double Largeur { get; }
+
+    public FixationBout Fixation { get; }
+
+    /// <summary>Compatible Multi-RETO (et Multi-RETO à embase).</summary>
+    public bool MultiReto { get; }
+
+    /// <summary>Compatible Multi-SYSTEM.</summary>
+    public bool MultiSystem { get; }
+
+    /// <summary>Un poteau peut être posé en bout (pas sur une platine).</summary>
+    public bool PorteGardeCorps => Fixation != FixationBout.Platine;
+
+    public bool Compatible(ModeleEchafaudage modele) => modele == ModeleEchafaudage.MultiSystem ? MultiSystem : MultiReto;
+
+    /// <summary>Embase posée en bout : chape en Multi-SYSTEM (pour accrocher la lisse et le poteau).</summary>
+    public string? Embase(ModeleEchafaudage modele) =>
+        Fixation == FixationBout.Chape && modele == ModeleEchafaudage.MultiSystem ? References.Embase : null;
+
+    /// <summary>Une lisse peut s'accrocher au bout sans poteau (nipple, ou chape munie d'une embase).</summary>
+    public bool LisseSansPoteau(ModeleEchafaudage modele) => Fixation == FixationBout.Nipple || Embase(modele) != null;
+
+    /// <summary>Poteau de garde-corps de 1 m posé en bout.</summary>
+    public string PoteauGardeCorps(ModeleEchafaudage modele) =>
+        modele == ModeleEchafaudage.MultiSystem ? "HMPOT10"
+        : Fixation == FixationBout.Chape ? "HMPOTDP10"
+        : "HMPOTST10"; // nipple en Multi-RETO : poteau courant sur l'embase intégrée (confirmé par Laurent le 24/11/2026)
+
+    /// <summary>
+    /// Point le plus bas de la console sous son plancher (jambe de force) : sert au renfoncement du mur de façade.
+    /// Mesuré sur les blocs de « Blocs 3D - Echafaudage.dwg » (CI du 25/11/2026) ; à défaut, selon le débord.
+    /// </summary>
+    public double HauteurSousPlancher =>
+        Mesures.TryGetValue(Reference, out double h) ? h
+        : Largeur <= 0.40 + Cotes.Tolerance ? 0.28 : Largeur <= 0.75 + Cotes.Tolerance ? 0.50 : 1.00;
+
+    private static readonly Dictionary<string, double> Mesures = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase)
+    {
+        ["HMCON300"] = 0.28, ["HMTRA030"] = 0.03, ["HMCON400E"] = 0.26, ["HMCON400E2"] = 0.26,
+        ["HMCON700E"] = 0.50, ["HMCON700E2"] = 0.50, ["HMCON700EE"] = 0.43, ["HMCON700EE2"] = 0.43,
+        ["HMCON750EE"] = 0.44, ["HMCON1000E"] = 1.00, ["HMCON1000E2"] = 1.00, ["HMCON1050E"] = 1.00, ["HMCON1050EE"] = 0.88,
+    };
+
+    /// <summary>Hauteur du pied du poteau au-dessus du plancher : 4 cm sur une embase (HMEMB ou intégrée) en Multi-SYSTEM.</summary>
+    public double DecalageZ(ModeleEchafaudage modele) => modele == ModeleEchafaudage.MultiSystem && Fixation != FixationBout.Platine ? 0.04 : 0;
+}
+
+/// <summary>
+/// Consoles par modèle d'échafaudage, liste de Laurent du 24/11/2026 (remplace la table v2 CheckConsole) :
+/// compatibilité MR / MS et fixation en bout (platine, chape, nipple).
+/// </summary>
+public static class CatalogueConsoles
+{
+    private const bool MR = true, MS = true, Non = false;
+
+    private static readonly ConsoleInfo[] Toutes =
+    {
+        new ConsoleInfo("HMCON300", 0.40, FixationBout.Platine, MR, MS),
+        new ConsoleInfo("HMCON400E2", 0.40, FixationBout.Nipple, Non, MS),
+        new ConsoleInfo("HMCON400E", 0.40, FixationBout.Chape, MR, MS),
+        new ConsoleInfo("HMCON700E", 0.70, FixationBout.Chape, MR, MS),
+        new ConsoleInfo("HMCON700E2", 0.70, FixationBout.Nipple, Non, MS),
+        new ConsoleInfo("HMCON700EE", 0.70, FixationBout.Chape, MR, MS),
+        new ConsoleInfo("HMCON700EE2", 0.70, FixationBout.Nipple, Non, MS),
+        new ConsoleInfo("HMCON750E", 0.75, FixationBout.Chape, MR, MS),
+        new ConsoleInfo("HMCON750MR", 0.75, FixationBout.Nipple, MR, Non),
+        new ConsoleInfo("HMCON750EE", 0.75, FixationBout.Chape, MR, MS),
+        new ConsoleInfo("HMCON750MR2", 0.75, FixationBout.Nipple, MR, Non),
+        new ConsoleInfo("HMCON1000E", 1.00, FixationBout.Chape, MR, MS),
+        new ConsoleInfo("HMCON1000E2", 1.00, FixationBout.Nipple, Non, MS),
+        new ConsoleInfo("HMCON1050E", 1.05, FixationBout.Chape, MR, MS),
+        new ConsoleInfo("HMCON1050MR", 1.05, FixationBout.Nipple, MR, Non),
+    };
+
+    /// <summary>Toutes les consoles de la liste, quel que soit le modèle.</summary>
+    public static IReadOnlyList<ConsoleInfo> Liste => Toutes;
+
+    /// <summary>Consoles proposées pour un modèle (Multi-RETO à embase : mêmes consoles que Multi-RETO).</summary>
+    public static IReadOnlyCollection<ConsoleInfo> Pour(ModeleEchafaudage modele) => Toutes.Where(c => c.Compatible(modele)).ToList();
+
+    /// <summary>
+    /// Consoles possibles en déport d'about (v2 ContextMenuDessin_Opening) : poteau possible en bout (pas de platine),
+    /// au moins 0,70 m, et plateaux de la longueur de la console dans la gamme de la largeur de maille
+    /// (0,70 / 1,00 avec une maille de 0,70 ; 0,75 / 1,05 avec une maille de 0,75 ou 1,05).
+    /// </summary>
+    public static IReadOnlyList<ConsoleInfo> PourDeport(ModeleEchafaudage modele, double largeurMaille) =>
+        Toutes.Where(c => c.Compatible(modele) && c.PorteGardeCorps && c.Largeur >= 0.70 - Cotes.Tolerance
+                          && GammeLarge(c.Largeur) == GammeLarge(largeurMaille)).ToList();
+
+    private static bool GammeLarge(double l) => Cotes.Egal(l, 0.75) || Cotes.Egal(l, 1.05);
+
+    public static bool TryGet(ModeleEchafaudage modele, string reference, out ConsoleInfo info)
+    {
+        info = Toutes.FirstOrDefault(c => c.Compatible(modele) && string.Equals(c.Reference, reference, StringComparison.OrdinalIgnoreCase))!;
+        return info != null;
+    }
+}
