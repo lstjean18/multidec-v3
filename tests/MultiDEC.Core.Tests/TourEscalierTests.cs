@@ -479,12 +479,14 @@ public class TourEscalierTests
 
         foreach (var d in dias.Where(d => d.Axe == Axe.Y))
         {
-            Assert.Equal(d.Inverse ? -t.Largeur : 0, d.Origine.Y, 3);
-            Assert.Equal(d.Inverse ? 180 : 0, d.Rotation, 3);
+            Assert.Equal(0, d.Origine.Y, 3);
+            Assert.Equal(0, d.Rotation, 3);
         }
 
         // Parallèles : deux diagonales d'une même face n'arrivent jamais au même nœud (Laurent, 28/11/2026).
-        Assert.DoesNotContain(dias, d => d.Inverse);
+        Assert.DoesNotContain(dias, d => d.Inverse && d.Axe == Axe.X);
+        // Bouts : chapes vers les poteaux, face retournée au bout gauche seulement.
+        Assert.All(dias.Where(d => d.Axe == Axe.Y), d => Assert.Equal(d.Origine.X < 0, d.Inverse));
     }
 
     [Fact]

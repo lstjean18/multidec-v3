@@ -482,10 +482,10 @@ public sealed partial class GenerateurTourEscalier
                         break;
                     default:
                         double x = cote == CoteTour.B ? L + GenerateurFacade.DemiTube : -GenerateurFacade.DemiTube;
-                        // En travers, le sens se change par un demi-tour autour de Z depuis le côté C (l'inversion d'un bloc
-                        // en travers ne fait que retourner sa face).
+                        // En travers, l'inversion d'un bloc ne fait que retourner sa face : au bout gauche (x = 0), elle tourne
+                        // les chapes vers les rosaces des poteaux (Laurent, 28/11/2026), comme le bout droit et les abouts.
                         Ajouter(References.DiagonaleVerticale(_w), Famille.DiagonaleVerticale, new Point3(Cotes.Arrondi(x), inverse ? -_w : 0, z0), Axe.Y,
-                            Face.Exterieure, inverse: inverse, rotation: inverse ? 180 : 0, repere: repere);
+                            Face.Exterieure, inverse: cote == CoteTour.D, rotation: inverse ? 180 : 0, repere: repere);
                         bouts++;
                         break;
                 }
