@@ -651,8 +651,8 @@ public sealed partial class GenerateurTourEscalier
 
     /// <summary>
     /// Départ de 0,50 m (hauteur en xx,50 m, Laurent 28/11/2026) : maille complémentaire de 0,70 m devant le bout d'entrée,
-    /// plateaux au niveau 0 (posés sur des traverses de 0,70 m), structure de 1,00 m de haut avec lisses tous les 0,50 m
-    /// et plinthes de 0,70 m au niveau 0 sur les deux grands côtés ; le bout extérieur reste ouvert (entrée).
+    /// structure de 1,00 m de haut avec traverses au sol et lisses tous les 0,50 m sur les deux grands côtés, sans plateaux
+    /// ni plinthes (on marche au sol) ; le bout extérieur reste ouvert (entrée) ; marche à 0,25 m sur consoles.
     /// </summary>
     private void PlacerMailleEntree()
     {
@@ -669,7 +669,7 @@ public sealed partial class GenerateurTourEscalier
             }
         }
 
-        // Grands côtés : traverse porteuse au niveau 0, lisses à 0,50 et 1,00 m, plinthe au niveau 0.
+        // Grands côtés : traverse au niveau 0, lisses à 0,50 et 1,00 m.
         string barre = References.LisseOuTraverse(e);
         foreach (var (y, face) in new[] { (0.0, Face.Interieure), (-_w, Face.Exterieure) })
         {
@@ -677,23 +677,10 @@ public sealed partial class GenerateurTourEscalier
             {
                 Ajouter(barre, z > Cotes.Tolerance ? Famille.Lisse : Famille.Traverse, new Point3(x0, y, z), Axe.X, face);
             }
-
-            var type = _p.PlintheExterieure;
-            if (References.Plinthe(type, e) is string plinthe)
-            {
-                Ajouter(plinthe, Famille.Plinthe, new Point3(x0, y, 0), Axe.X, face);
-            }
         }
 
         // Bout extérieur : traverse au niveau 0 seulement (entrée).
         Ajouter(References.LisseOuTraverse(_w), Famille.Traverse, new Point3(xLoin, 0, 0), Axe.Y, Face.Aucune, inverse: _t.Entree == CoteTour.D);
-
-        // Plateaux en travers (longueur = largeur de la tour), largeur vers les X décroissants depuis leur origine.
-        foreach (var (variante, rang) in GenerateurFacade.RepartitionPlateaux(e, _p.Plateaux))
-        {
-            double x = Cotes.Arrondi(x1 - GenerateurFacade.RetraitPlateau - GenerateurFacade.LargeurPlateau * rang);
-            Ajouter(References.Plateau(_p.Plateaux, _w, e, variante), Famille.Plateau, new Point3(x, 0, 0), Axe.Y, Face.Aucune);
-        }
 
         // Marche intermédiaire à mi-hauteur (Laurent, 28/11/2026) : collier rosace sur les deux poteaux du bout d'entrée,
         // console HMCON300 vers l'extérieur sur chacun, plateau de la largeur de la tour posé dessus.

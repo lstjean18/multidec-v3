@@ -192,10 +192,8 @@ public class TourEscalierTests
         var el = Elements(t);
         double x0 = entree == CoteTour.D ? -0.70 : 2.50, x1 = x0 + 0.70, xLoin = entree == CoteTour.D ? x0 : x1;
 
-        // Deux plateaux au niveau 0, de la largeur de la tour, dans la maille d'entrée.
-        var plateaux = el.Where(e => e.Famille == Famille.Plateau && Cotes.Egal(e.Origine.Z, 0)).ToList();
-        Assert.Equal(2, plateaux.Count);
-        Assert.All(plateaux, p => Assert.True(p.Origine.X > x0 && p.Origine.X <= x1 + Cotes.Tolerance && p.Axe == Axe.Y));
+        // Ni plateaux ni plinthes au niveau 0 dans la maille d'entrée (on marche au sol, Laurent 28/11/2026).
+        Assert.DoesNotContain(el, e => (e.Famille == Famille.Plateau || e.Famille == Famille.Plinthe) && Cotes.Egal(e.Origine.Z, 0));
 
         // Poteaux de 1 m au bout extérieur, lisses à 0,50 et 1,00 m et plinthes de 0,70 m sur les grands côtés.
         Assert.Equal(2, el.Where(e => e.Famille == Famille.Poteau && Cotes.Egal(e.Origine.X, xLoin)).Select(e => e.Origine.Y).Distinct().Count());
@@ -205,7 +203,6 @@ public class TourEscalierTests
             Assert.Equal(2, el.Count(e => e.Famille == Famille.Lisse && e.Reference == "HMTRA070" && Cotes.Egal(e.Origine.X, x0) && Cotes.Egal(e.Origine.Z, z)));
         }
 
-        Assert.Equal(2, el.Count(e => e.Famille == Famille.Plinthe && Cotes.Egal(e.Origine.X, x0) && Cotes.Egal(e.Origine.Z, 0)));
         Assert.DoesNotContain(el, e => e.Axe == Axe.Y && Cotes.Egal(e.Origine.X, xLoin) && e.Origine.Z > Cotes.Tolerance);
 
         // Plancher à 0,50 m seulement hors de la volée (pas de plateaux sous l'escalier).
