@@ -131,6 +131,10 @@ public sealed partial class GenerateurTourEscalier
             {
                 PlacerAmarrages(general);
             }
+            else if (_t.Stabilite == StabiliteTour.Stabilisee)
+            {
+                PlacerStabilisation();
+            }
             else
             {
                 _alertes.Add("Tour autostable lestée : faire calculer le lest (note de calcul) avant le montage.");

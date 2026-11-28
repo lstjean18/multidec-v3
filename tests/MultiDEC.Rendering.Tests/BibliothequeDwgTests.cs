@@ -640,6 +640,31 @@ public class BibliothequeDwgTests
         Image(doc, nom + "-TOUR-ACRO-dessus");
         rendu.Vue(Vues.Facade);
         Image(doc, nom + "-TOUR-ACRO-facade");
+
+        // Stabilisation sur deux côtés (plan LV Tec O240610) : tour de 7 m, 1,50 m, entrée D.
+        tour.Sorties.Clear();
+        tour.Hauteur = 7;
+        tour.Largeur = 1.5;
+        tour.Entree = CoteTour.D;
+        tour.Stabilite = StabiliteTour.Stabilisee;
+        tour.SortieParDefaut();
+        var ss = GenerateurStructure.Generer(projet);
+        var rs = rendu.Dessiner(ss, TableOrientations.ParDefaut());
+        _sortie.WriteLine($"TOUR-STAB : {rs.Inseres} insérés, manquants : {string.Join(", ", rs.BlocsManquants)}");
+        foreach (var x in rs.Inserts.Where(x => x.Element.Famille == Famille.DiagonaleVerticale || x.Element.Famille == Famille.DiagonaleHorizontale))
+        {
+            var b = x.Insert.BoundingBox;
+            _sortie.WriteLine(string.Format(CultureInfo.InvariantCulture, "STAB {0,-12} o=({1:0.00},{2:0.00},{3:0.00}) {4} inv={5} rot={6:0}  X {7:0.00}..{8:0.00}  Y {9:0.00}..{10:0.00}  Z {11:0.00}..{12:0.00}",
+                x.Element.Reference, x.Element.Origine.X, x.Element.Origine.Y, x.Element.Origine.Z, x.Element.Axe, x.Element.Inverse, x.Element.Rotation, b.Min.x, b.Max.x, b.Min.y, b.Max.y, b.Min.z, b.Max.z));
+        }
+
+        rendu.Rendu(ModeRendu.OmbreAretes);
+        rendu.Vue(Vues.Iso);
+        Image(doc, nom + "-TOUR-STAB-iso");
+        rendu.Vue(Vues.Dessus);
+        Image(doc, nom + "-TOUR-STAB-dessus");
+        rendu.Vue(Vues.Facade);
+        Image(doc, nom + "-TOUR-STAB-facade");
         Assert.Equal(0, diagonalesHors);
     }
 

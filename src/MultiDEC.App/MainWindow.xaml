@@ -245,7 +245,7 @@
               <ColumnDefinition Width="110" />
             </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
-              <RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition />
+              <RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition />
             </Grid.RowDefinitions>
             <TextBlock Style="{StaticResource Etiquette}" Text="Position X (m)" />
             <TextBox Grid.Column="1" Margin="0,2" Text="{app:Liaison PositionX, StringFormat=0.00}" ToolTip="Coin du bout D, côté A, dans le repère du projet (S1 part de X = 0)" />
@@ -258,6 +258,9 @@
                       SelectedValue="{app:Liaison Stabilite}" />
             <TextBlock Grid.Row="4" Style="{StaticResource Etiquette}" Text="Distance au bâtiment (m)" />
             <TextBox Grid.Row="4" Grid.Column="1" Margin="0,2" Text="{app:Liaison DistanceBatiment, StringFormat=0.00}" ToolTip="Côté A : longueur des tubes d'amarrage" />
+            <TextBlock Grid.Row="5" Style="{StaticResource Etiquette}" Text="Hauteur de stabilisation (m)" Visibility="{app:Liaison Stabilisee, Converter={StaticResource VisibleSi}}" />
+            <TextBox Grid.Row="5" Grid.Column="1" Margin="0,2" Text="{app:Liaison HauteurStabilisation, StringFormat=0.00}" Visibility="{app:Liaison Stabilisee, Converter={StaticResource VisibleSi}}"
+                     ToolTip="Structure de base côté C, vers le bout opposé à l'entrée : modules de 2,50 m, diagonales verticales et horizontales (autostable &lt; 85 km/h)" />
           </Grid>
 
           <TextBlock Style="{StaticResource Section}" Text="PALIERS ET SORTIES" />

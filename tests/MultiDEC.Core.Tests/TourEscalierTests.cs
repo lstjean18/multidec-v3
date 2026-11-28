@@ -523,4 +523,49 @@ public class TourEscalierTests
             }
         }
     }
+
+    // ---- Stabilisation sur deux côtés (Laurent, 28/11/2026, plan LV Tec O240610) ----
+
+    [Theory]
+    [InlineData(CoteTour.D, 1.50)]
+    [InlineData(CoteTour.B, 1.50)]
+    [InlineData(CoteTour.D, 2.00)]
+    public void Stabilisation_cote_C_vers_le_bout_oppose_a_l_entree(CoteTour entree, double largeur)
+    {
+        var t = new TourEscalierAlu { Hauteur = 7, Largeur = largeur, Entree = entree, Stabilite = StabiliteTour.Stabilisee };
+        t.SortieParDefaut();
+        var r = GenerateurTourEscalier.Generer(t, General);
+        Assert.Empty(r.Amarrages);
+        Assert.Contains(r.Alertes, a => a.Contains("85 km/h"));
+
+        // Emprise de 5,00 × (largeur + 2,50), vers le bout opposé à l'entrée.
+        var socles = r.Elements.Where(e => e.Famille == Famille.Socle).Select(e => (e.Origine.X, e.Origine.Y)).Distinct().ToList();
+        Assert.Equal(9, socles.Count);
+        Assert.Equal(-largeur - 2.5, socles.Min(p => p.Y), 3);
+        Assert.Equal(entree == CoteTour.D ? 5.0 : 2.5, socles.Max(p => p.X), 3);
+        Assert.Equal(entree == CoteTour.D ? 0.0 : -2.5, socles.Min(p => p.X), 3);
+
+        // Poteaux de stabilisation jusqu'à 3,00 m ; diagonales horizontales 10 cm sous la dernière rosace.
+        Assert.Equal(3, r.Elements.Count(e => e.Famille == Famille.DiagonaleHorizontale && e.Reference.StartsWith("HMTUB", StringComparison.Ordinal) && Cotes.Egal(e.Origine.Z, 2.9)));
+        Assert.Equal(6, r.Elements.Count(e => e.Reference == References.CollierFixe && Cotes.Egal(e.Origine.Z, 2.9)));
+        // Bracons : 4 diagonales du haut de la stabilisation (3 m) aux poteaux de la tour.
+        Assert.Equal(4, r.Elements.Count(e => e.Famille == Famille.DiagonaleVerticale && Cotes.Egal(e.Origine.Z, 3.0)));
+
+        var biblio = BibliothequeBlocs.DepuisFichier("blocs-3D-echafaudage.txt");
+        var refs = r.Elements.Select(e => e.Reference).Where(x => !x.StartsWith("HMTUBAMA", StringComparison.Ordinal) && !References.NonDessinee(x)).ToList();
+        Assert.True(biblio.Manquantes(refs).Count == 0, string.Join(", ", biblio.Manquantes(refs)));
+    }
+
+    [Fact]
+    public void Stabilisation_module_d_angle_en_tubes_seuls()
+    {
+        var t = new TourEscalierAlu { Hauteur = 7, Entree = CoteTour.D, Stabilite = StabiliteTour.Stabilisee };
+        var el = Elements(t);
+        // Module d'angle (X 2,50 à 5,00 ; Y -1,50 à -4,00) : pas de lisse sur ses côtés extérieurs.
+        Assert.DoesNotContain(el, e => e.Famille == Famille.Lisse && Cotes.Egal(e.Origine.Y, -4.0) && Cotes.Egal(e.Origine.X, 2.5));
+        Assert.DoesNotContain(el, e => e.Famille == Famille.Traverse && Cotes.Egal(e.Origine.X, 5.0) && Cotes.Egal(e.Origine.Y, -1.5));
+        // Module contre C et module de bout : lisses.
+        Assert.Contains(el, e => e.Famille == Famille.Lisse && Cotes.Egal(e.Origine.Y, -4.0) && Cotes.Egal(e.Origine.X, 0));
+        Assert.Contains(el, e => e.Famille == Famille.Traverse && Cotes.Egal(e.Origine.X, 5.0) && Cotes.Egal(e.Origine.Y, 0));
+    }
 }

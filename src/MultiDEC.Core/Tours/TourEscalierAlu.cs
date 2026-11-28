@@ -40,6 +40,12 @@ public enum StabiliteTour
 
     /// <summary>Autostable lestée : rien n'est dessiné, une alerte rappelle de faire calculer le lest.</summary>
     Lestee,
+
+    /// <summary>
+    /// Stabilisée par une structure de base côté C (Laurent, 28/11/2026, plan LV Tec O240610) : modules de 2,50 m contre le
+    /// côté C, vers le bout opposé à l'entrée, diagonales verticales et horizontales ; autostable pour un vent &lt; 85 km/h.
+    /// </summary>
+    Stabilisee,
 }
 
 /// <summary>Une sortie de la tour : ouverture d'un côté à un palier.</summary>
@@ -119,6 +125,9 @@ public sealed class TourEscalierAlu
     /// <summary>Distance entre le côté A et le mur (tubes d'amarrage), comme la distance à la façade d'un échafaudage.</summary>
     public double DistanceBatiment { get; set; } = 0.20;
 
+    /// <summary>Hauteur de la structure de stabilisation (3,00 m par défaut, règle selon la hauteur de la tour à venir).</summary>
+    public double HauteurStabilisation { get; set; } = 3.00;
+
     /// <summary>Sorties (ouvertures) choisies par l'utilisateur, palier par palier.</summary>
     public List<SortieTour> Sorties { get; set; } = new List<SortieTour>();
 
@@ -159,7 +168,7 @@ public sealed class TourEscalierAlu
     public TourEscalierAlu Copie()
     {
         var t = (TourEscalierAlu)MemberwiseClone();
-        t.Sorties = Sorties.Select(s => new SortieTour(s.Hauteur, s.Cote, s.Largeur)).ToList();
+        t.Sorties = Sorties.Select(s => new SortieTour(s.Hauteur, s.Cote, s.Largeur) { Acrotere = s.Acrotere, LongueurPont = s.LongueurPont, Tournee = s.Tournee }).ToList();
         return t;
     }
 

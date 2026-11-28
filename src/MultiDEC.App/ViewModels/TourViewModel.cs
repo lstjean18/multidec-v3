@@ -49,6 +49,7 @@ public sealed class TourViewModel : INotifyPropertyChanged
     {
         new KeyValuePair<StabiliteTour, string>(StabiliteTour.Amarree, "Amarrée au bâtiment (côté A)"),
         new KeyValuePair<StabiliteTour, string>(StabiliteTour.Lestee, "Autostable lestée (note de calcul)"),
+        new KeyValuePair<StabiliteTour, string>(StabiliteTour.Stabilisee, "Stabilisée côté C (2 côtés)"),
     };
 
     public static IReadOnlyList<double> Angles { get; } = new[] { 0.0, 90.0, 180.0, 270.0 };
@@ -99,6 +100,15 @@ public sealed class TourViewModel : INotifyPropertyChanged
     {
         get => _t.Stabilite;
         set => Changer(() => _t.Stabilite = value, paliers: false);
+    }
+
+    public bool Stabilisee => _t.Stabilite == StabiliteTour.Stabilisee;
+
+    /// <summary>Hauteur de la structure de stabilisation (3,00 m par défaut).</summary>
+    public double HauteurStabilisation
+    {
+        get => _t.HauteurStabilisation;
+        set => Changer(() => _t.HauteurStabilisation = Cotes.Arrondi(value), paliers: false);
     }
 
     public double DistanceBatiment
@@ -311,6 +321,7 @@ public sealed class TourViewModel : INotifyPropertyChanged
         Notifier(nameof(HauteurCorrecte));
         Notifier(nameof(HauteurIncorrecte));
         Notifier(nameof(Resume));
+        Notifier(nameof(Stabilisee));
     }
 
     private void Notifier([CallerMemberName] string? nom = null) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nom));
