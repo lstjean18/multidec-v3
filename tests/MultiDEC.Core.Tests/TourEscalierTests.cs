@@ -174,6 +174,23 @@ public class TourEscalierTests
         Assert.Equal(2, el.Count(e => e.Famille == Famille.Plinthe && Cotes.Egal(e.Origine.X, x0) && Cotes.Egal(e.Origine.Z, 0)));
         Assert.DoesNotContain(el, e => e.Axe == Axe.Y && Cotes.Egal(e.Origine.X, xLoin) && e.Origine.Z > Cotes.Tolerance);
 
+        // Plancher à 0,50 m seulement hors de la volée (pas de plateaux sous l'escalier).
+        var volee = el.First(e => e.Famille == Famille.Escalier && e.Reference.StartsWith("HMESCALU", StringComparison.Ordinal) && Cotes.Egal(e.Origine.Z, 2.5));
+        bool voleeCoteA = volee.Origine.Y > -largeur / 2;
+        var plancher = el.Where(e => e.Famille == Famille.Plateau && Cotes.Egal(e.Origine.Z, 0.5)).ToList();
+        Assert.NotEmpty(plancher);
+        Assert.All(plancher, p => Assert.True(voleeCoteA ? p.Origine.Y < -largeur / 2 + 0.01 : p.Origine.Y > -largeur / 2 - 0.01, $"plateau à Y = {p.Origine.Y}"));
+
+        // L'autre moitié du bout d'entrée fermée : montant de garde-corps et lisses courtes à +0,50 / +1,00 m, sans plinthe.
+        double xEntree = entree == CoteTour.D ? 0 : 2.5;
+        Assert.Single(el, e => e.Famille == Famille.GardeCorps && e.Reference.StartsWith("HMMONTGC", StringComparison.Ordinal) && Cotes.Egal(e.Origine.X, xEntree) && Cotes.Egal(e.Origine.Z, 0.5));
+        foreach (double z in new[] { 1.0, 1.5 })
+        {
+            Assert.Single(el, e => e.Axe == Axe.Y && Cotes.Egal(e.Origine.X, xEntree) && Cotes.Egal(e.Origine.Z, z));
+        }
+
+        Assert.DoesNotContain(el, e => e.Famille == Famille.Plinthe && e.Axe == Axe.Y && Cotes.Egal(e.Origine.X, xEntree) && Cotes.Egal(e.Origine.Z, 0.5));
+
         // Multi-RETO : poteaux de départ de 1,00 m (HMPOTDP10), pas de 2 m.
         var mr = GenerateurTourEscalier.Generer(t, new ParametresGeneraux { Modele = ModeleEchafaudage.MultiReto }).Elements;
         Assert.Equal(2, mr.Count(e => e.Reference == "HMPOTDP10" && Cotes.Egal(e.Origine.X, xLoin)));

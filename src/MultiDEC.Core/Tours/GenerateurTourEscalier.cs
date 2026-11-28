@@ -206,6 +206,14 @@ public sealed partial class GenerateurTourEscalier
                 _ouvertures.Add(Moitie(k) == 0 ? (s.Cote, s.Hauteur, 0.0, o) : (s.Cote, s.Hauteur, _w - o, _w));
             }
         }
+
+        if (_zb > Cotes.Tolerance)
+        {
+            // Départ de 0,50 m : entrée devant le pied de la première volée, l'autre moitié du bout fermée par un montant de
+            // garde-corps et des lisses courtes, sans plinthe (Laurent, 28/11/2026).
+            double o = _t.LargeurOuverture(new SortieTour(_zb, _t.Entree));
+            _ouvertures.Add(Moitie(1) == 0 ? (_t.Entree, _zb, 0.0, o) : (_t.Entree, _zb, _w - o, _w));
+        }
     }
 
     private (double Debut, double Fin)? Ouverture(CoteTour cote, double palier) =>
@@ -213,7 +221,7 @@ public sealed partial class GenerateurTourEscalier
 
     /// <summary>Entrée au sol : bout du pied de la première volée, pas de lisse entre le départ et 2 m au-dessus.</summary>
     private bool DansEntree(CoteTour cote, double z) =>
-        cote == _t.Entree && z > Cotes.Tolerance && !Cotes.Egal(z, _zb) && z < _zb + 2.0 - Cotes.Tolerance;
+        cote == _t.Entree && _zb <= Cotes.Tolerance && z > Cotes.Tolerance && z < 2.0 - Cotes.Tolerance;
 
     // ------------------------------------------------------------------------------------------
     // Poteaux, lisses, plinthes, diagonales
@@ -370,10 +378,11 @@ public sealed partial class GenerateurTourEscalier
 
         if (_zb > Cotes.Tolerance)
         {
-            foreach (var cote in new[] { CoteTour.A, CoteTour.B, CoteTour.C, CoteTour.D }.Where(c => c != _t.Entree))
-            {
-                Plinthe(cote, 0, cote == CoteTour.A || cote == CoteTour.C ? L : _w, _zb);
-            }
+            // Plancher de départ dans la moitié sans volée : plinthes le long de ses plateaux seulement.
+            bool coteA = Moitie(1) == 1;
+            Plinthe(coteA ? CoteTour.A : CoteTour.C, 0, L, _zb);
+            var bout = _t.BoutArrivee(1);
+            Plinthe(bout, coteA ? 0 : Cotes.Arrondi(_w / 2), coteA ? Cotes.Arrondi(_w / 2) : _w, _zb);
         }
     }
 
@@ -546,12 +555,13 @@ public sealed partial class GenerateurTourEscalier
         }
     }
 
-    /// <summary>Départ de 0,50 m : plancher en plateaux acier sur toute l'emprise de la tour.</summary>
+    /// <summary>Départ de 0,50 m : plancher en plateaux acier dans la moitié sans volée (pas sous l'escalier, Laurent 28/11/2026).</summary>
     private void PlacerPlancherDepart()
     {
-        foreach (var (_, rang) in GenerateurFacade.RepartitionPlateaux(_w, GammePlateaux.Standard))
+        double yBord = Moitie(1) == 1 ? 0.0 : Cotes.Arrondi(-_w / 2);
+        foreach (var (_, rang) in GenerateurFacade.RepartitionPlateaux(_w / 2, GammePlateaux.Standard))
         {
-            double y = Cotes.Arrondi(-GenerateurFacade.RetraitPlateau - GenerateurFacade.LargeurPlateau * rang);
+            double y = Cotes.Arrondi(yBord - GenerateurFacade.RetraitPlateau - GenerateurFacade.LargeurPlateau * rang);
             Ajouter(References.PlateauAcierComplement(L), Famille.Plateau, new Point3(0, y, _zb), Axe.X, Face.Aucune);
         }
 
