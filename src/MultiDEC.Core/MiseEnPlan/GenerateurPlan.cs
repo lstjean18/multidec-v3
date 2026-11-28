@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using MultiDEC.Core.Facade;
 using MultiDEC.Core.Geometrie;
+using MultiDEC.Core.TourEscalier;
 
 namespace MultiDEC.Core.MiseEnPlan;
 
@@ -67,17 +68,32 @@ public static class GenerateurPlan
         dessus.Vues.Add(VueDessus(ctx));
         plan.Pages.Add(dessus);
 
-        for (int i = 0; i < projet.Faces.Count; i++)
+        for (int i = 0; i < projet.FacesGenerees.Count; i++)
         {
             var page = new PageDePlan("Élévation " + projet.Faces[i].Nom);
             page.Vues.Add(Elevation(ctx, i, details.Where(d => d.Face == i)));
             plan.Pages.Add(page);
         }
 
-        var profils = new PageDePlan("Vues de profil");
-        profils.Vues.Add(Profil(ctx, 0, droit: false));
-        profils.Vues.Add(Profil(ctx, projet.Faces.Count - 1, droit: true));
-        plan.Pages.Add(profils);
+        if (projet.FacesGenerees.Count > 0)
+        {
+            var profils = new PageDePlan("Vues de profil");
+            profils.Vues.Add(Profil(ctx, 0, droit: false));
+            profils.Vues.Add(Profil(ctx, projet.Faces.Count - 1, droit: true));
+            plan.Pages.Add(profils);
+        }
+
+        // Une page par tour escalier : élévation côté C et vue de dessus de la tour.
+        foreach (var tour in projet.Tours)
+        {
+            if (ctx.Structure.Elements.Any(e => e.NomFace == tour.Nom) && ToursDansLaStructure.Pose(projet, tour, ctx.Poses) is { } pose)
+            {
+                var page = new PageDePlan("Tour " + tour.Nom);
+                page.Vues.Add(ElevationTour(ctx, tour, pose));
+                page.Vues.Add(DessusTour(ctx, tour, pose));
+                plan.Pages.Add(page);
+            }
+        }
 
         var iso = new PageDePlan("Vues isométriques");
         iso.Vues.Add(VueIso(ctx, coteBatiment: false));
@@ -117,7 +133,21 @@ public static class GenerateurPlan
     {
         var p = Projection.Dessus();
         var vue = new VueDePlan("Vue de dessus", TypeVue.Dessus, p, Emprise(p, Origines(ctx)));
-        var faces = ctx.Projet.Faces;
+        var faces = ctx.Projet.FacesGenerees;
+        foreach (var tour in ctx.Projet.Tours)
+        {
+            var points = Origines(ctx, tour.Nom).ToList();
+            if (points.Count > 0)
+            {
+                vue.Reperes.Add(new Repere(TypeRepere.Niveau, p.Projeter(new Point3(points.Average(o => o.X), points.Average(o => o.Y), 0)), tour.Nom));
+            }
+        }
+
+        if (faces.Count == 0)
+        {
+            return vue;
+        }
+
         for (int i = 0; i < faces.Count; i++)
         {
             var f = faces[i];
@@ -231,8 +261,84 @@ public static class GenerateurPlan
 
     private static VueDePlan VueIso(Contexte ctx, bool coteBatiment)
     {
-        var p = Projection.Iso(ctx.Poses[0].Angle, coteBatiment);
+        var p = Projection.Iso(AngleIso(ctx), coteBatiment);
         return new VueDePlan(coteBatiment ? "Vue isométrique côté bâtiment" : "Vue isométrique côté extérieur", TypeVue.Iso, p, Emprise(p, Origines(ctx)));
+    }
+
+    /// <summary>Angle des vues isométriques : celui de la première face, sinon celui de la première tour.</summary>
+    private static double AngleIso(Contexte ctx) =>
+        ctx.Projet.AvecFacade || ctx.Projet.Tours.Count == 0 ? ctx.Poses[0].Angle : ctx.Projet.Tours[0].Angle;
+
+    /// <summary>Point local d'une tour → point de la structure.</summary>
+    private static Point3 GlobalTour(PoseFace pose, double x, double y, double z)
+    {
+        var d = Projection.DirectionFace(pose.Angle);
+        return new Point3(pose.Origine.X + x * d.X - y * d.Y, pose.Origine.Y + x * d.Y + y * d.X, z);
+    }
+
+    /// <summary>Élévation d'une tour vue du côté C : longueur, niveaux des paliers, hauteur, amarrages.</summary>
+    private static VueDePlan ElevationTour(Contexte ctx, TourEscalierAlu tour, PoseFace pose)
+    {
+        var p = Projection.Elevation(pose.Angle);
+        double h = tour.Hauteur + 1;
+        var coins = new List<Point3>();
+        foreach (var x in new[] { 0.0, TourEscalierAlu.Longueur })
+        {
+            foreach (var z in new[] { -0.3, h })
+            {
+                coins.Add(GlobalTour(pose, x, -tour.Largeur, z));
+                coins.Add(GlobalTour(pose, x, 0, z));
+            }
+        }
+
+        var vue = new VueDePlan("Tour escalier alu " + tour.Nom + " (vue de l'extérieur)", TypeVue.Elevation, p, Emprise(p, coins.Concat(Origines(ctx, tour.Nom))))
+        {
+            Faces = new[] { tour.Nom },
+        };
+        double u0 = p.Projeter(GlobalTour(pose, 0, 0, 0)).U;
+        double u1 = p.Projeter(GlobalTour(pose, TourEscalierAlu.Longueur, 0, 0)).U;
+        double bas = vue.Emprise.VMin;
+        vue.Cotes.Add(new Cote(new Point2(Math.Min(u0, u1), bas), new Point2(Math.Max(u0, u1), bas), new Point2(1, 0), -Rangee));
+
+        var niveaux = new List<double> { 0 };
+        niveaux.AddRange(tour.Paliers());
+        niveaux.Add(tour.Hauteur);
+        niveaux = niveaux.Select(Cotes.Arrondi).Distinct().OrderBy(z => z).ToList();
+        double gauche = vue.Emprise.UMin;
+        Chaine(vue, niveaux.Select(z => new Point2(gauche, z)).ToList(), new Point2(0, 1), Rangee);
+        vue.Cotes.Add(new Cote(new Point2(gauche, 0), new Point2(gauche, h), new Point2(0, 1), 2 * Rangee));
+        foreach (var z in niveaux.Where(z => z > Cotes.Tolerance))
+        {
+            vue.Reperes.Add(new Repere(TypeRepere.Niveau, new Point2(vue.Emprise.UMax, z), "+" + Cote.Format(z)));
+        }
+
+        foreach (var a in ctx.Structure.Amarrages.Amarrages.Where(a => a.NomFace == tour.Nom))
+        {
+            vue.Reperes.Add(new Repere(TypeRepere.Amarrage, new Point2(p.Projeter(GlobalTour(pose, a.X, 0, 0)).U, a.Hauteur), string.Empty));
+        }
+
+        return vue;
+    }
+
+    /// <summary>Vue de dessus d'une tour : longueur, largeur et repères des côtés A à D.</summary>
+    private static VueDePlan DessusTour(Contexte ctx, TourEscalierAlu tour, PoseFace pose)
+    {
+        var p = Projection.Dessus();
+        double l = TourEscalierAlu.Longueur, w = tour.Largeur;
+        var coins = new[] { GlobalTour(pose, 0, 0, 0), GlobalTour(pose, l, 0, 0), GlobalTour(pose, 0, -w, 0), GlobalTour(pose, l, -w, 0) };
+        var vue = new VueDePlan("Vue de dessus " + tour.Nom, TypeVue.Dessus, p, Emprise(p, coins.Concat(Origines(ctx, tour.Nom)), 0.8))
+        {
+            Faces = new[] { tour.Nom },
+        };
+        var d = Projection.DirectionFace(pose.Angle);
+        var n = Projection.DirectionFace(pose.Angle + 90);
+        vue.Cotes.Add(new Cote(p.Projeter(coins[2]), p.Projeter(coins[3]), new Point2(d.X, d.Y), -Rangee));
+        vue.Cotes.Add(new Cote(p.Projeter(coins[2]), p.Projeter(coins[0]), new Point2(n.X, n.Y), Rangee));
+        vue.Reperes.Add(new Repere(TypeRepere.Niveau, p.Projeter(GlobalTour(pose, l / 2, 0.35, 0)), "Bâtiment"));
+        vue.Reperes.Add(new Repere(TypeRepere.Niveau, p.Projeter(GlobalTour(pose, l + 0.35, -w / 2, 0)), "Droite"));
+        vue.Reperes.Add(new Repere(TypeRepere.Niveau, p.Projeter(GlobalTour(pose, l / 2, -w - 0.35, 0)), "Extérieur"));
+        vue.Reperes.Add(new Repere(TypeRepere.Niveau, p.Projeter(GlobalTour(pose, -0.35, -w / 2, 0)), "Gauche"));
+        return vue;
     }
 
     private static void Chaine(VueDePlan vue, IReadOnlyList<Point2> points, Point2 direction, double decalage)
@@ -277,7 +383,7 @@ public static class GenerateurPlan
     private static List<Particularite> Particularites(Contexte ctx)
     {
         var liste = new List<Particularite>();
-        var faces = ctx.Projet.Faces;
+        var faces = ctx.Projet.FacesGenerees;
         for (int i = 0; i < faces.Count; i++)
         {
             var f = faces[i];

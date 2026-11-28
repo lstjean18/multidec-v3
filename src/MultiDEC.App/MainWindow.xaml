@@ -183,6 +183,143 @@
         </StackPanel>
       </ScrollViewer>
     </DataTemplate>
+
+    <!-- Onglet d'une tour escalier alu (T1, T2…) : DataContext = TourViewModel (projet multi-ouvrages, 28/11/2026). -->
+    <DataTemplate x:Key="PanneauTour">
+      <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="10,0,10,10">
+          <TextBlock Style="{StaticResource Section}" Text="TOUR ESCALIER À VOLÉES ALU" />
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="170" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+              <RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition />
+            </Grid.RowDefinitions>
+            <TextBlock Style="{StaticResource Etiquette}" Text="Longueur (m)" />
+            <TextBlock Grid.Column="1" Margin="0,2" VerticalAlignment="Center" Text="2,50 (volées de 2,50 m)" />
+            <TextBlock Grid.Row="1" Style="{StaticResource Etiquette}" Text="Largeur (m)" />
+            <ComboBox Grid.Row="1" Grid.Column="1" Margin="0,2" ItemsSource="{x:Static vm:TourViewModel.Largeurs}" SelectedItem="{app:Liaison Largeur}" ItemStringFormat="0.00"
+                      ToolTip="1,50 m : volées de 0,65 m ; 2,00 m : volées larges de 0,88 m" />
+            <TextBlock Grid.Row="2" Style="{StaticResource Etiquette}" Text="Paliers" />
+            <ComboBox Grid.Row="2" Grid.Column="1" Margin="0,2" ItemsSource="{x:Static vm:TourViewModel.Configurations}" DisplayMemberPath="Value" SelectedValuePath="Key"
+                      SelectedValue="{app:Liaison Configuration}" />
+            <TextBlock Grid.Row="3" Style="{StaticResource Etiquette}" Text="Dernier palier (m)" />
+            <TextBox Grid.Row="3" Grid.Column="1" Margin="0,2" Text="{app:Liaison Hauteur, StringFormat=0.00}"
+                     ToolTip="Multiple de 0,50 m ; en xx,50 m la tour part d'un plancher de départ à 0,50 m" />
+            <TextBlock Grid.Row="4" Style="{StaticResource Etiquette}" Text="Entrée au sol" />
+            <ComboBox Grid.Row="4" Grid.Column="1" Margin="0,2" ItemsSource="{x:Static vm:TourViewModel.Entrees}" DisplayMemberPath="Value" SelectedValuePath="Key"
+                      SelectedValue="{app:Liaison Entree}" ToolTip="Bout du pied de la première volée" />
+          </Grid>
+          <TextBlock Text="{app:Liaison ErreurHauteur}" Foreground="#C62828" TextWrapping="Wrap" FontSize="12" Margin="0,2"
+                     Visibility="{app:Liaison HauteurIncorrecte, Converter={StaticResource VisibleSi}}" />
+          <CheckBox Content="Départ poteaux 3 m" IsChecked="{app:Liaison Depart3m}" />
+          <Border Background="#F3F4F6" CornerRadius="6" Padding="8" Margin="0,6,0,0">
+            <TextBlock Text="{app:Liaison Resume}" TextWrapping="Wrap" FontSize="12" />
+          </Border>
+
+          <TextBlock Style="{StaticResource Section}" Text="POSITION" />
+          <CheckBox Content="Accolée à une face de la façade" IsChecked="{app:Liaison Accolee}"
+                    ToolTip="La tour garde ses poteaux, côté bâtiment contre la file extérieure de la face, reliée par tubes et colliers ; le garde-corps de la façade s'ouvre devant ses sorties côté bâtiment" />
+          <Grid Visibility="{app:Liaison Accolee, Converter={StaticResource VisibleSi}}">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="110" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+              <RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition />
+            </Grid.RowDefinitions>
+            <TextBlock Style="{StaticResource Etiquette}" Text="Face" />
+            <ComboBox Grid.Column="1" Margin="0,2" ItemsSource="{app:Liaison FacesPossibles}" SelectedItem="{app:Liaison FaceAccolee}" />
+            <TextBlock Grid.Row="1" Style="{StaticResource Etiquette}" Text="Début de la tour depuis le début de la face (m)" TextWrapping="Wrap" />
+            <TextBox Grid.Row="1" Grid.Column="1" Margin="0,2" Text="{app:Liaison Abscisse, StringFormat=0.00}" />
+            <TextBlock Grid.Row="2" Style="{StaticResource Etiquette}" Text="Écart avec la file extérieure (m)" TextWrapping="Wrap" />
+            <TextBox Grid.Row="2" Grid.Column="1" Margin="0,2" Text="{app:Liaison Ecart, StringFormat=0.00}" />
+            <Button Grid.Row="3" Grid.ColumnSpan="2" Content="Sorties côté façade aux planchers communs" Command="{app:Liaison SortiesCoteFacade}"
+                    HorizontalAlignment="Left" Padding="10,4" Margin="0,6,0,0" />
+          </Grid>
+          <Grid Visibility="{app:Liaison Seule, Converter={StaticResource VisibleSi}}">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="110" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+              <RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition />
+            </Grid.RowDefinitions>
+            <TextBlock Style="{StaticResource Etiquette}" Text="Position X (m)" />
+            <TextBox Grid.Column="1" Margin="0,2" Text="{app:Liaison PositionX, StringFormat=0.00}" ToolTip="Coin bout gauche, côté bâtiment, dans le repère du projet (S1 part de X = 0)" />
+            <TextBlock Grid.Row="1" Style="{StaticResource Etiquette}" Text="Position Y (m)" />
+            <TextBox Grid.Row="1" Grid.Column="1" Margin="0,2" Text="{app:Liaison PositionY, StringFormat=0.00}" />
+            <TextBlock Grid.Row="2" Style="{StaticResource Etiquette}" Text="Rotation (°)" />
+            <ComboBox Grid.Row="2" Grid.Column="1" Margin="0,2" ItemsSource="{x:Static vm:TourViewModel.Angles}" SelectedItem="{app:Liaison Angle}" ItemStringFormat="0" />
+            <TextBlock Grid.Row="3" Style="{StaticResource Etiquette}" Text="Stabilité" />
+            <ComboBox Grid.Row="3" Grid.Column="1" Margin="0,2" ItemsSource="{x:Static vm:TourViewModel.Stabilites}" DisplayMemberPath="Value" SelectedValuePath="Key"
+                      SelectedValue="{app:Liaison Stabilite}" />
+            <TextBlock Grid.Row="4" Style="{StaticResource Etiquette}" Text="Distance au bâtiment (m)" />
+            <TextBox Grid.Row="4" Grid.Column="1" Margin="0,2" Text="{app:Liaison DistanceBatiment, StringFormat=0.00}" ToolTip="Entre le côté bâtiment de la tour et le mur : longueur des tubes d'amarrage" />
+            <TextBlock Grid.Row="5" Style="{StaticResource Etiquette}" Text="Hauteur de stabilisation (m)" Visibility="{app:Liaison Stabilisee, Converter={StaticResource VisibleSi}}" />
+            <TextBox Grid.Row="5" Grid.Column="1" Margin="0,2" Text="{app:Liaison HauteurStabilisation, StringFormat=0.00}" Visibility="{app:Liaison Stabilisee, Converter={StaticResource VisibleSi}}"
+                     ToolTip="Structure de base côté extérieur, vers le bout opposé à l'entrée : modules de 2,50 m, diagonales verticales et horizontales (autostable &lt; 85 km/h)" />
+          </Grid>
+
+          <TextBlock Style="{StaticResource Section}" Text="PALIERS ET SORTIES" />
+          <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource Discret}" Margin="0,0,0,4"
+                     Text="Côtés vus de l'extérieur, face au bâtiment (ou à la façade) : côté bâtiment au fond, côté extérieur devant, bouts gauche et droit. Ouverture de 0,50 ou 1,00 m sur un grand côté, au bout du palier ; sur un bout, seulement là où arrive la volée. Sortie acrotère : ouverture de 1,00 m, pont de franchissement et structure de sortie posée sur le toit, 1,00 m sous le palier. Clic droit sur une lisse de la tour dans le dessin : ouvrir ou fermer le côté, ajouter ou retirer une sortie acrotère." />
+          <DataGrid ItemsSource="{app:Liaison Paliers}" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
+                    HeadersVisibility="Column" SelectionMode="Single" MaxHeight="360" FrozenColumnCount="1"
+                    HorizontalScrollBarVisibility="Auto">
+            <DataGrid.Columns>
+              <DataGridTextColumn Header="Palier (m)" Binding="{app:Liaison Hauteur, StringFormat=0.00}" IsReadOnly="True" Width="70" />
+              <DataGridTemplateColumn Header="Côté bâtiment" Width="Auto">
+                <DataGridTemplateColumn.CellTemplate>
+                  <DataTemplate>
+                    <StackPanel Orientation="Horizontal">
+                      <CheckBox IsChecked="{app:Liaison SortieA, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center" Margin="4,0" />
+                      <ComboBox ItemsSource="{x:Static vm:TourViewModel.LargeursOuverture}" SelectedItem="{app:Liaison LargeurA, UpdateSourceTrigger=PropertyChanged}"
+                                ItemStringFormat="0.00" Width="56" IsEnabled="{app:Liaison SortieA}" />
+                    </StackPanel>
+                  </DataTemplate>
+                </DataGridTemplateColumn.CellTemplate>
+              </DataGridTemplateColumn>
+              <DataGridTemplateColumn Header="Côté extérieur" Width="Auto">
+                <DataGridTemplateColumn.CellTemplate>
+                  <DataTemplate>
+                    <StackPanel Orientation="Horizontal">
+                      <CheckBox IsChecked="{app:Liaison SortieC, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center" Margin="4,0" />
+                      <ComboBox ItemsSource="{x:Static vm:TourViewModel.LargeursOuverture}" SelectedItem="{app:Liaison LargeurC, UpdateSourceTrigger=PropertyChanged}"
+                                ItemStringFormat="0.00" Width="56" IsEnabled="{app:Liaison SortieC}" />
+                    </StackPanel>
+                  </DataTemplate>
+                </DataGridTemplateColumn.CellTemplate>
+              </DataGridTemplateColumn>
+              <DataGridTemplateColumn Header="Bout d'arrivée" Width="Auto">
+                <DataGridTemplateColumn.CellTemplate>
+                  <DataTemplate>
+                    <CheckBox IsChecked="{app:Liaison SortieBout, UpdateSourceTrigger=PropertyChanged}" Content="{app:Liaison TexteBout}" VerticalAlignment="Center" Margin="4,0" />
+                  </DataTemplate>
+                </DataGridTemplateColumn.CellTemplate>
+              </DataGridTemplateColumn>
+              <DataGridTemplateColumn Header="Acrotère" Width="Auto">
+                <DataGridTemplateColumn.CellTemplate>
+                  <DataTemplate>
+                    <StackPanel Orientation="Horizontal">
+                      <ComboBox ItemsSource="{x:Static vm:PalierTour.ChoixAcrotere}" SelectedValuePath="Key" DisplayMemberPath="Value"
+                                SelectedValue="{app:Liaison Acrotere, UpdateSourceTrigger=PropertyChanged}" Width="74" Margin="2,0"
+                                ToolTip="Sortie acrotère : ouverture de 1,00 m, pont de franchissement, structure de sortie sur le toit (1,00 m sous le palier)" />
+                      <ComboBox ItemsSource="{x:Static vm:PalierTour.LongueursPont}" SelectedItem="{app:Liaison LongueurPont, UpdateSourceTrigger=PropertyChanged}"
+                                ItemStringFormat="0.00" Width="56" Margin="2,0" IsEnabled="{app:Liaison AvecAcrotere}" ToolTip="Longueur du pont de franchissement (m)" />
+                      <CheckBox IsChecked="{app:Liaison AcrotereTournee, UpdateSourceTrigger=PropertyChanged}" Content="Tournée" VerticalAlignment="Center" Margin="4,0"
+                                IsEnabled="{app:Liaison AvecAcrotere}" ToolTip="Structure de sortie tournée à 90° le long du côté (sinon droite, dans le prolongement du pont)" />
+                    </StackPanel>
+                  </DataTemplate>
+                </DataGridTemplateColumn.CellTemplate>
+              </DataGridTemplateColumn>
+            </DataGrid.Columns>
+          </DataGrid>
+        </StackPanel>
+      </ScrollViewer>
+    </DataTemplate>
   </Window.Resources>
 
   <DockPanel>
@@ -234,6 +371,29 @@
               </Button>
             </StackPanel>
             <TextBlock Style="{StaticResource TitreGroupe}" Text="Projet" />
+          </StackPanel>
+        </Border>
+        <!-- Ouvrages du projet (multi-ouvrages, Laurent 28/11/2026) : façade, tours escalier alu ; tour limon et SafeAccess à venir. -->
+        <Border Style="{StaticResource GroupeRuban}">
+          <StackPanel>
+            <StackPanel Orientation="Horizontal">
+              <Button x:Name="BoutonAjouterFacade" Style="{StaticResource BoutonRuban}" Click="AjouterFacade_Click"
+                      ToolTip="Ajoute l'échafaudage de façade au projet (onglets S1…)">
+                <StackPanel><TextBlock Style="{StaticResource Picto}" Text="&#xE80A;" /><TextBlock Text="+ Façade" /></StackPanel>
+              </Button>
+              <Button Style="{StaticResource BoutonRuban}" Click="AjouterTour_Click" IsEnabled="{app:Liaison PeutAjouterTour}"
+                      ToolTip="Ajoute une tour escalier à volées aluminium (onglet T1, T2…), seule ou accolée à une face">
+                <StackPanel><TextBlock Style="{StaticResource Picto}" Text="&#xE8B7;" /><TextBlock Text="+ Tour escalier alu" /></StackPanel>
+              </Button>
+              <Button Style="{StaticResource BoutonRuban}" IsEnabled="False" ToolTip="À venir : tour escalier à volées limon">
+                <StackPanel><TextBlock Style="{StaticResource Picto}" Text="&#xE8B7;" /><TextBlock Text="+ Tour limon" /></StackPanel>
+              </Button>
+              <Button Style="{StaticResource BoutonRuban}" Click="SupprimerOuvrage_Click"
+                      ToolTip="Retire du projet l'ouvrage de l'onglet ouvert (la tour, ou la façade s'il reste une tour)">
+                <StackPanel><TextBlock Style="{StaticResource Picto}" Text="&#xE74D;" /><TextBlock Text="Supprimer" /></StackPanel>
+              </Button>
+            </StackPanel>
+            <TextBlock Style="{StaticResource TitreGroupe}" Text="Ouvrages" />
           </StackPanel>
         </Border>
 
@@ -498,7 +658,7 @@
 
       <!-- Grilles de la face active, décompte, amarrages, alertes. -->
       <TabControl x:Name="OngletsBas" Grid.Row="2" Grid.ColumnSpan="3" Margin="6,0,6,6">
-        <TabItem>
+        <TabItem x:Name="OngletGrilles">
           <TabItem.Header>
             <Border Background="{app:Liaison CouleurFaceActive}" CornerRadius="2" Padding="6,1" Margin="-4,-1">
               <TextBlock Text="{app:Liaison TitreGrilles}" />
@@ -750,12 +910,16 @@
         <TabItem Header="Décompte">
           <DockPanel>
             <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="6,4">
+              <TextBlock Text="Ouvrage" VerticalAlignment="Center" Margin="0,0,8,0" />
+              <ComboBox Width="190" Margin="0,0,16,0" ItemsSource="{app:Liaison ChoixOuvragesDecompte}" SelectedValuePath="Key" DisplayMemberPath="Value"
+                        SelectedValue="{app:Liaison OuvrageDecompte}"
+                        ToolTip="Décompte de tout le projet, de la façade ou d'une tour (quantités calculées, sans les modifications faites à la main)" />
               <TextBlock Text="Références affichées" VerticalAlignment="Center" Margin="0,0,8,0" />
               <ComboBox Width="240" ItemsSource="{x:Static vm:FacadeViewModel.ChoixReferences}" SelectedValuePath="Key" DisplayMemberPath="Value"
                         SelectedValue="{app:Liaison ReferencesAffichees}"
                         ToolTip="Travail en références client : le décompte affiche les références du client (LV Tec intégré, ou fichier de correspondance des Paramètres par défaut)" />
             </StackPanel>
-            <WrapPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="6,0,6,4">
+            <WrapPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="6,0,6,4" IsEnabled="{app:Liaison DecompteModifiable}">
               <TextBlock Text="Ajouter la référence" VerticalAlignment="Center" Margin="0,0,8,0" />
               <TextBox x:Name="SaisieReference" Width="150" VerticalContentAlignment="Center" KeyDown="SaisieDecompte_KeyDown"
                        ToolTip="Référence RETOTUB ou référence client : désignation, poids et famille sont repris de multidec.bib" />
@@ -771,7 +935,7 @@
               <TextBlock Text="Double-cliquez une quantité pour la modifier." Foreground="Gray" VerticalAlignment="Center" Margin="16,0,0,0" />
             </WrapPanel>
             <TextBlock DockPanel.Dock="Bottom" Margin="6,4" TextWrapping="Wrap" FontWeight="SemiBold" Text="{app:Liaison ResumeDecompte}" />
-            <DataGrid x:Name="GrilleDecompte" ItemsSource="{app:Liaison Decompte}" AutoGenerateColumns="False" IsReadOnly="False"
+            <DataGrid x:Name="GrilleDecompte" ItemsSource="{app:Liaison Decompte}" AutoGenerateColumns="False" IsReadOnly="{app:Liaison DecompteFiltre}"
                       CanUserAddRows="False" CanUserDeleteRows="False" SelectionMode="Single" CellEditEnding="GrilleDecompte_CellEditEnding">
               <DataGrid.RowStyle>
                 <Style TargetType="DataGridRow">

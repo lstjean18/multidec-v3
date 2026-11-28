@@ -6,6 +6,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using MultiDEC.Core.Facade;
+using MultiDEC.Core.TourEscalier;
 using MultiDEC.Rendering.VectorDraw;
 using VectorDraw.Professional.Components;
 using VectorDraw.Professional.vdObjects;
@@ -175,6 +176,7 @@ public class BibliothequeDwgTests
         Escalier3m(rendu, doc, Path.GetFileNameWithoutExtension(fichier));
         VolumiqueEtHauteurs(rendu, doc, Path.GetFileNameWithoutExtension(fichier));
         AngleEnL(rendu, doc, Path.GetFileNameWithoutExtension(fichier));
+        TourEscalier(rendu, doc, Path.GetFileNameWithoutExtension(fichier));
     }
 
     /// <summary>
@@ -568,6 +570,120 @@ public class BibliothequeDwgTests
         rendu.MettreEnEvidence("S2");
         rendu.Vue(Vues.Iso);
         Image(doc, nom + "-L-S2");
+    }
+
+    /// <summary>
+    /// Tour escalier alu seule (2,00 m, 8 m, origine en 0) : chaque pièce doit tomber dans l'emprise de la tour
+    /// (Laurent, 28/11/2026 : diagonales qui partaient dans le vide).
+    /// </summary>
+    private void TourEscalier(RenduVectorDraw rendu, vdDocument doc, string nom)
+    {
+        var projet = ProjetStructure.Nouveau(face: new ParametresFacade { LongueurTotaleSouhaitee = 10, HauteurDernierPlancher = 8 });
+        var tour = projet.AjouterTour();
+        tour.Largeur = 2.0;
+        tour.Hauteur = 8;
+        tour.PositionX = 0;
+        tour.PositionY = 0;
+        projet.AvecFacade = false;
+        var s = GenerateurStructure.Generer(projet);
+        var rapport = rendu.Dessiner(s, TableOrientations.ParDefaut());
+        _sortie.WriteLine($"TOUR : {rapport.Inseres} insérés, manquants : {string.Join(", ", rapport.BlocsManquants)}, alertes : {string.Join(" | ", s.Alertes)}");
+        int diagonalesHors = 0;
+        foreach (var g in rapport.Inserts.GroupBy(x => x.Element.Famille))
+        {
+            var bx = g.Select(x => x.Insert.BoundingBox).ToList();
+            _sortie.WriteLine(string.Format(CultureInfo.InvariantCulture, "TOUR {0,-20} {1,3}  X {2:0.00}..{3:0.00}  Y {4:0.00}..{5:0.00}  Z {6:0.00}..{7:0.00}",
+                g.Key, g.Count(), bx.Min(b => b.Min.x), bx.Max(b => b.Max.x), bx.Min(b => b.Min.y), bx.Max(b => b.Max.y), bx.Min(b => b.Min.z), bx.Max(b => b.Max.z)));
+            foreach (var x in g)
+            {
+                var b = x.Insert.BoundingBox;
+                bool dedans = b.Min.x > -0.3 && b.Max.x < 2.8 && b.Min.y > -2.3 && b.Max.y < 1.3 && b.Min.z > -0.6 && b.Max.z < 9.6;
+                if (!dedans)
+                {
+                    _sortie.WriteLine(string.Format(CultureInfo.InvariantCulture, "TOUR HORS {0,-18} o=({1:0.00},{2:0.00},{3:0.00}) inv={4} rot={5}  X {6:0.00}..{7:0.00}  Y {8:0.00}..{9:0.00}  Z {10:0.00}..{11:0.00}",
+                        x.Element.Reference, x.Element.Origine.X, x.Element.Origine.Y, x.Element.Origine.Z, x.Element.Inverse, x.Element.Rotation, b.Min.x, b.Max.x, b.Min.y, b.Max.y, b.Min.z, b.Max.z));
+                    if (x.Element.Famille == Famille.DiagonaleVerticale)
+                    {
+                        diagonalesHors++;
+                    }
+                }
+            }
+        }
+
+        rendu.Rendu(ModeRendu.OmbreAretes);
+        rendu.Vue(Vues.Iso);
+        Image(doc, nom + "-TOUR-iso");
+        rendu.Vue(Vues.Facade);
+        Image(doc, nom + "-TOUR-facade");
+        rendu.Vue(Vues.CoteGauche);
+        Image(doc, nom + "-TOUR-cote");
+
+        // Sorties acrotère (v2) : droite côté C au palier de 6 m, tournée au bout du dernier palier.
+        var bout = tour.BoutArrivee(tour.Paliers().Count - 1);
+        tour.Sorties.Clear();
+        tour.Sorties.Add(new SortieTour(6, CoteTour.C) { Acrotere = true, LongueurPont = 1.5 });
+        tour.Sorties.Add(new SortieTour(8, bout) { Acrotere = true, LongueurPont = 1.0, Tournee = true });
+        var sa = GenerateurStructure.Generer(projet);
+        var ra = rendu.Dessiner(sa, TableOrientations.ParDefaut());
+        _sortie.WriteLine($"TOUR-ACRO : {ra.Inseres} insérés, manquants : {string.Join(", ", ra.BlocsManquants)}, alertes : {string.Join(" | ", sa.Alertes)}");
+        foreach (var x in ra.Inserts.Where(x => x.Element.Origine.Y < -2.05 || x.Element.Origine.X > 2.55 || x.Element.Origine.X < -0.05))
+        {
+            var b = x.Insert.BoundingBox;
+            _sortie.WriteLine(string.Format(CultureInfo.InvariantCulture, "ACRO {0,-18} o=({1:0.00},{2:0.00},{3:0.00}) {4} inv={5} rot={6}  X {7:0.00}..{8:0.00}  Y {9:0.00}..{10:0.00}  Z {11:0.00}..{12:0.00}",
+                x.Element.Reference, x.Element.Origine.X, x.Element.Origine.Y, x.Element.Origine.Z, x.Element.Axe, x.Element.Inverse, x.Element.Rotation, b.Min.x, b.Max.x, b.Min.y, b.Max.y, b.Min.z, b.Max.z));
+        }
+
+        rendu.Rendu(ModeRendu.OmbreAretes);
+        rendu.Vue(Vues.Iso);
+        Image(doc, nom + "-TOUR-ACRO-iso");
+        rendu.Vue(Vues.Dessus);
+        Image(doc, nom + "-TOUR-ACRO-dessus");
+        rendu.Vue(Vues.Facade);
+        Image(doc, nom + "-TOUR-ACRO-facade");
+
+        // Stabilisation sur deux côtés (plan LV Tec O240610) : tour de 7 m, 1,50 m, entrée D.
+        tour.Sorties.Clear();
+        tour.Hauteur = 7;
+        tour.Largeur = 1.5;
+        tour.Entree = CoteTour.D;
+        tour.Stabilite = StabiliteTour.Stabilisee;
+        tour.SortieParDefaut();
+        var ss = GenerateurStructure.Generer(projet);
+        var rs = rendu.Dessiner(ss, TableOrientations.ParDefaut());
+        _sortie.WriteLine($"TOUR-STAB : {rs.Inseres} insérés, manquants : {string.Join(", ", rs.BlocsManquants)}");
+        foreach (var x in rs.Inserts.Where(x => x.Element.Famille == Famille.DiagonaleVerticale || x.Element.Famille == Famille.DiagonaleHorizontale))
+        {
+            var b = x.Insert.BoundingBox;
+            _sortie.WriteLine(string.Format(CultureInfo.InvariantCulture, "STAB {0,-12} o=({1:0.00},{2:0.00},{3:0.00}) {4} inv={5} rot={6:0}  X {7:0.00}..{8:0.00}  Y {9:0.00}..{10:0.00}  Z {11:0.00}..{12:0.00}",
+                x.Element.Reference, x.Element.Origine.X, x.Element.Origine.Y, x.Element.Origine.Z, x.Element.Axe, x.Element.Inverse, x.Element.Rotation, b.Min.x, b.Max.x, b.Min.y, b.Max.y, b.Min.z, b.Max.z));
+        }
+
+        rendu.Rendu(ModeRendu.OmbreAretes);
+        rendu.Vue(Vues.Iso);
+        Image(doc, nom + "-TOUR-STAB-iso");
+        rendu.Vue(Vues.Dessus);
+        Image(doc, nom + "-TOUR-STAB-dessus");
+        rendu.Vue(Vues.Facade);
+        Image(doc, nom + "-TOUR-STAB-facade");
+
+        // Départ à 0,50 m (6,50 m) : maille d'entrée de 0,70 m au niveau 0 devant le bout gauche (Laurent, 28/11/2026).
+        tour.Sorties.Clear();
+        tour.Hauteur = 6.5;
+        tour.Stabilite = StabiliteTour.Amarree;
+        tour.SortieParDefaut();
+        var sd = GenerateurStructure.Generer(projet);
+        var rd = rendu.Dessiner(sd, TableOrientations.ParDefaut());
+        _sortie.WriteLine($"TOUR-DEPART : {rd.Inseres} insérés, manquants : {string.Join(", ", rd.BlocsManquants)}");
+        foreach (var x in rd.Inserts.Where(x => x.Element.Origine.Z < 1.1 && x.Insert.BoundingBox.Min.x < -0.05))
+        {
+            var b = x.Insert.BoundingBox;
+            _sortie.WriteLine(string.Format(CultureInfo.InvariantCulture, "DEPART {0,-14} o=({1:0.00},{2:0.00},{3:0.00}) {4} inv={5} rot={6:0}  X {7:0.00}..{8:0.00}  Y {9:0.00}..{10:0.00}  Z {11:0.00}..{12:0.00}",
+                x.Element.Reference, x.Element.Origine.X, x.Element.Origine.Y, x.Element.Origine.Z, x.Element.Axe, x.Element.Inverse, x.Element.Rotation, b.Min.x, b.Max.x, b.Min.y, b.Max.y, b.Min.z, b.Max.z));
+        }
+
+        rendu.Vue(Vues.Iso);
+        Image(doc, nom + "-TOUR-DEPART-iso");
+        Assert.Equal(0, diagonalesHors);
     }
 
     private void Image(vdDocument doc, string nom)

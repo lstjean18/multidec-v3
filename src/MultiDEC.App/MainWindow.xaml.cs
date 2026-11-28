@@ -64,6 +64,7 @@ public partial class MainWindow : Window
         Vm.ColonnesConsolesChangees += (_, _) => ColonnesConsoles();
         ColonnesConsoles();
         Vm.Faces.CollectionChanged += (_, _) => ReconstruireOnglets();
+        Vm.OuvragesChanges += (_, _) => ReconstruireOnglets();
         Vm.Mailles.CollectionChanged += (_, _) => Dispatcher.BeginInvoke(new Action(NumeroterMailles));
         Vm.PropertyChanged += Vm_PropertyChanged;
         Vm_PropertyChanged(Vm, new System.ComponentModel.PropertyChangedEventArgs(string.Empty));
@@ -313,7 +314,7 @@ public partial class MainWindow : Window
             Onglets.Items.RemoveAt(Onglets.Items.Count - 1);
         }
 
-        for (int i = 0; i < Vm.Faces.Count; i++)
+        for (int i = 0; i < NombreOngletsFaces; i++)
         {
             var face = Vm.Faces[i];
             Onglets.Items.Add(new TabItem
@@ -333,8 +334,13 @@ public partial class MainWindow : Window
             });
         }
 
-        // On reste sur « Général », sinon sur la face active (S1 si l'ancienne face n'existe plus).
-        Onglets.SelectedIndex = selection <= 0 ? 0 : Math.Min(Vm.IndexFaceActive + 1, Onglets.Items.Count - 1);
+        OngletsTours();
+
+        // On reste sur « Général », sinon sur la face active (S1 si l'ancienne face n'existe plus), ou sur l'onglet demandé.
+        Onglets.SelectedIndex = _ongletApresReconstruction is int demande && demande < Onglets.Items.Count
+            ? demande
+            : selection <= 0 || NombreOngletsFaces == 0 ? (selection > 0 ? Math.Min(selection, Onglets.Items.Count - 1) : 0) : Math.Min(Vm.IndexFaceActive + 1, Onglets.Items.Count - 1);
+        _ongletApresReconstruction = null;
     }
 
     private void Onglets_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -344,12 +350,27 @@ public partial class MainWindow : Window
             return; // listes déroulantes à l'intérieur des onglets
         }
 
-        if (Onglets.SelectedIndex > 0)
+        if (Onglets.SelectedIndex > 0 && Onglets.SelectedIndex <= NombreOngletsFaces)
         {
             Vm.IndexFaceActive = Onglets.SelectedIndex - 1;
         }
 
+        AfficherGrillesFace();
         MettreEnEvidence();
+    }
+
+    /// <summary>
+    /// Onglet du bas « mailles et niveaux » : masqué sur l'onglet d'une tour ou sans façade (Laurent, 28/11/2026) ; s'il était
+    /// ouvert, on passe au décompte.
+    /// </summary>
+    private void AfficherGrillesFace()
+    {
+        bool visible = TourActive == null && Vm.AvecFacade;
+        OngletGrilles.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
+        if (!visible && ReferenceEquals(OngletsBas.SelectedItem, OngletGrilles))
+        {
+            OngletsBas.SelectedIndex = 1;
+        }
     }
 
     private void Vm_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -368,14 +389,15 @@ public partial class MainWindow : Window
             ColonneReference.Header = Vm.TitreReference;
         }
 
-        if (e.PropertyName == nameof(FacadeViewModel.IndexFaceActive) && Onglets.SelectedIndex > 0 && Onglets.SelectedIndex != Vm.IndexFaceActive + 1)
+        if (e.PropertyName == nameof(FacadeViewModel.IndexFaceActive) && Onglets.SelectedIndex > 0 && Onglets.SelectedIndex <= NombreOngletsFaces
+            && Onglets.SelectedIndex != Vm.IndexFaceActive + 1)
         {
             Onglets.SelectedIndex = Vm.IndexFaceActive + 1;
         }
     }
 
     /// <summary>Face active en couleur dans le dessin, les autres estompées (toutes en couleur sur « Général »).</summary>
-    private void MettreEnEvidence() => _rendu?.MettreEnEvidence(Onglets.SelectedIndex > 0 ? Vm.NomFaceActive : null);
+    private void MettreEnEvidence() => _rendu?.MettreEnEvidence(NomOuvrageActif());
 
     // ---- Grille des mailles -------------------------------------------------------------------
 
@@ -468,6 +490,14 @@ public partial class MainWindow : Window
         var remplacer = new System.Windows.Forms.ToolStripMenuItem("Remplacer l'about par");
         menu.Items.Insert(0, separateurAbout);
         menu.Items.Insert(0, remplacer);
+
+        // Clic droit sur une pièce d'un côté de tour escalier : ouvrir ou fermer ce côté au palier (sortie).
+        var separateurTour = new System.Windows.Forms.ToolStripSeparator();
+        var sortieTour = new System.Windows.Forms.ToolStripMenuItem("Ouvrir");
+        var acrotereTour = new System.Windows.Forms.ToolStripMenuItem("Sortie acrotère");
+        menu.Items.Insert(0, separateurTour);
+        menu.Items.Insert(0, acrotereTour);
+        menu.Items.Insert(0, sortieTour);
         menu.Opening += (_, _) =>
         {
             int n = _rendu?.NombreSelectionnes ?? 0;
@@ -482,6 +512,13 @@ public partial class MainWindow : Window
             bool about = element?.About != null;
             remplacer.Visible = about;
             separateurAbout.Visible = about;
+            separateurTour.Visible = sortieTour.Visible = PreparerMenuTour(sortieTour, element);
+            acrotereTour.Visible = sortieTour.Visible;
+            if (sortieTour.Visible)
+            {
+                // Ouvrir ou fermer étant possible, la sortie acrotère l'est aussi (fermer = côté ouvert à ce palier).
+                PreparerMenuAcrotere(acrotereTour, element!, sortieTour.Enabled);
+            }
             if (about)
             {
                 MenuRemplacerAbout(remplacer, element!.NomFace, element.About!);
@@ -606,7 +643,23 @@ public partial class MainWindow : Window
 
     private void Nouveau_Click(object sender, RoutedEventArgs e)
     {
-        Vm.Nouveau();
+        // Projet multi-ouvrages : on choisit le premier ouvrage (façade ou tour escalier alu).
+        var choix = ChoisirPremierOuvrage();
+        if (choix == null)
+        {
+            return;
+        }
+
+        if (choix == PremierOuvrage.TourEscalierAlu)
+        {
+            Vm.NouveauProjetTour();
+            _ongletApresReconstruction = 1;
+        }
+        else
+        {
+            Vm.Nouveau();
+        }
+
         ListeRendu(true);
     }
 

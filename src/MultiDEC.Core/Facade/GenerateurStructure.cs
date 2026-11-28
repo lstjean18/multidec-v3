@@ -33,9 +33,18 @@ public static class GenerateurStructure
     public static StructureFacade Generer(ProjetStructure projet)
     {
         projet.AppliquerGeneraux();
-        VerifierPremiersPlanchers(projet);
-        RegleTourRoulante.Verifier(projet);
-        RegleMaillesAcces.Verifier(projet);
+        if (projet.SansOuvrage)
+        {
+            throw new InvalidOperationException("Le projet ne contient aucun ouvrage : ajoutez une façade ou une tour (ruban « Ouvrages »).");
+        }
+
+        if (projet.AvecFacade)
+        {
+            VerifierPremiersPlanchers(projet);
+            RegleTourRoulante.Verifier(projet);
+            RegleMaillesAcces.Verifier(projet);
+        }
+
         var poses = Poses(projet);
         var elements = new List<ElementPlace>();
         var amarrages = new List<Amarrage>();
@@ -45,7 +54,7 @@ public static class GenerateurStructure
         bool note = false;
         bool plusieurs = projet.Faces.Count > 1;
 
-        for (int i = 0; i < projet.Faces.Count; i++)
+        for (int i = 0; i < projet.FacesGenerees.Count; i++)
         {
             var face = projet.Faces[i];
             if (face.Mailles.Count == 0)
@@ -100,7 +109,9 @@ public static class GenerateurStructure
             }
 
             var pose = poses[i];
-            var places = s.Elements.Select(e => e.DansLaStructure(face.Nom, pose.Angle, pose.Origine)).ToList();
+            // Tours accolées : garde-corps extérieur ouvert devant leurs sorties (repère de la face).
+            var locaux = TourEscalier.ToursDansLaStructure.OuvrirDevantLesSorties(projet, face, s.Elements, alertes);
+            var places = locaux.Select(e => e.DansLaStructure(face.Nom, pose.Angle, pose.Origine)).ToList();
             if (i > 0)
             {
                 places = SansPoteauxCommuns(places, elements);
@@ -118,12 +129,14 @@ public static class GenerateurStructure
             alertes.AddRange(plusieurs ? s.Alertes.Select(a => face.Nom + " : " + a) : s.Alertes);
         }
 
-        if (!projet.EstVolumique && projet.Faces.Any(f => f.Parametres.LargeurMaille > 1.05 + Cotes.Tolerance))
+        TourEscalier.ToursDansLaStructure.Ajouter(projet, poses, elements, amarrages, alertes);
+
+        if (projet.AvecFacade && !projet.EstVolumique && projet.Faces.Any(f => f.Parametres.LargeurMaille > 1.05 + Cotes.Tolerance))
         {
             alertes.Add("Largeur de maille supérieure à 1,05 m : réservée aux structures volumiques.");
         }
 
-        if (projet.Forme == FormeStructure.Fermee && projet.Faces.Count == 4)
+        if (projet.AvecFacade && projet.Forme == FormeStructure.Fermee && projet.Faces.Count == 4)
         {
             var f = projet.Faces;
             if (!Cotes.Egal(f[0].LongueurObtenue, f[2].LongueurObtenue) || !Cotes.Egal(f[1].LongueurObtenue, f[3].LongueurObtenue))

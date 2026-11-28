@@ -20,7 +20,7 @@ namespace MultiDEC.App.ViewModels;
 /// des mailles et des niveaux sont éditables, génération de toute la structure.
 /// Ne dépend ni de WPF ni de VectorDraw : la vue appelle <see cref="Generer"/> puis dessine le résultat.
 /// </summary>
-public sealed class FacadeViewModel : INotifyPropertyChanged
+public sealed partial class FacadeViewModel : INotifyPropertyChanged
 {
     private ProjetStructure _projet = new ProjetStructure();
     private int _indexFace;
@@ -483,7 +483,7 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
     public bool FaceActiveAValider => _projet.FaceAValider(_indexFace);
 
     /// <summary>Première face à valider (-1 si aucune) : « Dessiner » ouvre son onglet.</summary>
-    public int PremiereFaceAValider() => _projet.PremiereFaceAValider();
+    public int PremiereFaceAValider() => _projet.AvecFacade ? _projet.PremiereFaceAValider() : -1;
 
     private void NotifierValidation() => Notifier(nameof(FaceActiveAValider));
 
@@ -836,7 +836,7 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
     {
         Remplir(Decompte, _structure == null
             ? new List<LigneDecompte>()
-            : CalculDecompte.Calculer(_structure.Elements, _articles, _client, _projet.CorrectionsDecompte));
+            : CalculDecompte.Calculer(ElementsDuDecompte(_structure), _articles, _client, CorrectionsDuDecompte()));
         Notifier(nameof(ResumeDecompte));
         Notifier(nameof(DecompteCorrige));
     }
@@ -951,6 +951,7 @@ public sealed class FacadeViewModel : INotifyPropertyChanged
         Notifier(nameof(ResumeDecompte));
         Alertes.Clear();
         ListeAmarrages.Clear();
+        ChargerOuvrages();
         Notifier(string.Empty); // tout rafraîchir
         ChargerFace(0);
     }
